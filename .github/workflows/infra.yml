@@ -45,29 +45,6 @@ jobs:
           az bicep build --file infra/bicep/main.bicep
           echo "✅ Bicep syntax validation passed"
 
-      - name: Login to Azure
-        uses: azure/login@v1
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Create Resource Group
-        run: |
-          az group create \
-            --name "${{ env.RESOURCE_GROUP }}" \
-            --location "${{ env.AZURE_LOCATION }}"
-          echo "✅ Resource group created or verified"
-
-      - name: Validate Bicep deployment
-        run: |
-          az deployment group validate \
-            --resource-group "${{ env.RESOURCE_GROUP }}" \
-            --template-file infra/bicep/main.bicep \
-            --parameters "@infra/bicep/parameters/${{ github.event.inputs.environment }}.parameters.json"
-          
-          echo "✅ Bicep deployment validation passed"
-
   deploy:
     name: Deploy Infrastructure
     runs-on: ubuntu-latest
