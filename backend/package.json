@@ -10,7 +10,8 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch",
-    "start": "func start",
+    "prestart": "npm run build",
+    "start": "func start --typescript",
     "test": "jest",
     "test:unit": "jest --testPathPattern=tests/unit",
     "test:contract": "jest --testPathPattern=tests/contract",
