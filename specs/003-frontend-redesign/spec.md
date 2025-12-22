@@ -136,39 +136,87 @@ A user can view all logged meals grouped by day and see a weekly protein trend c
 
 ## Requirements *(mandatory)*
 
-<!--
-  ACTION REQUIRED: The content in this section represents placeholders.
-  Fill them out with the right functional requirements.
--->
-
 ### Functional Requirements
 
-- **FR-001**: System MUST [specific capability, e.g., "allow users to create accounts"]
-- **FR-002**: System MUST [specific capability, e.g., "validate email addresses"]  
-- **FR-003**: Users MUST be able to [key interaction, e.g., "reset their password"]
-- **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
-- **FR-005**: System MUST [behavior, e.g., "log all security events"]
+### Home Page (FR-001 through FR-005)
 
-*Example of marking unclear requirements:*
+- **FR-001**: Home page displays hero header with tagline "Analyze meals in seconds, track protein effortlessly" within 300ms (FCP - First Contentful Paint)
+- **FR-002**: Home page displays primary CTA button "📸 Upload Meal Photo" in thumb zone (bottom 30% of viewport) with minimum 44×44px touch target
+- **FR-003**: Hero section displays trust elements: "AI-powered", "Edit anytime", "Your data, your control" reassurance text
+- **FR-004**: Home page displays example results preview showing sample meal analysis with total protein, food items, and confidence levels
+- **FR-005**: Home page adapts to both light and dark mode with proper contrast (WCAG AA 4.5:1 minimum)
 
-- **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]
-- **FR-007**: System MUST retain user data for [NEEDS CLARIFICATION: retention period not specified]
+### Upload & Image Selection (FR-006 through FR-012)
 
-### Key Entities *(include if feature involves data)*
+- **FR-006**: Users can upload a meal photo via file picker on mobile or drag/drop zone on desktop
+- **FR-007**: After selecting an image, a preview is displayed with options to "Replace Image" and "Remove Image"
+- **FR-008**: Image preview shows the selected photo at 1:1 aspect ratio (or fitted) with clear visual boundaries
+- **FR-009**: During upload, a progress indicator shows status (e.g., "Uploading... 45%") without blocking the UI
+- **FR-010**: During analysis (AI processing), skeleton loading states display instead of spinners—showing structure of expected results (shimmer cards)
+- **FR-011**: Skeleton states remain visible until analysis completes, building anticipation without spinners
+- **FR-012**: When analysis completes, results fade in smoothly over 300-400ms with gentle motion (respects `prefers-reduced-motion`)
 
-- **[Entity 1]**: [What it represents, key attributes without implementation]
-- **[Entity 2]**: [What it represents, relationships to other entities]
+### Results Display (FR-013 through FR-020)
+
+- **FR-013**: Results summary card displays total protein in large, prominent text (minimum 20px on mobile, 24px on desktop)
+- **FR-014**: Results card shows estimated calories and macrobreakdown (carbs, fats, protein) if available from AI analysis
+- **FR-015**: Food items are listed with columns: name, portion size, protein grams, confidence % badge
+- **FR-016**: Each food item displays a confidence % badge (e.g., "92% confident") with a tooltip explaining confidence means "AI is 92% sure this is correct"
+- **FR-017**: Original meal image is displayed on the results screen (preview or full-size button) so users can verify what AI saw
+- **FR-018**: Results screen displays all food items in a scrollable list without blocking the total protein display
+- **FR-019**: On mobile (≤600px), tapping a food item expands to show full details (portion, protein grams, original name, editable fields)
+- **FR-020**: Total protein calculation updates in real-time when any food item protein value changes (before save)
+
+### Editing & Corrections (FR-021 through FR-027)
+
+- **FR-021**: Users can tap any food item to enter edit mode with editable fields: food name, portion (text field), protein grams
+- **FR-022**: Edit form displays the original AI-detected value as reference text (e.g., "AI detected: 25g, You: —")
+- **FR-023**: Tapping "Save" on an edited food item persists the changes and shows a confirmation toast ("Item saved")
+- **FR-024**: After editing, the results card immediately updates to show the corrected values (optimistic UI)
+- **FR-025**: Users can add a notes field per meal (optional) to explain context (e.g., "actually ate half the portion")
+- **FR-026**: Edit form labels are always visible (not placeholder-only) with proper text contrast (WCAG AA 4.5:1)
+- **FR-027**: Canceling an edit form discards changes and closes without saving
+
+### Protein Gap & Coaching Widget (FR-028 through FR-032)
+
+- **FR-028**: Coaching widget displays "Protein Gap: X grams to reach your daily goal" with large, readable text (16px+)
+- **FR-029**: If daily goal is not set, coaching widget shows "Set your daily protein goal" with a CTA to configure it
+- **FR-030**: When gap is positive (protein < goal), widget displays exactly 3 suggested high-protein foods with protein content (e.g., "Chicken breast: 31g per 100g")
+- **FR-031**: When gap is zero or negative (goal met), widget displays "🎯 Goal met! Your protein: X grams (Goal: Y grams)"
+- **FR-032**: Users can tap a suggestion to "Quick Add" it to the meal or view details; quick add updates the gap immediately
+
+### History & Trends (FR-033 through FR-037)
+
+- **FR-033**: History page displays all logged meals grouped by date (most recent first) with clear date headers
+- **FR-034**: Each meal entry in history shows: thumbnail image preview, total protein, timestamp (e.g., "12:34 PM")
+- **FR-035**: History page displays a 7-day trend chart (bar chart) showing total daily protein intake for past 7 days
+- **FR-036**: Hovering/tapping a trend bar shows the exact protein value for that day (e.g., "Monday: 145g")
+- **FR-037**: Empty state on history page (no meals logged) displays a message "No meals logged yet" with a CTA to "Log your first meal"
+
+### Key Entities
+
+- **Meal**: Represents a single meal logged by a user. Attributes: id, userId, uploadedAt (timestamp), image (blob reference), analysis (JSON object containing detected foods and macros), corrections (array of user edits)
+- **Food Item**: Represents an individual food detected in a meal. Attributes: id, mealId, name (detected food name), portion (text or visual descriptor), proteinGrams (numeric), confidence (percentage, 0-100), aiDetected (boolean, true if from AI)
+- **Daily Goal**: Represents a user's daily protein target. Attributes: userId, goalGrams (default 150g), lastUpdated (timestamp)
+- **Correction**: Represents a user edit to a detected food item. Attributes: id, foodId, fieldEdited (name/portion/protein), originalValue, newValue, savedAt (timestamp)
 
 ## Success Criteria *(mandatory)*
 
-<!--
-  ACTION REQUIRED: Define measurable success criteria.
-  These must be technology-agnostic and measurable.
--->
-
 ### Measurable Outcomes
 
-- **SC-001**: [Measurable metric, e.g., "Users can complete account creation in under 2 minutes"]
-- **SC-002**: [Measurable metric, e.g., "System handles 1000 concurrent users without degradation"]
-- **SC-003**: [User satisfaction metric, e.g., "90% of users successfully complete primary task on first attempt"]
-- **SC-004**: [Business metric, e.g., "Reduce support tickets related to [X] by 50%"]
+- **SC-001**: Home page loads with hero section and upload CTA visible within 300ms (FCP) on 3G network
+- **SC-002**: Users can upload a meal photo and complete the full upload + analysis flow within 5 seconds (median)
+- **SC-003**: Results display with total protein, itemized foods, and confidence badges within 1 second of analysis completion
+- **SC-004**: 95% of users can identify the primary CTA ("Upload Meal Photo") within 3 seconds of landing on the home page
+- **SC-005**: Users can edit a food item (change protein value) and see total update within 100ms (real-time)
+- **SC-006**: History page with past meals and 7-day trend chart loads within 1 second (median)
+- **SC-007**: Protein gap widget calculation is 100% accurate (daily total - goal = gap)
+- **SC-008**: Users can navigate the entire app using keyboard only (Tab, Enter, Esc) with visible focus indicators (WCAG AA)
+- **SC-009**: All UI text meets WCAG AA contrast requirements (4.5:1 for normal text, 3:1 for large text)
+- **SC-010**: Motion animations respect `prefers-reduced-motion` media query (no animation when user has motion reduced)
+- **SC-011**: App is fully functional on mobile (375px viewport) and desktop (1024px+) without horizontal scrolling
+- **SC-012**: All interactive elements meet minimum 44×44px touch target size on mobile
+- **SC-013**: App passes WCAG AA accessibility validation with zero critical violations (tested via axe DevTools)
+- **SC-014**: Dark mode theme displays correctly with proper contrast in all screens
+- **SC-015**: Empty states (no meals logged) provide clear CTAs with minimum 16px text
+- **SC-016**: Users can delete a meal and see history update without page reload (optimistic UI)
