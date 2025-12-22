@@ -105,7 +105,7 @@ export function useMealUpload(): UseMealUploadResult {
 
       // Step 2: Upload file to blob storage
       console.log('Uploading file to blob storage...');
-      await apiClient.uploadToBlob(uploadUrlResponse.uploadUrl, fileToUpload);
+      await apiClient.uploadToBlob(uploadUrlResponse.uploadUrl, fileToUpload as File);
       console.log('Upload complete');
 
       setIsUploading(false);
