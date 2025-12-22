@@ -50,7 +50,7 @@ description: "Task list for Blob Upload + GPT-5.1 Vision Analysis feature implem
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
 - [X] T011 Create Prisma schema with MealAnalysis and Food entities in backend/prisma/schema.prisma
-- [ ] T012 Run Prisma migration to create database tables
+- [X] T012 Run Prisma migration to create database tables
 - [X] T013 [P] Configure Azure Blob Storage connection using Managed Identity in backend/src/services/blobService.ts
 - [X] T014 [P] Implement structured logging utility with correlation ID support in backend/src/utils/logger.ts
 - [X] T015 [P] Implement error handling utilities and custom error classes in backend/src/utils/errors.ts
@@ -74,40 +74,40 @@ description: "Task list for Blob Upload + GPT-5.1 Vision Analysis feature implem
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T021 [P] [US1] Unit test for SAS URL generation with write permissions in backend/tests/unit/blobService.test.ts
-- [ ] T022 [P] [US1] Unit test for SAS URL generation with read permissions in backend/tests/unit/blobService.test.ts
-- [ ] T023 [P] [US1] Unit test for AI response JSON schema validation in backend/tests/unit/schemas.test.ts
-- [ ] T024 [P] [US1] Contract test for POST /api/upload-url returns valid SAS URL in backend/tests/contract/upload-url.test.ts
-- [ ] T025 [P] [US1] Contract test for POST /api/meals/analyze returns schema-valid JSON in backend/tests/contract/analyze.test.ts
-- [ ] T026 [P] [US1] Integration test for full upload → analyze → display flow in backend/tests/integration/meal-flow.test.ts
+- [X] T021 [P] [US1] Unit test for SAS URL generation with write permissions in backend/tests/unit/blobService.test.ts
+- [X] T022 [P] [US1] Unit test for SAS URL generation with read permissions in backend/tests/unit/blobService.test.ts
+- [X] T023 [P] [US1] Unit test for AI response JSON schema validation in backend/tests/unit/schemas.test.ts
+- [X] T024 [P] [US1] Contract test for POST /api/upload-url returns valid SAS URL in backend/tests/contract/upload-url.test.ts
+- [X] T025 [P] [US1] Contract test for POST /api/meals/analyze returns schema-valid JSON in backend/tests/contract/analyze.test.ts
+- [X] T026 [P] [US1] Integration test for full upload → analyze → display flow in backend/tests/integration/meal-flow.test.ts
 
 ### Backend Implementation for User Story 1
 
-- [ ] T027 [P] [US1] Implement blobService.generateUploadSasUrl() with 10-min expiry in backend/src/services/blobService.ts
-- [ ] T028 [P] [US1] Implement blobService.generateReadSasUrl() for AI access in backend/src/services/blobService.ts
-- [ ] T029 [P] [US1] Implement blobService.validateFileType() for JPEG/PNG/HEIC in backend/src/services/blobService.ts
-- [ ] T030 [US1] Implement POST /api/upload-url function with file type/size validation in backend/src/functions/upload-url.ts
-- [ ] T031 [P] [US1] Implement aiService.analyzeMealImage() with GPT-5.1 Vision call in backend/src/services/aiService.ts
-- [ ] T032 [P] [US1] Add retry logic with exponential backoff to aiService in backend/src/services/aiService.ts
-- [ ] T033 [P] [US1] Implement mealService.createMealAnalysis() to persist meal data in backend/src/services/mealService.ts
-- [ ] T034 [US1] Implement POST /api/meals/analyze function with blob retrieval and AI call in backend/src/functions/analyze.ts
-- [ ] T035 [US1] Add error handling for upload failures (SAS expired, blob not found) in backend/src/functions/analyze.ts
-- [ ] T036 [US1] Add error handling for AI failures (malformed JSON, low confidence) in backend/src/functions/analyze.ts
-- [ ] T037 [US1] Add request correlation ID logging to all US1 endpoints in backend/src/functions/
+- [X] T027 [P] [US1] Implement blobService.generateUploadSasUrl() with 10-min expiry in backend/src/services/blobService.ts
+- [X] T028 [P] [US1] Implement blobService.generateReadSasUrl() for AI access in backend/src/services/blobService.ts
+- [X] T029 [P] [US1] Implement blobService.validateFileType() for JPEG/PNG/HEIC in backend/src/services/blobService.ts
+- [X] T030 [US1] Implement POST /api/upload-url function with file type/size validation in backend/src/functions/upload-url.ts
+- [X] T031 [P] [US1] Implement aiService.analyzeMealImage() with GPT-5.1 Vision call in backend/src/services/aiService.ts
+- [X] T032 [P] [US1] Add retry logic with exponential backoff to aiService in backend/src/services/aiService.ts
+- [X] T033 [P] [US1] Implement mealService.createMealAnalysis() to persist meal data in backend/src/services/mealService.ts
+- [X] T034 [US1] Implement POST /api/meals/analyze function with blob retrieval and AI call in backend/src/functions/analyze.ts
+- [X] T035 [US1] Add error handling for upload failures (SAS expired, blob not found) in backend/src/functions/analyze.ts
+- [X] T036 [US1] Add error handling for AI failures (malformed JSON, low confidence) in backend/src/functions/analyze.ts
+- [X] T037 [US1] Add request correlation ID logging to all US1 endpoints in backend/src/functions/
 
 ### Frontend Implementation for User Story 1
 
-- [ ] T038 [P] [US1] Create apiClient service with upload URL request in frontend/src/services/apiClient.ts
-- [ ] T039 [P] [US1] Create apiClient.uploadToBlob() for direct blob PUT in frontend/src/services/apiClient.ts
-- [ ] T040 [P] [US1] Create apiClient.analyzeMeal() to call analyze endpoint in frontend/src/services/apiClient.ts
-- [ ] T041 [P] [US1] Create useMealUpload hook with upload state management in frontend/src/hooks/useMealUpload.ts
-- [ ] T042 [P] [US1] Implement MealUpload component with file picker in frontend/src/components/MealUpload.tsx
-- [ ] T043 [US1] Add upload progress indicator to MealUpload component in frontend/src/components/MealUpload.tsx
-- [ ] T044 [US1] Implement state transitions: uploading → analyzing → results in frontend/src/hooks/useMealUpload.ts
-- [ ] T045 [P] [US1] Create AnalysisResults component to display foods and protein totals in frontend/src/components/AnalysisResults.tsx
-- [ ] T046 [US1] Add confidence level display to AnalysisResults component in frontend/src/components/AnalysisResults.tsx
-- [ ] T047 [US1] Add error display for upload/analysis failures in frontend/src/components/MealUpload.tsx
-- [ ] T048 [US1] Integrate MealUpload and AnalysisResults into App.tsx
+- [X] T038 [P] [US1] Create apiClient service with upload URL request in frontend/src/services/apiClient.ts
+- [X] T039 [P] [US1] Create apiClient.uploadToBlob() for direct blob PUT in frontend/src/services/apiClient.ts
+- [X] T040 [P] [US1] Create apiClient.analyzeMeal() to call analyze endpoint in frontend/src/services/apiClient.ts
+- [X] T041 [P] [US1] Create useMealUpload hook with upload state management in frontend/src/hooks/useMealUpload.ts
+- [X] T042 [P] [US1] Implement MealUpload component with file picker in frontend/src/components/MealUpload.tsx
+- [X] T043 [US1] Add upload progress indicator to MealUpload component in frontend/src/components/MealUpload.tsx
+- [X] T044 [US1] Implement state transitions: uploading → analyzing → results in frontend/src/hooks/useMealUpload.ts
+- [X] T045 [P] [US1] Create AnalysisResults component to display foods and protein totals in frontend/src/components/AnalysisResults.tsx
+- [X] T046 [US1] Add confidence level display to AnalysisResults component in frontend/src/components/AnalysisResults.tsx
+- [X] T047 [US1] Add error display for upload/analysis failures in frontend/src/components/MealUpload.tsx
+- [X] T048 [US1] Integrate MealUpload and AnalysisResults into App.tsx
 
 **Checkpoint**: At this point, User Story 1 should be fully functional - users can upload photos and see analysis results
 

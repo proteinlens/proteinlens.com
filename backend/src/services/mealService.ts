@@ -44,7 +44,7 @@ class MealService {
         blobUrl, // Without SAS token per Constitution Principle I
         requestId,
         aiModel: modelName || config.aiModelDeployment,
-        aiResponseRaw: aiResponse as unknown as Record<string, unknown>,
+        aiResponseRaw: aiResponse as any,
         totalProtein: aiResponse.totalProtein,
         confidence: aiResponse.confidence,
         blobHash,
@@ -65,7 +65,7 @@ class MealService {
     Logger.info('Meal analysis created successfully', {
       requestId,
       mealAnalysisId: mealAnalysis.id,
-      foodCount: mealAnalysis.foods.length,
+      foodCount: aiResponse.foods.length,
     });
 
     return mealAnalysis.id;
@@ -121,7 +121,7 @@ class MealService {
 
     return prisma.mealAnalysis.update({
       where: { id },
-      data: { userCorrections },
+      data: { userCorrections: userCorrections as any },
       include: { foods: true },
     });
   }

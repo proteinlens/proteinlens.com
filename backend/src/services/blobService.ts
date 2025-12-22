@@ -16,18 +16,19 @@ import { UnsupportedFileTypeError, FileSizeLimitError } from '../utils/errors.js
 
 class BlobService {
   private containerClient: ContainerClient;
+  private blobServiceClient: BlobServiceClient;
   private credential: DefaultAzureCredential;
 
   constructor() {
     // Use DefaultAzureCredential for Managed Identity (Constitution Principle II)
     this.credential = new DefaultAzureCredential();
     
-    const blobServiceClient = new BlobServiceClient(
+    this.blobServiceClient = new BlobServiceClient(
       `https://${config.storageAccountName}.blob.core.windows.net`,
       this.credential
     );
     
-    this.containerClient = blobServiceClient.getContainerClient(config.blobContainerName);
+    this.containerClient = this.blobServiceClient.getContainerClient(config.blobContainerName);
     
     Logger.info('BlobService initialized with Managed Identity', {
       storageAccount: config.storageAccountName,
@@ -66,7 +67,7 @@ class BlobService {
     const blobClient = this.containerClient.getBlobClient(blobName);
     
     // Get user delegation key (requires Managed Identity with appropriate permissions)
-    const blobServiceClient = this.containerClient.getServiceClient();
+    const blobServiceClient = this.blobServiceClient;
     const startsOn = new Date();
     const expiresOn = new Date(startsOn.getTime() + config.sasTokenExpiryMinutes * 60 * 1000);
     
@@ -107,7 +108,7 @@ class BlobService {
   async generateReadSasUrl(blobName: string): Promise<string> {
     const blobClient = this.containerClient.getBlobClient(blobName);
     
-    const blobServiceClient = this.containerClient.getServiceClient();
+    const blobServiceClient = this.blobServiceClient;
     const startsOn = new Date();
     const expiresOn = new Date(startsOn.getTime() + 15 * 60 * 1000); // 15 min for AI processing
     
