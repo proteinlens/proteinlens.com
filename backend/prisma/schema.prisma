@@ -1,0 +1,66 @@
+// Prisma schema for ProteinLens meal analysis
+// Constitution compliance: traceability, auditability, user data rights
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model MealAnalysis {
+  id              String   @id @default(uuid())
+  userId          String   @db.VarChar(255)
+  
+  // Blob storage reference (Constitution Principle III: Blob-First Ingestion)
+  blobName        String   @db.VarChar(500)
+  blobUrl         String   @db.Text  // WITHOUT SAS token (permanent path)
+  blobHash        String?  @db.VarChar(64)  // SHA-256 for caching (Principle VI)
+  
+  // Traceability (Constitution Principle IV)
+  requestId       String   @db.Uuid
+  
+  // AI model metadata
+  aiModel         String   @db.VarChar(100)  // e.g., "gpt-5.1-vision"
+  aiResponseRaw   Json     // Original AI response (Principle V: schema-valid JSON)
+  
+  // Analysis results
+  totalProtein    Decimal  @db.Decimal(6, 2)
+  confidence      String   @db.VarChar(20)  // "high", "medium", "low"
+  notes           String?  @db.Text
+  
+  // User corrections (Constitution Principle IV: maintain original + corrections)
+  userCorrections Json?    // Stores user-edited values separately
+  
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  foods           Food[]
+  
+  // Indexes for performance
+  @@index([userId, createdAt])
+  @@index([blobHash])
+  @@index([requestId])
+}
+
+model Food {
+  id              String        @id @default(uuid())
+  mealAnalysisId  String
+  mealAnalysis    MealAnalysis  @relation(fields: [mealAnalysisId], references: [id], onDelete: Cascade)
+  
+  // Food details from AI
+  name            String        @db.VarChar(200)
+  portion         String        @db.VarChar(100)
+  protein         Decimal       @db.Decimal(6, 2)
+  
+  // Order for display
+  displayOrder    Int           @default(0)
+  
+  createdAt       DateTime      @default(now())
+  
+  @@index([mealAnalysisId])
+}
