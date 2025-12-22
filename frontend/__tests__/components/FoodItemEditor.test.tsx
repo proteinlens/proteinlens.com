@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { FoodItemEditor } from '@/components/FoodItemEditor';
+import { FoodItemEditor } from '@/components/results/FoodItemEditor';
 import React from 'react';
 
 describe('FoodItemEditor', () => {
