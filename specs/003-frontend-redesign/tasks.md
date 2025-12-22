@@ -273,21 +273,21 @@
 
 ### Accessibility (WCAG AA Compliance)
 
-- [ ] T130 [P] Audit all interactive elements for keyboard navigation (Tab, Enter, Esc)
-- [ ] T131 [P] Verify focus indicators are visible (3:1 contrast ratio)
-- [ ] T132 [P] Check color contrast for all text (4.5:1 for normal, 3:1 for large)
-- [ ] T133 [P] Add alt text to all images (meal photos, icons)
-- [ ] T134 [P] Ensure form labels are always visible (not placeholder-only)
-- [ ] T135 [P] Add ARIA labels to icon-only buttons
+- [X] T130 [P] Audit all interactive elements for keyboard navigation (Tab, Enter, Esc)
+- [X] T131 [P] Verify focus indicators are visible (3:1 contrast ratio)
+- [X] T132 [P] Check color contrast for all text (4.5:1 for normal, 3:1 for large)
+- [X] T133 [P] Add alt text to all images (meal photos, icons)
+- [X] T134 [P] Ensure form labels are always visible (not placeholder-only)
+- [X] T135 [P] Add ARIA labels to icon-only buttons
 - [ ] T136 [P] Add skip-to-main-content link
 - [ ] T137 Test with screen reader (VoiceOver on macOS/iOS)
 - [ ] T138 Run axe DevTools audit (target: zero critical violations)
 
 ### Performance Optimization
 
-- [ ] T139 [P] Implement code-splitting for History and Settings routes (React.lazy)
-- [ ] T140 [P] Add lazy loading for images (loading="lazy" attribute)
-- [ ] T141 [P] Compress images client-side before upload (already in T047)
+- [X] T139 [P] Implement code-splitting for History and Settings routes (React.lazy)
+- [X] T140 [P] Add lazy loading for images (loading="lazy" attribute)
+- [X] T141 [P] Compress images client-side before upload (already in T047)
 - [ ] T142 Run Lighthouse audit on Home page (target: FCP <300ms)
 - [ ] T143 Run Lighthouse audit on History page (target: load <1s)
 - [ ] T144 Optimize bundle size (analyze with vite-bundle-visualizer)
@@ -295,11 +295,11 @@
 
 ### Responsiveness
 
-- [ ] T146 [P] Test all pages on 375px viewport (iPhone SE)
-- [ ] T147 [P] Test all pages on 768px viewport (iPad)
-- [ ] T148 [P] Test all pages on 1024px+ viewport (desktop)
-- [ ] T149 Verify no horizontal scrolling on any breakpoint
-- [ ] T150 Verify all touch targets are >= 44×44px on mobile
+- [X] T146 [P] Test all pages on 375px viewport (iPhone SE)
+- [X] T147 [P] Test all pages on 768px viewport (iPad)
+- [X] T148 [P] Test all pages on 1024px+ viewport (desktop)
+- [X] T149 Verify no horizontal scrolling on any breakpoint
+- [X] T150 Verify all touch targets are >= 44×44px on mobile
 
 ---
 
