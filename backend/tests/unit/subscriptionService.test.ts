@@ -3,7 +3,7 @@
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { Plan, SubscriptionStatus } from '@prisma/client';
-import { shouldHaveProAccess } from '../services/subscriptionService';
+import { shouldHaveProAccess } from '../../src/services/subscriptionService';
 
 // Test constants
 const GRACE_PERIOD_DAYS = 5;

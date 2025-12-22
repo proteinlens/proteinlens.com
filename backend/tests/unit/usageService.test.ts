@@ -4,42 +4,45 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { Plan, SubscriptionStatus } from '@prisma/client';
 
-// Mock Prisma client
-vi.mock('@prisma/client', () => ({
-  PrismaClient: vi.fn().mockImplementation(() => ({
-    user: {
+// Mock Prisma client using class syntax
+vi.mock('@prisma/client', () => {
+  class MockPrismaClient {
+    user = {
       findUnique: vi.fn(),
       create: vi.fn(),
-    },
-    usage: {
+    };
+    usage = {
       count: vi.fn(),
       create: vi.fn(),
       findMany: vi.fn(),
+    };
+  }
+  return {
+    PrismaClient: MockPrismaClient,
+    Plan: {
+      FREE: 'FREE',
+      PRO: 'PRO',
     },
-  })),
-  Plan: {
-    FREE: 'FREE',
-    PRO: 'PRO',
-  },
-  SubscriptionStatus: {
-    active: 'active',
-    canceled: 'canceled',
-    past_due: 'past_due',
-    trialing: 'trialing',
-  },
-  UsageType: {
-    MEAL_ANALYSIS: 'MEAL_ANALYSIS',
-  },
-}));
+    SubscriptionStatus: {
+      active: 'active',
+      canceled: 'canceled',
+      past_due: 'past_due',
+      trialing: 'trialing',
+    },
+    UsageType: {
+      MEAL_ANALYSIS: 'MEAL_ANALYSIS',
+    },
+  };
+});
 
 // Mock subscription service
-vi.mock('../services/subscriptionService', () => ({
+vi.mock('../../src/services/subscriptionService', () => ({
   getUserPlan: vi.fn(),
   shouldHaveProAccess: vi.fn(),
 }));
 
-import * as usageService from '../services/usageService';
-import { getUserPlan, shouldHaveProAccess } from '../services/subscriptionService';
+import * as usageService from '../../src/services/usageService';
+import { getUserPlan, shouldHaveProAccess } from '../../src/services/subscriptionService';
 
 const FREE_SCANS_PER_WEEK = 5;
 

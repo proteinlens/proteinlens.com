@@ -1,7 +1,7 @@
 // Unit tests for AI response JSON schema validation
 // T023: Test Zod schema validation for AI responses
 
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect } from 'vitest';
 import { AIAnalysisResponseSchema, FoodItemSchema } from '../../src/models/schemas';
 import type { AIAnalysisResponse } from '../../src/models/schemas';
 

@@ -2,7 +2,7 @@
 // Tests end-to-end workflow: request SAS URL → upload blob → analyze → verify results
 // T026: Integration test for complete user story 1 flow
 
-import { describe, it, expect, beforeAll } from '@jest/globals';
+import { describe, it, expect, beforeAll } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';

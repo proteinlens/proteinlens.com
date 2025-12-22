@@ -12,10 +12,12 @@
     "watch": "tsc --watch",
     "prestart": "npm run build",
     "start": "func start --typescript",
-    "test": "jest",
-    "test:unit": "jest --testPathPattern=tests/unit",
-    "test:contract": "jest --testPathPattern=tests/contract",
-    "test:integration": "jest --testPathPattern=tests/integration",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run --dir tests/unit",
+    "test:contract": "vitest run --dir tests/contract",
+    "test:integration": "vitest run --dir tests/integration",
+    "test:coverage": "vitest run --coverage",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "lint": "eslint src/**/*.ts",
@@ -44,12 +46,14 @@
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",
+    "@vitest/coverage-v8": "^4.0.16",
     "eslint": "^8.56.0",
     "jest": "^29.7.0",
     "prettier": "^3.1.1",
     "prisma": "^5.8.0",
     "supertest": "^6.3.3",
     "ts-jest": "^29.1.1",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^4.0.16"
   }
 }

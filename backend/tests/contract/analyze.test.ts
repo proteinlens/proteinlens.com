@@ -2,7 +2,7 @@
 // Verifies API returns schema-valid AI analysis response
 // T025: Contract test for analyze endpoint
 
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect } from 'vitest';
 import { AIAnalysisResponseSchema } from '../../src/models/schemas.js';
 
 describe('POST /api/meals/analyze - Contract Test', () => {
