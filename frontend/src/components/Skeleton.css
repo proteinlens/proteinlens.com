@@ -1,0 +1,228 @@
+/* T084: Skeleton loading component styles */
+
+/* Base skeleton animation */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 50%,
+    #f0f0f0 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Skeleton text */
+.skeleton-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.skeleton-text__line {
+  margin-bottom: 0;
+}
+
+/* Food item skeleton */
+.skeleton-food-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+}
+
+.skeleton-food-item__details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.skeleton-food-item__protein {
+  margin-left: 1rem;
+}
+
+/* Analysis results skeleton */
+.skeleton-analysis {
+  padding: 2rem 0;
+}
+
+.skeleton-analysis__image {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.skeleton-analysis__total {
+  text-align: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, #d1d5db 0%, #9ca3af 100%);
+  border-radius: 1rem;
+  margin: 1.5rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.skeleton-analysis__total .skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.3) 25%,
+    rgba(255, 255, 255, 0.5) 50%,
+    rgba(255, 255, 255, 0.3) 75%
+  );
+  background-size: 200% 100%;
+}
+
+.skeleton-analysis__confidence {
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+.skeleton-analysis__foods {
+  margin: 2rem 0;
+}
+
+.skeleton-analysis__title {
+  margin-bottom: 1rem;
+}
+
+.skeleton-analysis__notes {
+  background-color: #f3f4f6;
+  padding: 1rem 1.5rem;
+  margin: 2rem 0;
+  border-radius: 0.25rem;
+}
+
+.skeleton-analysis__notes-title {
+  margin-bottom: 0.75rem;
+}
+
+/* Pricing card skeleton */
+.skeleton-pricing-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 280px;
+}
+
+.skeleton-pricing-card__features {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.skeleton-pricing-card__button {
+  margin-top: auto;
+}
+
+/* History item skeleton */
+.skeleton-history-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+}
+
+.skeleton-history-item__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Meal history skeleton */
+.skeleton-meal-history {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Page skeleton */
+.skeleton-page {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.skeleton-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.skeleton-page__content {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      #374151 25%,
+      #4b5563 50%,
+      #374151 75%
+    );
+    background-size: 200% 100%;
+  }
+
+  .skeleton-food-item,
+  .skeleton-history-item {
+    background-color: #1f2937;
+    border-color: #374151;
+  }
+
+  .skeleton-analysis__notes {
+    background-color: #1f2937;
+  }
+
+  .skeleton-pricing-card {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .skeleton-page__content {
+    background: #1f2937;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+    background: #e5e7eb;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .skeleton {
+      background: #4b5563;
+    }
+  }
+}

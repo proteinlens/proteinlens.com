@@ -1,0 +1,281 @@
+# T082: Azure Pipelines CI/CD Configuration
+# ProteinLens - Build, Test, and Deploy Pipeline
+# Includes secret scanning and security checks
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    include:
+      - backend/**
+      - frontend/**
+      - infra/**
+
+pr:
+  branches:
+    include:
+      - main
+      - develop
+
+variables:
+  nodeVersion: '20.x'
+  azureSubscription: 'ProteinLens-Azure-Connection'
+  resourceGroupName: 'rg-proteinlens'
+  functionAppName: 'func-proteinlens'
+  storageAccountName: 'stproteinlens'
+
+stages:
+  # ================================
+  # Stage 1: Security Scanning
+  # ================================
+  - stage: Security
+    displayName: 'Security Scanning'
+    jobs:
+      - job: SecretScan
+        displayName: 'Secret Detection'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: CredScan@3
+            displayName: 'Run CredScan for secret detection'
+            inputs:
+              outputFormat: 'sarif'
+              
+          - task: PublishSecurityAnalysisLogs@3
+            displayName: 'Publish Security Analysis Logs'
+            
+          - task: PostAnalysis@2
+            displayName: 'Post Analysis - Fail on secrets'
+            inputs:
+              CredScan: true
+
+      - job: DependencyCheck
+        displayName: 'Dependency Vulnerability Scan'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: NodeTool@0
+            displayName: 'Use Node.js $(nodeVersion)'
+            inputs:
+              versionSpec: '$(nodeVersion)'
+
+          - script: |
+              npm audit --audit-level=high
+            displayName: 'npm audit - Backend'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/backend'
+            continueOnError: true
+
+          - script: |
+              npm audit --audit-level=high
+            displayName: 'npm audit - Frontend'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/frontend'
+            continueOnError: true
+
+  # ================================
+  # Stage 2: Build & Test
+  # ================================
+  - stage: Build
+    displayName: 'Build & Test'
+    dependsOn: Security
+    jobs:
+      - job: BuildBackend
+        displayName: 'Build Backend'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: NodeTool@0
+            displayName: 'Use Node.js $(nodeVersion)'
+            inputs:
+              versionSpec: '$(nodeVersion)'
+
+          - script: npm ci
+            displayName: 'Install dependencies'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/backend'
+
+          - script: npm run build
+            displayName: 'Build TypeScript'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/backend'
+
+          - script: npm run lint
+            displayName: 'Run ESLint'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/backend'
+            continueOnError: true
+
+          - script: npm test -- --ci --coverage
+            displayName: 'Run unit tests'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/backend'
+            env:
+              DATABASE_URL: $(DATABASE_URL_TEST)
+
+          - task: PublishTestResults@2
+            displayName: 'Publish test results'
+            inputs:
+              testResultsFormat: 'JUnit'
+              testResultsFiles: '**/junit.xml'
+              searchFolder: '$(System.DefaultWorkingDirectory)/backend'
+
+          - task: PublishCodeCoverageResults@1
+            displayName: 'Publish code coverage'
+            inputs:
+              codeCoverageTool: 'Cobertura'
+              summaryFileLocation: '$(System.DefaultWorkingDirectory)/backend/coverage/cobertura-coverage.xml'
+
+          - task: ArchiveFiles@2
+            displayName: 'Archive backend build'
+            inputs:
+              rootFolderOrFile: '$(System.DefaultWorkingDirectory)/backend'
+              includeRootFolder: false
+              archiveType: 'zip'
+              archiveFile: '$(Build.ArtifactStagingDirectory)/backend.zip'
+
+          - publish: $(Build.ArtifactStagingDirectory)/backend.zip
+            artifact: BackendArtifact
+
+      - job: BuildFrontend
+        displayName: 'Build Frontend'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: NodeTool@0
+            displayName: 'Use Node.js $(nodeVersion)'
+            inputs:
+              versionSpec: '$(nodeVersion)'
+
+          - script: npm ci
+            displayName: 'Install dependencies'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/frontend'
+
+          - script: npm run build
+            displayName: 'Build production bundle'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/frontend'
+            env:
+              VITE_API_URL: '/api'
+
+          - script: npm run lint
+            displayName: 'Run ESLint'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/frontend'
+            continueOnError: true
+
+          - task: ArchiveFiles@2
+            displayName: 'Archive frontend build'
+            inputs:
+              rootFolderOrFile: '$(System.DefaultWorkingDirectory)/frontend/dist'
+              includeRootFolder: false
+              archiveType: 'zip'
+              archiveFile: '$(Build.ArtifactStagingDirectory)/frontend.zip'
+
+          - publish: $(Build.ArtifactStagingDirectory)/frontend.zip
+            artifact: FrontendArtifact
+
+  # ================================
+  # Stage 3: Deploy to Staging
+  # ================================
+  - stage: DeployStaging
+    displayName: 'Deploy to Staging'
+    dependsOn: Build
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'))
+    jobs:
+      - deployment: DeployBackendStaging
+        displayName: 'Deploy Backend to Staging'
+        environment: 'staging'
+        pool:
+          vmImage: 'ubuntu-latest'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: current
+                  artifact: BackendArtifact
+
+                - task: AzureFunctionApp@2
+                  displayName: 'Deploy to Azure Functions (Staging)'
+                  inputs:
+                    connectedServiceNameARM: '$(azureSubscription)'
+                    appType: 'functionApp'
+                    appName: '$(functionAppName)-staging'
+                    package: '$(Pipeline.Workspace)/BackendArtifact/backend.zip'
+                    deploymentMethod: 'auto'
+
+      - deployment: DeployFrontendStaging
+        displayName: 'Deploy Frontend to Staging'
+        environment: 'staging'
+        pool:
+          vmImage: 'ubuntu-latest'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: current
+                  artifact: FrontendArtifact
+
+                - task: AzureStaticWebApp@0
+                  displayName: 'Deploy to Azure Static Web Apps (Staging)'
+                  inputs:
+                    app_location: '$(Pipeline.Workspace)/FrontendArtifact'
+                    skip_app_build: true
+                    azure_static_web_apps_api_token: $(AZURE_SWA_TOKEN_STAGING)
+
+  # ================================
+  # Stage 4: Deploy to Production
+  # ================================
+  - stage: DeployProduction
+    displayName: 'Deploy to Production'
+    dependsOn: Build
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: DeployBackendProduction
+        displayName: 'Deploy Backend to Production'
+        environment: 'production'
+        pool:
+          vmImage: 'ubuntu-latest'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: current
+                  artifact: BackendArtifact
+
+                - task: AzureFunctionApp@2
+                  displayName: 'Deploy to Azure Functions (Production)'
+                  inputs:
+                    connectedServiceNameARM: '$(azureSubscription)'
+                    appType: 'functionApp'
+                    appName: '$(functionAppName)'
+                    package: '$(Pipeline.Workspace)/BackendArtifact/backend.zip'
+                    deploymentMethod: 'auto'
+
+      - deployment: DeployFrontendProduction
+        displayName: 'Deploy Frontend to Production'
+        environment: 'production'
+        pool:
+          vmImage: 'ubuntu-latest'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: current
+                  artifact: FrontendArtifact
+
+                - task: AzureStaticWebApp@0
+                  displayName: 'Deploy to Azure Static Web Apps (Production)'
+                  inputs:
+                    app_location: '$(Pipeline.Workspace)/FrontendArtifact'
+                    skip_app_build: true
+                    azure_static_web_apps_api_token: $(AZURE_SWA_TOKEN_PRODUCTION)
+
+      - job: SmokeTest
+        displayName: 'Production Smoke Test'
+        dependsOn: 
+          - DeployBackendProduction
+          - DeployFrontendProduction
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - script: |
+              echo "Running smoke tests against production..."
+              curl -f https://proteinlens.com/api/health || exit 1
+              curl -f https://proteinlens.com || exit 1
+              echo "Smoke tests passed!"
+            displayName: 'Health check endpoints'

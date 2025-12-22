@@ -178,23 +178,25 @@ description: "Task list for Blob Upload + GPT-5.1 Vision Analysis feature implem
 
 **Purpose**: Performance optimization, enhanced error handling, observability, and security hardening
 
-- [ ] T072 [P] Add client-side image resize/compression before upload in frontend/src/utils/imageCompression.ts
-- [ ] T073 [P] Implement file size validation in frontend before calling upload-url in frontend/src/hooks/useMealUpload.ts
-- [ ] T074 [P] Add Application Insights integration for backend telemetry in backend/src/utils/telemetry.ts
-- [ ] T075 [P] Add performance monitoring for AI calls (latency, token usage) in backend/src/services/aiService.ts
-- [ ] T076 [P] Implement SHA-256 hash calculation for blob caching in backend/src/services/blobService.ts
-- [ ] T077 [P] Add cache lookup before calling AI (if hash exists, return cached result) in backend/src/services/aiService.ts
-- [ ] T078 [P] Audit and remove any hardcoded secrets from codebase
-- [ ] T079 [P] Rotate development storage account keys if any were committed
-- [ ] T080 [P] Verify Function App Managed Identity is correctly configured with Blob Data Contributor role
-- [ ] T081 [P] Add health check endpoint for backend in backend/src/functions/health.ts
-- [ ] T082 [P] Configure CI/CD pipeline with secret scanning in infra/azure-pipelines.yml
-- [ ] T083 Create E2E test: upload → analyze → correction → verify daily totals in frontend/tests/e2e/full-flow.spec.ts
-- [ ] T084 [P] Add loading states and skeleton screens for better UX in frontend/src/components/
-- [ ] T085 [P] Implement proper TypeScript types for all API responses in frontend/src/types/
-- [ ] T086 [P] Add input sanitization for user-entered corrections in backend/src/utils/sanitize.ts
-- [ ] T087 [P] Configure rate limiting on API endpoints in backend/host.json
-- [ ] T088 [P] Add cost monitoring alerts for blob storage and AI usage in infra/bicep/monitoring.bicep
+- [x] T072 [P] Add client-side image resize/compression before upload in frontend/src/utils/imageCompression.ts
+- [x] T073 [P] Implement file size validation in frontend before calling upload-url in frontend/src/hooks/useMealUpload.ts
+- [x] T074 [P] Add Application Insights integration for backend telemetry in backend/src/utils/telemetry.ts
+- [x] T075 [P] Add performance monitoring for AI calls (latency, token usage) in backend/src/services/aiService.ts
+- [x] T076 [P] Implement SHA-256 hash calculation for blob caching in backend/src/services/blobService.ts
+- [x] T077 [P] Add cache lookup before calling AI (if hash exists, return cached result) in backend/src/services/aiService.ts
+- [x] T078 [P] Audit and remove any hardcoded secrets from codebase
+- [x] T079 [P] Rotate development storage account keys if any were committed
+- [x] T080 [P] Verify Function App Managed Identity is correctly configured with Blob Data Contributor role
+- [x] T081 [P] Add health check endpoint for backend in backend/src/functions/health.ts
+- [x] T082 [P] Configure CI/CD pipeline with secret scanning in infra/azure-pipelines.yml
+- [x] T083 Create E2E test: upload → analyze → correction → verify daily totals in frontend/tests/e2e/full-flow.spec.ts
+- [x] T084 [P] Add loading states and skeleton screens for better UX in frontend/src/components/
+- [x] T085 [P] Implement proper TypeScript types for all API responses in frontend/src/types/
+- [x] T086 [P] Add input sanitization for user-entered corrections in backend/src/utils/sanitize.ts
+- [x] T087 [P] Configure rate limiting on API endpoints in backend/host.json
+- [x] T088 [P] Add cost monitoring alerts for blob storage and AI usage in infra/bicep/monitoring.bicep
+
+**Checkpoint**: Feature 001 is now COMPLETE! All tasks implemented. ✅
 
 ---
 

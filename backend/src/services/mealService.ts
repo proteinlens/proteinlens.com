@@ -23,6 +23,7 @@ class MealService {
   /**
    * T033: Create meal analysis record with normalized foods
    * Constitution Principle IV: Stores requestId for traceability
+   * T077: Updated to accept blobHash parameter for caching
    */
   async createMealAnalysis(
     userId: string,
@@ -30,12 +31,13 @@ class MealService {
     blobUrl: string,
     requestId: string,
     aiResponse: AIAnalysisResponse,
-    modelName: string
+    modelName: string,
+    blobHash?: string
   ): Promise<string> {
     Logger.info('Creating meal analysis', { userId, blobName, requestId, foodCount: aiResponse.foods.length });
 
-    // Generate hash for caching
-    const blobHash = this.generateBlobHash(blobName);
+    // Use provided hash or generate one
+    const hash = blobHash || this.generateBlobHash(blobName);
 
     const mealAnalysis = await prisma.mealAnalysis.create({
       data: {
@@ -47,7 +49,7 @@ class MealService {
         aiResponseRaw: aiResponse as any,
         totalProtein: aiResponse.totalProtein,
         confidence: aiResponse.confidence,
-        blobHash,
+        blobHash: hash,
         foods: {
           create: aiResponse.foods.map((food, index) => ({
             name: food.name,
@@ -66,6 +68,71 @@ class MealService {
       requestId,
       mealAnalysisId: mealAnalysis.id,
       foodCount: aiResponse.foods.length,
+    });
+
+    return mealAnalysis.id;
+  }
+
+  /**
+   * T077: Create meal analysis from cached result
+   * Creates a new record for the user but references cached AI response
+   */
+  async createMealAnalysisFromCache(
+    userId: string,
+    blobName: string,
+    blobUrl: string,
+    requestId: string,
+    blobHash: string,
+    cachedMealId: string
+  ): Promise<string> {
+    // Get the cached analysis to copy the data
+    const cachedAnalysis = await prisma.mealAnalysis.findUnique({
+      where: { id: cachedMealId },
+      include: { foods: true },
+    });
+
+    if (!cachedAnalysis) {
+      throw new Error(`Cached meal analysis not found: ${cachedMealId}`);
+    }
+
+    Logger.info('Creating meal analysis from cache', { 
+      userId, 
+      blobName, 
+      requestId, 
+      cachedMealId,
+      blobHash: blobHash.substring(0, 16) + '...',
+    });
+
+    const mealAnalysis = await prisma.mealAnalysis.create({
+      data: {
+        userId,
+        blobName,
+        blobUrl,
+        requestId,
+        aiModel: cachedAnalysis.aiModel,
+        aiResponseRaw: cachedAnalysis.aiResponseRaw,
+        totalProtein: cachedAnalysis.totalProtein,
+        confidence: cachedAnalysis.confidence,
+        blobHash,
+        cachedFromId: cachedMealId, // Track that this was a cache hit
+        foods: {
+          create: cachedAnalysis.foods.map((food, index) => ({
+            name: food.name,
+            portion: food.portion,
+            protein: food.protein,
+            displayOrder: index,
+          })),
+        },
+      },
+      include: {
+        foods: true,
+      },
+    });
+
+    Logger.info('Meal analysis created from cache', {
+      requestId,
+      mealAnalysisId: mealAnalysis.id,
+      cachedFromId: cachedMealId,
     });
 
     return mealAnalysis.id;

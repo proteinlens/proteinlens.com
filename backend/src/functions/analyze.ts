@@ -3,6 +3,7 @@
 // Constitution Principles: III (Blob-First), IV (Traceability), V (Deterministic JSON)
 // T034: Analyze meal image and store results
 // T031, T033: Added quota enforcement and usage recording (Feature 002)
+// T077: Cache lookup using SHA-256 hash before calling AI
 
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { v4 as uuidv4 } from 'uuid';
@@ -10,7 +11,7 @@ import { Logger } from '../utils/logger.js';
 import { blobService } from '../services/blobService.js';
 import { aiService } from '../services/aiService.js';
 import { mealService } from '../services/mealService.js';
-import { AnalyzeRequestSchema } from '../models/schemas.js';
+import { AnalyzeRequestSchema, AIAnalysisResponse } from '../models/schemas.js';
 import { ValidationError, BlobNotFoundError } from '../utils/errors.js';
 import { enforceWeeklyQuota, extractUserId } from '../middleware/quotaMiddleware.js';
 import { recordUsage } from '../services/usageService.js';
@@ -48,36 +49,70 @@ export async function analyzeMeal(request: HttpRequest, context: InvocationConte
       };
     }
 
-    // Generate read SAS URL for AI service (Constitution Principle III: Blob-First)
-    const blobUrl = await blobService.generateReadSasUrl(blobName);
-    const blobUrlWithoutSas = blobUrl.split('?')[0]; // Store without SAS token
+    // T076-T077: Calculate blob hash and check cache
+    const blobHash = await blobService.calculateBlobHash(blobName);
+    const cachedAnalysis = await mealService.getMealAnalysisByBlobHash(blobHash);
 
-    Logger.info('Blob SAS URL generated for AI analysis', { requestId, blobName });
+    let aiResponse: AIAnalysisResponse;
+    let mealAnalysisId: string;
+    let wasCached = false;
 
-    // Call AI service with blob URL
-    const aiResponse = await aiService.analyzeMealImage(blobUrl, requestId);
+    if (cachedAnalysis) {
+      // T077: Use cached result instead of calling AI
+      Logger.info('Using cached analysis result', { 
+        requestId, 
+        blobName, 
+        cachedMealId: cachedAnalysis.id,
+        blobHash: blobHash.substring(0, 16) + '...',
+      });
 
-    Logger.info('AI analysis completed', {
-      requestId,
-      foodCount: aiResponse.foods.length,
-      totalProtein: aiResponse.totalProtein,
-      confidence: aiResponse.confidence,
-    });
+      aiResponse = cachedAnalysis.aiResponseRaw as unknown as AIAnalysisResponse;
+      
+      // Create new meal record referencing cached analysis
+      mealAnalysisId = await mealService.createMealAnalysisFromCache(
+        userId,
+        blobName,
+        blobService.getBlobUrl(blobName),
+        requestId,
+        blobHash,
+        cachedAnalysis.id
+      );
+      wasCached = true;
 
-    // Persist meal analysis to database (Constitution Principle IV: Traceability)
-    const mealAnalysisId = await mealService.createMealAnalysis(
-      userId,
-      blobName,
-      blobUrlWithoutSas,
-      requestId,
-      aiResponse,
-      'gpt-5.1-vision'
-    );
+    } else {
+      // No cache hit - call AI service
+      const blobUrl = await blobService.generateReadSasUrl(blobName);
+      const blobUrlWithoutSas = blobUrl.split('?')[0];
+
+      Logger.info('Blob SAS URL generated for AI analysis', { requestId, blobName });
+
+      // Call AI service with blob URL
+      aiResponse = await aiService.analyzeMealImage(blobUrl, requestId);
+
+      Logger.info('AI analysis completed', {
+        requestId,
+        foodCount: aiResponse.foods.length,
+        totalProtein: aiResponse.totalProtein,
+        confidence: aiResponse.confidence,
+      });
+
+      // Persist meal analysis to database with hash for future cache lookups
+      mealAnalysisId = await mealService.createMealAnalysis(
+        userId,
+        blobName,
+        blobUrlWithoutSas,
+        requestId,
+        aiResponse,
+        'gpt-5.1-vision',
+        blobHash
+      );
+    }
 
     Logger.info('Meal analysis persisted successfully', {
       requestId,
       mealAnalysisId,
       blobName,
+      wasCached,
     });
 
     // T033: Record usage after successful analysis
@@ -94,6 +129,7 @@ export async function analyzeMeal(request: HttpRequest, context: InvocationConte
       headers: {
         'Content-Type': 'application/json',
         'X-Request-ID': requestId,
+        ...(wasCached && { 'X-Cache-Hit': 'true' }),
       },
       jsonBody: {
         mealAnalysisId,
