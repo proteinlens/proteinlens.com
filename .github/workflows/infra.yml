@@ -152,6 +152,33 @@ jobs:
           
           echo "✅ Function App Key Vault access granted"
 
+      - name: Grant Function App Storage Access
+        run: |
+          FUNCTION_APP_IDENTITY=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.functionAppManagedIdentityId.value')
+          STORAGE_ACCOUNT=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.storageAccountName.value')
+          
+          if [ -z "$FUNCTION_APP_IDENTITY" ] || [ "$FUNCTION_APP_IDENTITY" == "null" ]; then
+            echo "❌ Failed to extract Function App Managed Identity"
+            exit 1
+          fi
+          
+          echo "🔐 Granting Storage Blob Data Contributor role to Function App"
+          
+          # Get storage account resource ID
+          STORAGE_ID=$(az storage account show \
+            --name "$STORAGE_ACCOUNT" \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
+            --query id -o tsv)
+          
+          # Assign Storage Blob Data Contributor role
+          az role assignment create \
+            --assignee "$FUNCTION_APP_IDENTITY" \
+            --role "Storage Blob Data Contributor" \
+            --scope "$STORAGE_ID" \
+            || echo "⚠️ Role assignment may already exist"
+          
+          echo "✅ Function App Storage access granted"
+
       - name: Output Deployment Results
         if: success()
         run: |

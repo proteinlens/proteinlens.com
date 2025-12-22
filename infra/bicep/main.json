@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.39.26.7824",
-      "templateHash": "395013348742948734"
+      "templateHash": "4549420643363486317"
     }
   },
   "parameters": {
@@ -60,20 +60,6 @@
             }
           }
         ]
-      },
-      "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'function-app-deployment')]"
-      ]
-    },
-    {
-      "type": "Microsoft.Authorization/roleAssignments",
-      "apiVersion": "2022-04-01",
-      "scope": "[format('Microsoft.Storage/storageAccounts/{0}', parameters('storageAccountName'))]",
-      "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), parameters('functionAppName'), 'Storage Blob Data Contributor')]",
-      "properties": {
-        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
-        "principalId": "[reference(resourceId('Microsoft.Resources/deployments', 'function-app-deployment'), '2025-04-01').outputs.functionAppPrincipalId.value]",
-        "principalType": "ServicePrincipal"
       },
       "dependsOn": [
         "[resourceId('Microsoft.Resources/deployments', 'function-app-deployment')]"

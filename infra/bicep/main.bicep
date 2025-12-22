@@ -56,22 +56,6 @@ resource keyVaultAccessPolicy 'Microsoft.KeyVault/vaults/accessPolicies@2023-07-
   }
 }
 
-// Reference the deployed storage account for role assignment
-resource storageAccountRef 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
-  name: storageAccountName
-}
-
-// Grant Function App Storage Blob Data Contributor role for blob access
-resource storageBlobDataContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(storageAccountRef.id, functionAppName, 'Storage Blob Data Contributor')
-  scope: storageAccountRef
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe') // Storage Blob Data Contributor
-    principalId: functionApp.outputs.functionAppPrincipalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
 // Output all critical infrastructure details
 output resourceGroupName string = resourceGroup().name
 output deploymentId string = deployment().name
