@@ -96,23 +96,9 @@ jobs:
           name: backend-build
 
       - name: Login to Azure
-        env:
-          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-        run: |
-          # Parse Azure credentials from JSON
-          CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientId')
-          CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r '.clientSecret')
-          TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.tenantId')
-          SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r '.subscriptionId')
-          
-          # Login to Azure
-          az login --service-principal \
-            --username "$CLIENT_ID" \
-            --password "$CLIENT_SECRET" \
-            --tenant "$TENANT_ID"
-          
-          # Set subscription
-          az account set --subscription "$SUBSCRIPTION_ID"
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Deploy to Azure Functions
         uses: azure/functions-action@v1
