@@ -1,0 +1,187 @@
+/* AnalysisResults Component Styles */
+/* T047: Styling for results display */
+
+.analysis-results {
+  padding: 2rem 0;
+}
+
+.analysis-results h2 {
+  text-align: center;
+  color: #10b981;
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Result image */
+.result-image {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.result-image img {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Total protein display */
+.total-protein {
+  text-align: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: 1rem;
+  margin: 1.5rem 0;
+  color: white;
+  box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
+}
+
+.protein-value {
+  font-size: 4rem;
+  font-weight: bold;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.protein-label {
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+/* Confidence indicator */
+.confidence-indicator {
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+.confidence-badge {
+  display: inline-block;
+  padding: 0.5rem 1.5rem;
+  border-radius: 2rem;
+  color: white;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Food items list */
+.food-items {
+  margin: 2rem 0;
+}
+
+.food-items h3 {
+  color: #1f2937;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.no-foods {
+  text-align: center;
+  color: #6b7280;
+  padding: 2rem;
+  background-color: #f3f4f6;
+  border-radius: 0.5rem;
+}
+
+.food-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.food-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s;
+}
+
+.food-item:hover {
+  background-color: #f3f4f6;
+}
+
+.food-details {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.food-name {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+}
+
+.food-portion {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.food-protein {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #10b981;
+  margin-left: 1rem;
+}
+
+/* AI notes */
+.ai-notes {
+  background-color: #eff6ff;
+  border-left: 4px solid #3b82f6;
+  padding: 1rem 1.5rem;
+  margin: 2rem 0;
+  border-radius: 0.25rem;
+}
+
+.ai-notes h4 {
+  color: #1e40af;
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+}
+
+.ai-notes p {
+  color: #1e3a8a;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* Metadata */
+.metadata {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.meta-item {
+  color: #6b7280;
+  font-size: 0.85rem;
+  margin: 0.5rem 0;
+}
+
+.meta-item strong {
+  color: #4b5563;
+}
+
+/* Responsive design */
+@media (max-width: 640px) {
+  .protein-value {
+    font-size: 3rem;
+  }
+
+  .food-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .food-protein {
+    margin-left: 0;
+    margin-top: 0.5rem;
+  }
+}

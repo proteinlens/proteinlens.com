@@ -1,0 +1,205 @@
+/* MealUpload Component Styles */
+/* T047: Styling for upload UI */
+
+.meal-upload {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+}
+
+.meal-upload h1 {
+  font-size: 2.5rem;
+  text-align: center;
+  margin-bottom: 0.5rem;
+  color: #1f2937;
+}
+
+.subtitle {
+  text-align: center;
+  color: #6b7280;
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+}
+
+/* File picker */
+.upload-section {
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.file-input {
+  display: none;
+}
+
+.file-label {
+  display: inline-block;
+  padding: 1rem 2rem;
+  background-color: #3b82f6;
+  color: white;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.file-label:hover {
+  background-color: #2563eb;
+}
+
+.file-label:active {
+  background-color: #1d4ed8;
+}
+
+/* Image preview */
+.preview-section {
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: 400px;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.file-info {
+  margin-top: 0.5rem;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+/* Buttons */
+.btn-primary {
+  display: block;
+  width: 100%;
+  padding: 1rem;
+  background-color: #10b981;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin: 1rem 0;
+}
+
+.btn-primary:hover {
+  background-color: #059669;
+}
+
+.btn-primary:disabled {
+  background-color: #d1d5db;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  padding: 0.75rem 1.5rem;
+  background-color: #6b7280;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-secondary:hover {
+  background-color: #4b5563;
+}
+
+/* Progress states */
+.progress-state {
+  text-align: center;
+  padding: 2rem;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  margin: 0 auto 1rem;
+  border: 4px solid #e5e7eb;
+  border-top: 4px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.progress-state p {
+  font-size: 1.1rem;
+  color: #1f2937;
+  margin: 0.5rem 0;
+}
+
+.progress-subtext {
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+/* Error message */
+.error-message {
+  background-color: #fee2e2;
+  border: 2px solid #ef4444;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.error-message h3 {
+  color: #991b1b;
+  margin: 0 0 1rem 0;
+}
+
+.error-message p {
+  color: #7f1d1d;
+  margin-bottom: 1rem;
+}
+
+/* Tips section */
+.tips {
+  background-color: #f3f4f6;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin-top: 2rem;
+}
+
+.tips h3 {
+  color: #1f2937;
+  margin-top: 0;
+}
+
+.tips ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  color: #4b5563;
+}
+
+.tips li {
+  margin: 0.5rem 0;
+}
+
+/* Responsive design */
+@media (max-width: 640px) {
+  .meal-upload {
+    padding: 1rem;
+  }
+
+  .meal-upload h1 {
+    font-size: 2rem;
+  }
+
+  .preview-image {
+    max-height: 300px;
+  }
+}
