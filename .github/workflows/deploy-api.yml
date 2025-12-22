@@ -127,7 +127,7 @@ jobs:
 
       - name: Grant Deployment Access to Storage
         run: |
-          echo "🔐 Granting deployment workflow access to storage account..."
+          echo "🔐 Ensuring storage account has proper RBAC roles..."
           
           # Get service principal object ID
           SP_OBJECT_ID=$(az ad sp show --id ${{ secrets.AZURE_CLIENT_ID }} --query id -o tsv)
@@ -138,18 +138,25 @@ jobs:
             --resource-group proteinlens-prod \
             --query id -o tsv)
           
-          # Grant Storage Blob Data Owner role for deployment uploads (higher permission needed)
+          # Grant Storage Blob Data Contributor for upload/create operations
           az role assignment create \
             --assignee "$SP_OBJECT_ID" \
-            --role "Storage Blob Data Owner" \
+            --role "Storage Blob Data Contributor" \
             --scope "$STORAGE_ID" \
-            2>/dev/null || echo "⚠️  Role assignment may already exist (this is OK)"
+            2>/dev/null || echo "⚠️  Blob Data Contributor role may already exist"
+          
+          # Grant Storage Blob Delegator for user delegation SAS generation
+          az role assignment create \
+            --assignee "$SP_OBJECT_ID" \
+            --role "Storage Blob Delegator" \
+            --scope "$STORAGE_ID" \
+            2>/dev/null || echo "⚠️  Blob Delegator role may already exist"
           
           # Wait for RBAC propagation
           echo "⏳ Waiting 10s for role assignment propagation..."
           sleep 10
           
-          echo "✅ Storage access configured"
+          echo "✅ Storage RBAC configured"
 
       - name: Prepare Deployment Container
         run: |
@@ -159,18 +166,17 @@ jobs:
             --account-name plprodsa85 \
             --name deployments \
             --auth-mode login \
-            --only-show-errors \
-            || echo "Container may already exist"
+            --output none
           
           echo "✅ Deployments container ready"
 
       - name: Deploy to Azure Functions
         run: |
-          echo "📦 Deploying Function App via blob storage..."
+          set -euo pipefail
           
-          # Upload deployment package to blob storage using RBAC
+          echo "📦 Uploading deployment package..."
           TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-          BLOB_NAME="deployments/backend-${TIMESTAMP}.zip"
+          BLOB_NAME="backend-${TIMESTAMP}.zip"
           
           az storage blob upload \
             --account-name plprodsa85 \
@@ -178,31 +184,40 @@ jobs:
             --name "$BLOB_NAME" \
             --file backend-deploy.zip \
             --auth-mode login \
-            --overwrite
+            --overwrite true \
+            --output none
           
-          # Get blob URL with SAS token for Function App
-          EXPIRY=$(date -u -d '1 year' +%Y-%m-%dT%H:%MZ 2>/dev/null || date -u -v+1y +%Y-%m-%dT%H:%MZ)
+          echo "🔐 Creating user delegation SAS URL..."
+          # Start time in the past to avoid clock-skew issues
+          START=$(date -u -d '15 minutes ago' +%Y-%m-%dT%H:%MZ 2>/dev/null || date -u -v-15M +%Y-%m-%dT%H:%MZ)
+          EXPIRY=$(date -u -d '365 days' +%Y-%m-%dT%H:%MZ 2>/dev/null || date -u -v+365d +%Y-%m-%dT%H:%MZ)
           
           PACKAGE_URL=$(az storage blob generate-sas \
             --account-name plprodsa85 \
             --container-name deployments \
             --name "$BLOB_NAME" \
             --permissions r \
+            --start "$START" \
             --expiry "$EXPIRY" \
             --auth-mode login \
             --as-user \
             --full-uri \
             --output tsv)
           
-          # Configure Function App to run from package
+          echo "⚙️  Setting WEBSITE_RUN_FROM_PACKAGE..."
           az functionapp config appsettings set \
             --resource-group proteinlens-prod \
             --name "${{ env.AZURE_FUNCTIONAPP_NAME }}" \
             --settings "WEBSITE_RUN_FROM_PACKAGE=$PACKAGE_URL" \
             --output none
           
-          echo "✅ Function App deployment configured"
-          echo "📦 Package URL set successfully"
+          echo "🔄 Restarting Function App to load new package..."
+          az functionapp restart \
+            --resource-group proteinlens-prod \
+            --name "${{ env.AZURE_FUNCTIONAPP_NAME }}" \
+            --output none
+          
+          echo "✅ Function App deployment completed"
 
       - name: Wait for cold start
         run: |
