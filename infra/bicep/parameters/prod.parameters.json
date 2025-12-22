@@ -1,0 +1,30 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "eastus"
+    },
+    "environmentName": {
+      "value": "prod"
+    },
+    "appNamePrefix": {
+      "value": "proteinlens"
+    },
+    "storageAccountName": {
+      "value": "proteinlensprodsa"
+    },
+    "functionAppName": {
+      "value": "proteinlens-api-prod"
+    },
+    "keyVaultName": {
+      "value": "proteinlens-kv-prod"
+    },
+    "postgresServerName": {
+      "value": "proteinlens-db-prod"
+    },
+    "staticWebAppName": {
+      "value": "proteinlens-web-prod"
+    }
+  }
+}

@@ -3,9 +3,22 @@
 
 param location string = resourceGroup().location
 param environmentName string = 'dev'
-param storageAccountName string = 'proteinlens${environmentName}${uniqueString(resourceGroup().id)}'
-param functionAppName string = 'proteinlens-api-${environmentName}'
-param keyVaultName string = 'proteinlens-kv-${environmentName}'
+param appNamePrefix string = 'proteinlens'
+param storageAccountName string = '${appNamePrefix}${environmentName}${uniqueString(resourceGroup().id)}'
+param functionAppName string = '${appNamePrefix}-api-${environmentName}'
+param keyVaultName string = '${appNamePrefix}-kv-${environmentName}'
+param postgresServerName string = '${appNamePrefix}-db-${environmentName}'
+param staticWebAppName string = '${appNamePrefix}-web-${environmentName}'
+
+// Deploy Key Vault first (needed by other modules)
+module keyVault './keyvault.bicep' = {
+  name: 'keyvault-deployment'
+  params: {
+    location: location
+    keyVaultName: keyVaultName
+    functionAppPrincipalId: '' // Will be updated after Function App created
+  }
+}
 
 // Deploy storage account with CORS
 module storage './storage.bicep' = {
@@ -29,16 +42,15 @@ module functionApp './function-app.bicep' = {
   }
 }
 
-// Deploy Key Vault
-module keyVault './keyvault.bicep' = {
-  name: 'keyvault-deployment'
-  params: {
-    location: location
-    keyVaultName: keyVaultName
-    functionAppPrincipalId: functionApp.outputs.functionAppPrincipalId
-  }
-}
-
-output storageAccountName string = storage.outputs.storageAccountName
+// Output all critical infrastructure details
+output resourceGroupName string = resourceGroup().name
+output deploymentId string = deployment().name
+output functionAppName string = functionApp.outputs.functionAppName
 output functionAppUrl string = functionApp.outputs.functionAppUrl
+output functionAppManagedIdentityId string = functionApp.outputs.functionAppPrincipalId
+output staticWebAppName string = staticWebAppName
+output postgresServerName string = postgresServerName
 output keyVaultName string = keyVault.outputs.keyVaultName
+output keyVaultUri string = keyVault.outputs.keyVaultUri
+output storageAccountName string = storage.outputs.storageAccountName
+output storageContainerName string = 'meal-photos'

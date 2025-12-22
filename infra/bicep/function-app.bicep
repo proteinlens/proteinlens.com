@@ -59,8 +59,24 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
           value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/ai-model-deployment/)'
         }
         {
+          name: 'OPENAI_API_KEY'
+          value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/openai-api-key/)'
+        }
+        {
           name: 'DATABASE_URL'
           value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/database-url/)'
+        }
+        {
+          name: 'STRIPE_SECRET_KEY'
+          value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/stripe-secret-key/)'
+        }
+        {
+          name: 'STRIPE_WEBHOOK_SECRET'
+          value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/stripe-webhook-secret/)'
+        }
+        {
+          name: 'BLOB_STORAGE_CONNECTION'
+          value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/blob-storage-connection/)'
         }
         {
           name: 'SAS_TOKEN_EXPIRY_MINUTES'
