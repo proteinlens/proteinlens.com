@@ -22,16 +22,16 @@
 
 ### GitHub & Repository Setup
 
-- [ ] T001 Create `.github/workflows/` directory if not exists
-- [ ] T002 Create `.github/secrets/` documentation for required GitHub Secrets (AZURE_CREDENTIALS, AZURE_SUBSCRIPTION_ID, AZURE_RESOURCE_GROUP, DATABASE_ADMIN_PASSWORD, OPENAI_API_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET)
-- [ ] T003 [P] Create `infra/` directory structure: `main.bicep`, `modules/`, `parameters/`
-- [ ] T004 [P] Create `infra/README.md` with deployment instructions and prerequisites
+- [X] T001 Create `.github/workflows/` directory if not exists
+- [X] T002 Create `.github/secrets/` documentation for required GitHub Secrets (AZURE_CREDENTIALS, AZURE_SUBSCRIPTION_ID, AZURE_RESOURCE_GROUP, DATABASE_ADMIN_PASSWORD, OPENAI_API_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET)
+- [X] T003 [P] Create `infra/` directory structure: `main.bicep`, `modules/`, `parameters/`
+- [X] T004 [P] Create `infra/README.md` with deployment instructions and prerequisites
 
 ### Local Development Setup
 
-- [ ] T005 [P] Install/verify Bicep CLI: `az bicep version` (min 0.20.0)
-- [ ] T006 [P] Install/verify Azure CLI: `az --version` (min 2.50.0)
-- [ ] T007 Document Node.js 20+ requirement for backend deployment in `DEVELOPMENT-GUIDE.md`
+- [X] T005 [P] Install/verify Bicep CLI: `az bicep version` (min 0.20.0)
+- [X] T006 [P] Install/verify Azure CLI: `az --version` (min 2.50.0)
+- [X] T007 Document Node.js 20+ requirement for backend deployment in `DEVELOPMENT-GUIDE.md`
 
 **Checkpoint**: Repository structure ready, developer environment validated
 
@@ -120,24 +120,24 @@
 
 ### Infrastructure Workflow Setup
 
-- [ ] T019 Create `.github/workflows/infra.yml` with:
+- [X] T019 Create `.github/workflows/infra.yml` with:
   - Trigger: `workflow_dispatch` only (manual approval required for infra changes)
   - Input parameters: `environment` (prod/staging/dev), `confirm_deploy` (confirmation string)
   - Jobs: validate → deploy → output
   - Reference: [contracts/github-workflows.md](contracts/github-workflows.md#1-infrastructure-deployment-workflow)
 
-- [ ] T020 Implement infrastructure validation step in `infra.yml`:
+- [X] T020 Implement infrastructure validation step in `infra.yml`:
   - `az bicep build infra/main.bicep`
   - `az deployment group validate --template-file infra/main.bicep --parameters @infra/parameters/$ENVIRONMENT.parameters.json`
   - Fail workflow if validation fails
 
-- [ ] T021 Implement infrastructure deployment step in `infra.yml`:
+- [X] T021 Implement infrastructure deployment step in `infra.yml`:
   - Login to Azure: `az login` via AZURE_CREDENTIALS secret
   - Create resource group: `az group create --name $RESOURCE_GROUP --location $LOCATION`
   - Deploy template: `az deployment group create --template-file infra/main.bicep --parameters ...`
   - Capture outputs via `az deployment group show`
 
-- [ ] T022 Seed Key Vault secrets from GitHub Secrets in `infra.yml`:
+- [X] T022 Seed Key Vault secrets from GitHub Secrets in `infra.yml`:
   - After infrastructure deployment, populate Key Vault with:
     - `database-url`: Constructed from PostgreSQL FQDN + admin user (from GitHub Secret)
     - `openai-api-key`: From GitHub Secret `OPENAI_API_KEY`
@@ -145,7 +145,7 @@
     - `stripe-webhook-secret`: From GitHub Secret `STRIPE_WEBHOOK_SECRET`
   - Use: `az keyvault secret set --vault-name $KEY_VAULT --name $SECRET_NAME --value $SECRET_VALUE`
 
-- [ ] T023 Grant Function App Managed Identity access to Key Vault in `infra.yml`:
+- [X] T023 Grant Function App Managed Identity access to Key Vault in `infra.yml`:
   - After Function App deployment, get its Managed Identity object ID from outputs
   - Create access policy: `az keyvault set-policy --name $KEY_VAULT --object-id $IDENTITY_ID --secret-permissions get list`
 
@@ -176,23 +176,23 @@
 
 ### Backend Deployment Workflow
 
-- [ ] T026 Create `.github/workflows/deploy-api.yml` with:
+- [X] T026 Create `.github/workflows/deploy-api.yml` with:
   - Trigger: Push to `main` branch, path filter: `backend/**`, `.github/workflows/deploy-api.yml`
   - Also support manual trigger: `workflow_dispatch`
   - Reference: [contracts/github-workflows.md](contracts/github-workflows.md#2-backend-deployment-workflow)
 
-- [ ] T027 Implement Node.js setup and dependency installation in `deploy-api.yml`:
+- [X] T027 Implement Node.js setup and dependency installation in `deploy-api.yml`:
   - Setup Node.js 20: `actions/setup-node@v4`
   - Install backend dependencies: `npm ci --prefix backend` (clean install)
   - Display versions: `node --version`, `npm --version`
 
-- [ ] T028 Implement backend build step in `deploy-api.yml`:
+- [X] T028 Implement backend build step in `deploy-api.yml`:
   - Compile TypeScript: `npm run build --prefix backend`
   - Run linting: `npm run lint --prefix backend`
   - Fail workflow if build or lint fails
   - Publish version info (git commit SHA) for traceability
 
-- [ ] T029 Implement Azure Functions deployment step in `deploy-api.yml`:
+- [X] T029 Implement Azure Functions deployment step in `deploy-api.yml`:
   - Login to Azure: `az login` via AZURE_CREDENTIALS secret
   - Deploy Function App: `azure/functions-action@v1` with:
     - `app-name`: From GitHub Secret `AZURE_FUNCTION_APP_NAME`
@@ -200,7 +200,7 @@
     - `publish-profile`: Generated during infrastructure deployment
   - Capture deployment status (success/failure)
 
-- [ ] T030 Add health endpoint verification in `deploy-api.yml`:
+- [X] T030 Add health endpoint verification in `deploy-api.yml`:
   - After deployment, wait 10 seconds for cold start
   - Call health endpoint: `curl -f -v https://$FUNCTION_APP_URL/api/health`
   - Parse response: Expect status 200 and `"status":"healthy"` in JSON
@@ -208,7 +208,7 @@
   - Fail workflow if health check fails
   - This validates: database connection, secrets available, all dependencies working
 
-- [ ] T031 Add error handling and notifications to `deploy-api.yml`:
+- [X] T031 Add error handling and notifications to `deploy-api.yml`:
   - Capture error details from failed steps
   - Post to GitHub Actions summary with error message
   - Optionally send to Slack/Teams if webhook configured (future enhancement)
@@ -240,12 +240,12 @@
 
 ### Frontend Deployment Workflow
 
-- [ ] T034 Create `.github/workflows/deploy-web.yml` with:
+- [X] T034 Create `.github/workflows/deploy-web.yml` with:
   - Trigger: Push to `main` branch, path filter: `frontend/**`, `.github/workflows/deploy-web.yml`
   - Also support manual trigger: `workflow_dispatch`
   - Reference: [contracts/github-workflows.md](contracts/github-workflows.md#3-frontend-deployment-workflow)
 
-- [ ] T035 Implement Node.js setup and build in `deploy-web.yml`:
+- [X] T035 Implement Node.js setup and build in `deploy-web.yml`:
   - Setup Node.js 20
   - Install frontend dependencies: `npm ci --prefix frontend`
   - Build frontend: `VITE_API_URL=$API_URL npm run build --prefix frontend`
@@ -253,7 +253,7 @@
   - Display build artifacts size: `du -sh frontend/dist/`
   - Fail workflow if build fails
 
-- [ ] T036 Implement Static Web Apps deployment in `deploy-web.yml`:
+- [X] T036 Implement Static Web Apps deployment in `deploy-web.yml`:
   - Use `azure/static-web-apps-deploy@v1` action with:
     - `azure_static_web_apps_api_token`: From GitHub Secret `AZURE_STATIC_WEB_APPS_API_TOKEN`
     - `repo_token`: GitHub token (GITHUB_TOKEN, automatic)
@@ -262,13 +262,13 @@
     - `skip_app_build`: true (already built above)
   - Reference: [contracts/github-workflows.md](contracts/github-workflows.md#3-frontend-deployment-workflow)
 
-- [ ] T037 Add smoke test to `deploy-web.yml`:
+- [X] T037 Add smoke test to `deploy-web.yml`:
   - After deployment, wait for Static Web Apps to be ready
   - Fetch deployed site homepage: `curl -f https://$SWA_URL/`
   - Verify HTTP 200 response (site is accessible)
   - Fail workflow if site not accessible
 
-- [ ] T038 Add error handling and reporting to `deploy-web.yml`:
+- [X] T038 Add error handling and reporting to `deploy-web.yml`:
   - Capture build size in workflow output
   - Report deployment status to GitHub Actions summary
   - Include deployment URL in summary for easy access
