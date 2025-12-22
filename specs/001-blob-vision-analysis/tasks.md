@@ -152,25 +152,25 @@ description: "Task list for Blob Upload + GPT-5.1 Vision Analysis feature implem
 
 ### Tests for User Story 3
 
-- [ ] T061 [P] [US3] Contract test for DELETE /api/meals/:id returns 204 No Content in backend/tests/contract/delete-meal.test.ts
-- [ ] T062 [P] [US3] Integration test verifying blob and DB record are both deleted in backend/tests/integration/delete-cascade.test.ts
+- [x] T061 [P] [US3] Contract test for DELETE /api/meals/:id returns 204 No Content in backend/tests/contract/delete-meal.test.ts
+- [x] T062 [P] [US3] Integration test verifying blob and DB record are both deleted in backend/tests/integration/delete-cascade.test.ts
 
 ### Backend Implementation for User Story 3
 
-- [ ] T063 [P] [US3] Implement blobService.deleteBlob() to remove blob from storage in backend/src/services/blobService.ts
-- [ ] T064 [P] [US3] Implement mealService.deleteMeal() with cascade delete in backend/src/services/mealService.ts
-- [ ] T065 [US3] Implement DELETE /api/meals/:id function in backend/src/functions/delete-meal.ts
-- [ ] T066 [US3] Add transaction handling to ensure blob + DB delete both succeed or rollback in backend/src/functions/delete-meal.ts
-- [ ] T067 [US3] Add logging for delete operations with user ID and request ID in backend/src/functions/delete-meal.ts
+- [x] T063 [P] [US3] Implement blobService.deleteBlob() to remove blob from storage in backend/src/services/blobService.ts
+- [x] T064 [P] [US3] Implement mealService.deleteMeal() with cascade delete in backend/src/services/mealService.ts
+- [x] T065 [US3] Implement DELETE /api/meals/:id function in backend/src/functions/delete-meal.ts
+- [x] T066 [US3] Add transaction handling to ensure blob + DB delete both succeed or rollback in backend/src/functions/delete-meal.ts
+- [x] T067 [US3] Add logging for delete operations with user ID and request ID in backend/src/functions/delete-meal.ts
 
 ### Frontend Implementation for User Story 3
 
-- [ ] T068 [P] [US3] Create apiClient.deleteMeal() to call DELETE endpoint in frontend/src/services/apiClient.ts
-- [ ] T069 [P] [US3] Add delete button with confirmation dialog to AnalysisResults component in frontend/src/components/AnalysisResults.tsx
-- [ ] T070 [US3] Implement delete flow with optimistic UI update in frontend/src/components/AnalysisResults.tsx
-- [ ] T071 [US3] Add success/error messaging for delete operations in frontend/src/components/AnalysisResults.tsx
+- [x] T068 [P] [US3] Create apiClient.deleteMeal() to call DELETE endpoint in frontend/src/services/apiClient.ts
+- [x] T069 [P] [US3] Add delete button with confirmation dialog to AnalysisResults component in frontend/src/components/AnalysisResults.tsx
+- [x] T070 [US3] Implement delete flow with optimistic UI update in frontend/src/components/AnalysisResults.tsx
+- [x] T071 [US3] Add success/error messaging for delete operations in frontend/src/components/AnalysisResults.tsx
 
-**Checkpoint**: All user stories should now be independently functional - full feature complete
+**Checkpoint**: All user stories should now be independently functional - full feature complete ✅
 
 ---
 
