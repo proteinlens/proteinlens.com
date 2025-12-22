@@ -2,11 +2,14 @@
 // T048: Root component integration
 // T028: Added /pricing route for billing feature
 // T038: Added UsageCounter to navigation (Feature 002)
+// T071: Added /settings route for billing management
 
 import React from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { MealUpload } from './components/MealUpload';
 import { PricingPage } from './pages/PricingPage';
+import { CheckoutSuccessPage } from './pages/CheckoutSuccessPage';
+import { SettingsPage } from './pages/SettingsPage';
 import { UsageCounter } from './components/UsageCounter';
 import { useUsage } from './hooks/useUsage';
 import './App.css';
@@ -36,6 +39,12 @@ const Navigation: React.FC = () => {
         >
           Pricing
         </Link>
+        <Link 
+          to="/settings" 
+          className={location.pathname === '/settings' ? 'active' : ''}
+        >
+          Settings
+        </Link>
       </div>
       <div className="app-nav__usage">
         <UsageCounter usage={usage} loading={loading} compact />
@@ -53,6 +62,8 @@ function App() {
           <Routes>
             <Route path="/" element={<MealUpload />} />
             <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/billing/success" element={<CheckoutSuccessPage />} />
           </Routes>
         </main>
       </div>

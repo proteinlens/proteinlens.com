@@ -1,8 +1,10 @@
 // Usage Counter Component - Shows remaining scans for Free users
 // Feature: 002-saas-billing, User Story 3
+// T065: Hide UsageCounter for Pro users, show Pro badge instead
 
 import React from 'react';
 import { UsageStats } from '../services/billingApi';
+import ProBadge from './ProBadge';
 import './UsageCounter.css';
 
 interface UsageCounterProps {
@@ -28,11 +30,14 @@ export const UsageCounter: React.FC<UsageCounterProps> = ({
     return null;
   }
 
-  // Pro users with unlimited scans
-  if (usage.scansRemaining === -1) {
+  // T065: Pro users see Pro badge instead of scan counter
+  if (usage.scansRemaining === -1 || usage.plan === 'PRO') {
+    if (compact) {
+      return <ProBadge size="small" showLabel={true} />;
+    }
     return (
-      <div className={`usage-counter usage-counter--pro ${compact ? 'usage-counter--compact' : ''}`}>
-        <span className="usage-counter__badge">Pro</span>
+      <div className="usage-counter usage-counter--pro">
+        <ProBadge size="medium" />
         <span className="usage-counter__text">Unlimited scans</span>
       </div>
     );

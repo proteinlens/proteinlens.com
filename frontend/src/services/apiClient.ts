@@ -39,6 +39,19 @@ export interface ApiError {
   requestId?: string;
 }
 
+/**
+ * T055: Meal corrections interface
+ */
+export interface MealCorrections {
+  foods?: Array<{
+    name: string;
+    portion?: string;
+    protein: number;
+  }>;
+  totalProtein?: number;
+  notes?: string;
+}
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 class ApiClient {
@@ -139,6 +152,27 @@ class ApiClient {
       const error: ApiError = await response.json();
       throw new Error(error.error || `Delete meal failed: ${response.status}`);
     }
+  }
+
+  /**
+   * Update meal with user corrections
+   * T055: Update meal corrections (User Story 2, Phase 4)
+   */
+  async updateMeal(mealId: string, corrections: MealCorrections): Promise<AnalysisResponse> {
+    const response = await fetch(`${API_BASE_URL}/meals/${mealId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ corrections }),
+    });
+
+    if (!response.ok) {
+      const error: ApiError = await response.json();
+      throw new Error(error.error || `Update meal failed: ${response.status}`);
+    }
+
+    return response.json();
   }
 }
 

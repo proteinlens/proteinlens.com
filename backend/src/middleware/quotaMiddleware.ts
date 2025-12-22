@@ -1,8 +1,10 @@
 // Quota middleware for enforcing scan limits
 // Feature: 002-saas-billing, User Story 3
+// T085: Added structured logging for quota enforcement
 
 import { HttpRequest, HttpResponseInit } from '@azure/functions';
 import { canPerformScan } from '../services/usageService';
+import { Logger } from '../utils/logger';
 
 /**
  * Result of quota check
@@ -36,13 +38,31 @@ export async function checkQuota(userId: string): Promise<QuotaCheckResult> {
 /**
  * Enforce weekly quota for scan operations
  * Returns a 429 response if quota exceeded
+ * T085: Added structured logging
  * @param userId - User identifier
  * @returns null if allowed, HttpResponseInit if blocked
  */
 export async function enforceWeeklyQuota(userId: string): Promise<HttpResponseInit | null> {
   const quotaCheck = await checkQuota(userId);
 
+  // T085: Structured logging for quota enforcement
+  Logger.info('Quota check performed', {
+    userId,
+    scansUsed: quotaCheck.scansUsed,
+    scansLimit: quotaCheck.scansLimit,
+    scansRemaining: quotaCheck.scansRemaining,
+    plan: quotaCheck.plan,
+    allowed: quotaCheck.allowed,
+  });
+
   if (!quotaCheck.allowed) {
+    Logger.warn('Quota exceeded - scan blocked', {
+      userId,
+      scansUsed: quotaCheck.scansUsed,
+      scansLimit: quotaCheck.scansLimit,
+      plan: quotaCheck.plan,
+    });
+
     return {
       status: 429, // Too Many Requests
       headers: {
@@ -98,4 +118,42 @@ export function extractUserId(request: HttpRequest, blobName?: string): string |
   }
 
   return null;
+}
+
+/**
+ * T060: Check if user has Pro plan
+ * Returns a 403 response if user is on Free plan
+ * @param userId - User identifier
+ * @returns null if Pro, HttpResponseInit if Free
+ */
+export async function requirePro(userId: string): Promise<HttpResponseInit | null> {
+  const quotaCheck = await checkQuota(userId);
+
+  if (quotaCheck.plan !== 'PRO') {
+    return {
+      status: 403, // Forbidden
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      jsonBody: {
+        error: 'Pro subscription required',
+        message: 'This feature is only available for Pro subscribers.',
+        currentPlan: quotaCheck.plan,
+        upgrade: {
+          message: 'Upgrade to Pro to access this feature',
+          url: '/pricing',
+        },
+      },
+    };
+  }
+
+  return null; // User is Pro
+}
+
+/**
+ * Get history days limit based on plan
+ * Free: 7 days, Pro: unlimited (null)
+ */
+export function getHistoryDaysLimit(plan: 'FREE' | 'PRO'): number | null {
+  return plan === 'PRO' ? null : 7;
 }

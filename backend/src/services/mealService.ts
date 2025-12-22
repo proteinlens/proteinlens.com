@@ -100,14 +100,80 @@ class MealService {
 
   /**
    * Get all meal analyses for a user
+   * T058: Filter by plan - Free users see last 7 days, Pro users see all
    */
-  async getUserMealAnalyses(userId: string, limit = 50): Promise<MealAnalysis[]> {
+  async getUserMealAnalyses(
+    userId: string,
+    options: { limit?: number; daysBack?: number } = {}
+  ): Promise<MealAnalysis[]> {
+    const { limit = 50, daysBack } = options;
+
+    const whereClause: { userId: string; createdAt?: { gte: Date } } = { userId };
+
+    // If daysBack is specified, filter by date
+    if (daysBack !== undefined && daysBack > 0) {
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - daysBack);
+      whereClause.createdAt = { gte: cutoffDate };
+    }
+
     return prisma.mealAnalysis.findMany({
-      where: { userId },
+      where: whereClause,
       include: { foods: true },
       orderBy: { createdAt: 'desc' },
       take: limit,
     });
+  }
+
+  /**
+   * T059: Export meal analyses for Pro users
+   * Returns data in CSV-ready format
+   */
+  async exportUserMealAnalyses(userId: string): Promise<{
+    meals: Array<{
+      id: string;
+      createdAt: Date;
+      totalProtein: number;
+      confidence: number;
+      foods: Array<{ name: string; portion: string; protein: number }>;
+    }>;
+    summary: {
+      totalMeals: number;
+      totalProtein: number;
+      averageProteinPerMeal: number;
+      dateRange: { start: Date | null; end: Date | null };
+    };
+  }> {
+    const meals = await prisma.mealAnalysis.findMany({
+      where: { userId },
+      include: { foods: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const totalProtein = meals.reduce((sum, m) => sum + m.totalProtein, 0);
+
+    return {
+      meals: meals.map((m) => ({
+        id: m.id,
+        createdAt: m.createdAt,
+        totalProtein: m.totalProtein,
+        confidence: m.confidence,
+        foods: m.foods.map((f) => ({
+          name: f.name,
+          portion: f.portion,
+          protein: f.protein,
+        })),
+      })),
+      summary: {
+        totalMeals: meals.length,
+        totalProtein,
+        averageProteinPerMeal: meals.length > 0 ? totalProtein / meals.length : 0,
+        dateRange: {
+          start: meals.length > 0 ? meals[meals.length - 1].createdAt : null,
+          end: meals.length > 0 ? meals[0].createdAt : null,
+        },
+      },
+    };
   }
 
   /**

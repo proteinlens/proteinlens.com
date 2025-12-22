@@ -185,3 +185,69 @@
     margin-top: 0.5rem;
   }
 }
+
+/* T60: Edit and Delete Actions */
+.analysis-results__actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.analysis-results__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.analysis-results__btn--edit {
+  background: #4a6741;
+  color: white;
+}
+
+.analysis-results__btn--edit:hover {
+  background: #3d5636;
+}
+
+.analysis-results__btn--delete {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.analysis-results__btn--delete:hover {
+  background: #fecaca;
+}
+
+/* Editor Modal/Overlay */
+.analysis-results__editor-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.analysis-results__editor-modal {
+  background: white;
+  border-radius: 16px;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+}

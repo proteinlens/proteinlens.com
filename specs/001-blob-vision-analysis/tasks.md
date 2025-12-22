@@ -121,26 +121,26 @@ description: "Task list for Blob Upload + GPT-5.1 Vision Analysis feature implem
 
 ### Tests for User Story 2
 
-- [ ] T049 [P] [US2] Contract test for PATCH /api/meals/:id returns updated meal in backend/tests/contract/update-meal.test.ts
-- [ ] T050 [P] [US2] Integration test for edit → save → reload showing corrected values in backend/tests/integration/corrections.test.ts
+- [x] T049 [P] [US2] Contract test for PATCH /api/meals/:id returns updated meal in backend/tests/contract/update-meal.test.ts
+- [x] T050 [P] [US2] Integration test for edit → save → reload showing corrected values in backend/tests/integration/corrections.test.ts
 
 ### Backend Implementation for User Story 2
 
-- [ ] T051 [P] [US2] Implement mealService.updateMealCorrections() to persist user edits in backend/src/services/mealService.ts
-- [ ] T052 [US2] Implement PATCH /api/meals/:id function for updating corrections in backend/src/functions/update-meal.ts
-- [ ] T053 [US2] Add validation for correction data (valid protein values, food names) in backend/src/functions/update-meal.ts
-- [ ] T054 [US2] Ensure original AI response is preserved when storing corrections in backend/src/services/mealService.ts
+- [x] T051 [P] [US2] Implement mealService.updateMealCorrections() to persist user edits in backend/src/services/mealService.ts
+- [x] T052 [US2] Implement PATCH /api/meals/:id function for updating corrections in backend/src/functions/update-meal.ts
+- [x] T053 [US2] Add validation for correction data (valid protein values, food names) in backend/src/functions/update-meal.ts
+- [x] T054 [US2] Ensure original AI response is preserved when storing corrections in backend/src/services/mealService.ts
 
 ### Frontend Implementation for User Story 2
 
-- [ ] T055 [P] [US2] Create apiClient.updateMeal() to call PATCH endpoint in frontend/src/services/apiClient.ts
-- [ ] T056 [P] [US2] Create MealEditor component with editable food list in frontend/src/components/MealEditor.tsx
-- [ ] T057 [US2] Add inline editing for food names, portions, protein values in frontend/src/components/MealEditor.tsx
-- [ ] T058 [US2] Implement save button and optimistic UI updates in frontend/src/components/MealEditor.tsx
-- [ ] T059 [US2] Add visual distinction between original AI data and user corrections in frontend/src/components/AnalysisResults.tsx
-- [ ] T060 [US2] Integrate MealEditor into AnalysisResults component
+- [x] T055 [P] [US2] Create apiClient.updateMeal() to call PATCH endpoint in frontend/src/services/apiClient.ts
+- [x] T056 [P] [US2] Create MealEditor component with editable food list in frontend/src/components/MealEditor.tsx
+- [x] T057 [US2] Add inline editing for food names, portions, protein values in frontend/src/components/MealEditor.tsx
+- [x] T058 [US2] Implement save button and optimistic UI updates in frontend/src/components/MealEditor.tsx
+- [x] T059 [US2] Add visual distinction between original AI data and user corrections in frontend/src/components/AnalysisResults.tsx
+- [x] T060 [US2] Integrate MealEditor into AnalysisResults component
 
-**Checkpoint**: At this point, User Stories 1 AND 2 should both work - users can upload, analyze, and edit results
+**Checkpoint**: At this point, User Stories 1 AND 2 should both work - users can upload, analyze, and edit results ✅
 
 ---
 

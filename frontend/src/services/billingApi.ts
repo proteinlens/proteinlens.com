@@ -158,3 +158,38 @@ export async function redirectToPortal(): Promise<void> {
   const { url } = await createPortalSession();
   window.location.href = url;
 }
+
+/**
+ * T062: Export meal data (Pro-only)
+ * @param format - 'json' or 'csv'
+ */
+export async function exportMeals(format: 'json' | 'csv' = 'json'): Promise<void> {
+  const response = await fetch(`${API_BASE}/meals/export?format=${format}`, {
+    headers: {
+      // TODO: Add auth header when auth is implemented
+      'Content-Type': 'application/json',
+    },
+  });
+  
+  if (!response.ok) {
+    if (response.status === 403) {
+      throw new Error('Pro subscription required for export');
+    }
+    throw new Error(`Failed to export: ${response.statusText}`);
+  }
+  
+  // Download file
+  const blob = await response.blob();
+  const filename = response.headers.get('Content-Disposition')
+    ?.split('filename=')[1]
+    ?.replace(/"/g, '') || `proteinlens-export.${format}`;
+  
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
+}
