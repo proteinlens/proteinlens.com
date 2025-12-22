@@ -1,0 +1,131 @@
+/* Export Button Styles */
+/* Feature: 002-saas-billing, User Story 4 */
+
+.export-button-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.export-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #4a6741;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.export-button:hover:not(:disabled) {
+  background: #3d5636;
+  transform: translateY(-1px);
+}
+
+.export-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.export-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.export-button--locked {
+  background: #6b7280;
+  position: relative;
+}
+
+.export-button--locked:hover {
+  background: #4b5563;
+}
+
+.export-button__icon {
+  font-size: 1.1rem;
+}
+
+.export-button__text {
+  font-weight: 500;
+}
+
+.export-button__lock {
+  font-size: 0.8rem;
+  margin-left: 0.25rem;
+}
+
+.export-button--loading {
+  pointer-events: none;
+}
+
+/* Dropdown Menu */
+.export-button__menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  z-index: 100;
+  min-width: 180px;
+}
+
+.export-button__menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-align: left;
+  color: #374151;
+  transition: background-color 0.15s;
+}
+
+.export-button__menu-item:hover {
+  background: #f3f4f6;
+}
+
+.export-button__menu-item:not(:last-child) {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.export-button__format-icon {
+  font-size: 1.2rem;
+}
+
+/* Error Message */
+.export-button__error {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #fef2f2;
+  color: #dc2626;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .export-button {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .export-button__menu {
+    right: auto;
+    left: 0;
+  }
+}

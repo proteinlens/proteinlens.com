@@ -1,16 +1,20 @@
 // MealUpload Component
 // User Story 1: Upload meal photo and get protein analysis
 // T040-T043: File picker, upload UI, progress states, error handling
+// T039: Handle 429 response to show UpgradePrompt (Feature 002)
 
 import React, { useRef, useState } from 'react';
 import { useMealUpload } from '../hooks/useMealUpload';
 import { AnalysisResults } from './AnalysisResults';
+import { UpgradePrompt } from './UpgradePrompt';
 import './MealUpload.css';
 
 export const MealUpload: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
+  const [quotaInfo, setQuotaInfo] = useState<{ used: number; limit: number } | null>(null);
   
   const {
     uploadMeal,
@@ -54,19 +58,30 @@ export const MealUpload: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
-  // T041: Upload button handler
+  // T041: Upload button handler (T039: Handle 429 quota exceeded)
   const handleUpload = async () => {
     if (!selectedFile) {
       return;
     }
 
-    await uploadMeal(selectedFile);
+    try {
+      await uploadMeal(selectedFile);
+    } catch (err: any) {
+      // Check for 429 quota exceeded response
+      if (err?.status === 429 || err?.message?.includes('429') || err?.message?.includes('Quota exceeded')) {
+        const quota = err?.quota || { used: 5, limit: 5 };
+        setQuotaInfo({ used: quota.used, limit: quota.limit });
+        setShowUpgradePrompt(true);
+      }
+    }
   };
 
   // Reset to upload new photo
   const handleReset = () => {
     setSelectedFile(null);
     setPreviewUrl(null);
+    setShowUpgradePrompt(false);
+    setQuotaInfo(null);
     reset();
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -97,10 +112,26 @@ export const MealUpload: React.FC = () => {
     return null;
   };
 
-  // T043: Error handling UI
+  // T043: Error handling UI (T039: Check for quota error)
   const renderError = () => {
     if (!error) {
       return null;
+    }
+
+    // Check if error is quota-related (show upgrade prompt instead)
+    if (error.includes('429') || error.includes('Quota exceeded') || error.includes('limit')) {
+      return (
+        <div className="error-message error-message--quota">
+          <h3>📊 Weekly Scan Limit Reached</h3>
+          <p>You've used all your free scans this week.</p>
+          <button onClick={() => setShowUpgradePrompt(true)} className="btn-primary">
+            View Upgrade Options
+          </button>
+          <button onClick={handleReset} className="btn-secondary">
+            Close
+          </button>
+        </div>
+      );
     }
 
     return (
@@ -186,6 +217,14 @@ export const MealUpload: React.FC = () => {
           </ul>
         </div>
       )}
+
+      {/* T039: Upgrade Prompt Modal */}
+      <UpgradePrompt
+        isOpen={showUpgradePrompt}
+        onClose={() => setShowUpgradePrompt(false)}
+        scansUsed={quotaInfo?.used}
+        scansLimit={quotaInfo?.limit}
+      />
     </div>
   );
 };

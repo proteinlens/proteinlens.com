@@ -1,11 +1,13 @@
 // AI Service for GPT-5.1 Vision analysis via Azure AI Foundry
 // Constitution Principle V: Deterministic JSON Output
 // T031-T032: GPT-5.1 Vision integration with retry logic
+// T075: Performance monitoring for AI calls
 
 import { Logger } from '../utils/logger.js';
 import { AIAnalysisResponse, AIAnalysisResponseSchema } from '../models/schemas.js';
 import { AIAnalysisError, SchemaValidationError } from '../utils/errors.js';
 import { config } from '../utils/config.js';
+import { trackAICall } from '../utils/telemetry.js';
 
 class AIService {
   private maxRetries = 3;
@@ -17,6 +19,8 @@ class AIService {
    */
   async analyzeMealImage(imageUrl: string, requestId: string): Promise<AIAnalysisResponse> {
     Logger.info('AI analysis started', { requestId, model: config.aiModelDeployment });
+    
+    const startTime = Date.now();
     
     const prompt = `Analyze this meal image and identify all visible food items with their protein content. 
 Return a JSON object with this exact structure:
@@ -57,15 +61,32 @@ Guidelines:
       response_format: { type: 'json_object' },
     };
 
-    return this.callWithRetry(requestBody, requestId);
+    try {
+      const result = await this.callWithRetry(requestBody, requestId, startTime);
+      return result;
+    } catch (error) {
+      // T075: Track failed AI call
+      const durationMs = Date.now() - startTime;
+      trackAICall(
+        'analyzeMealImage',
+        config.aiModelDeployment,
+        durationMs,
+        false,
+        undefined,
+        (error as Error).message
+      );
+      throw error;
+    }
   }
 
   /**
    * T032: Retry logic with exponential backoff
+   * T075: Added performance tracking
    */
   private async callWithRetry(
     requestBody: unknown,
     requestId: string,
+    startTime: number,
     attempt = 1
   ): Promise<AIAnalysisResponse> {
     try {
@@ -90,6 +111,13 @@ Guidelines:
         throw new AIAnalysisError('No response content from AI model');
       }
 
+      // T075: Extract token usage for telemetry
+      const tokenUsage = data.usage ? {
+        prompt: data.usage.prompt_tokens || 0,
+        completion: data.usage.completion_tokens || 0,
+        total: data.usage.total_tokens || 0,
+      } : undefined;
+
       // Parse and validate JSON response
       let parsedResponse;
       try {
@@ -105,11 +133,23 @@ Guidelines:
         throw new SchemaValidationError(errors);
       }
 
+      // T075: Track successful AI call
+      const durationMs = Date.now() - startTime;
+      trackAICall(
+        'analyzeMealImage',
+        config.aiModelDeployment,
+        durationMs,
+        true,
+        tokenUsage
+      );
+
       Logger.info('AI analysis completed successfully', {
         requestId,
         foodCount: validation.data.foods.length,
         totalProtein: validation.data.totalProtein,
         confidence: validation.data.confidence,
+        durationMs,
+        ...(tokenUsage && { tokenUsage: tokenUsage.total }),
       });
 
       return validation.data;
@@ -123,7 +163,7 @@ Guidelines:
         });
         
         await new Promise(resolve => setTimeout(resolve, delayMs));
-        return this.callWithRetry(requestBody, requestId, attempt + 1);
+        return this.callWithRetry(requestBody, requestId, startTime, attempt + 1);
       }
 
       Logger.error('AI analysis failed after all retries', error as Error, { requestId });

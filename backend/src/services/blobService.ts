@@ -164,6 +164,68 @@ class BlobService {
   }
 
   /**
+   * T076: Calculate SHA-256 hash of blob content for caching
+   * Used to detect duplicate images and return cached analysis results
+   */
+  async calculateBlobHash(blobName: string): Promise<string> {
+    const crypto = await import('crypto');
+    
+    try {
+      const blobClient = this.containerClient.getBlobClient(blobName);
+      const downloadResponse = await blobClient.download();
+      
+      if (!downloadResponse.readableStreamBody) {
+        throw new Error('No readable stream from blob');
+      }
+
+      // Read stream into buffer
+      const chunks: Buffer[] = [];
+      for await (const chunk of downloadResponse.readableStreamBody) {
+        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+      }
+      const buffer = Buffer.concat(chunks);
+
+      // Calculate SHA-256 hash
+      const hash = crypto.createHash('sha256').update(buffer).digest('hex');
+      
+      Logger.info('Calculated blob hash', { blobName, hash: hash.substring(0, 16) + '...' });
+      
+      return hash;
+    } catch (error) {
+      Logger.error('Failed to calculate blob hash', error as Error, { blobName });
+      throw error;
+    }
+  }
+
+  /**
+   * Get blob metadata (including content hash if set)
+   */
+  async getBlobMetadata(blobName: string): Promise<Record<string, string>> {
+    try {
+      const blobClient = this.containerClient.getBlobClient(blobName);
+      const properties = await blobClient.getProperties();
+      return properties.metadata || {};
+    } catch (error) {
+      Logger.error('Failed to get blob metadata', error as Error, { blobName });
+      return {};
+    }
+  }
+
+  /**
+   * Set blob metadata (e.g., content hash for caching)
+   */
+  async setBlobMetadata(blobName: string, metadata: Record<string, string>): Promise<void> {
+    try {
+      const blobClient = this.containerClient.getBlobClient(blobName);
+      await blobClient.setMetadata(metadata);
+      Logger.info('Set blob metadata', { blobName, keys: Object.keys(metadata) });
+    } catch (error) {
+      Logger.error('Failed to set blob metadata', error as Error, { blobName });
+      throw error;
+    }
+  }
+
+  /**
    * Generate unique blob name for user upload
    */
   generateBlobName(userId: string, originalFileName: string): string {

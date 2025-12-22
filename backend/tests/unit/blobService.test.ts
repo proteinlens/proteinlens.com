@@ -1,7 +1,7 @@
 // Unit tests for BlobService SAS URL generation
 // T021-T022: Test SAS URL generation with write and read permissions
 
-import { describe, it, expect, jest, beforeEach } from '@jest/globals';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { blobService } from '../../src/services/blobService';
 
 describe('BlobService - SAS URL Generation', () => {
@@ -9,7 +9,7 @@ describe('BlobService - SAS URL Generation', () => {
   const mockFileName = 'meal.jpg';
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('generateUploadSasUrl', () => {

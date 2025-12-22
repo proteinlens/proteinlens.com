@@ -1,0 +1,125 @@
+/* Usage Counter Styles */
+/* Feature: 002-saas-billing */
+
+.usage-counter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  min-width: 180px;
+}
+
+.usage-counter--compact {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  min-width: auto;
+}
+
+.usage-counter--low {
+  border-color: #fbbf24;
+  background: #fffbeb;
+}
+
+.usage-counter--empty {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.usage-counter--pro {
+  border-color: #6366f1;
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+}
+
+.usage-counter__loading {
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+.usage-counter__badge {
+  background: #6366f1;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.usage-counter__info {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.usage-counter__count {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.usage-counter--compact .usage-counter__count {
+  font-size: 16px;
+}
+
+.usage-counter--low .usage-counter__count {
+  color: #d97706;
+}
+
+.usage-counter--empty .usage-counter__count {
+  color: #dc2626;
+}
+
+.usage-counter__label {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.usage-counter__bar {
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.usage-counter__fill {
+  height: 100%;
+  background: #22c55e;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.usage-counter--low .usage-counter__fill {
+  background: #fbbf24;
+}
+
+.usage-counter--empty .usage-counter__fill {
+  background: #ef4444;
+}
+
+.usage-counter__reset {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+.usage-counter__upgrade {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 6px 12px;
+  background: #6366f1;
+  color: white;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  text-align: center;
+  transition: background 0.2s;
+}
+
+.usage-counter__upgrade:hover {
+  background: #4f46e5;
+}

@@ -1,0 +1,124 @@
+/* Checkout Success Page Styles */
+/* Feature: 002-saas-billing */
+
+.checkout-success {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 70vh;
+  padding: 24px;
+}
+
+.checkout-success__card {
+  background: white;
+  border-radius: 20px;
+  padding: 48px;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.1);
+  border: 2px solid #6366f1;
+}
+
+.checkout-success__icon {
+  font-size: 64px;
+  margin-bottom: 24px;
+  animation: bounce 1s ease infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.checkout-success__title {
+  font-size: 32px;
+  font-weight: 800;
+  color: #1f2937;
+  margin: 0 0 16px 0;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.checkout-success__message {
+  font-size: 16px;
+  color: #6b7280;
+  line-height: 1.6;
+  margin: 0 0 32px 0;
+}
+
+.checkout-success__features {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 32px;
+  padding: 24px;
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  border-radius: 12px;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
+  color: #4b5563;
+}
+
+.feature-icon {
+  font-size: 20px;
+}
+
+.checkout-success__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.checkout-success__actions .btn-primary {
+  width: 100%;
+  padding: 16px 32px;
+  background: #6366f1;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.checkout-success__actions .btn-primary:hover {
+  background: #4f46e5;
+}
+
+.checkout-success__redirect {
+  font-size: 13px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.checkout-success__session {
+  font-size: 11px;
+  color: #d1d5db;
+  margin: 24px 0 0 0;
+  font-family: monospace;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .checkout-success__card {
+    padding: 32px 24px;
+  }
+
+  .checkout-success__icon {
+    font-size: 48px;
+  }
+
+  .checkout-success__title {
+    font-size: 24px;
+  }
+}

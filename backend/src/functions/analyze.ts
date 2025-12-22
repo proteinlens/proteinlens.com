@@ -2,6 +2,8 @@
 // Analyzes meal photo using GPT-5.1 Vision and persists results
 // Constitution Principles: III (Blob-First), IV (Traceability), V (Deterministic JSON)
 // T034: Analyze meal image and store results
+// T031, T033: Added quota enforcement and usage recording (Feature 002)
+// T077: Cache lookup using SHA-256 hash before calling AI
 
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { v4 as uuidv4 } from 'uuid';
@@ -9,8 +11,11 @@ import { Logger } from '../utils/logger.js';
 import { blobService } from '../services/blobService.js';
 import { aiService } from '../services/aiService.js';
 import { mealService } from '../services/mealService.js';
-import { AnalyzeRequestSchema } from '../models/schemas.js';
+import { AnalyzeRequestSchema, AIAnalysisResponse } from '../models/schemas.js';
 import { ValidationError, BlobNotFoundError } from '../utils/errors.js';
+import { enforceWeeklyQuota, extractUserId } from '../middleware/quotaMiddleware.js';
+import { recordUsage } from '../services/usageService.js';
+import { UsageType } from '@prisma/client';
 
 export async function analyzeMeal(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
   const requestId = uuidv4();
@@ -29,45 +34,102 @@ export async function analyzeMeal(request: HttpRequest, context: InvocationConte
     const { blobName } = validation.data;
 
     // Extract userId from blob path or auth header
-    const userId = request.headers.get('x-user-id') || extractUserIdFromBlobName(blobName);
+    const userId = extractUserId(request, blobName) || extractUserIdFromBlobName(blobName);
 
-    // Generate read SAS URL for AI service (Constitution Principle III: Blob-First)
-    const blobUrl = await blobService.generateReadSasUrl(blobName);
-    const blobUrlWithoutSas = blobUrl.split('?')[0]; // Store without SAS token
+    // T031: Check quota before proceeding with analysis
+    const quotaBlock = await enforceWeeklyQuota(userId);
+    if (quotaBlock) {
+      Logger.info('Scan blocked - quota exceeded', { requestId, userId });
+      return {
+        ...quotaBlock,
+        headers: {
+          ...quotaBlock.headers,
+          'X-Request-ID': requestId,
+        },
+      };
+    }
 
-    Logger.info('Blob SAS URL generated for AI analysis', { requestId, blobName });
+    // T076-T077: Calculate blob hash and check cache
+    const blobHash = await blobService.calculateBlobHash(blobName);
+    const cachedAnalysis = await mealService.getMealAnalysisByBlobHash(blobHash);
 
-    // Call AI service with blob URL
-    const aiResponse = await aiService.analyzeMealImage(blobUrl, requestId);
+    let aiResponse: AIAnalysisResponse;
+    let mealAnalysisId: string;
+    let wasCached = false;
 
-    Logger.info('AI analysis completed', {
-      requestId,
-      foodCount: aiResponse.foods.length,
-      totalProtein: aiResponse.totalProtein,
-      confidence: aiResponse.confidence,
-    });
+    if (cachedAnalysis) {
+      // T077: Use cached result instead of calling AI
+      Logger.info('Using cached analysis result', { 
+        requestId, 
+        blobName, 
+        cachedMealId: cachedAnalysis.id,
+        blobHash: blobHash.substring(0, 16) + '...',
+      });
 
-    // Persist meal analysis to database (Constitution Principle IV: Traceability)
-    const mealAnalysisId = await mealService.createMealAnalysis(
-      userId,
-      blobName,
-      blobUrlWithoutSas,
-      requestId,
-      aiResponse,
-      'gpt-5.1-vision'
-    );
+      aiResponse = cachedAnalysis.aiResponseRaw as unknown as AIAnalysisResponse;
+      
+      // Create new meal record referencing cached analysis
+      mealAnalysisId = await mealService.createMealAnalysisFromCache(
+        userId,
+        blobName,
+        blobService.getBlobUrl(blobName),
+        requestId,
+        blobHash,
+        cachedAnalysis.id
+      );
+      wasCached = true;
+
+    } else {
+      // No cache hit - call AI service
+      const blobUrl = await blobService.generateReadSasUrl(blobName);
+      const blobUrlWithoutSas = blobUrl.split('?')[0];
+
+      Logger.info('Blob SAS URL generated for AI analysis', { requestId, blobName });
+
+      // Call AI service with blob URL
+      aiResponse = await aiService.analyzeMealImage(blobUrl, requestId);
+
+      Logger.info('AI analysis completed', {
+        requestId,
+        foodCount: aiResponse.foods.length,
+        totalProtein: aiResponse.totalProtein,
+        confidence: aiResponse.confidence,
+      });
+
+      // Persist meal analysis to database with hash for future cache lookups
+      mealAnalysisId = await mealService.createMealAnalysis(
+        userId,
+        blobName,
+        blobUrlWithoutSas,
+        requestId,
+        aiResponse,
+        'gpt-5.1-vision',
+        blobHash
+      );
+    }
 
     Logger.info('Meal analysis persisted successfully', {
       requestId,
       mealAnalysisId,
       blobName,
+      wasCached,
     });
+
+    // T033: Record usage after successful analysis
+    try {
+      await recordUsage(userId, UsageType.MEAL_ANALYSIS, mealAnalysisId);
+      Logger.info('Usage recorded', { requestId, userId, mealAnalysisId });
+    } catch (usageError) {
+      // Log but don't fail the request if usage recording fails
+      Logger.error('Failed to record usage', usageError as Error, { requestId, userId });
+    }
 
     return {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
         'X-Request-ID': requestId,
+        ...(wasCached && { 'X-Cache-Hit': 'true' }),
       },
       jsonBody: {
         mealAnalysisId,

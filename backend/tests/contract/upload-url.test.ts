@@ -2,7 +2,7 @@
 // Verifies API contract returns valid SAS URL structure
 // T024: Contract test for upload-url endpoint
 
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect } from 'vitest';
 
 describe('POST /api/upload-url - Contract Test', () => {
   const FUNCTION_URL = process.env.FUNCTION_URL || 'http://localhost:7071/api/upload-url';

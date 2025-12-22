@@ -1,0 +1,257 @@
+/* MealEditor Component Styles */
+/* Feature: 001-blob-vision-analysis, User Story 2 */
+
+.meal-editor {
+  background: #fefefe;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #e5e7eb;
+}
+
+.meal-editor__header {
+  margin-bottom: 1.25rem;
+}
+
+.meal-editor__title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 0.25rem 0;
+}
+
+.meal-editor__subtitle {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Food List */
+.meal-editor__foods {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.meal-editor__food {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  transition: border-color 0.2s, background-color 0.2s;
+  position: relative;
+}
+
+.meal-editor__food--edited {
+  background: #fef3c7;
+  border-color: #fcd34d;
+}
+
+.meal-editor__edited-badge {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  font-size: 0.75rem;
+  background: white;
+  border-radius: 50%;
+  padding: 2px;
+}
+
+.meal-editor__food-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+/* Input Fields */
+.meal-editor__input {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.meal-editor__input:focus {
+  outline: none;
+  border-color: #4a6741;
+  box-shadow: 0 0 0 3px rgba(74, 103, 65, 0.1);
+}
+
+.meal-editor__input--name {
+  flex: 2;
+  min-width: 120px;
+}
+
+.meal-editor__input--portion {
+  flex: 1;
+  min-width: 80px;
+}
+
+.meal-editor__input--protein {
+  width: 70px;
+  text-align: right;
+}
+
+.meal-editor__protein-input {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.meal-editor__unit {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+/* Remove Button */
+.meal-editor__remove-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: #fee2e2;
+  color: #dc2626;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+}
+
+.meal-editor__remove-btn:hover {
+  background: #fecaca;
+}
+
+/* Add Button */
+.meal-editor__add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0.75rem;
+  background: #f3f4f6;
+  color: #4b5563;
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color 0.2s, border-color 0.2s;
+  margin-bottom: 1rem;
+}
+
+.meal-editor__add-btn:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+/* Total */
+.meal-editor__total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #f0fdf4;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.meal-editor__total-label {
+  font-weight: 500;
+  color: #374151;
+}
+
+.meal-editor__total-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #059669;
+}
+
+.meal-editor__total-change {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: #6b7280;
+  margin-left: 0.5rem;
+}
+
+/* Error */
+.meal-editor__error {
+  padding: 0.75rem 1rem;
+  background: #fef2f2;
+  color: #dc2626;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+/* Actions */
+.meal-editor__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.meal-editor__btn {
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.meal-editor__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.meal-editor__btn--primary {
+  background: #4a6741;
+  color: white;
+}
+
+.meal-editor__btn--primary:hover:not(:disabled) {
+  background: #3d5636;
+}
+
+.meal-editor__btn--secondary {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.meal-editor__btn--secondary:hover:not(:disabled) {
+  background: #d1d5db;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .meal-editor {
+    padding: 1rem;
+  }
+
+  .meal-editor__food-fields {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .meal-editor__input--name,
+  .meal-editor__input--portion {
+    min-width: 100%;
+  }
+
+  .meal-editor__actions {
+    flex-direction: column;
+  }
+
+  .meal-editor__btn {
+    width: 100%;
+  }
+}

@@ -1,0 +1,286 @@
+/* Settings Page Styles */
+/* Feature: 002-saas-billing, User Story 5 */
+
+.settings-page {
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+}
+
+.settings-page__container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.settings-page__title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 2rem;
+}
+
+/* Section Styles */
+.settings-section {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.settings-section__title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.settings-section__icon {
+  font-size: 1.4rem;
+}
+
+.settings-section__loading {
+  color: #6b7280;
+  padding: 1rem 0;
+}
+
+.settings-section__placeholder {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* Billing Section */
+.settings-billing {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.settings-billing__plan {
+  padding: 1.25rem;
+  background: #f9fafb;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.settings-billing__plan-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.settings-billing__plan-label {
+  font-size: 0.9rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.settings-billing__plan-free {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #6b7280;
+  padding: 0.25rem 0.75rem;
+  background: #e5e7eb;
+  border-radius: 8px;
+}
+
+.settings-billing__details {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.settings-billing__detail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.settings-billing__detail-label {
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.settings-billing__detail-value {
+  font-weight: 500;
+  color: #374151;
+}
+
+.settings-billing__status--active {
+  color: #059669;
+}
+
+.settings-billing__status--canceled {
+  color: #dc2626;
+}
+
+.settings-billing__status--past_due {
+  color: #d97706;
+}
+
+.settings-billing__days-left {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  margin-left: 0.5rem;
+}
+
+/* Actions */
+.settings-billing__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.settings-billing__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.settings-billing__button--manage {
+  background: #374151;
+  color: white;
+}
+
+.settings-billing__button--manage:hover:not(:disabled) {
+  background: #1f2937;
+  transform: translateY(-1px);
+}
+
+.settings-billing__button--manage:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.settings-billing__button--upgrade {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+
+.settings-billing__button--upgrade:hover {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  transform: translateY(-1px);
+}
+
+.settings-billing__button--reactivate {
+  background: #4a6741;
+  color: white;
+}
+
+.settings-billing__button--reactivate:hover {
+  background: #3d5636;
+}
+
+.settings-billing__button-icon {
+  font-size: 1.1rem;
+}
+
+.settings-billing__spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Lapsed Pro */
+.settings-billing__lapsed {
+  padding: 1rem;
+  background: #fef3c7;
+  border-radius: 10px;
+  border: 1px solid #fcd34d;
+}
+
+.settings-billing__lapsed-message {
+  margin-bottom: 1rem;
+  color: #92400e;
+  font-size: 0.95rem;
+}
+
+/* Error */
+.settings-billing__error {
+  padding: 0.75rem 1rem;
+  background: #fef2f2;
+  color: #dc2626;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+/* Features */
+.settings-features {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.settings-feature {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.settings-feature--available {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.settings-feature__icon {
+  font-size: 1.1rem;
+}
+
+.settings-feature__name {
+  font-weight: 500;
+  color: #374151;
+}
+
+.settings-feature__limit {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  margin-left: auto;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .settings-page {
+    padding: 1rem 0.75rem;
+  }
+
+  .settings-page__title {
+    font-size: 1.5rem;
+  }
+
+  .settings-section {
+    padding: 1.25rem;
+    border-radius: 12px;
+  }
+
+  .settings-billing__plan-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .settings-billing__detail {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+}

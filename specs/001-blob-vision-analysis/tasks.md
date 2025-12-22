@@ -121,26 +121,26 @@ description: "Task list for Blob Upload + GPT-5.1 Vision Analysis feature implem
 
 ### Tests for User Story 2
 
-- [ ] T049 [P] [US2] Contract test for PATCH /api/meals/:id returns updated meal in backend/tests/contract/update-meal.test.ts
-- [ ] T050 [P] [US2] Integration test for edit → save → reload showing corrected values in backend/tests/integration/corrections.test.ts
+- [x] T049 [P] [US2] Contract test for PATCH /api/meals/:id returns updated meal in backend/tests/contract/update-meal.test.ts
+- [x] T050 [P] [US2] Integration test for edit → save → reload showing corrected values in backend/tests/integration/corrections.test.ts
 
 ### Backend Implementation for User Story 2
 
-- [ ] T051 [P] [US2] Implement mealService.updateMealCorrections() to persist user edits in backend/src/services/mealService.ts
-- [ ] T052 [US2] Implement PATCH /api/meals/:id function for updating corrections in backend/src/functions/update-meal.ts
-- [ ] T053 [US2] Add validation for correction data (valid protein values, food names) in backend/src/functions/update-meal.ts
-- [ ] T054 [US2] Ensure original AI response is preserved when storing corrections in backend/src/services/mealService.ts
+- [x] T051 [P] [US2] Implement mealService.updateMealCorrections() to persist user edits in backend/src/services/mealService.ts
+- [x] T052 [US2] Implement PATCH /api/meals/:id function for updating corrections in backend/src/functions/update-meal.ts
+- [x] T053 [US2] Add validation for correction data (valid protein values, food names) in backend/src/functions/update-meal.ts
+- [x] T054 [US2] Ensure original AI response is preserved when storing corrections in backend/src/services/mealService.ts
 
 ### Frontend Implementation for User Story 2
 
-- [ ] T055 [P] [US2] Create apiClient.updateMeal() to call PATCH endpoint in frontend/src/services/apiClient.ts
-- [ ] T056 [P] [US2] Create MealEditor component with editable food list in frontend/src/components/MealEditor.tsx
-- [ ] T057 [US2] Add inline editing for food names, portions, protein values in frontend/src/components/MealEditor.tsx
-- [ ] T058 [US2] Implement save button and optimistic UI updates in frontend/src/components/MealEditor.tsx
-- [ ] T059 [US2] Add visual distinction between original AI data and user corrections in frontend/src/components/AnalysisResults.tsx
-- [ ] T060 [US2] Integrate MealEditor into AnalysisResults component
+- [x] T055 [P] [US2] Create apiClient.updateMeal() to call PATCH endpoint in frontend/src/services/apiClient.ts
+- [x] T056 [P] [US2] Create MealEditor component with editable food list in frontend/src/components/MealEditor.tsx
+- [x] T057 [US2] Add inline editing for food names, portions, protein values in frontend/src/components/MealEditor.tsx
+- [x] T058 [US2] Implement save button and optimistic UI updates in frontend/src/components/MealEditor.tsx
+- [x] T059 [US2] Add visual distinction between original AI data and user corrections in frontend/src/components/AnalysisResults.tsx
+- [x] T060 [US2] Integrate MealEditor into AnalysisResults component
 
-**Checkpoint**: At this point, User Stories 1 AND 2 should both work - users can upload, analyze, and edit results
+**Checkpoint**: At this point, User Stories 1 AND 2 should both work - users can upload, analyze, and edit results ✅
 
 ---
 
@@ -152,25 +152,25 @@ description: "Task list for Blob Upload + GPT-5.1 Vision Analysis feature implem
 
 ### Tests for User Story 3
 
-- [ ] T061 [P] [US3] Contract test for DELETE /api/meals/:id returns 204 No Content in backend/tests/contract/delete-meal.test.ts
-- [ ] T062 [P] [US3] Integration test verifying blob and DB record are both deleted in backend/tests/integration/delete-cascade.test.ts
+- [x] T061 [P] [US3] Contract test for DELETE /api/meals/:id returns 204 No Content in backend/tests/contract/delete-meal.test.ts
+- [x] T062 [P] [US3] Integration test verifying blob and DB record are both deleted in backend/tests/integration/delete-cascade.test.ts
 
 ### Backend Implementation for User Story 3
 
-- [ ] T063 [P] [US3] Implement blobService.deleteBlob() to remove blob from storage in backend/src/services/blobService.ts
-- [ ] T064 [P] [US3] Implement mealService.deleteMeal() with cascade delete in backend/src/services/mealService.ts
-- [ ] T065 [US3] Implement DELETE /api/meals/:id function in backend/src/functions/delete-meal.ts
-- [ ] T066 [US3] Add transaction handling to ensure blob + DB delete both succeed or rollback in backend/src/functions/delete-meal.ts
-- [ ] T067 [US3] Add logging for delete operations with user ID and request ID in backend/src/functions/delete-meal.ts
+- [x] T063 [P] [US3] Implement blobService.deleteBlob() to remove blob from storage in backend/src/services/blobService.ts
+- [x] T064 [P] [US3] Implement mealService.deleteMeal() with cascade delete in backend/src/services/mealService.ts
+- [x] T065 [US3] Implement DELETE /api/meals/:id function in backend/src/functions/delete-meal.ts
+- [x] T066 [US3] Add transaction handling to ensure blob + DB delete both succeed or rollback in backend/src/functions/delete-meal.ts
+- [x] T067 [US3] Add logging for delete operations with user ID and request ID in backend/src/functions/delete-meal.ts
 
 ### Frontend Implementation for User Story 3
 
-- [ ] T068 [P] [US3] Create apiClient.deleteMeal() to call DELETE endpoint in frontend/src/services/apiClient.ts
-- [ ] T069 [P] [US3] Add delete button with confirmation dialog to AnalysisResults component in frontend/src/components/AnalysisResults.tsx
-- [ ] T070 [US3] Implement delete flow with optimistic UI update in frontend/src/components/AnalysisResults.tsx
-- [ ] T071 [US3] Add success/error messaging for delete operations in frontend/src/components/AnalysisResults.tsx
+- [x] T068 [P] [US3] Create apiClient.deleteMeal() to call DELETE endpoint in frontend/src/services/apiClient.ts
+- [x] T069 [P] [US3] Add delete button with confirmation dialog to AnalysisResults component in frontend/src/components/AnalysisResults.tsx
+- [x] T070 [US3] Implement delete flow with optimistic UI update in frontend/src/components/AnalysisResults.tsx
+- [x] T071 [US3] Add success/error messaging for delete operations in frontend/src/components/AnalysisResults.tsx
 
-**Checkpoint**: All user stories should now be independently functional - full feature complete
+**Checkpoint**: All user stories should now be independently functional - full feature complete ✅
 
 ---
 
@@ -178,23 +178,25 @@ description: "Task list for Blob Upload + GPT-5.1 Vision Analysis feature implem
 
 **Purpose**: Performance optimization, enhanced error handling, observability, and security hardening
 
-- [ ] T072 [P] Add client-side image resize/compression before upload in frontend/src/utils/imageCompression.ts
-- [ ] T073 [P] Implement file size validation in frontend before calling upload-url in frontend/src/hooks/useMealUpload.ts
-- [ ] T074 [P] Add Application Insights integration for backend telemetry in backend/src/utils/telemetry.ts
-- [ ] T075 [P] Add performance monitoring for AI calls (latency, token usage) in backend/src/services/aiService.ts
-- [ ] T076 [P] Implement SHA-256 hash calculation for blob caching in backend/src/services/blobService.ts
-- [ ] T077 [P] Add cache lookup before calling AI (if hash exists, return cached result) in backend/src/services/aiService.ts
-- [ ] T078 [P] Audit and remove any hardcoded secrets from codebase
-- [ ] T079 [P] Rotate development storage account keys if any were committed
-- [ ] T080 [P] Verify Function App Managed Identity is correctly configured with Blob Data Contributor role
-- [ ] T081 [P] Add health check endpoint for backend in backend/src/functions/health.ts
-- [ ] T082 [P] Configure CI/CD pipeline with secret scanning in infra/azure-pipelines.yml
-- [ ] T083 Create E2E test: upload → analyze → correction → verify daily totals in frontend/tests/e2e/full-flow.spec.ts
-- [ ] T084 [P] Add loading states and skeleton screens for better UX in frontend/src/components/
-- [ ] T085 [P] Implement proper TypeScript types for all API responses in frontend/src/types/
-- [ ] T086 [P] Add input sanitization for user-entered corrections in backend/src/utils/sanitize.ts
-- [ ] T087 [P] Configure rate limiting on API endpoints in backend/host.json
-- [ ] T088 [P] Add cost monitoring alerts for blob storage and AI usage in infra/bicep/monitoring.bicep
+- [x] T072 [P] Add client-side image resize/compression before upload in frontend/src/utils/imageCompression.ts
+- [x] T073 [P] Implement file size validation in frontend before calling upload-url in frontend/src/hooks/useMealUpload.ts
+- [x] T074 [P] Add Application Insights integration for backend telemetry in backend/src/utils/telemetry.ts
+- [x] T075 [P] Add performance monitoring for AI calls (latency, token usage) in backend/src/services/aiService.ts
+- [x] T076 [P] Implement SHA-256 hash calculation for blob caching in backend/src/services/blobService.ts
+- [x] T077 [P] Add cache lookup before calling AI (if hash exists, return cached result) in backend/src/services/aiService.ts
+- [x] T078 [P] Audit and remove any hardcoded secrets from codebase
+- [x] T079 [P] Rotate development storage account keys if any were committed
+- [x] T080 [P] Verify Function App Managed Identity is correctly configured with Blob Data Contributor role
+- [x] T081 [P] Add health check endpoint for backend in backend/src/functions/health.ts
+- [x] T082 [P] Configure CI/CD pipeline with secret scanning in infra/azure-pipelines.yml
+- [x] T083 Create E2E test: upload → analyze → correction → verify daily totals in frontend/tests/e2e/full-flow.spec.ts
+- [x] T084 [P] Add loading states and skeleton screens for better UX in frontend/src/components/
+- [x] T085 [P] Implement proper TypeScript types for all API responses in frontend/src/types/
+- [x] T086 [P] Add input sanitization for user-entered corrections in backend/src/utils/sanitize.ts
+- [x] T087 [P] Configure rate limiting on API endpoints in backend/host.json
+- [x] T088 [P] Add cost monitoring alerts for blob storage and AI usage in infra/bicep/monitoring.bicep
+
+**Checkpoint**: Feature 001 is now COMPLETE! All tasks implemented. ✅
 
 ---
 
