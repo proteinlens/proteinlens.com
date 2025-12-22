@@ -52,6 +52,13 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      - name: Create Resource Group
+        run: |
+          az group create \
+            --name "${{ env.RESOURCE_GROUP }}" \
+            --location "${{ env.AZURE_LOCATION }}"
+          echo "✅ Resource group created or verified"
+
       - name: Validate Bicep deployment
         run: |
           az deployment group validate \
