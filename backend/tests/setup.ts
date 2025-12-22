@@ -13,34 +13,34 @@ process.env.STRIPE_SECRET_KEY = 'sk_test_123';
 process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test_123';
 process.env.STRIPE_PRO_PRICE_ID = 'price_test_123';
 
-// Mock PrismaClient globally using class syntax
+// Mock PrismaClient globally using constructor function syntax
 vi.mock('@prisma/client', () => {
-  class MockPrismaClient {
-    user = {
+  function MockPrismaClient(this: any) {
+    this.user = {
       findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       upsert: vi.fn(),
     };
-    mealAnalysis = {
+    this.mealAnalysis = {
       findUnique: vi.fn(),
       findMany: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
     };
-    food = {
+    this.food = {
       findMany: vi.fn(),
       create: vi.fn(),
       createMany: vi.fn(),
       deleteMany: vi.fn(),
     };
-    usage = {
+    this.usage = {
       count: vi.fn(),
       create: vi.fn(),
       findMany: vi.fn(),
     };
-    $transaction = vi.fn((fn: any) => fn(this));
+    this.$transaction = vi.fn((fn: any) => fn(this));
   }
 
   return {
@@ -61,20 +61,20 @@ vi.mock('@prisma/client', () => {
   };
 });
 
-// Mock Azure Identity using class syntax
+// Mock Azure Identity using constructor function syntax
 vi.mock('@azure/identity', () => {
-  class MockDefaultAzureCredential {
-    getToken = vi.fn().mockResolvedValue({ token: 'test-token' });
+  function MockDefaultAzureCredential(this: any) {
+    this.getToken = vi.fn().mockResolvedValue({ token: 'test-token' });
   }
   return {
     DefaultAzureCredential: MockDefaultAzureCredential,
   };
 });
 
-// Mock Azure Storage Blob using class syntax
+// Mock Azure Storage Blob using constructor function syntax
 vi.mock('@azure/storage-blob', () => {
-  class MockBlobServiceClient {
-    getContainerClient = vi.fn(() => ({
+  function MockBlobServiceClient(this: any) {
+    this.getContainerClient = vi.fn(() => ({
       getBlockBlobClient: vi.fn(() => ({
         generateSasUrl: vi.fn().mockResolvedValue('https://test.blob.core.windows.net/test?sig=test'),
         exists: vi.fn().mockResolvedValue(true),
@@ -94,23 +94,23 @@ vi.mock('@azure/storage-blob', () => {
   };
 });
 
-// Mock Stripe using class syntax
+// Mock Stripe using constructor function syntax
 vi.mock('stripe', () => {
-  class MockStripe {
-    customers = {
+  function MockStripe(this: any) {
+    this.customers = {
       create: vi.fn().mockResolvedValue({ id: 'cus_test' }),
     };
-    checkout = {
+    this.checkout = {
       sessions: {
         create: vi.fn().mockResolvedValue({ url: 'https://checkout.stripe.com/test' }),
       },
     };
-    billingPortal = {
+    this.billingPortal = {
       sessions: {
         create: vi.fn().mockResolvedValue({ url: 'https://billing.stripe.com/test' }),
       },
     };
-    webhooks = {
+    this.webhooks = {
       constructEvent: vi.fn(),
     };
   }

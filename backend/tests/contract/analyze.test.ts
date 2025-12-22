@@ -7,8 +7,9 @@ import { AIAnalysisResponseSchema } from '../../src/models/schemas.js';
 
 describe('POST /api/meals/analyze - Contract Test', () => {
   const FUNCTION_URL = process.env.FUNCTION_URL || 'http://localhost:7071/api/meals/analyze';
+  const SKIP_LIVE_TESTS = !process.env.FUNCTION_URL; // Skip if no live function URL
 
-  it('should return 200 with valid AI analysis response schema', async () => {
+  it.skipIf(SKIP_LIVE_TESTS)('should return 200 with valid AI analysis response schema', async () => {
     // Note: This test requires a valid blobName from a prior upload
     // In integration tests, we'll do full upload → analyze flow
     const requestBody = {
@@ -73,7 +74,7 @@ describe('POST /api/meals/analyze - Contract Test', () => {
     expect(response.headers.get('X-Request-ID')).toBeTruthy();
   });
 
-  it('should return 400 for missing blobName', async () => {
+  it.skipIf(SKIP_LIVE_TESTS)('should return 400 for missing blobName', async () => {
     const requestBody = {};
 
     const response = await fetch(FUNCTION_URL, {
@@ -89,7 +90,7 @@ describe('POST /api/meals/analyze - Contract Test', () => {
     expect(data.error).toMatch(/blobName.*required/i);
   });
 
-  it('should return 400 for invalid blobName format', async () => {
+  it.skipIf(SKIP_LIVE_TESTS)('should return 400 for invalid blobName format', async () => {
     const requestBody = {
       blobName: 'invalid-format.jpg', // Missing meals/{userId}/ prefix
     };
@@ -106,7 +107,7 @@ describe('POST /api/meals/analyze - Contract Test', () => {
     expect(data).toHaveProperty('error');
   });
 
-  it('should return 404 for non-existent blob', async () => {
+  it.skipIf(SKIP_LIVE_TESTS)('should return 404 for non-existent blob', async () => {
     const requestBody = {
       blobName: 'meals/testuser/nonexistent-12345.jpg',
     };
@@ -124,7 +125,7 @@ describe('POST /api/meals/analyze - Contract Test', () => {
     expect(data).toHaveProperty('error');
   });
 
-  it('should include requestId in response for traceability', async () => {
+  it.skipIf(SKIP_LIVE_TESTS)('should include requestId in response for traceability', async () => {
     const requestBody = {
       blobName: 'meals/testuser/trace-test.jpg',
     };

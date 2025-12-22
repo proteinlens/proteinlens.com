@@ -96,7 +96,7 @@ jobs:
           name: backend-build
 
       - name: Setup Azure CLI
-        uses: azure/setup-azure-cli@v3
+        uses: azure/setup-azure-cli@v1
 
       - name: Login to Azure
         env:
