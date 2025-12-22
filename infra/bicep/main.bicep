@@ -16,7 +16,6 @@ module keyVault './keyvault.bicep' = {
   params: {
     location: location
     keyVaultName: keyVaultName
-    functionAppPrincipalId: '' // Will be updated after Function App created
   }
 }
 
@@ -38,6 +37,22 @@ module functionApp './function-app.bicep' = {
     functionAppName: functionAppName
     storageAccountName: storage.outputs.storageAccountName
     keyVaultUri: keyVault.outputs.keyVaultUri
+  }
+}
+
+// Grant Function App access to Key Vault after it's created
+resource keyVaultAccessPolicy 'Microsoft.KeyVault/vaults/accessPolicies@2023-07-01' = {
+  name: '${keyVaultName}/add'
+  properties: {
+    accessPolicies: [
+      {
+        tenantId: subscription().tenantId
+        objectId: functionApp.outputs.functionAppPrincipalId
+        permissions: {
+          secrets: ['get', 'list']
+        }
+      }
+    ]
   }
 }
 

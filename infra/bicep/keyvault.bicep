@@ -4,7 +4,6 @@
 param location string = resourceGroup().location
 param keyVaultName string
 param tenantId string = subscription().tenantId
-param functionAppPrincipalId string
 
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   name: keyVaultName
@@ -15,21 +14,11 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
       name: 'standard'
     }
     tenantId: tenantId
-    enableRbacAuthorization: true
+    enableRbacAuthorization: false
     enableSoftDelete: true
     softDeleteRetentionInDays: 90
-    enablePurgeProtection: true
-  }
-}
-
-// Grant Function App access to secrets
-resource secretUserRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  scope: keyVault
-  name: guid(keyVault.id, functionAppPrincipalId, 'Key Vault Secrets User')
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6') // Key Vault Secrets User
-    principalId: functionAppPrincipalId
-    principalType: 'ServicePrincipal'
+    enablePurgeProtection: false
+    accessPolicies: []
   }
 }
 

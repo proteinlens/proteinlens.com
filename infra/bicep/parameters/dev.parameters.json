@@ -12,7 +12,7 @@
       "value": "proteinlens"
     },
     "storageAccountName": {
-      "value": "proteinlensdevsa"
+      "value": "pldevsa"
     },
     "functionAppName": {
       "value": "proteinlens-api-dev"
