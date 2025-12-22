@@ -3,16 +3,26 @@
 // T028: Added /pricing route for billing feature
 // T038: Added UsageCounter to navigation (Feature 002)
 // T071: Added /settings route for billing management
+// Feature 003: React Query + Theme Provider setup
 
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MealUpload } from './components/MealUpload';
 import { PricingPage } from './pages/PricingPage';
 import { CheckoutSuccessPage } from './pages/CheckoutSuccessPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { Home } from './pages/Home';
 import { UsageCounter } from './components/UsageCounter';
 import { useUsage } from './hooks/useUsage';
+import { ThemeProvider } from './contexts/ThemeContext';
+import { BottomNav } from './components/layout/BottomNav';
+import { PageContainer } from './components/layout/PageContainer';
 import './App.css';
+import './index.css';
+
+// Lazy load History page
+const History = lazy(() => import('./pages/History').then(m => ({ default: m.History })));
 
 // Navigation component with usage counter
 const Navigation: React.FC = () => {
@@ -54,20 +64,46 @@ const Navigation: React.FC = () => {
 };
 
 function App() {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 1000 * 60,
+        gcTime: 1000 * 60 * 5,
+        retry: 1,
+        refetchOnWindowFocus: false,
+      },
+    },
+  });
+
   return (
-    <BrowserRouter>
-      <div className="app">
-        <Navigation />
-        <main className="app-main">
-          <Routes>
-            <Route path="/" element={<MealUpload />} />
-            <Route path="/pricing" element={<PricingPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/billing/success" element={<CheckoutSuccessPage />} />
-          </Routes>
-        </main>
-      </div>
-    </BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <BrowserRouter>
+          <div className="app flex flex-col min-h-screen bg-background text-foreground">
+            <Navigation />
+            <PageContainer>
+              <Suspense fallback={
+                <div className="flex items-center justify-center min-h-screen">
+                  <div className="text-center">
+                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                    <p className="text-muted-foreground">Loading...</p>
+                  </div>
+                </div>
+              }>
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/history" element={<History />} />
+                  <Route path="/pricing" element={<PricingPage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/billing/success" element={<CheckoutSuccessPage />} />
+                </Routes>
+              </Suspense>
+            </PageContainer>
+            <BottomNav />
+          </div>
+        </BrowserRouter>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
 

@@ -195,8 +195,7 @@ export const AnalysisResults: React.FC<AnalysisResultsProps> = ({
             </div>
           </div>
         </div>
-      )
-      </div>
+      )}
 
       {/* T60: MealEditor modal/panel */}
       {isEditing && (
@@ -212,7 +211,7 @@ export const AnalysisResults: React.FC<AnalysisResultsProps> = ({
                 if (corrections.foods) {
                   setCurrentResult(prev => ({
                     ...prev,
-                    foods: corrections.foods!,
+                    foods: corrections.foods! as any,
                     totalProtein: corrections.totalProtein || prev.totalProtein,
                   }));
                 }
