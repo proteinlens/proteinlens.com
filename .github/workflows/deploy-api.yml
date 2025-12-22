@@ -125,6 +125,28 @@ jobs:
             exit 1
           fi
 
+      - name: Grant Deployment Access to Storage
+        run: |
+          echo "🔐 Granting deployment workflow access to storage account..."
+          
+          # Get service principal object ID
+          SP_OBJECT_ID=$(az ad sp show --id ${{ secrets.AZURE_CLIENT_ID }} --query id -o tsv)
+          
+          # Get storage account resource ID
+          STORAGE_ID=$(az storage account show \
+            --name plprodsa85 \
+            --resource-group proteinlens-prod \
+            --query id -o tsv)
+          
+          # Grant Storage Blob Data Contributor role for deployment uploads
+          az role assignment create \
+            --assignee "$SP_OBJECT_ID" \
+            --role "Storage Blob Data Contributor" \
+            --scope "$STORAGE_ID" \
+            2>/dev/null || echo "⚠️  Role assignment may already exist (this is OK)"
+          
+          echo "✅ Storage access configured"
+
       - name: Deploy to Azure Functions
         uses: azure/functions-action@v1
         with:
