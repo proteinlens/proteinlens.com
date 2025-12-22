@@ -17,6 +17,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
     supportsHttpsTrafficOnly: true
     minimumTlsVersion: 'TLS1_2'
     allowBlobPublicAccess: false
+    allowSharedKeyAccess: false  // Comply with Azure security policy
     networkAcls: {
       defaultAction: 'Allow' // Can be restricted to specific VNets in production
     }
