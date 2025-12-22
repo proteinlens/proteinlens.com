@@ -1,21 +1,23 @@
-import React from 'react'
-import { motion } from 'framer-motion'
+import React, { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import type { FoodItem as FoodItemType } from '@/types/meal'
 import { cn } from '@/utils/cn'
 import { getCardVariants, getInteractionScale, getStaggerSettings } from '@/utils/animations'
+import { FoodItemEditor } from './FoodItemEditor'
 
 interface FoodItemProps {
+  mealId: string
   item: FoodItemType
   onEdit?: (item: FoodItemType) => void
   isEditing?: boolean
+  onCancelEdit?: () => void
 }
 
-export function FoodItem({ item, onEdit, isEditing = false }: FoodItemProps) {
+export function FoodItem({ mealId, item, onEdit, isEditing = false, onCancelEdit }: FoodItemProps) {
   const cardVariants = getCardVariants()
   const { hover, tap } = getInteractionScale()
   
-  return (
-    <motion.div
+  return (    <>    <motion.div
       className={cn(
         'bg-card border border-border rounded-lg p-4 md:p-5 transition-all',
         'hover:border-primary/50 cursor-pointer group',
@@ -84,16 +86,28 @@ export function FoodItem({ item, onEdit, isEditing = false }: FoodItemProps) {
         </span>
       </div>
     </motion.div>
+    
+    <AnimatePresence>
+      {isEditing && (
+        <FoodItemEditor
+          mealId={mealId}
+          foodItem={item}
+          onSave={() => onCancelEdit?.()}
+          onCancel={() => onCancelEdit?.()}
+        />
+      )}
+    </AnimatePresence>
+    </>
   )
 }
 
 interface FoodItemListProps {
+  mealId: string
   items: FoodItemType[]
-  onEdit?: (item: FoodItemType) => void
-  editingId?: string
 }
 
-export function FoodItemList({ items, onEdit, editingId }: FoodItemListProps) {
+export function FoodItemList({ mealId, items }: FoodItemListProps) {
+  const [editingId, setEditingId] = useState<string | null>(null)
   const staggerSettings = getStaggerSettings()
   
   const containerVariants = {
@@ -125,9 +139,11 @@ export function FoodItemList({ items, onEdit, editingId }: FoodItemListProps) {
             {items.map((item, index) => (
               <FoodItem
                 key={item.id}
+                mealId={mealId}
                 item={item}
-                onEdit={onEdit}
+                onEdit={(item) => setEditingId(item.id)}
                 isEditing={editingId === item.id}
+                onCancelEdit={() => setEditingId(null)}
               />
             ))}
           </motion.div>

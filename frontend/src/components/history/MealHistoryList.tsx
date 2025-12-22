@@ -1,13 +1,15 @@
 import React from 'react'
 import { format, isToday, isYesterday } from 'date-fns'
 import { MealHistoryCard } from './MealHistoryCard'
+import { Button } from '@/components/ui/Button'
 
 interface MealHistoryListProps {
   meals: any[]
   onMealClick?: (meal: any) => void
+  onMealDelete?: () => void
 }
 
-export function MealHistoryList({ meals, onMealClick }: MealHistoryListProps) {
+export function MealHistoryList({ meals, onMealClick, onMealDelete }: MealHistoryListProps) {
   // Group meals by date
   const groupedMeals = React.useMemo(() => {
     const groups: { [key: string]: any[] } = {}
@@ -94,9 +96,11 @@ export function MealHistoryList({ meals, onMealClick }: MealHistoryListProps) {
           <div className="space-y-3">
             {groupedMeals[date].map((meal) => (
               <MealHistoryCard
-                key={meal.mealAnalysisId || meal.id}
+                key={meal.id || meal.mealAnalysisId}
+                mealId={meal.id || meal.mealAnalysisId}
                 meal={meal}
                 onClick={() => onMealClick?.(meal)}
+                onDelete={onMealDelete}
               />
             ))}
           </div>

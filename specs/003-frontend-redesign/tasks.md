@@ -25,18 +25,18 @@
 
 **Purpose**: Project initialization and dependency installation
 
-- [ ] T001 Install React Query dependencies in frontend/package.json (@tanstack/react-query@^5.0.0, @tanstack/react-query-devtools)
-- [ ] T002 [P] Install Framer Motion in frontend/package.json (framer-motion@^11.0.0)
-- [ ] T003 [P] Install shadcn/ui CLI and initialize with default config (npx shadcn-ui@latest init)
-- [ ] T004 [P] Install Recharts for charting in frontend/package.json (recharts@^2.10.0)
-- [ ] T005 [P] Install browser-image-compression in frontend/package.json (browser-image-compression@^2.0.0)
-- [ ] T006 [P] Install utility libraries: clsx, tailwind-merge, date-fns in frontend/package.json
-- [ ] T007 Install testing dependencies: vitest, @testing-library/react, @testing-library/jest-dom, @testing-library/user-event
-- [ ] T008 [P] Install eslint-plugin-jsx-a11y for accessibility linting
-- [ ] T009 Configure Tailwind with design tokens in frontend/tailwind.config.js (colors, spacing, breakpoints per research.md)
-- [ ] T010 [P] Update ESLint config with jsx-a11y plugin in frontend/.eslintrc.cjs
-- [ ] T011 [P] Add shadcn/ui components: button, card, input, label, toast, skeleton (npx shadcn-ui add)
-- [ ] T012 [P] Create cn() utility in frontend/src/utils/cn.ts (clsx + tailwind-merge)
+- [X] T001 Install React Query dependencies in frontend/package.json (@tanstack/react-query@^5.0.0, @tanstack/react-query-devtools)
+- [X] T002 [P] Install Framer Motion in frontend/package.json (framer-motion@^11.0.0)
+- [X] T003 [P] Install shadcn/ui CLI and initialize with default config (npx shadcn-ui@latest init)
+- [X] T004 [P] Install Recharts for charting in frontend/package.json (recharts@^2.10.0)
+- [X] T005 [P] Install browser-image-compression in frontend/package.json (browser-image-compression@^2.0.0)
+- [X] T006 [P] Install utility libraries: clsx, tailwind-merge, date-fns in frontend/package.json
+- [X] T007 Install testing dependencies: vitest, @testing-library/react, @testing-library/jest-dom, @testing-library/user-event
+- [X] T008 [P] Install eslint-plugin-jsx-a11y for accessibility linting
+- [X] T009 Configure Tailwind with design tokens in frontend/tailwind.config.js (colors, spacing, breakpoints per research.md)
+- [X] T010 [P] Update ESLint config with jsx-a11y plugin in frontend/.eslintrc.cjs
+- [X] T011 [P] Add shadcn/ui components: button, card, input, label, toast, skeleton (npx shadcn-ui add)
+- [X] T012 [P] Create cn() utility in frontend/src/utils/cn.ts (clsx + tailwind-merge)
 
 ---
 
@@ -46,22 +46,22 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T013 Setup React Query QueryClient in frontend/src/App.tsx with config from contracts/state.md
-- [ ] T014 [P] Create ThemeProvider context in frontend/src/contexts/ThemeContext.tsx (light/dark/system modes)
-- [ ] T015 [P] Create query keys structure in frontend/src/hooks/queryKeys.ts per contracts/state.md
-- [ ] T016 [P] Create TypeScript interfaces in frontend/src/types/meal.ts (Meal, FoodItem, Correction per data-model.md)
-- [ ] T017 [P] Create TypeScript interfaces in frontend/src/types/goal.ts (DailyGoal, ProteinGap per data-model.md)
-- [ ] T018 [P] Create TypeScript interfaces in frontend/src/types/api.ts (API request/response types)
-- [ ] T019 Create apiClient wrapper in frontend/src/services/apiClient.ts (fetch with auth, base URL from env)
+- [X] T013 Setup React Query QueryClient in frontend/src/App.tsx with config from contracts/state.md
+- [X] T014 [P] Create ThemeProvider context in frontend/src/contexts/ThemeContext.tsx (light/dark/system modes)
+- [X] T015 [P] Create query keys structure in frontend/src/hooks/queryKeys.ts per contracts/state.md
+- [X] T016 [P] Create TypeScript interfaces in frontend/src/types/meal.ts (Meal, FoodItem, Correction per data-model.md)
+- [X] T017 [P] Create TypeScript interfaces in frontend/src/types/goal.ts (DailyGoal, ProteinGap per data-model.md)
+- [X] T018 [P] Create TypeScript interfaces in frontend/src/types/api.ts (API request/response types)
+- [X] T019 Create apiClient wrapper in frontend/src/services/apiClient.ts (fetch with auth, base URL from env)
 - [ ] T020 [P] Create mealService in frontend/src/services/mealService.ts (getAll, getById, editFoodItem, delete methods)
 - [ ] T021 [P] Create uploadService in frontend/src/services/uploadService.ts (upload, pollAnalysis methods)
-- [ ] T022 Create upload state machine reducer in frontend/src/utils/uploadStateMachine.ts per contracts/state.md
-- [ ] T023 [P] Create useUpload hook in frontend/src/hooks/useUpload.ts wrapping state machine
-- [ ] T024 [P] Setup React Router with lazy loading in frontend/src/App.tsx (/, /history, /settings routes)
-- [ ] T025 [P] Create PageContainer layout component in frontend/src/components/layout/PageContainer.tsx
-- [ ] T026 [P] Create BottomNav component in frontend/src/components/layout/BottomNav.tsx (mobile navigation)
+- [X] T022 Create upload state machine reducer in frontend/src/utils/uploadStateMachine.ts per contracts/state.md
+- [X] T023 [P] Create useUpload hook in frontend/src/hooks/useUpload.ts wrapping state machine
+- [X] T024 [P] Setup React Router with lazy loading in frontend/src/App.tsx (/, /history, /settings routes)
+- [X] T025 [P] Create PageContainer layout component in frontend/src/components/layout/PageContainer.tsx
+- [X] T026 [P] Create BottomNav component in frontend/src/components/layout/BottomNav.tsx (mobile navigation)
 - [ ] T027 [P] Create Sidebar component in frontend/src/components/layout/Sidebar.tsx (desktop navigation)
-- [ ] T028 Configure vitest in frontend/vitest.config.ts
+- [X] T028 Configure vitest in frontend/vitest.config.ts
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -75,14 +75,14 @@
 
 ### Implementation for User Story 1
 
-- [ ] T029 [P] [US1] Create Home page component in frontend/src/pages/Home.tsx (route handler)
-- [ ] T030 [P] [US1] Create HeroUploadCard component in frontend/src/components/home/HeroUploadCard.tsx per contracts/components.md
+- [X] T029 [P] [US1] Create Home page component in frontend/src/pages/Home.tsx (route handler)
+- [X] T030 [P] [US1] Create HeroUploadCard component in frontend/src/components/home/HeroUploadCard.tsx per contracts/components.md
 - [ ] T031 [P] [US1] Create ExampleResults static component in frontend/src/components/home/ExampleResults.tsx (mock data preview)
-- [ ] T032 [US1] Integrate HeroUploadCard into Home page with upload click handler
-- [ ] T033 [US1] Add Framer Motion page transition to Home in frontend/src/App.tsx (fade + slide, 300ms)
-- [ ] T034 [US1] Style HeroUploadCard with gradient background + glass effect using Tailwind
-- [ ] T035 [US1] Ensure CTA button is 44×44px minimum and positioned in bottom third on mobile
-- [ ] T036 [US1] Add trust elements: "AI-powered", "Edit anytime", "Your data, your control" badges
+- [X] T032 [US1] Integrate HeroUploadCard into Home page with upload click handler
+- [X] T033 [US1] Add Framer Motion page transition to Home in frontend/src/App.tsx (fade + slide, 300ms)
+- [X] T034 [US1] Style HeroUploadCard with gradient background + glass effect using Tailwind
+- [X] T035 [US1] Ensure CTA button is 44×44px minimum and positioned in bottom third on mobile
+- [X] T036 [US1] Add trust elements: "AI-powered", "Edit anytime", "Your data, your control" badges
 
 **Checkpoint**: Home page loads with hero section, CTA, trust elements - FCP <300ms
 
@@ -96,17 +96,17 @@
 
 ### Implementation for User Story 2
 
-- [ ] T037 [P] [US2] Create UploadDropzone component in frontend/src/components/upload/UploadDropzone.tsx per contracts/components.md
-- [ ] T038 [P] [US2] Create ImagePreview component in frontend/src/components/upload/ImagePreview.tsx with replace/remove buttons
-- [ ] T039 [P] [US2] Create AnalyzeProgress component in frontend/src/components/upload/AnalyzeProgress.tsx (skeleton screens, no spinners)
-- [ ] T040 [US2] Integrate UploadDropzone into Home page (show when user clicks upload CTA)
-- [ ] T041 [US2] Add file validation in UploadDropzone (max 10MB, image/* only, display errors)
-- [ ] T042 [US2] Generate preview URL (blob URL) when file selected in useUpload hook
-- [ ] T043 [US2] Implement upload progress tracking in uploadService with progress callback
-- [ ] T044 [US2] Add skeleton loading cards in AnalyzeProgress (shimmer effect, matches results structure)
-- [ ] T045 [US2] Add Framer Motion fade-in transition (300ms) when results replace skeleton
-- [ ] T046 [US2] Ensure touch targets are 44×44px for "Replace" and "Remove" buttons on mobile
-- [ ] T047 [US2] Add client-side image compression before upload using browser-image-compression
+- [X] T037 [P] [US2] Create UploadDropzone component in frontend/src/components/upload/UploadDropzone.tsx per contracts/components.md
+- [X] T038 [P] [US2] Create ImagePreview component in frontend/src/components/upload/ImagePreview.tsx with replace/remove buttons
+- [X] T039 [P] [US2] Create AnalyzeProgress component in frontend/src/components/upload/AnalyzeProgress.tsx (skeleton screens, no spinners)
+- [X] T040 [US2] Integrate UploadDropzone into Home page (show when user clicks upload CTA)
+- [X] T041 [US2] Add file validation in UploadDropzone (max 10MB, image/* only, display errors)
+- [X] T042 [US2] Generate preview URL (blob URL) when file selected in useUpload hook
+- [X] T043 [US2] Implement upload progress tracking in uploadService with progress callback
+- [X] T044 [US2] Add skeleton loading cards in AnalyzeProgress (shimmer effect, matches results structure)
+- [X] T045 [US2] Add Framer Motion fade-in transition (300ms) when results replace skeleton
+- [X] T046 [US2] Ensure touch targets are 44×44px for "Replace" and "Remove" buttons on mobile
+- [X] T047 [US2] Add client-side image compression before upload using browser-image-compression
 
 **Checkpoint**: Upload flow works (idle → selected → uploading → analyzing → done), smooth transitions
 
@@ -120,20 +120,20 @@
 
 ### Implementation for User Story 3
 
-- [ ] T048 [P] [US3] Create MealSummaryCard component in frontend/src/components/results/MealSummaryCard.tsx per contracts/components.md
-- [ ] T049 [P] [US3] Create FoodItemList component in frontend/src/components/results/FoodItemList.tsx
-- [ ] T050 [P] [US3] Create FoodItem component in frontend/src/components/results/FoodItem.tsx (single item row)
-- [ ] T051 [P] [US3] Create useMeal hook in frontend/src/hooks/useMeal.ts (React Query fetch single meal)
-- [ ] T052 [P] [US3] Create useMeals hook in frontend/src/hooks/useMeals.ts (React Query fetch all meals)
-- [ ] T053 [US3] Display MealSummaryCard in Home page after upload completes (show results inline)
-- [ ] T054 [US3] Calculate and display total protein prominently (24px font on desktop, 20px on mobile)
-- [ ] T055 [US3] Display calories and macros if available from analysis (optional fields)
-- [ ] T056 [US3] Render FoodItemList with columns: name, portion, protein, confidence badge
-- [ ] T057 [US3] Add confidence badge (e.g., "85% confident") only if confidence <95%
-- [ ] T058 [US3] Display original meal image in MealSummaryCard with "what AI saw" label
-- [ ] T059 [US3] Make results scrollable on mobile without blocking total protein display (sticky header)
+- [X] T048 [P] [US3] Create MealSummaryCard component in frontend/src/components/results/MealSummaryCard.tsx per contracts/components.md
+- [X] T049 [P] [US3] Create FoodItemList component in frontend/src/components/results/FoodItemList.tsx
+- [X] T050 [P] [US3] Create FoodItem component in frontend/src/components/results/FoodItem.tsx (single item row)
+- [X] T051 [P] [US3] Create useMeal hook in frontend/src/hooks/useMeal.ts (React Query fetch single meal)
+- [X] T052 [P] [US3] Create useMeals hook in frontend/src/hooks/useMeals.ts (React Query fetch all meals)
+- [X] T053 [US3] Display MealSummaryCard in Home page after upload completes (show results inline)
+- [X] T054 [US3] Calculate and display total protein prominently (24px font on desktop, 20px on mobile)
+- [X] T055 [US3] Display calories and macros if available from analysis (optional fields)
+- [X] T056 [US3] Render FoodItemList with columns: name, portion, protein, confidence badge
+- [X] T057 [US3] Add confidence badge (e.g., "85% confident") only if confidence <95%
+- [X] T058 [US3] Display original meal image in MealSummaryCard with "what AI saw" label
+- [X] T059 [US3] Make results scrollable on mobile without blocking total protein display (sticky header)
 - [ ] T060 [US3] Add expandable detail view on mobile when tapping food item (show full portion/notes)
-- [ ] T061 [US3] Ensure layout is responsive: stacked on mobile (<768px), side-by-side on desktop (>=768px)
+- [X] T061 [US3] Ensure layout is responsive: stacked on mobile (<768px), side-by-side on desktop (>=768px)
 
 **Checkpoint**: Results display correctly with all required elements, responsive on mobile and desktop
 
@@ -147,20 +147,20 @@
 
 ### Implementation for User Story 4
 
-- [ ] T062 [P] [US4] Create FoodItemEditor component in frontend/src/components/results/FoodItemEditor.tsx per contracts/components.md
-- [ ] T063 [P] [US4] Create useEditFoodItem hook in frontend/src/hooks/useEditFoodItem.ts with optimistic update per contracts/state.md
-- [ ] T064 [US4] Add edit mode to FoodItem component (show editor when clicked)
-- [ ] T065 [US4] Implement inline edit form with fields: name (text), portion (text), protein (number)
-- [ ] T066 [US4] Display original AI-detected value for reference ("AI detected: 25g, You: —")
-- [ ] T067 [US4] Add optimistic update logic in useEditFoodItem (instant UI change before server response)
-- [ ] T068 [US4] Recalculate meal total protein in real-time when protein value changes
-- [ ] T069 [US4] Add Save and Cancel buttons (44×44px touch targets)
+- [X] T062 [P] [US4] Create FoodItemEditor component in frontend/src/components/results/FoodItemEditor.tsx per contracts/components.md
+- [X] T063 [P] [US4] Create useEditFoodItem hook in frontend/src/hooks/useEditFoodItem.ts with optimistic update per contracts/state.md
+- [X] T064 [US4] Add edit mode to FoodItem component (show editor when clicked)
+- [X] T065 [US4] Implement inline edit form with fields: name (text), portion (text), protein (number)
+- [X] T066 [US4] Display original AI-detected value for reference ("AI detected: 25g, You: —")
+- [X] T067 [US4] Add optimistic update logic in useEditFoodItem (instant UI change before server response)
+- [X] T068 [US4] Recalculate meal total protein in real-time when protein value changes
+- [X] T069 [US4] Add Save and Cancel buttons (44×44px touch targets)
 - [ ] T070 [US4] Show confirmation toast on successful save ("Item saved")
-- [ ] T071 [US4] Rollback optimistic update on error (restore previous value)
+- [X] T071 [US4] Rollback optimistic update on error (restore previous value)
 - [ ] T072 [US4] Add notes field to meal (optional user context)
-- [ ] T073 [US4] Ensure form labels are always visible (not placeholder-only) with 4.5:1 contrast
-- [ ] T074 [US4] Add keyboard support: Enter to save, Escape to cancel
-- [ ] T075 [US4] Mark edited items with visual indicator (pencil icon or "edited" badge)
+- [X] T073 [US4] Ensure form labels are always visible (not placeholder-only) with 4.5:1 contrast
+- [X] T074 [US4] Add keyboard support: Enter to save, Escape to cancel
+- [X] T075 [US4] Mark edited items with visual indicator (pencil icon or "edited" badge)
 
 **Checkpoint**: Editing works with instant UI feedback, persists to backend, error handling in place
 
@@ -174,20 +174,20 @@
 
 ### Implementation for User Story 5
 
-- [ ] T076 [P] [US5] Create ProteinGapWidget component in frontend/src/components/coaching/ProteinGapWidget.tsx per contracts/components.md
-- [ ] T077 [P] [US5] Create SuggestionCard component in frontend/src/components/coaching/SuggestionCard.tsx
-- [ ] T078 [P] [US5] Create useGoal hook in frontend/src/hooks/useGoal.ts (localStorage + optional backend sync)
-- [ ] T079 [P] [US5] Create useProteinGap hook in frontend/src/hooks/useProteinGap.ts (computed from meals + goal)
-- [ ] T080 [P] [US5] Create static suggestions data in frontend/src/data/suggestions.ts (6 high-protein foods per data-model.md)
-- [ ] T081 [US5] Calculate protein gap client-side (goal - sum of today's meals)
-- [ ] T082 [US5] Display gap message: "X grams to reach your 150g daily goal" (16px+ font)
-- [ ] T083 [US5] Display 3 random suggestions from static data with protein content
-- [ ] T084 [US5] Show "🎯 Goal met!" when gap <= 0 (consumed >= goal)
-- [ ] T085 [US5] Add color-coding: red (<50% complete), yellow (50-90%), green (90%+)
+- [X] T076 [P] [US5] Create ProteinGapWidget component in frontend/src/components/coaching/ProteinGapWidget.tsx per contracts/components.md
+- [X] T077 [P] [US5] Create SuggestionCard component in frontend/src/components/coaching/SuggestionCard.tsx
+- [X] T078 [P] [US5] Create useGoal hook in frontend/src/hooks/useGoal.ts (localStorage + optional backend sync)
+- [X] T079 [P] [US5] Create useProteinGap hook in frontend/src/hooks/useProteinGap.ts (computed from meals + goal)
+- [X] T080 [P] [US5] Create static suggestions data in frontend/src/data/suggestions.ts (6 high-protein foods per data-model.md)
+- [X] T081 [US5] Calculate protein gap client-side (goal - sum of today's meals)
+- [X] T082 [US5] Display gap message: "X grams to reach your 150g daily goal" (16px+ font)
+- [X] T083 [US5] Display 3 random suggestions from static data with protein content
+- [X] T084 [US5] Show "🎯 Goal met!" when gap <= 0 (consumed >= goal)
+- [X] T085 [US5] Add color-coding: red (<50% complete), yellow (50-90%), green (90%+)
 - [ ] T086 [US5] Display "Set your daily protein goal" CTA if goal not configured
 - [ ] T087 [US5] Implement quick add button for suggestions (optional - adds to current meal)
-- [ ] T088 [US5] Reset gap calculation at midnight UTC (new day starts)
-- [ ] T089 [US5] Add ProteinGapWidget to Home page below results or in sidebar
+- [X] T088 [US5] Reset gap calculation at midnight UTC (new day starts)
+- [X] T089 [US5] Add ProteinGapWidget to Home page below results or in sidebar
 
 **Checkpoint**: Gap widget displays accurate calculation, suggestions rotate, quick add works
 
@@ -201,22 +201,22 @@
 
 ### Implementation for User Story 6
 
-- [ ] T090 [P] [US6] Create History page component in frontend/src/pages/History.tsx (lazy-loaded route)
-- [ ] T091 [P] [US6] Create MealHistoryList component in frontend/src/components/history/MealHistoryList.tsx per contracts/components.md
-- [ ] T092 [P] [US6] Create MealHistoryCard component in frontend/src/components/history/MealHistoryCard.tsx (single meal in list)
-- [ ] T093 [P] [US6] Create WeeklyTrendChart component in frontend/src/components/history/WeeklyTrendChart.tsx using Recharts
-- [ ] T094 [P] [US6] Create useWeeklyTrend hook in frontend/src/hooks/useWeeklyTrend.ts (computed from meals)
-- [ ] T095 [US6] Group meals by date (most recent first) with date headers ("Today", "Yesterday", "Dec 20")
-- [ ] T096 [US6] Display meal cards with: thumbnail image, total protein, timestamp
-- [ ] T097 [US6] Calculate weekly trend (7 days, today - 6 days) with daily totals
-- [ ] T098 [US6] Render bar chart with 7 bars (Mon, Tue, Wed... labels)
-- [ ] T099 [US6] Highlight today's bar with different color
-- [ ] T100 [US6] Add tooltip on hover/tap: "Monday: 145g protein (3 meals)"
-- [ ] T101 [US6] Show average line across chart (optional)
-- [ ] T102 [US6] Ensure chart is responsive (no horizontal scroll on mobile)
-- [ ] T103 [US6] Add empty state: "No meals yet. Upload your first meal →" with CTA
-- [ ] T104 [US6] Implement meal click navigation to /meal/:id or inline modal (show full results)
-- [ ] T105 [US6] Lazy-load Recharts library only when History route is accessed
+- [X] T090 [P] [US6] Create History page component in frontend/src/pages/History.tsx (lazy-loaded route)
+- [X] T091 [P] [US6] Create MealHistoryList component in frontend/src/components/history/MealHistoryList.tsx per contracts/components.md
+- [X] T092 [P] [US6] Create MealHistoryCard component in frontend/src/components/history/MealHistoryCard.tsx (single meal in list)
+- [X] T093 [P] [US6] Create WeeklyTrendChart component in frontend/src/components/history/WeeklyTrendChart.tsx using Recharts
+- [X] T094 [P] [US6] Create useWeeklyTrend hook in frontend/src/hooks/useWeeklyTrend.ts (computed from meals)
+- [X] T095 [US6] Group meals by date (most recent first) with date headers ("Today", "Yesterday", "Dec 20")
+- [X] T096 [US6] Display meal cards with: thumbnail image, total protein, timestamp
+- [X] T097 [US6] Calculate weekly trend (7 days, today - 6 days) with daily totals
+- [X] T098 [US6] Render bar chart with 7 bars (Mon, Tue, Wed... labels)
+- [X] T099 [US6] Highlight today's bar with different color
+- [X] T100 [US6] Add tooltip on hover/tap: "Monday: 145g protein (3 meals)"
+- [X] T101 [US6] Show average line across chart (optional)
+- [X] T102 [US6] Ensure chart is responsive (no horizontal scroll on mobile)
+- [X] T103 [US6] Add empty state: "No meals yet. Upload your first meal →" with CTA
+- [X] T104 [US6] Implement meal click navigation to /meal/:id or inline modal (show full results)
+- [X] T105 [US6] Lazy-load Recharts library only when History route is accessed
 
 **Checkpoint**: History page displays grouped meals + weekly chart, empty state works, responsive
 
@@ -228,16 +228,16 @@
 
 **Independent Test**: Navigate to /settings, change goal value, toggle dark mode, verify persistence
 
-- [ ] T106 [P] Create Settings page component in frontend/src/pages/Settings.tsx (lazy-loaded route)
-- [ ] T107 [P] Create GoalInput component in frontend/src/components/settings/GoalInput.tsx
-- [ ] T108 [P] Create ThemeToggle component in frontend/src/components/settings/ThemeToggle.tsx
-- [ ] T109 Add goal input field with save button (validate >= 0, <= 500)
-- [ ] T110 Persist goal to localStorage and optionally backend
-- [ ] T111 Add theme toggle: Light / Dark / System (3-way switch)
-- [ ] T112 Display account email and subscription status (placeholder for billing)
-- [ ] T113 Add "Export Meals" button (download CSV - future feature placeholder)
-- [ ] T114 Add "Delete All Data" button with confirmation dialog
-- [ ] T115 Ensure settings persist across page refreshes
+- [X] T106 [P] Create Settings page component in frontend/src/pages/Settings.tsx (lazy-loaded route)
+- [X] T107 [P] Create GoalInput component in frontend/src/components/settings/GoalInput.tsx
+- [X] T108 [P] Create ThemeToggle component in frontend/src/components/settings/ThemeToggle.tsx
+- [X] T109 Add goal input field with save button (validate >= 0, <= 500)
+- [X] T110 Persist goal to localStorage and optionally backend
+- [X] T111 Add theme toggle: Light / Dark / System (3-way switch)
+- [X] T112 Display account email and subscription status (placeholder for billing)
+- [X] T113 Add "Export Meals" button (download CSV - future feature placeholder)
+- [X] T114 Add "Delete All Data" button with confirmation dialog
+- [X] T115 Ensure settings persist across page refreshes
 
 ---
 
@@ -247,13 +247,13 @@
 
 **Independent Test**: Delete meal from history, verify it disappears instantly, persists after refresh
 
-- [ ] T116 [P] Create useDeleteMeal hook in frontend/src/hooks/useDeleteMeal.ts with optimistic delete per contracts/state.md
-- [ ] T117 Add delete button to MealHistoryCard (icon button, 44×44px touch target)
-- [ ] T118 Show confirmation dialog before delete: "Delete this meal?"
-- [ ] T119 Optimistically remove meal from list (instant UI update)
-- [ ] T120 Call backend API to delete meal and cascade delete analysis records
-- [ ] T121 Rollback optimistic delete on error (restore meal to list)
-- [ ] T122 Update protein gap calculation after delete (if today's meal deleted)
+- [X] T116 [P] Create useDeleteMeal hook in frontend/src/hooks/useDeleteMeal.ts with optimistic delete per contracts/state.md
+- [X] T117 Add delete button to MealHistoryCard (icon button, 44×44px touch target)
+- [X] T118 Show confirmation dialog before delete: "Delete this meal?"
+- [X] T119 Optimistically remove meal from list (instant UI update)
+- [X] T120 Call backend API to delete meal and cascade delete analysis records
+- [X] T121 Rollback optimistic delete on error (restore meal to list)
+- [X] T122 Update protein gap calculation after delete (if today's meal deleted)
 - [ ] T123 Show toast notification: "Meal deleted"
 
 ---
@@ -264,12 +264,12 @@
 
 ### Animations (Framer Motion)
 
-- [ ] T124 [P] Add page transition animations (fade + slide, 300ms) to all routes
-- [ ] T125 [P] Add card expand animation when tapping food item (scale + opacity)
-- [ ] T126 [P] Add list item insert animation for FoodItemList (slide in from right)
-- [ ] T127 [P] Add skeleton → content fade-in animation (300-400ms)
-- [ ] T128 Add button press feedback (scale 0.95 on tap)
-- [ ] T129 Ensure all animations respect prefers-reduced-motion media query
+- [X] T124 [P] Add page transition animations (fade + slide, 300ms) to all routes
+- [X] T125 [P] Add card expand animation when tapping food item (scale + opacity)
+- [X] T126 [P] Add list item insert animation for FoodItemList (slide in from right)
+- [X] T127 [P] Add skeleton → content fade-in animation (300-400ms)
+- [X] T128 Add button press feedback (scale 0.95 on tap)
+- [X] T129 Ensure all animations respect prefers-reduced-motion media query
 
 ### Accessibility (WCAG AA Compliance)
 
