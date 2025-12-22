@@ -6,7 +6,10 @@ import { ImagePreview } from '@/components/upload/ImagePreview'
 import { AnalyzeProgress } from '@/components/upload/AnalyzeProgress'
 import { MealSummaryCard } from '@/components/results/MealSummaryCard'
 import { FoodItemList } from '@/components/results/FoodItemList'
+import { ProteinGapWidget } from '@/components/coaching/ProteinGapWidget'
 import { useUpload } from '@/hooks/useUpload'
+import { useGoal } from '@/hooks/useGoal'
+import { useProteinGap } from '@/hooks/useProteinGap'
 import { apiClient } from '@/services/apiClient'
 import imageCompression from 'browser-image-compression'
 import { getPageVariants, getPageTransition } from '@/utils/animations'
@@ -15,6 +18,8 @@ import { Button } from '@/components/ui/Button'
 export function Home() {
   const uploadState = useUpload()
   const [uploadError, setUploadError] = useState<string | null>(null)
+  const { goal } = useGoal()
+  const gap = useProteinGap({ userId: 'mock-user', dailyGoalGrams: goal })
   
   const pageVariants = getPageVariants()
   const pageTransition = getPageTransition()
@@ -158,7 +163,13 @@ export function Home() {
               }}
             />
             {uploadState.state.analysis?.foods && (
-              <FoodItemList items={uploadState.state.analysis.foods} />
+              <FoodItemList 
+                mealId={uploadState.state.mealId || ''}
+                items={uploadState.state.analysis.foods} 
+              />
+            )}
+            {gap.gapGrams > 0 && (
+              <ProteinGapWidget gap={gap} />
             )}
             <div className="max-w-2xl mx-auto px-4 space-y-3">
               <Button

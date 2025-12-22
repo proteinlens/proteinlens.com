@@ -11,7 +11,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MealUpload } from './components/MealUpload';
 import { PricingPage } from './pages/PricingPage';
 import { CheckoutSuccessPage } from './pages/CheckoutSuccessPage';
-import { SettingsPage } from './pages/SettingsPage';
 import { Home } from './pages/Home';
 import { UsageCounter } from './components/UsageCounter';
 import { useUsage } from './hooks/useUsage';
@@ -21,8 +20,9 @@ import { PageContainer } from './components/layout/PageContainer';
 import './App.css';
 import './index.css';
 
-// Lazy load History page
+// Lazy load History and Settings pages
 const History = lazy(() => import('./pages/History').then(m => ({ default: m.History })));
+const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
 
 // Navigation component with usage counter
 const Navigation: React.FC = () => {
@@ -94,7 +94,7 @@ function App() {
                   <Route path="/" element={<Home />} />
                   <Route path="/history" element={<History />} />
                   <Route path="/pricing" element={<PricingPage />} />
-                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/settings" element={<Settings />} />
                   <Route path="/billing/success" element={<CheckoutSuccessPage />} />
                 </Routes>
               </Suspense>
