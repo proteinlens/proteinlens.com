@@ -166,7 +166,7 @@ export async function logSubscriptionEvent(
       userId,
       eventType,
       stripeEventId,
-      eventData,
+      eventData: eventData as any,
       processedAt: new Date(),
     },
   });

@@ -3,10 +3,10 @@
  * Provides structured telemetry for monitoring, debugging, and performance analysis
  */
 
-import { TelemetryClient, Contracts } from 'applicationinsights';
+import * as appInsights from 'applicationinsights';
 
 // Singleton telemetry client
-let telemetryClient: TelemetryClient | null = null;
+let telemetryClient: appInsights.TelemetryClient | null = null;
 
 export interface TelemetryConfig {
   connectionString?: string;
@@ -34,7 +34,7 @@ export interface DependencyTelemetry {
  * Initialize Application Insights telemetry
  * Should be called once at application startup
  */
-export function initializeTelemetry(config: TelemetryConfig = {}): TelemetryClient | null {
+export function initializeTelemetry(config: TelemetryConfig = {}): appInsights.TelemetryClient | null {
   const connectionString = config.connectionString || process.env.APPLICATIONINSIGHTS_CONNECTION_STRING;
   
   if (!connectionString) {
@@ -80,7 +80,7 @@ export function initializeTelemetry(config: TelemetryConfig = {}): TelemetryClie
 /**
  * Get the telemetry client instance
  */
-export function getTelemetryClient(): TelemetryClient | null {
+export function getTelemetryClient(): appInsights.TelemetryClient | null {
   return telemetryClient;
 }
 
@@ -158,17 +158,18 @@ export function trackTrace(
 ): void {
   if (!telemetryClient) return;
 
-  const severityLevel: Record<string, Contracts.SeverityLevel> = {
-    'Verbose': Contracts.SeverityLevel.Verbose,
-    'Information': Contracts.SeverityLevel.Information,
-    'Warning': Contracts.SeverityLevel.Warning,
-    'Error': Contracts.SeverityLevel.Error,
-    'Critical': Contracts.SeverityLevel.Critical,
+  // Severity levels: 0=Verbose, 1=Information, 2=Warning, 3=Error, 4=Critical
+  const severityLevel: Record<string, number> = {
+    'Verbose': 0,
+    'Information': 1,
+    'Warning': 2,
+    'Error': 3,
+    'Critical': 4,
   };
 
   telemetryClient.trackTrace({
     message,
-    severity: severityLevel[severity],
+    severity: severityLevel[severity] as any,
     properties,
   });
 }
@@ -306,9 +307,8 @@ export function trackDatabaseOperation(
 export function flushTelemetry(): Promise<void> {
   return new Promise((resolve) => {
     if (telemetryClient) {
-      telemetryClient.flush({
-        callback: () => resolve(),
-      });
+      telemetryClient.flush();
+      setTimeout(resolve, 1000); // Give it a second to flush
     } else {
       resolve();
     }

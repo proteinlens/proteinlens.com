@@ -97,7 +97,7 @@ async function handleWebhook(
       userId,
       event.type,
       event.id,
-      event.data.object as Record<string, unknown>
+      event.data.object as unknown as Record<string, unknown>
     );
 
     return {
@@ -171,7 +171,7 @@ async function handleSubscriptionUpdated(
   const customerId = subscription.customer as string;
   const subscriptionId = subscription.id;
   const status = subscription.status;
-  const currentPeriodEnd = new Date(subscription.current_period_end * 1000);
+  const currentPeriodEnd = new Date((subscription as any).current_period_end * 1000);
 
   context.log('Subscription updated', { customerId, subscriptionId, status });
 
@@ -228,7 +228,7 @@ async function handlePaymentFailed(
   context: InvocationContext
 ): Promise<string | null> {
   const customerId = invoice.customer as string;
-  const subscriptionId = invoice.subscription as string;
+  const subscriptionId = (invoice as any).subscription as string;
 
   context.log('Payment failed', { customerId, subscriptionId });
 

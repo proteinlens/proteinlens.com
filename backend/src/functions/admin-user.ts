@@ -62,7 +62,7 @@ async function getAdminUser(
     const user = await prisma.user.findUnique({
       where: { externalId: userId },
       include: {
-        usages: {
+        usage: {
           orderBy: { createdAt: 'desc' },
           take: 10, // Recent usage
         },
@@ -132,7 +132,7 @@ async function getAdminUser(
         usage: {
           scansThisWeek: usageStats.totalScansThisWeek,
           scansAllTime: usageStats.totalScansAllTime,
-          recentScans: user.usages.map((u) => ({
+          recentScans: user.usage.map((u) => ({
             id: u.id,
             type: u.type,
             mealId: u.mealId,
@@ -169,6 +169,6 @@ async function getAdminUser(
 app.http('adminUser', {
   methods: ['GET'],
   authLevel: 'anonymous', // Protected by requireAdmin middleware
-  route: 'admin/users/{userId}',
+  route: 'billing/admin/users/{userId}',
   handler: getAdminUser,
 });

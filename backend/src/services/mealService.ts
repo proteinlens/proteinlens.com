@@ -110,11 +110,11 @@ class MealService {
         blobUrl,
         requestId,
         aiModel: cachedAnalysis.aiModel,
-        aiResponseRaw: cachedAnalysis.aiResponseRaw,
+        aiResponseRaw: cachedAnalysis.aiResponseRaw as any,
         totalProtein: cachedAnalysis.totalProtein,
         confidence: cachedAnalysis.confidence,
         blobHash,
-        cachedFromId: cachedMealId, // Track that this was a cache hit
+        notes: `Cached from meal ${cachedMealId}`, // Track that this was a cache hit
         foods: {
           create: cachedAnalysis.foods.map((food, index) => ({
             name: food.name,
@@ -217,18 +217,18 @@ class MealService {
       orderBy: { createdAt: 'desc' },
     });
 
-    const totalProtein = meals.reduce((sum, m) => sum + m.totalProtein, 0);
+    const totalProtein = meals.reduce((sum, m) => sum + Number(m.totalProtein), 0);
 
     return {
       meals: meals.map((m) => ({
         id: m.id,
         createdAt: m.createdAt,
-        totalProtein: m.totalProtein,
-        confidence: m.confidence,
+        totalProtein: Number(m.totalProtein),
+        confidence: Number(m.confidence),
         foods: m.foods.map((f) => ({
           name: f.name,
           portion: f.portion,
-          protein: f.protein,
+          protein: Number(f.protein),
         })),
       })),
       summary: {

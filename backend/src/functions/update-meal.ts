@@ -150,7 +150,6 @@ export async function updateMeal(
         confidence: updatedMeal.confidence,
         userCorrections: updatedMeal.userCorrections,
         originalAiResponse: updatedMeal.aiResponseRaw,
-        foods: updatedMeal.foods,
         updatedAt: updatedMeal.updatedAt,
       },
     };
