@@ -66,3 +66,16 @@ migrations/
 # Generated files
 .turbo/
 .parcel-cache/
+# Deployment & Infrastructure
+publish-profile.xml
+azure-credentials.json
+*.publishsettings
+.azure/
+infra/bicep/parameters/*.local.json
+
+# Secrets (never commit!)
+secrets.json
+.secrets/
+*.pem
+*.key
+*.p8
