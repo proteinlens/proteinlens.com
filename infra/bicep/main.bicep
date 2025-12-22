@@ -37,7 +37,6 @@ module functionApp './function-app.bicep' = {
     location: location
     functionAppName: functionAppName
     storageAccountName: storage.outputs.storageAccountName
-    storageAccountId: storage.outputs.storageAccountId
     keyVaultUri: keyVault.outputs.keyVaultUri
   }
 }
@@ -49,7 +48,9 @@ output functionAppName string = functionApp.outputs.functionAppName
 output functionAppUrl string = functionApp.outputs.functionAppUrl
 output functionAppManagedIdentityId string = functionApp.outputs.functionAppPrincipalId
 output staticWebAppName string = staticWebAppName
+output staticWebAppUrl string = 'https://${staticWebAppName}.azurewebsites.net'
 output postgresServerName string = postgresServerName
+output postgresServerFqdn string = '${postgresServerName}.postgres.database.azure.com'
 output keyVaultName string = keyVault.outputs.keyVaultName
 output keyVaultUri string = keyVault.outputs.keyVaultUri
 output storageAccountName string = storage.outputs.storageAccountName

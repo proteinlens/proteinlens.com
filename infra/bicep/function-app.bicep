@@ -5,7 +5,6 @@ param location string = resourceGroup().location
 param functionAppName string
 param storageAccountName string
 param appServicePlanName string = '${functionAppName}-plan'
-param storageAccountId string
 param keyVaultUri string
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
@@ -96,18 +95,6 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
         supportCredentials: true
       }
     }
-  }
-}
-
-// Assign Blob Data Contributor role to Function App Managed Identity
-// Constitution Principle II: Least Privilege - specific RBAC role
-resource blobDataContributorRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  scope: resourceId('Microsoft.Storage/storageAccounts', storageAccountName)
-  name: guid(storageAccountId, functionApp.id, 'Blob Data Contributor')
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe') // Blob Data Contributor
-    principalId: functionApp.identity.principalId
-    principalType: 'ServicePrincipal'
   }
 }
 

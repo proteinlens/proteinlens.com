@@ -102,9 +102,10 @@ jobs:
             --resource-group "${{ env.RESOURCE_GROUP }}" \
             --template-file infra/bicep/main.bicep \
             --parameters "@infra/bicep/parameters/${{ github.event.inputs.environment }}.parameters.json" \
-            --query properties.outputs)
+            --query properties.outputs \
+            --output json)
           
-          echo "deployment_output=$DEPLOYMENT_OUTPUT" >> "$GITHUB_OUTPUT"
+          echo "deployment_output=$(echo "$DEPLOYMENT_OUTPUT" | jq -c .)" >> "$GITHUB_OUTPUT"
           echo "✅ Infrastructure deployment completed"
 
       - name: Seed Key Vault Secrets
@@ -118,9 +119,11 @@ jobs:
         run: |
           # Extract Key Vault name from deployment outputs
           KEYVAULT_NAME=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.keyVaultName.value')
+          POSTGRES_SERVER=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.postgresServerFqdn.value')
           
           if [ -z "$KEYVAULT_NAME" ] || [ "$KEYVAULT_NAME" == "null" ]; then
             echo "❌ Failed to extract Key Vault name from deployment outputs"
+            echo "Outputs: ${{ steps.deploy.outputs.deployment_output }}"
             exit 1
           fi
           
@@ -130,7 +133,7 @@ jobs:
           az keyvault secret set \
             --vault-name "$KEYVAULT_NAME" \
             --name "database-url" \
-            --value "postgres://postgres:${{ env.DATABASE_ADMIN_PASSWORD }}@$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.postgresServerName.value')/proteinlens"
+            --value "postgresql://postgres:${{ env.DATABASE_ADMIN_PASSWORD }}@${POSTGRES_SERVER}/proteinlens"
           
           az keyvault secret set \
             --vault-name "$KEYVAULT_NAME" \
