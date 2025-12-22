@@ -17,7 +17,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
     enableRbacAuthorization: false
     enableSoftDelete: true
     softDeleteRetentionInDays: 90
-    enablePurgeProtection: false
+    enablePurgeProtection: true  // Cannot be disabled once enabled
     accessPolicies: []
   }
 }
