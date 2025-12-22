@@ -37,7 +37,6 @@ module functionApp './function-app.bicep' = {
     location: location
     functionAppName: functionAppName
     storageAccountName: storage.outputs.storageAccountName
-    storageAccountId: storage.outputs.storageAccountId
     keyVaultUri: keyVault.outputs.keyVaultUri
   }
 }
