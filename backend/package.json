@@ -34,6 +34,7 @@
     "@azure/identity": "^4.0.0",
     "@azure/storage-blob": "^12.17.0",
     "@prisma/client": "^5.8.0",
+    "stripe": "^20.1.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {

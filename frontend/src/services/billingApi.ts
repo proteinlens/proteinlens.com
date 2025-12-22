@@ -1,0 +1,160 @@
+// Billing API client for subscription and plan management
+// Feature: 002-saas-billing
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+
+/**
+ * Plan feature limits
+ */
+export interface PlanFeatures {
+  scansPerWeek: number; // -1 for unlimited
+  historyDays: number; // -1 for unlimited
+  exportEnabled: boolean;
+}
+
+/**
+ * Pricing plan information
+ */
+export interface PlanInfo {
+  id: 'FREE' | 'PRO';
+  name: string;
+  priceMonthly: number | null;
+  priceAnnual: number | null;
+  priceMonthlyFormatted: string;
+  priceAnnualFormatted: string | null;
+  annualSavings: number | null; // Percentage
+  features: PlanFeatures;
+}
+
+/**
+ * Feature comparison row
+ */
+export interface FeatureComparison {
+  name: string;
+  free: string | boolean;
+  pro: string | boolean;
+}
+
+/**
+ * Plans response from API
+ */
+export interface PlansResponse {
+  plans: PlanInfo[];
+  featureComparison: FeatureComparison[];
+  currency: string;
+  currencySymbol: string;
+}
+
+/**
+ * Usage statistics
+ */
+export interface UsageStats {
+  plan: 'FREE' | 'PRO';
+  scansUsed: number;
+  scansRemaining: number; // -1 for unlimited
+  scansLimit: number; // -1 for unlimited
+  periodStart: string;
+  periodEnd: string;
+}
+
+/**
+ * Checkout session response
+ */
+export interface CheckoutResponse {
+  sessionId: string;
+  url: string;
+}
+
+/**
+ * Portal session response
+ */
+export interface PortalResponse {
+  url: string;
+}
+
+/**
+ * Fetch available pricing plans
+ */
+export async function getPlans(): Promise<PlansResponse> {
+  const response = await fetch(`${API_BASE}/billing/plans`);
+  
+  if (!response.ok) {
+    throw new Error(`Failed to fetch plans: ${response.statusText}`);
+  }
+  
+  return response.json();
+}
+
+/**
+ * Get current usage statistics for authenticated user
+ */
+export async function getUsage(): Promise<UsageStats> {
+  const response = await fetch(`${API_BASE}/billing/usage`, {
+    headers: {
+      // TODO: Add auth header when auth is implemented
+      'Content-Type': 'application/json',
+    },
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Failed to fetch usage: ${response.statusText}`);
+  }
+  
+  return response.json();
+}
+
+/**
+ * Create a checkout session for subscription
+ * @param priceId - Stripe price ID (monthly or annual)
+ */
+export async function createCheckout(priceId: string): Promise<CheckoutResponse> {
+  const response = await fetch(`${API_BASE}/billing/checkout`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      // TODO: Add auth header when auth is implemented
+    },
+    body: JSON.stringify({ priceId }),
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Failed to create checkout: ${response.statusText}`);
+  }
+  
+  return response.json();
+}
+
+/**
+ * Create a billing portal session
+ */
+export async function createPortalSession(): Promise<PortalResponse> {
+  const response = await fetch(`${API_BASE}/billing/portal`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      // TODO: Add auth header when auth is implemented
+    },
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Failed to create portal session: ${response.statusText}`);
+  }
+  
+  return response.json();
+}
+
+/**
+ * Redirect to Stripe Checkout
+ */
+export async function redirectToCheckout(priceId: string): Promise<void> {
+  const { url } = await createCheckout(priceId);
+  window.location.href = url;
+}
+
+/**
+ * Redirect to Stripe Customer Portal
+ */
+export async function redirectToPortal(): Promise<void> {
+  const { url } = await createPortalSession();
+  window.location.href = url;
+}

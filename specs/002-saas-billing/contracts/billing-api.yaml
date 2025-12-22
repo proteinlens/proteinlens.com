@@ -1,0 +1,401 @@
+openapi: 3.0.3
+info:
+  title: ProteinLens Billing API
+  description: API endpoints for subscription management and billing
+  version: 1.0.0
+
+servers:
+  - url: https://api.proteinlens.com/api
+    description: Production
+  - url: http://localhost:7071/api
+    description: Local development
+
+paths:
+  /billing/plans:
+    get:
+      summary: Get pricing plans
+      description: Returns available subscription plans and their features
+      operationId: getPlans
+      tags:
+        - Billing
+      responses:
+        '200':
+          description: List of available plans
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlansResponse'
+
+  /billing/checkout:
+    post:
+      summary: Create checkout session
+      description: Creates a Stripe Checkout session for Pro subscription
+      operationId: createCheckout
+      tags:
+        - Billing
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckoutRequest'
+      responses:
+        '200':
+          description: Checkout session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckoutResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /billing/portal:
+    post:
+      summary: Create billing portal session
+      description: Creates a Stripe Customer Portal session for managing subscription
+      operationId: createPortal
+      tags:
+        - Billing
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Portal session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortalResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: User has no Stripe customer record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /billing/webhook:
+    post:
+      summary: Stripe webhook handler
+      description: Receives and processes Stripe webhook events
+      operationId: handleWebhook
+      tags:
+        - Billing
+      parameters:
+        - name: stripe-signature
+          in: header
+          required: true
+          schema:
+            type: string
+          description: Stripe webhook signature for verification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Stripe event payload (validated via signature)
+      responses:
+        '200':
+          description: Webhook processed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  received:
+                    type: boolean
+                    example: true
+        '400':
+          description: Invalid signature or malformed payload
+
+  /billing/usage:
+    get:
+      summary: Get usage statistics
+      description: Returns current user's scan usage and quota status
+      operationId: getUsage
+      tags:
+        - Billing
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Usage statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /admin/users/{userId}:
+    get:
+      summary: Get user subscription details (admin)
+      description: Returns subscription details for a specific user
+      operationId: getAdminUserDetails
+      tags:
+        - Admin
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User subscription details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: User does not have admin privileges
+        '404':
+          description: User not found
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Plan:
+      type: string
+      enum:
+        - FREE
+        - PRO
+      description: Subscription plan tier
+
+    SubscriptionStatus:
+      type: string
+      enum:
+        - active
+        - canceled
+        - past_due
+        - trialing
+      description: Current subscription status
+
+    PlanFeatures:
+      type: object
+      required:
+        - scansPerWeek
+        - historyDays
+        - exportEnabled
+      properties:
+        scansPerWeek:
+          type: integer
+          description: Number of scans allowed per 7-day rolling window (-1 for unlimited)
+          example: 5
+        historyDays:
+          type: integer
+          description: Number of days of history visible (-1 for unlimited)
+          example: 7
+        exportEnabled:
+          type: boolean
+          description: Whether data export is available
+          example: false
+
+    PlanInfo:
+      type: object
+      required:
+        - id
+        - name
+        - features
+      properties:
+        id:
+          $ref: '#/components/schemas/Plan'
+        name:
+          type: string
+          example: "Pro"
+        priceMonthly:
+          type: number
+          format: float
+          example: 9.99
+          description: Monthly price in EUR (null for free plan)
+        priceAnnual:
+          type: number
+          format: float
+          example: 79.00
+          description: Annual price in EUR (null for free plan)
+        stripePriceIdMonthly:
+          type: string
+          example: "price_1ABC..."
+          description: Stripe price ID for monthly billing
+        stripePriceIdAnnual:
+          type: string
+          example: "price_2DEF..."
+          description: Stripe price ID for annual billing
+        features:
+          $ref: '#/components/schemas/PlanFeatures'
+
+    PlansResponse:
+      type: object
+      required:
+        - plans
+      properties:
+        plans:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlanInfo'
+
+    CheckoutRequest:
+      type: object
+      required:
+        - priceId
+      properties:
+        priceId:
+          type: string
+          description: Stripe price ID (monthly or annual)
+          example: "price_1ABC..."
+
+    CheckoutResponse:
+      type: object
+      required:
+        - sessionId
+        - url
+      properties:
+        sessionId:
+          type: string
+          description: Stripe Checkout session ID
+          example: "cs_test_..."
+        url:
+          type: string
+          format: uri
+          description: Stripe Checkout URL to redirect user to
+          example: "https://checkout.stripe.com/c/pay/cs_test_..."
+
+    PortalResponse:
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          type: string
+          format: uri
+          description: Stripe Customer Portal URL
+          example: "https://billing.stripe.com/session/..."
+
+    UsageResponse:
+      type: object
+      required:
+        - plan
+        - scansUsed
+        - scansRemaining
+        - periodStart
+        - periodEnd
+      properties:
+        plan:
+          $ref: '#/components/schemas/Plan'
+        subscriptionStatus:
+          $ref: '#/components/schemas/SubscriptionStatus'
+        scansUsed:
+          type: integer
+          description: Number of scans used in current period
+          example: 3
+        scansRemaining:
+          type: integer
+          description: Number of scans remaining (-1 for unlimited)
+          example: 2
+        scansLimit:
+          type: integer
+          description: Maximum scans per period (-1 for unlimited)
+          example: 5
+        periodStart:
+          type: string
+          format: date-time
+          description: Start of current usage period (rolling 7-day window)
+          example: "2025-12-15T00:00:00Z"
+        periodEnd:
+          type: string
+          format: date-time
+          description: End of current usage period (next reset)
+          example: "2025-12-22T00:00:00Z"
+        currentPeriodEnd:
+          type: string
+          format: date-time
+          description: Subscription renewal date (Pro only)
+          example: "2025-01-22T00:00:00Z"
+
+    AdminUserResponse:
+      type: object
+      required:
+        - userId
+        - email
+        - plan
+      properties:
+        userId:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        plan:
+          $ref: '#/components/schemas/Plan'
+        subscriptionStatus:
+          $ref: '#/components/schemas/SubscriptionStatus'
+        stripeCustomerId:
+          type: string
+          example: "cus_..."
+        stripeSubscriptionId:
+          type: string
+          example: "sub_..."
+        currentPeriodEnd:
+          type: string
+          format: date-time
+        usage:
+          $ref: '#/components/schemas/UsageResponse'
+        recentEvents:
+          type: array
+          items:
+            type: object
+            properties:
+              eventType:
+                type: string
+                example: "checkout.session.completed"
+              createdAt:
+                type: string
+                format: date-time
+
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Weekly scan limit reached"
+        upgradeUrl:
+          type: string
+          description: URL to upgrade page (for quota errors)
+          example: "/pricing"
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Authentication required"
+
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Invalid price ID"

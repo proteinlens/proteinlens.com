@@ -1,0 +1,165 @@
+/* Pricing Card Styles */
+/* Feature: 002-saas-billing */
+
+.pricing-card {
+  position: relative;
+  background: #ffffff;
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s, box-shadow 0.2s;
+  min-width: 280px;
+  max-width: 340px;
+}
+
+.pricing-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+
+.pricing-card--pro {
+  border-color: #6366f1;
+  background: linear-gradient(180deg, #fafaff 0%, #ffffff 100%);
+}
+
+.pricing-card--current {
+  border-color: #22c55e;
+}
+
+.pricing-card__badge {
+  position: absolute;
+  top: -12px;
+  right: 20px;
+  background: #6366f1;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pricing-card__header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.pricing-card__name {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 16px 0;
+}
+
+.pricing-card--pro .pricing-card__name {
+  color: #6366f1;
+}
+
+.pricing-card__price {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 2px;
+}
+
+.pricing-card__currency {
+  font-size: 24px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.pricing-card__amount {
+  font-size: 48px;
+  font-weight: 800;
+  color: #1f2937;
+  line-height: 1;
+}
+
+.pricing-card__period {
+  font-size: 16px;
+  color: #6b7280;
+  margin-left: 4px;
+}
+
+.pricing-card__free {
+  font-size: 48px;
+  font-weight: 800;
+  color: #1f2937;
+}
+
+.pricing-card__billed {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 8px;
+}
+
+.pricing-card__features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 24px 0;
+  flex-grow: 1;
+}
+
+.pricing-card__features li {
+  padding: 10px 0;
+  color: #4b5563;
+  font-size: 15px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.pricing-card__features li:last-child {
+  border-bottom: none;
+}
+
+.feature--highlight {
+  color: #6366f1 !important;
+  font-weight: 600;
+}
+
+.feature--disabled {
+  color: #9ca3af !important;
+}
+
+.pricing-card__button {
+  width: 100%;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.pricing-card__button:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+.pricing-card__button--pro {
+  background: #6366f1;
+  color: white;
+}
+
+.pricing-card__button--pro:hover:not(:disabled) {
+  background: #4f46e5;
+}
+
+.pricing-card__button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .pricing-card {
+    min-width: 100%;
+    padding: 24px 20px;
+  }
+  
+  .pricing-card__amount {
+    font-size: 40px;
+  }
+}

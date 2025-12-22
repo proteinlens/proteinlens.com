@@ -10,6 +10,100 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ===========================================
+// Enums for Billing (Feature 002)
+// ===========================================
+
+enum Plan {
+  FREE
+  PRO
+}
+
+enum SubscriptionStatus {
+  active
+  canceled
+  past_due
+  trialing
+}
+
+enum UsageType {
+  MEAL_ANALYSIS
+}
+
+// ===========================================
+// User Model (Extended for Billing)
+// ===========================================
+
+model User {
+  id                    String              @id @default(uuid())
+  
+  // External identity (from auth provider)
+  externalId            String              @unique @db.VarChar(255)
+  email                 String?             @db.VarChar(320)
+  
+  // Stripe billing fields (Feature 002)
+  stripeCustomerId      String?             @unique @db.VarChar(255)
+  stripeSubscriptionId  String?             @db.VarChar(255)
+  plan                  Plan                @default(FREE)
+  subscriptionStatus    SubscriptionStatus?
+  currentPeriodEnd      DateTime?
+  
+  // Timestamps
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+  
+  // Relations
+  usage                 Usage[]
+  subscriptionEvents    SubscriptionEvent[]
+  
+  @@index([externalId])
+  @@index([stripeCustomerId])
+  @@index([plan])
+}
+
+// ===========================================
+// Usage Tracking (Feature 002)
+// ===========================================
+
+model Usage {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type      UsageType
+  mealId    String?   @db.VarChar(255)  // Reference to MealAnalysis.id
+  
+  createdAt DateTime  @default(now())
+  
+  @@index([userId, createdAt])
+  @@index([userId, type, createdAt])
+}
+
+// ===========================================
+// Subscription Event Audit Log (Feature 002)
+// ===========================================
+
+model SubscriptionEvent {
+  id            String    @id @default(uuid())
+  userId        String?
+  user          User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  eventType     String    @db.VarChar(100)
+  stripeEventId String    @unique @db.VarChar(255)
+  eventData     Json
+  
+  processedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  
+  @@index([userId])
+  @@index([eventType])
+  @@index([stripeEventId])
+}
+
+// ===========================================
+// Meal Analysis (Core Feature)
+// ===========================================
+
 model MealAnalysis {
   id              String   @id @default(uuid())
   userId          String   @db.VarChar(255)

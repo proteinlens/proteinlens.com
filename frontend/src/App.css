@@ -18,7 +18,54 @@ body {
 
 .app {
   min-height: 100vh;
+}
+
+.app-main {
   padding: 2rem 1rem;
+}
+
+/* Navigation Styles */
+.app-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  gap: 24px;
+}
+
+.app-nav__logo a {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+  text-decoration: none;
+}
+
+.app-nav__center {
+  display: flex;
+  gap: 24px;
+}
+
+.app-nav__center a {
+  color: #6b7280;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 15px;
+  transition: color 0.2s;
+}
+
+.app-nav__center a:hover,
+.app-nav__center a.active {
+  color: #6366f1;
+}
+
+.app-nav__usage {
+  display: flex;
+  align-items: center;
 }
 
 code {

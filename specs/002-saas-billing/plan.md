@@ -103,3 +103,33 @@ frontend/
 ## Complexity Tracking
 
 No constitution violations requiring justification. Feature adds standard SaaS billing patterns without introducing architectural complexity beyond existing structure.
+
+## Post-Phase 1 Constitution Re-Check
+
+*Re-evaluated after design completion to verify all principles remain satisfied.*
+
+| Principle | Pre-Design | Post-Design | Verification |
+|-----------|------------|-------------|--------------|
+| I. Zero Secrets | ✅ PASS | ✅ PASS | Stripe secret keys in Azure App Settings only; publishable key in frontend env |
+| II. Least Privilege | ✅ PASS | ✅ PASS | Webhook uses signature verification; user can only access own billing portal |
+| III. Blob-First | ✅ N/A | ✅ N/A | Billing feature does not handle images |
+| IV. Traceability | ✅ PASS | ✅ PASS | SubscriptionEvent logs all webhooks with stripeEventId; Usage table links to MealAnalysis |
+| V. Deterministic JSON | ✅ PASS | ✅ PASS | OpenAPI schema in contracts/billing-api.yaml; all responses typed |
+| VI. Cost Controls | ✅ PASS | ✅ PASS | Rolling 7-day quota; atomic DB operations prevent race conditions |
+| VII. Privacy | ✅ PASS | ✅ PASS | Cascade delete on User removes Usage records; SubscriptionEvent nullifies userId on delete |
+
+**Final Gate Status**: ✅ ALL PASS - Ready for Phase 2 task generation
+
+## Implementation Estimates
+
+| Phase | Scope | Time Estimate |
+|-------|-------|---------------|
+| Database | Schema + migration | 0.5 day |
+| Backend Services | Stripe, Usage, Subscription | 1 day |
+| Backend Functions | 4 new endpoints + middleware | 0.5 day |
+| Quota Enforcement | Modify analyze, history endpoints | 0.5 day |
+| Frontend Services | API client, hooks | 0.25 day |
+| Frontend Components | 3 new components | 0.5 day |
+| Frontend Pages | Pricing, Settings billing section | 0.5 day |
+| Testing | Unit + integration + E2E | 0.5 day |
+| **Total** | | **4.25 days**

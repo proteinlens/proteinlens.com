@@ -2,6 +2,7 @@
 // Analyzes meal photo using GPT-5.1 Vision and persists results
 // Constitution Principles: III (Blob-First), IV (Traceability), V (Deterministic JSON)
 // T034: Analyze meal image and store results
+// T031, T033: Added quota enforcement and usage recording (Feature 002)
 
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { v4 as uuidv4 } from 'uuid';
@@ -11,6 +12,9 @@ import { aiService } from '../services/aiService.js';
 import { mealService } from '../services/mealService.js';
 import { AnalyzeRequestSchema } from '../models/schemas.js';
 import { ValidationError, BlobNotFoundError } from '../utils/errors.js';
+import { enforceWeeklyQuota, extractUserId } from '../middleware/quotaMiddleware.js';
+import { recordUsage } from '../services/usageService.js';
+import { UsageType } from '@prisma/client';
 
 export async function analyzeMeal(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
   const requestId = uuidv4();
@@ -29,7 +33,20 @@ export async function analyzeMeal(request: HttpRequest, context: InvocationConte
     const { blobName } = validation.data;
 
     // Extract userId from blob path or auth header
-    const userId = request.headers.get('x-user-id') || extractUserIdFromBlobName(blobName);
+    const userId = extractUserId(request, blobName) || extractUserIdFromBlobName(blobName);
+
+    // T031: Check quota before proceeding with analysis
+    const quotaBlock = await enforceWeeklyQuota(userId);
+    if (quotaBlock) {
+      Logger.info('Scan blocked - quota exceeded', { requestId, userId });
+      return {
+        ...quotaBlock,
+        headers: {
+          ...quotaBlock.headers,
+          'X-Request-ID': requestId,
+        },
+      };
+    }
 
     // Generate read SAS URL for AI service (Constitution Principle III: Blob-First)
     const blobUrl = await blobService.generateReadSasUrl(blobName);
@@ -62,6 +79,15 @@ export async function analyzeMeal(request: HttpRequest, context: InvocationConte
       mealAnalysisId,
       blobName,
     });
+
+    // T033: Record usage after successful analysis
+    try {
+      await recordUsage(userId, UsageType.MEAL_ANALYSIS, mealAnalysisId);
+      Logger.info('Usage recorded', { requestId, userId, mealAnalysisId });
+    } catch (usageError) {
+      // Log but don't fail the request if usage recording fails
+      Logger.error('Failed to record usage', usageError as Error, { requestId, userId });
+    }
 
     return {
       status: 200,
