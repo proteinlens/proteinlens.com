@@ -1,112 +1,168 @@
 # Implementation Plan: Azure Deployment Pipeline
 
-**Branch**: `004-azure-deploy-pipeline` | **Date**: December 22, 2024 | **Spec**: [spec.md](./spec.md)
+**Branch**: `004-azure-deploy-pipeline` | **Date**: 2024-12-22 | **Spec**: [spec.md](spec.md)
 **Input**: Feature specification from `/specs/004-azure-deploy-pipeline/spec.md`
 
 **Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
 
 ## Summary
 
-Establish a production-ready CI/CD pipeline that automates deployment of ProteinLens infrastructure, backend (Azure Functions), and frontend (Static Web Apps) to Azure. The pipeline will provision infrastructure via Bicep templates, run Prisma database migrations safely during backend deployment, and manage all secrets via Azure Key Vault with GitHub Secrets integration. Every push to main branch will trigger automated deployments with health checks and smoke tests.
+This feature establishes a production-ready CI/CD pipeline for ProteinLens that automates deployment of infrastructure (Bicep), backend (Azure Functions), and frontend (Static Web Apps) to Azure. The pipeline ensures safe database migrations via Prisma, secure secret management via Key Vault references, and automated deployments on every push to the main branch. This eliminates manual deployment steps and enables rapid iteration while maintaining security best practices.
 
 ## Technical Context
 
-**Language/Version**: Node.js 20+ (backend), TypeScript 5.3+ (both frontend and backend), Bicep (infrastructure)  
+**Language/Version**: TypeScript (backend), React/TypeScript (frontend), Bicep (infrastructure)  
 **Primary Dependencies**: 
-- **Infrastructure**: Azure Bicep, Azure CLI 2.50+
-- **Backend**: Azure Functions v4, Prisma 5.8+, @azure/identity 4.0+, @azure/storage-blob 12.17+
-- **Frontend**: React 18, Vite 5, React Query 5, Tailwind CSS 4
-- **CI/CD**: GitHub Actions, Azure/functions-action, Azure/static-web-apps-deploy
+- Backend: Azure Functions v4, Node.js 20+, Prisma 5.8, @azure/storage-blob 12.17, @azure/identity 4.0
+- Frontend: React 18.2, Vite 5.0, React Query 5.90, Tailwind CSS v4
+- Infrastructure: Bicep CLI, Azure CLI 2.50+, GitHub Actions
 
 **Storage**: 
-- PostgreSQL Flexible Server (production database)
-- Azure Blob Storage (meal photos)
-- Azure Key Vault (secrets management)
+- Database: Azure PostgreSQL Flexible Server (Prisma ORM)
+- Blob Storage: Azure Storage Account for meal images
+- Secrets: Azure Key Vault for runtime secrets
 
 **Testing**: 
-- Vitest (backend and frontend unit tests)
-- Supertest (backend API tests)
-- Health endpoint smoke tests (post-deployment)
+- Backend: Vitest (43 tests), contract/integration/unit split
+- Frontend: Vitest (56 tests), Playwright for E2E
+- Infrastructure: Bicep validation, deployment testing
 
-**Target Platform**: Azure Cloud (Functions on Linux consumption plan, Static Web Apps, PostgreSQL Flexible Server)
-
-**Project Type**: Web application (separate backend API and frontend SPA)
-
+**Target Platform**: Azure cloud (Functions Consumption Plan, Static Web Apps Free tier, PostgreSQL Flexible Server)  
+**Project Type**: Web application (frontend + backend + infrastructure)  
 **Performance Goals**: 
-- Infrastructure deployment: <15 minutes
-- Backend deployment: <3 minutes
-- Frontend deployment: <5 minutes
-- End-to-end deployment pipeline: <10 minutes
+- Infrastructure deployment: <15 minutes first run, <5 minutes updates
+- Backend deployment: <3 minutes (build + migrate + deploy)
+- Frontend deployment: <5 minutes (build + upload)
+- End-to-end pipeline: <10 minutes from push to live
 
 **Constraints**: 
-- Prisma migrations must run before backend deployment goes live
-- Database must be accessible from GitHub Actions runners (IPv4 firewall rules or Azure-hosted migration runner)
-- Zero secrets in Git repository or frontend build artifacts
-- All Function App secrets must use Key Vault references
-- Workflows must be idempotent (safe to re-run on same commit)
+- Secrets MUST NOT be in Git repository or frontend build
+- Database migrations MUST run from Azure-hosted environment (not GitHub Actions runner due to PostgreSQL firewall IPv4 restrictions)
+- Bicep templates MUST be idempotent (safe to re-run)
+- Workflows MUST fail fast on errors (no silent failures)
 
 **Scale/Scope**: 
-- 3 GitHub Actions workflows (infra.yml, deploy-api.yml, deploy-web.yml)
-- 6-8 Bicep modules (main, storage, function-app, postgres, keyvault, static-web-app, optional front-door)
-- ~15-20 GitHub Secrets to configure
-- ~5-10 Key Vault secrets to provision
+- Infrastructure: 8 Azure resources (Resource Group, Function App, Static Web App, PostgreSQL, Key Vault, Storage, App Insights, optional Front Door)
+- Workflows: 3 GitHub Actions workflows (infra, backend, frontend)
+- Bicep modules: 6-8 modular templates
+- Secrets: 5-7 Key Vault secrets (DATABASE_URL, OPENAI_API_KEY, STRIPE_SECRET_KEY, etc.)
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-### ✅ PASS: Zero Secrets in Client or Repository (Principle I)
-- **Compliance**: GitHub Actions workflows will use GitHub Secrets for deployment credentials (AZURE_CREDENTIALS, deployment tokens)
-- **Compliance**: Function App will use Key Vault references for all runtime secrets (DATABASE_URL, OPENAI_API_KEY, STRIPE_SECRET_KEY)
-- **Compliance**: Frontend build will receive VITE_API_URL as build-time environment variable (public API endpoint, not a secret)
-- **Compliance**: Bicep templates will store sensitive outputs (connection strings, storage keys) in Key Vault, not in logs or Git
-- **Justification**: N/A - full compliance
+### Core Principles (Backend & Infrastructure)
 
-### ✅ PASS: Least Privilege Access (Principle II)
-- **Compliance**: Function App will use System Managed Identity to access Storage Account (no account keys)
-- **Compliance**: Function App Managed Identity will be granted Key Vault access policies (Get, List secrets only)
-- **Compliance**: Database connection will use PostgreSQL admin credentials stored in Key Vault (Managed Identity not yet supported for Postgres Flexible Server at time of implementation)
-- **Compliance**: GitHub Actions will use Service Principal with Contributor role scoped to resource group (minimum required for deployment)
-- **Justification**: PostgreSQL Managed Identity support is planned for future release (Azure roadmap)
+**✅ I. Zero Secrets in Client or Repository**
+- **Status**: PASS
+- **Validation**: 
+  - All secrets stored in GitHub Secrets (AZURE_CREDENTIALS, deployment tokens)
+  - Runtime secrets stored in Azure Key Vault
+  - Function App uses Key Vault references (not direct values)
+  - Frontend build uses environment variables (VITE_API_URL), no secrets embedded
+  - Bicep templates use secure parameters, outputs do not expose secrets
+- **Evidence**: FR-019, FR-020, FR-021, FR-023, FR-024 enforce zero secrets in repo
 
-### ✅ PASS: Blob-First Ingestion (Principle III)
-- **Compliance**: Not applicable to deployment pipeline (this principle applies to meal photo upload feature)
-- **Justification**: Deployment pipeline does not handle meal photo uploads
+**✅ II. Least Privilege Access**
+- **Status**: PASS
+- **Validation**:
+  - Function App uses System-Assigned Managed Identity for Key Vault access
+  - Azure service principal for GitHub Actions has minimum RBAC (Contributor on Resource Group only)
+  - Key Vault access policies grant only "Get" and "List" secrets to Function App identity
+  - PostgreSQL uses Entra ID authentication (Managed Identity) where possible, falls back to username/password in Key Vault
+- **Evidence**: FR-022 mandates Managed Identity, constitution principle II enforced
 
-### ✅ PASS: Traceability & Auditability (Principle IV)
-- **Compliance**: GitHub Actions provides built-in audit trail for all workflow runs (commit SHA, timestamp, actor, status)
-- **Compliance**: Infrastructure deployments will be tracked via Azure Activity Log
-- **Compliance**: Deployment workflows will log key events (build start/finish, migration execution, health check results)
-- **Justification**: N/A - full compliance
+**✅ III. Blob-First Ingestion**
+- **Status**: N/A (not modified by this feature)
+- **Validation**: Existing backend implementation already enforces blob-first ingestion. Deployment pipeline does not change this.
 
-### ✅ PASS: Deterministic JSON Output (Principle V)
-- **Compliance**: Not applicable to deployment pipeline (this principle applies to AI inference responses)
-- **Justification**: Deployment pipeline does not process AI responses
+**✅ IV. Traceability & Auditability**
+- **Status**: PASS
+- **Validation**:
+  - GitHub Actions workflows log all deployment steps with timestamps
+  - Azure deployment outputs include correlation IDs
+  - Failed deployments captured in workflow logs with error details
+  - Health check endpoint logs deployment validation results
+- **Evidence**: FR-029 mandates notifications, all workflow steps logged
 
-### ✅ PASS: Cost Controls & Resource Limits (Principle VI)
-- **Compliance**: Bicep templates will parameterize SKUs (e.g., consumption plan for Functions, Basic tier for PostgreSQL) to control costs
-- **Compliance**: Workflows will timeout after 15 minutes to prevent hanging jobs that consume runner minutes
-- **Justification**: N/A - full compliance
+**✅ V. Deterministic JSON Output**
+- **Status**: N/A (not modified by this feature)
+- **Validation**: Deployment pipeline does not affect AI inference JSON schemas.
 
-### ✅ PASS: Privacy & User Data Rights (Principle VII)
-- **Compliance**: Not applicable to deployment pipeline (this principle applies to user data handling)
-- **Justification**: Deployment pipeline does not handle user data
+**✅ VI. Cost Controls & Resource Limits**
+- **Status**: PASS (with monitoring recommendation)
+- **Validation**:
+  - Infrastructure templates use cost-effective SKUs (Functions Consumption Plan, Static Web Apps Free tier)
+  - No auto-scaling rules that could cause runaway costs
+  - Database migrations run once per deployment (not continuously)
+  - Workflow timeouts prevent hanging jobs (15 minutes max per FR-030)
+- **Recommendation**: Add Azure Cost Management alerts post-deployment (out of scope for this feature)
 
-### ⚠️ ADVISORY: Mobile-First Design (Principle VIII)
-- **Compliance**: Not applicable to deployment pipeline (this principle applies to UI design)
-- **Justification**: Deployment pipeline has no user-facing UI
+**✅ VII. Privacy & User Data Rights**
+- **Status**: N/A (not modified by this feature)
+- **Validation**: Deployment pipeline does not change data retention or deletion policies.
 
-### ⚠️ ADVISORY: Fast Perceived Performance (Principle IX)
-- **Compliance**: Not applicable to deployment pipeline (this principle applies to frontend performance)
-- **Justification**: Deployment pipeline performance affects developers, not end users
+### User Experience & Interface Standards
 
-### ⚠️ ADVISORY: Remaining UX Principles (X-XIV)
-- **Compliance**: Not applicable to deployment pipeline (these principles apply to frontend UI/UX)
-- **Justification**: Deployment pipeline has no user-facing UI
+**Status**: N/A - This feature is infrastructure/DevOps focused, no user-facing UI changes.
 
-### 🎯 Constitution Check Result: **PASS**
+### Security & Privacy Standards
 
-All applicable constitutional principles are satisfied. The deployment pipeline focuses on infrastructure automation and does not interact with user data, AI processing, or UI/UX concerns. Security principles (I, II, IV, VI) are fully addressed through Key Vault integration, Managed Identity, audit logging, and resource constraints.
+**✅ Authentication & Authorization**
+- **Status**: PASS
+- **Validation**:
+  - GitHub Actions authenticates to Azure using service principal (AZURE_CREDENTIALS secret)
+  - Function App health endpoint can be anonymously accessed for smoke testing (consistent with existing backend)
+  - All other endpoints enforce authentication (unchanged by deployment pipeline)
+
+**✅ Data Protection**
+- **Status**: PASS
+- **Validation**:
+  - Bicep templates enable encryption at rest (default for Azure services)
+  - PostgreSQL enforces TLS 1.2+ connections
+  - Key Vault secrets encrypted by Azure-managed keys
+  - Workflow logs do not expose sensitive data (FR-023)
+
+**✅ Compliance**
+- **Status**: PASS
+- **Validation**:
+  - Deployment pipeline maintains existing compliance posture
+  - No new data collection introduced
+  - Secrets management aligns with GDPR/CCPA requirements
+
+### Operational Constraints
+
+**✅ Observability**
+- **Status**: PASS
+- **Validation**:
+  - Application Insights created by infrastructure template
+  - Function App automatically sends telemetry to App Insights
+  - Deployment workflows log structured output (GitHub Actions native JSON logging)
+  - Failed deployments trigger GitHub Actions status notifications
+- **Evidence**: FR-029 mandates failure notifications
+
+**✅ Performance**
+- **Status**: PASS
+- **Validation**:
+  - Health endpoint smoke test validates API response time post-deployment (FR-010)
+  - Deployment pipeline itself meets <10 minute target (SC-001)
+  - Database migrations timeout after reasonable duration
+
+**✅ Availability**
+- **Status**: PASS
+- **Validation**:
+  - Infrastructure templates are idempotent (safe to retry on transient failures)
+  - Bicep deployments use incremental mode (non-destructive updates)
+  - Health endpoint validates service availability post-deployment (FR-010)
+  - Workflow retries not implemented (fail fast per constitution), but manual re-run supported
+
+### Summary
+
+**Overall Status**: ✅ PASS - All applicable constitutional principles satisfied.
+
+**No violations requiring justification.**
+
+**Post-Phase 1 Re-check Required**: Yes (after contracts and data-model generated)
 
 ## Project Structure
 
@@ -125,55 +181,148 @@ specs/[###-feature]/
 ### Source Code (repository root)
 
 ```text
-.github/
-└── workflows/                    # GitHub Actions CI/CD workflows
-    ├── infra.yml                # Infrastructure provisioning (manual trigger)
-    ├── deploy-api.yml           # Backend deployment (auto on push to main)
-    └── deploy-web.yml           # Frontend deployment (auto on push to main)
-
-infra/
-└── bicep/                       # Infrastructure-as-Code templates
-    ├── main.bicep               # Main orchestration (existing, will be updated)
-    ├── storage.bicep            # Storage account + container (existing)
-    ├── function-app.bicep       # Function App + App Service Plan (existing)
-    ├── keyvault.bicep           # Key Vault + access policies (existing)
-    ├── monitoring.bicep         # Application Insights (existing)
-    ├── postgres.bicep           # PostgreSQL Flexible Server (NEW)
-    ├── static-web-app.bicep     # Azure Static Web Apps (NEW)
-    └── front-door.bicep         # Azure Front Door (NEW, optional)
-
-backend/
-├── src/                         # Function App code (existing)
-├── prisma/
-│   ├── schema.prisma           # Database schema (existing)
-│   └── migrations/             # Migration files (existing)
-├── package.json
-└── host.json
-
-frontend/
-├── src/                         # React SPA code (existing)
-├── dist/                        # Build output (generated)
-├── package.json
-└── vite.config.ts
-
-specs/004-azure-deploy-pipeline/
-├── plan.md                      # This file
-├── research.md                  # Phase 0 output (will be generated)
-├── data-model.md                # Phase 1 output (will be generated)
-├── quickstart.md                # Phase 1 output (will be generated)
-└── contracts/                   # Phase 1 output (will be generated)
+proteinlens.com/
+├── .github/
+│   └── workflows/
+│       ├── infra.yml              # Infrastructure deployment (manual trigger)
+│       ├── deploy-api.yml         # Backend deployment (auto on push to main)
+│       └── deploy-web.yml         # Frontend deployment (auto on push to main)
+├── infra/
+│   ├── main.bicep                 # Main orchestration template
+│   ├── modules/
+│   │   ├── storage.bicep          # Storage Account + container
+│   │   ├── keyvault.bicep         # Key Vault + access policies
+│   │   ├── postgres.bicep         # PostgreSQL Flexible Server
+│   │   ├── function-app.bicep     # Function App + App Service Plan + App Insights
+│   │   ├── static-web-app.bicep   # Static Web Apps
+│   │   └── frontdoor.bicep        # (Optional) Front Door + custom domain
+│   ├── parameters/
+│   │   ├── prod.parameters.json   # Production environment parameters
+│   │   └── dev.parameters.json    # (Future) Development environment parameters
+│   └── README.md                  # Deployment instructions
+├── backend/
+│   ├── src/
+│   │   ├── functions/
+│   │   │   └── health.ts          # Health check endpoint (smoke test)
+│   │   └── lib/
+│   ├── prisma/
+│   │   ├── schema.prisma          # Database schema
+│   │   └── migrations/            # Migration files
+│   ├── package.json
+│   └── tsconfig.json
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   └── services/
+│   ├── package.json
+│   └── vite.config.ts
+└── specs/
+    └── 004-azure-deploy-pipeline/
+        ├── spec.md                # Feature specification
+        ├── plan.md                # This file
+        ├── research.md            # Phase 0 research findings
+        ├── data-model.md          # Deployment entities
+        ├── quickstart.md          # Deployment guide
+        └── contracts/             # Workflow and parameter schemas
 ```
 
-**Structure Decision**: Web application structure with separate backend API (Azure Functions) and frontend SPA (React). Infrastructure-as-Code templates located in `infra/bicep/`. CI/CD workflows will be added to `.github/workflows/` directory (currently does not exist). Existing Bicep modules will be updated, and new modules will be created for PostgreSQL, Static Web Apps, and optionally Front Door.
+**Structure Decision**: 
+
+This feature adds deployment infrastructure to the existing web application structure. Key additions:
+
+1. **`.github/workflows/`**: GitHub Actions workflow files (3 workflows)
+2. **`infra/`**: Bicep infrastructure-as-code templates (1 main + 6 modules)
+3. **`backend/src/functions/health.ts`**: Health check endpoint for deployment validation
+4. **Existing `backend/` and `frontend/`**: No structural changes, only workflow integration
+
+The deployment pipeline integrates with existing code via:
+- Backend: Builds from `backend/`, deploys to Azure Functions
+- Frontend: Builds from `frontend/`, deploys to Static Web Apps
+- Infrastructure: Provisions Azure resources that host backend and frontend
+
+No new projects or directories are created within `backend/` or `frontend/`. This feature is purely infrastructure and CI/CD automation.
 
 ## Complexity Tracking
 
-> **No violations - this section intentionally left empty**
+> **Fill ONLY if Constitution Check has violations that must be justified**
 
-The deployment pipeline implementation does not violate any constitutional principles and does not require complexity justification. All architectural decisions align with established best practices:
+**No violations identified.** All constitutional principles are satisfied by this design.
 
-- Uses Azure-native services (Functions, Static Web Apps, PostgreSQL Flexible Server)
-- Follows Infrastructure-as-Code principles with Bicep
-- Implements secure secrets management via Key Vault
-- Leverages GitHub Actions for CI/CD automation (industry standard)
-- Maintains separation of concerns (infrastructure, backend, frontend workflows)
+---
+
+## Phase 1 Complete: Design & Contracts ✅
+
+**Date**: 2024-12-22
+
+### Deliverables
+
+✅ **research.md**: All NEEDS CLARIFICATION items resolved
+- Database migration strategy: Run from Function App cold start (Azure-hosted)
+- Bicep structure: Modular templates (6-8 modules)
+- Workflow triggers: Path filters per component
+- Secret storage: Deployment creds in GitHub, runtime in Key Vault
+- Health endpoint: Multi-level dependency checks
+- API URL: Direct Function URL (Phase 1), Front Door (Phase 2)
+- Environment params: Parameter files per environment
+
+✅ **data-model.md**: Deployment entities documented
+- GitHub Secrets entity (8 secrets)
+- Key Vault Secrets entity (7 runtime secrets)
+- Bicep Parameter Files (prod.parameters.json structure)
+- Workflow Outputs (resource names, URLs, status)
+- Deployment Artifacts (Function App zip, Static Web App dist/)
+- Health Check Response (JSON schema)
+
+✅ **contracts/**: Workflow and parameter schemas
+- bicep-parameters.md: Parameter contract with validation rules
+- github-workflows.md: All 3 workflow contracts (infra, backend, frontend)
+
+✅ **quickstart.md**: Step-by-step deployment guide
+- Prerequisites checklist
+- Azure service principal creation
+- GitHub Secrets configuration
+- Infrastructure deployment (2 options: GitHub Actions + Azure CLI)
+- Backend and frontend deployment
+- Troubleshooting guide
+- Routine operations (secret rotation, logs, rollback)
+
+✅ **Agent context updated**: `.github/agents/copilot-instructions.md`
+- Added: TypeScript (backend), React/TypeScript (frontend), Bicep (infrastructure)
+- Project type: Web application (frontend + backend + infrastructure)
+
+### Constitution Re-Check (Post-Design)
+
+**Overall Status**: ✅ PASS - All constitutional principles remain satisfied after Phase 1 design.
+
+**Changes from Initial Check**: None - design phase did not introduce any constitutional violations.
+
+**Key Confirmations**:
+- Zero secrets in repo: ✅ GitHub Secrets + Key Vault only
+- Least privilege: ✅ Managed Identity for Key Vault access
+- Traceability: ✅ All workflow steps logged with timestamps
+- Cost controls: ✅ Consumption plan, timeouts prevent runaway jobs
+- Observability: ✅ Application Insights, health checks, structured logs
+
+**No complexity justification required** - design follows simplest approach for each decision.
+
+### Next Steps
+
+**Ready for Phase 2**: `/speckit.tasks` command to generate tasks.md
+
+**Phase 2 will produce**:
+- `tasks.md`: Detailed task breakdown with time estimates
+- Implementation checklist for all 30 functional requirements
+- Testing scenarios for each user story
+
+**Estimated Implementation Time**: 5-7 days (based on research findings)
+- Infrastructure setup: 1-2 days
+- GitHub Actions workflows: 2-3 days
+- Testing and documentation: 1-2 days
+
+---
+
+**Planning Phase Complete** 🎉
+
+Feature 004-azure-deploy-pipeline is fully planned and ready for task breakdown and implementation.
+
