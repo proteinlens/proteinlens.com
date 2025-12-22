@@ -15,7 +15,7 @@ process.env.STRIPE_PRO_PRICE_ID = 'price_test_123';
 
 // Mock PrismaClient globally using constructor function syntax
 vi.mock('@prisma/client', () => {
-  function MockPrismaClient(this: any) {
+  const MockPrismaClient = function(this: any, options?: any) {
     this.user = {
       findUnique: vi.fn(),
       create: vi.fn(),
@@ -41,7 +41,8 @@ vi.mock('@prisma/client', () => {
       findMany: vi.fn(),
     };
     this.$transaction = vi.fn((fn: any) => fn(this));
-  }
+    this.$on = vi.fn();
+  } as any;
 
   return {
     PrismaClient: MockPrismaClient,
@@ -63,9 +64,9 @@ vi.mock('@prisma/client', () => {
 
 // Mock Azure Identity using constructor function syntax
 vi.mock('@azure/identity', () => {
-  function MockDefaultAzureCredential(this: any) {
+  const MockDefaultAzureCredential = function(this: any) {
     this.getToken = vi.fn().mockResolvedValue({ token: 'test-token' });
-  }
+  } as any;
   return {
     DefaultAzureCredential: MockDefaultAzureCredential,
   };
@@ -73,7 +74,7 @@ vi.mock('@azure/identity', () => {
 
 // Mock Azure Storage Blob using constructor function syntax
 vi.mock('@azure/storage-blob', () => {
-  function MockBlobServiceClient(this: any) {
+  const MockBlobServiceClient = function(this: any) {
     this.getContainerClient = vi.fn(() => ({
       getBlockBlobClient: vi.fn(() => ({
         generateSasUrl: vi.fn().mockResolvedValue('https://test.blob.core.windows.net/test?sig=test'),
@@ -83,7 +84,7 @@ vi.mock('@azure/storage-blob', () => {
         url: 'https://test.blob.core.windows.net/test',
       })),
     }));
-  }
+  } as any;
   return {
     BlobServiceClient: MockBlobServiceClient,
     StorageSharedKeyCredential: vi.fn(),
@@ -96,7 +97,7 @@ vi.mock('@azure/storage-blob', () => {
 
 // Mock Stripe using constructor function syntax
 vi.mock('stripe', () => {
-  function MockStripe(this: any) {
+  const MockStripe = function(this: any, apiKey?: string) {
     this.customers = {
       create: vi.fn().mockResolvedValue({ id: 'cus_test' }),
     };
@@ -113,7 +114,7 @@ vi.mock('stripe', () => {
     this.webhooks = {
       constructEvent: vi.fn(),
     };
-  }
+  } as any;
   return { default: MockStripe };
 });
 

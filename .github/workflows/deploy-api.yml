@@ -59,7 +59,7 @@ jobs:
       - name: Run unit tests
         run: |
           cd backend
-          npm run test --if-present || true
+          npm run test:unit
           echo "✅ Unit tests completed"
 
       - name: Package Function App
