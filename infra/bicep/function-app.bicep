@@ -42,6 +42,10 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
           value: '~4'
         }
         {
+          name: 'AzureWebJobsStorage__accountName'
+          value: storageAccountName
+        }
+        {
           name: 'AZURE_STORAGE_ACCOUNT_NAME'
           value: storageAccountName
         }
