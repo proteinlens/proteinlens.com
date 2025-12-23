@@ -76,14 +76,14 @@ export async function runMigrations(): Promise<MigrationResult> {
         output: output.substring(0, 500), // First 500 chars
       });
     }
-  } catch (error) {
+  } catch (err) {
     result.success = false;
-    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    const errorObj = err instanceof Error ? err : new Error(String(err));
     result.errors.push(errorMessage);
 
-    Logger.error('[MIGRATION] Migration failed', {
-      error: errorMessage,
-      stack: error instanceof Error ? error.stack : undefined,
+    Logger.error('[MIGRATION] Migration failed', errorObj, {
+      message: errorMessage,
     });
 
     // Don't throw - let the application start but health checks will fail

@@ -137,7 +137,7 @@ export async function cancelSubscription(subscriptionId: string): Promise<Stripe
  * Reactivate a canceled subscription
  */
 export async function reactivateSubscription(subscriptionId: string): Promise<Stripe.Subscription> {
-  return stripe.subscriptions.update(subscriptionId, {
+  return getStripeClient().subscriptions.update(subscriptionId, {
     cancel_at_period_end: false,
   });
 }
