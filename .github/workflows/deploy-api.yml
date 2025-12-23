@@ -15,7 +15,6 @@ permissions:
   id-token: write
 
 env:
-  AZURE_FUNCTIONAPP_NAME: proteinlens-api-prod
   NODE_VERSION: '20'
 
 jobs:
@@ -109,10 +108,10 @@ jobs:
         run: |
           echo "🔍 Checking if Function App exists..."
           if az functionapp show --name "${{ env.AZURE_FUNCTIONAPP_NAME }}" --resource-group proteinlens-prod &> /dev/null; then
-            echo "✅ Function App '${{ env.AZURE_FUNCTIONAPP_NAME }}' found"
+            echo "✅ Function App '${{ env.AZUsecrets.AZURE_FUNCTIONAPP_NAME }}" --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" &> /dev/null; then
+            echo "✅ Function App '${{ secrets.AZURE_FUNCTIONAPP_NAME }}' found"
           else
-            echo "❌ Function App '${{ env.AZURE_FUNCTIONAPP_NAME }}' does not exist"
-            echo ""
+            echo "❌ Function App '${{ secrets
             echo "📋 Please deploy infrastructure first:"
             echo "   1. Go to Actions tab"
             echo "   2. Select 'Deploy Infrastructure' workflow"
@@ -138,8 +137,8 @@ jobs:
           echo "📦 Ensuring deployments container exists..."
           
           az storage container create \
-            --account-name plprodsa85 \
-            --name deployments \
+            --account-name "${{ secrets.AZURE_STORAGE_ACCOUNT }}" \
+            --name "${{ secrets.AZURE_STORAGE_CONTAINER }}" \
             --auth-mode login \
             --output none
           
@@ -157,8 +156,8 @@ jobs:
           echo "File size: $(ls -lh backend-deploy.zip | awk '{print $5}')"
           
           az storage blob upload \
-            --account-name plprodsa85 \
-            --container-name deployments \
+            --account-name "${{ secrets.AZURE_STORAGE_ACCOUNT }}" \
+            --container-name "${{ secrets.AZURE_STORAGE_CONTAINER }}" \
             --name "$BLOB_NAME" \
             --file backend-deploy.zip \
             --auth-mode login \
@@ -174,8 +173,8 @@ jobs:
           echo "SAS expiry: $EXPIRY"
           
           PACKAGE_URL=$(az storage blob generate-sas \
-            --account-name plprodsa85 \
-            --container-name deployments \
+            --account-name "${{ secrets.AZURE_STORAGE_ACCOUNT }}" \
+            --container-name "${{ secrets.AZURE_STORAGE_CONTAINER }}" \
             --name "$BLOB_NAME" \
             --permissions r \
             --start "$START" \
@@ -189,15 +188,15 @@ jobs:
           
           echo "⚙️  Setting WEBSITE_RUN_FROM_PACKAGE..."
           az functionapp config appsettings set \
-            --resource-group proteinlens-prod \
-            --name "${{ env.AZURE_FUNCTIONAPP_NAME }}" \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --name "${{ secrets.AZURE_FUNCTIONAPP_NAME }}" \
             --settings "WEBSITE_RUN_FROM_PACKAGE=$PACKAGE_URL" \
             --output json
           
           echo "🔄 Restarting Function App to load new package..."
           az functionapp restart \
-            --resource-group proteinlens-prod \
-            --name "${{ env.AZURE_FUNCTIONAPP_NAME }}" \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --name "${{ secrets.AZURE_FUNCTIONAPP_NAME }}" \
             --output json
           
           echo "✅ Function App deployment completed"
@@ -227,7 +226,7 @@ jobs:
         id: health
         timeout-minutes: 3
         run: |
-          HEALTH_ENDPOINT="https://${{ env.AZURE_FUNCTIONAPP_NAME }}.azurewebsites.net/api/health"
+          HEALTH_ENDPOINT="https://${{ secrets.AZURE_FUNCTIONAPP_NAME }}.azurewebsites.net/api/health"
           MAX_RETRIES=5
           RETRY_DELAY=5
           RETRY_COUNT=0
@@ -282,8 +281,8 @@ jobs:
           echo "| Deploy | ✅ Passed |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Health Check | ✅ Passed |" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "**Function App**: ${{ env.AZURE_FUNCTIONAPP_NAME }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "**URL**: https://${{ env.AZURE_FUNCTIONAPP_NAME }}.azurewebsites.net" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Function App**: ${{ secrets.AZURE_FUNCTIONAPP_NAME }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "**URL**: https://${{ secrets.AZURE_FUNCTIONAPP_NAME }}.azurewebsites.net" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Report Failure
         if: failure()
