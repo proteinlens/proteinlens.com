@@ -139,6 +139,15 @@ jobs:
           echo "  - Storage Blob Delegator"
           echo "✅ Proceeding with deployment (assumes roles are configured)"
 
+      - name: Get Storage Connection String
+        id: storage
+        run: |
+          CONN_STR=$(az storage account show-connection-string \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --name "${{ secrets.AZURE_STORAGE_ACCOUNT }}" \
+            --query connectionString -o tsv)
+          echo "connection_string=$CONN_STR" >> $GITHUB_OUTPUT
+
       - name: Prepare Deployment Container
         run: |
           echo "📦 Ensuring deployments container exists..."
@@ -146,7 +155,7 @@ jobs:
           az storage container create \
             --account-name "${{ secrets.AZURE_STORAGE_ACCOUNT }}" \
             --name "${{ secrets.AZURE_STORAGE_CONTAINER }}" \
-            --auth-mode login \
+            --connection-string "${{ steps.storage.outputs.connection_string }}" \
             --output none
           
           echo "✅ Deployments container ready"
@@ -167,15 +176,15 @@ jobs:
             --container-name "${{ secrets.AZURE_STORAGE_CONTAINER }}" \
             --name "$BLOB_NAME" \
             --file backend-deploy.zip \
-            --auth-mode login \
+            --connection-string "${{ steps.storage.outputs.connection_string }}" \
             --overwrite true \
             --output json
           
-          echo "🔐 Creating user delegation SAS URL..."
+          echo "🔐 Creating account SAS URL..."
           # Start time in the past to avoid clock-skew issues
           START=$(date -u -d '15 minutes ago' +%Y-%m-%dT%H:%MZ 2>/dev/null || date -u -v-15M +%Y-%m-%dT%H:%MZ)
-          # User delegation SAS max expiry is 7 days
-          EXPIRY=$(date -u -d '7 days' +%Y-%m-%dT%H:%MZ 2>/dev/null || date -u -v+7d +%Y-%m-%dT%H:%MZ)
+          # Account SAS max expiry is 1 year
+          EXPIRY=$(date -u -d '365 days' +%Y-%m-%dT%H:%MZ 2>/dev/null || date -u -v+365d +%Y-%m-%dT%H:%MZ)
           
           echo "SAS start: $START"
           echo "SAS expiry: $EXPIRY"
@@ -187,8 +196,7 @@ jobs:
             --permissions r \
             --start "$START" \
             --expiry "$EXPIRY" \
-            --auth-mode login \
-            --as-user \
+            --connection-string "${{ steps.storage.outputs.connection_string }}" \
             --full-uri \
             --output tsv)
           
