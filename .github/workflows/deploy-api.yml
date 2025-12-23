@@ -149,11 +149,10 @@ jobs:
             --settings WEBSITE_RUN_FROM_PACKAGE=1
           echo "✅ Function App configured"
 
-      - name: Upload ZIP to Storage
+      - name: Upload and Deploy from Storage
         run: |
           echo "📤 Uploading deployment package to Azure Storage..."
           
-          # Find storage account in the resource group
           STORAGE_ACCOUNT=$(az storage account list \
             --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
             --query '[0].name' -o tsv)
@@ -163,15 +162,15 @@ jobs:
             exit 1
           fi
           
-          echo "Using storage account: $STORAGE_ACCOUNT"
+          echo "Storage account: $STORAGE_ACCOUNT"
           
           # Create container if needed
           az storage container create \
             --account-name "$STORAGE_ACCOUNT" \
             --name deployments \
-            --auth-mode login 2>/dev/null || true
+            --auth-mode key 2>/dev/null || true
           
-          # Upload ZIP with timestamp
+          # Upload ZIP with timestamp using storage account key
           TIMESTAMP=$(date +%s)
           BLOB_NAME="backend-${TIMESTAMP}.zip"
           
@@ -180,7 +179,7 @@ jobs:
             --container-name deployments \
             --name "$BLOB_NAME" \
             --file backend-deploy.zip \
-            --auth-mode login
+            --auth-mode key
           
           echo "✅ ZIP uploaded to storage: $BLOB_NAME"
           
@@ -191,22 +190,16 @@ jobs:
             --name "$BLOB_NAME" \
             --permissions r \
             --expiry $(date -u -d '+1 hour' '+%Y-%m-%dT%H:%MZ') \
-            --auth-mode login -o tsv)
+            --auth-mode key -o tsv)
           
           PACKAGE_URL="https://${STORAGE_ACCOUNT}.blob.core.windows.net/deployments/${BLOB_NAME}?${SAS_TOKEN}"
           
-          # Save URL for next step
-          echo "PACKAGE_URL=${PACKAGE_URL}" >> $GITHUB_ENV
-          echo "✅ SAS URL generated"
-
-      - name: Deploy from Storage URL
-        run: |
-          echo "📦 Deploying Function App from package URL..."
+          echo "📦 Setting package URL for Function App..."
           
           az functionapp config appsettings set \
             --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
             --name "${{ secrets.AZURE_FUNCTIONAPP_NAME }}" \
-            --settings WEBSITE_RUN_FROM_PACKAGE="${{ env.PACKAGE_URL }}"
+            --settings WEBSITE_RUN_FROM_PACKAGE="${PACKAGE_URL}"
           
           echo "✅ Function App configured with package URL"
           echo "⏳ Waiting for deployment to complete (30s)..."
