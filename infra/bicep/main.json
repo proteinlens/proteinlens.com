@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.39.26.7824",
-      "templateHash": "1730962412047618742"
+      "templateHash": "2748657151443166618"
     }
   },
   "parameters": {
@@ -45,6 +45,14 @@
       "type": "string",
       "defaultValue": "[format('{0}-fd-{1}', parameters('appNamePrefix'), parameters('environmentName'))]"
     },
+    "aiHubName": {
+      "type": "string",
+      "defaultValue": "[format('{0}-ai-hub-{1}', parameters('appNamePrefix'), parameters('environmentName'))]"
+    },
+    "aiProjectName": {
+      "type": "string",
+      "defaultValue": "[format('{0}-ai-project-{1}', parameters('appNamePrefix'), parameters('environmentName'))]"
+    },
     "postgresAdminUsername": {
       "type": "string",
       "defaultValue": "pgadmin"
@@ -55,6 +63,10 @@
     "enableFrontDoor": {
       "type": "bool",
       "defaultValue": false
+    },
+    "enableAIFoundry": {
+      "type": "bool",
+      "defaultValue": true
     }
   },
   "resources": [
@@ -73,9 +85,6 @@
           },
           "keyVaultName": {
             "value": "[parameters('keyVaultName')]"
-          },
-          "functionAppPrincipalId": {
-            "value": ""
           }
         },
         "template": {
@@ -85,7 +94,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.39.26.7824",
-              "templateHash": "10309763261119741049"
+              "templateHash": "16579586242449195085"
             }
           },
           "parameters": {
@@ -99,9 +108,6 @@
             "tenantId": {
               "type": "string",
               "defaultValue": "[subscription().tenantId]"
-            },
-            "functionAppPrincipalId": {
-              "type": "string"
             }
           },
           "resources": [
@@ -116,25 +122,12 @@
                   "name": "standard"
                 },
                 "tenantId": "[parameters('tenantId')]",
-                "enableRbacAuthorization": true,
+                "enableRbacAuthorization": false,
                 "enableSoftDelete": true,
                 "softDeleteRetentionInDays": 90,
-                "enablePurgeProtection": true
+                "enablePurgeProtection": true,
+                "accessPolicies": []
               }
-            },
-            {
-              "type": "Microsoft.Authorization/roleAssignments",
-              "apiVersion": "2022-04-01",
-              "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('keyVaultName'))]",
-              "name": "[guid(resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName')), parameters('functionAppPrincipalId'), 'Key Vault Secrets User')]",
-              "properties": {
-                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')]",
-                "principalId": "[parameters('functionAppPrincipalId')]",
-                "principalType": "ServicePrincipal"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
-              ]
             }
           ],
           "outputs": {
@@ -181,7 +174,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.39.26.7824",
-              "templateHash": "4766886051323970522"
+              "templateHash": "11889642119084453073"
             }
           },
           "parameters": {
@@ -212,6 +205,7 @@
                 "supportsHttpsTrafficOnly": true,
                 "minimumTlsVersion": "TLS1_2",
                 "allowBlobPublicAccess": false,
+                "allowSharedKeyAccess": false,
                 "networkAcls": {
                   "defaultAction": "Allow"
                 }
@@ -462,7 +456,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.39.26.7824",
-              "templateHash": "3045432569374665744"
+              "templateHash": "4248927992968466942"
             }
           },
           "parameters": {
@@ -521,6 +515,10 @@
                     {
                       "name": "FUNCTIONS_EXTENSION_VERSION",
                       "value": "~4"
+                    },
+                    {
+                      "name": "AzureWebJobsStorage__accountName",
+                      "value": "[parameters('storageAccountName')]"
                     },
                     {
                       "name": "AZURE_STORAGE_ACCOUNT_NAME",
@@ -793,6 +791,144 @@
           }
         }
       }
+    },
+    {
+      "condition": "[parameters('enableAIFoundry')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "ai-foundry-deployment",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "aiHubName": {
+            "value": "[parameters('aiHubName')]"
+          },
+          "aiProjectName": {
+            "value": "[parameters('aiProjectName')]"
+          },
+          "keyVaultId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyvault-deployment'), '2025-04-01').outputs.keyVaultId.value]"
+          },
+          "storageAccountId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'storage-deployment'), '2025-04-01').outputs.storageAccountId.value]"
+          },
+          "applicationInsightsId": {
+            "value": ""
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "1459046197239310688"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]"
+            },
+            "aiHubName": {
+              "type": "string"
+            },
+            "aiProjectName": {
+              "type": "string"
+            },
+            "keyVaultId": {
+              "type": "string"
+            },
+            "storageAccountId": {
+              "type": "string"
+            },
+            "applicationInsightsId": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.MachineLearningServices/workspaces",
+              "apiVersion": "2024-04-01",
+              "name": "[parameters('aiHubName')]",
+              "location": "[parameters('location')]",
+              "kind": "Hub",
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "properties": {
+                "friendlyName": "ProteinLens AI Hub",
+                "description": "AI Foundry hub for GPT-5.1 meal analysis",
+                "keyVault": "[parameters('keyVaultId')]",
+                "storageAccount": "[parameters('storageAccountId')]",
+                "applicationInsights": "[parameters('applicationInsightsId')]",
+                "publicNetworkAccess": "Enabled",
+                "hbiWorkspace": false
+              }
+            },
+            {
+              "type": "Microsoft.MachineLearningServices/workspaces",
+              "apiVersion": "2024-04-01",
+              "name": "[parameters('aiProjectName')]",
+              "location": "[parameters('location')]",
+              "kind": "Project",
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "properties": {
+                "friendlyName": "ProteinLens AI Project",
+                "description": "Project for GPT-5.1 integration",
+                "keyVault": "[parameters('keyVaultId')]",
+                "storageAccount": "[parameters('storageAccountId')]",
+                "applicationInsights": "[parameters('applicationInsightsId')]",
+                "hubResourceId": "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiHubName'))]",
+                "publicNetworkAccess": "Enabled",
+                "hbiWorkspace": false
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiHubName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "aiHubName": {
+              "type": "string",
+              "value": "[parameters('aiHubName')]"
+            },
+            "aiHubId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiHubName'))]"
+            },
+            "aiProjectName": {
+              "type": "string",
+              "value": "[parameters('aiProjectName')]"
+            },
+            "aiProjectId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiProjectName'))]"
+            },
+            "aiHubManagedIdentityId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiHubName')), '2024-04-01', 'full').identity.principalId]"
+            },
+            "aiProjectManagedIdentityId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiProjectName')), '2024-04-01', 'full').identity.principalId]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'keyvault-deployment')]",
+        "[resourceId('Microsoft.Resources/deployments', 'storage-deployment')]"
+      ]
     }
   ],
   "outputs": {
@@ -894,6 +1030,26 @@
     "frontDoorName": {
       "type": "string",
       "value": "[if(parameters('enableFrontDoor'), reference(resourceId('Microsoft.Resources/deployments', 'frontdoor-deployment'), '2025-04-01').outputs.frontDoorName.value, '')]"
+    },
+    "aiFoundryEnabled": {
+      "type": "bool",
+      "value": "[parameters('enableAIFoundry')]"
+    },
+    "aiHubName": {
+      "type": "string",
+      "value": "[if(parameters('enableAIFoundry'), reference(resourceId('Microsoft.Resources/deployments', 'ai-foundry-deployment'), '2025-04-01').outputs.aiHubName.value, '')]"
+    },
+    "aiHubId": {
+      "type": "string",
+      "value": "[if(parameters('enableAIFoundry'), reference(resourceId('Microsoft.Resources/deployments', 'ai-foundry-deployment'), '2025-04-01').outputs.aiHubId.value, '')]"
+    },
+    "aiProjectName": {
+      "type": "string",
+      "value": "[if(parameters('enableAIFoundry'), reference(resourceId('Microsoft.Resources/deployments', 'ai-foundry-deployment'), '2025-04-01').outputs.aiProjectName.value, '')]"
+    },
+    "aiProjectId": {
+      "type": "string",
+      "value": "[if(parameters('enableAIFoundry'), reference(resourceId('Microsoft.Resources/deployments', 'ai-foundry-deployment'), '2025-04-01').outputs.aiProjectId.value, '')]"
     },
     "databaseConnectionString": {
       "type": "string",

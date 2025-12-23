@@ -28,9 +28,9 @@ description: "Task list for OpenAI Foundry Automation feature implementation"
 
 **Purpose**: Project initialization and basic Bicep module scaffolding
 
-- [ ] T001 Create infra/bicep/openai-foundry.bicep for OpenAI account and model deployment resources
-- [ ] T002 [P] Add infra/bicep/keyvault-foundry.bicep for Key Vault secret and role assignment (if Key Vault module doesn't exist)
-- [ ] T003 [P] Add Bicep outputs: OpenAI endpoint, resource name, deployment name, Key Vault secret URI to infra/bicep/openai-foundry.bicep
+- [X] T001 Create infra/bicep/openai-foundry.bicep for OpenAI account and model deployment resources
+- [X] T002 [P] Add infra/bicep/keyvault-foundry.bicep for Key Vault secret and role assignment (if Key Vault module doesn't exist)
+- [X] T003 [P] Add Bicep outputs: OpenAI endpoint, resource name, deployment name, Key Vault secret URI to infra/bicep/openai-foundry.bicep
 
 ---
 
@@ -40,12 +40,12 @@ description: "Task list for OpenAI Foundry Automation feature implementation"
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T004 Create scripts/foundry-up.sh to orchestrate Bicep deployment and secret provisioning
-- [ ] T005 Create scripts/foundry-down.sh to orchestrate resource deletion and cleanup
-- [ ] T006 Create scripts/foundry-rotate-key.sh to orchestrate key regeneration and secret update
-- [ ] T007 Create .github/workflows/foundry-on-demand.yml with workflow_dispatch inputs (action, env, region, model)
-- [ ] T008 Add helper function to scripts/foundry-up.sh to detect active vs inactive key slots without logging keys
-- [ ] T009 Add secret scanning guardrails: create .github/workflows/secret-scan.yml to block raw key commits
+- [X] T004 Create scripts/foundry-up.sh to orchestrate Bicep deployment and secret provisioning
+- [X] T005 Create scripts/foundry-down.sh to orchestrate resource deletion and cleanup
+- [X] T006 Create scripts/foundry-rotate-key.sh to orchestrate key regeneration and secret update
+- [X] T007 Create .github/workflows/foundry-on-demand.yml with workflow_dispatch inputs (action, env, region, model)
+- [X] T008 Add helper function to scripts/foundry-up.sh to detect active vs inactive key slots without logging keys
+- [X] T009 Add secret scanning guardrails: create .github/workflows/secret-scan.yml to block raw key commits
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -59,17 +59,17 @@ description: "Task list for OpenAI Foundry Automation feature implementation"
 
 ### Implementation for User Story 1
 
-- [ ] T010 [US1] Implement Microsoft.CognitiveServices/accounts resource in infra/bicep/openai-foundry.bicep with env-scoped naming
-- [ ] T011 [US1] Implement Microsoft.CognitiveServices/accounts/deployments for gpt-5-1 model in infra/bicep/openai-foundry.bicep
-- [ ] T012 [P] [US1] Implement Key Vault secret creation for AZURE_OPENAI_API_KEY--{env} in infra/bicep/keyvault-foundry.bicep
-- [ ] T013 [P] [US1] Implement Managed Identity role assignment (Key Vault Secrets User) in infra/bicep/keyvault-foundry.bicep
-- [ ] T014 [US1] Implement Bicep deployment logic in scripts/foundry-up.sh using az deployment group create with --what-if check
-- [ ] T015 [US1] Add logic to scripts/foundry-up.sh to read OpenAI API key via az cognitiveservices account keys list (without logging)
-- [ ] T016 [US1] Add logic to scripts/foundry-up.sh to write key to Key Vault secret using az keyvault secret set (silent mode)
-- [ ] T017 [US1] Add logic to scripts/foundry-up.sh to update Function App setting AZURE_OPENAI_API_KEY to Key Vault reference format
-- [ ] T018 [US1] Implement workflow job for action=up in .github/workflows/foundry-on-demand.yml calling scripts/foundry-up.sh
-- [ ] T019 [US1] Add region fallback logic (eastus → westus) in scripts/foundry-up.sh for quota handling
-- [ ] T020 [US1] Add error handling and human-readable failure messages in scripts/foundry-up.sh for permissions and quota issues
+- [X] T010 [US1] Implement Microsoft.CognitiveServices/accounts resource in infra/bicep/openai-foundry.bicep with env-scoped naming
+- [X] T011 [US1] Implement Microsoft.CognitiveServices/accounts/deployments for gpt-5-1 model in infra/bicep/openai-foundry.bicep
+- [X] T012 [P] [US1] Implement Key Vault secret creation for AZURE_OPENAI_API_KEY--{env} in infra/bicep/keyvault-foundry.bicep
+- [X] T013 [P] [US1] Implement Managed Identity role assignment (Key Vault Secrets User) in infra/bicep/keyvault-foundry.bicep
+- [X] T014 [US1] Implement Bicep deployment logic in scripts/foundry-up.sh using az deployment group create with --what-if check
+- [X] T015 [US1] Add logic to scripts/foundry-up.sh to read OpenAI API key via az cognitiveservices account keys list (without logging)
+- [X] T016 [US1] Add logic to scripts/foundry-up.sh to write key to Key Vault secret using az keyvault secret set (silent mode)
+- [X] T017 [US1] Add logic to scripts/foundry-up.sh to update Function App setting AZURE_OPENAI_API_KEY to Key Vault reference format
+- [X] T018 [US1] Implement workflow job for action=up in .github/workflows/foundry-on-demand.yml calling scripts/foundry-up.sh
+- [X] T019 [US1] Add region fallback logic (eastus → westus) in scripts/foundry-up.sh for quota handling
+- [X] T020 [US1] Add error handling and human-readable failure messages in scripts/foundry-up.sh for permissions and quota issues
 
 **Checkpoint**: At this point, User Story 1 (provision) should be fully functional and testable independently
 
@@ -83,13 +83,13 @@ description: "Task list for OpenAI Foundry Automation feature implementation"
 
 ### Implementation for User Story 2
 
-- [ ] T021 [US2] Implement logic in scripts/foundry-rotate-key.sh to detect currently active vs inactive key slot
-- [ ] T022 [US2] Add logic to scripts/foundry-rotate-key.sh to regenerate inactive key using az cognitiveservices account keys regenerate
-- [ ] T023 [US2] Add logic to scripts/foundry-rotate-key.sh to update Key Vault secret AZURE_OPENAI_API_KEY--{env} with new inactive key value
-- [ ] T024 [US2] Implement config reference refresh trigger in scripts/foundry-rotate-key.sh using Function App management endpoint
-- [ ] T025 [US2] Implement workflow job for action=rotate-key in .github/workflows/foundry-on-demand.yml calling scripts/foundry-rotate-key.sh
-- [ ] T026 [US2] Add validation in scripts/foundry-rotate-key.sh to confirm no raw keys are echoed to stdout or GitHub Actions logs
-- [ ] T027 [US2] Document refresh SLA (≤15 min) and optional manual restart option in scripts/foundry-rotate-key.sh comments
+- [X] T021 [US2] Implement logic in scripts/foundry-rotate-key.sh to detect currently active vs inactive key slot
+- [X] T022 [US2] Add logic to scripts/foundry-rotate-key.sh to regenerate inactive key using az cognitiveservices account keys regenerate
+- [X] T023 [US2] Add logic to scripts/foundry-rotate-key.sh to update Key Vault secret AZURE_OPENAI_API_KEY--{env} with new inactive key value
+- [X] T024 [US2] Implement config reference refresh trigger in scripts/foundry-rotate-key.sh using Function App management endpoint
+- [X] T025 [US2] Implement workflow job for action=rotate-key in .github/workflows/foundry-on-demand.yml calling scripts/foundry-rotate-key.sh
+- [X] T026 [US2] Add validation in scripts/foundry-rotate-key.sh to confirm no raw keys are echoed to stdout or GitHub Actions logs
+- [X] T027 [US2] Document refresh SLA (≤15 min) and optional manual restart option in scripts/foundry-rotate-key.sh comments
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently (provision + rotate)
 
@@ -103,12 +103,12 @@ description: "Task list for OpenAI Foundry Automation feature implementation"
 
 ### Implementation for User Story 3
 
-- [ ] T028 [US3] Implement resource deletion logic in scripts/foundry-down.sh using az cognitiveservices account delete or resource group scoped deletion
-- [ ] T029 [US3] Add logic to scripts/foundry-down.sh to delete Key Vault secret AZURE_OPENAI_API_KEY--{env} if exists
-- [ ] T030 [US3] Add logic to scripts/foundry-down.sh to remove Function App setting AZURE_OPENAI_API_KEY reference (optional cleanup)
-- [ ] T031 [US3] Implement idempotency checks in scripts/foundry-down.sh (skip deletion if resource already absent)
-- [ ] T032 [US3] Implement workflow job for action=down in .github/workflows/foundry-on-demand.yml calling scripts/foundry-down.sh
-- [ ] T033 [US3] Add validation in scripts/foundry-down.sh to ensure deletion is scoped to target env only (no cross-env impact)
+- [X] T028 [US3] Implement resource deletion logic in scripts/foundry-down.sh using az cognitiveservices account delete or resource group scoped deletion
+- [X] T029 [US3] Add logic to scripts/foundry-down.sh to delete Key Vault secret AZURE_OPENAI_API_KEY--{env} if exists
+- [X] T030 [US3] Add logic to scripts/foundry-down.sh to remove Function App setting AZURE_OPENAI_API_KEY reference (optional cleanup)
+- [X] T031 [US3] Implement idempotency checks in scripts/foundry-down.sh (skip deletion if resource already absent)
+- [X] T032 [US3] Implement workflow job for action=down in .github/workflows/foundry-on-demand.yml calling scripts/foundry-down.sh
+- [X] T033 [US3] Add validation in scripts/foundry-down.sh to ensure deletion is scoped to target env only (no cross-env impact)
 
 **Checkpoint**: All user stories should now be independently functional (up, rotate, down)
 
@@ -118,11 +118,11 @@ description: "Task list for OpenAI Foundry Automation feature implementation"
 
 **Purpose**: Validation, documentation, and safety improvements affecting all user stories
 
-- [ ] T034 [P] Add smoke test script scripts/foundry-smoke-test.sh to call /api/health and verify OpenAI key loaded
-- [ ] T035 [P] Add log assertion check in scripts/foundry-smoke-test.sh to scan workflow logs for accidental key exposure
-- [ ] T036 Ensure backend/src/ code reads AZURE_OPENAI_API_KEY from process.env (verify no hardcoded keys)
+- [X] T034 [P] Add smoke test script scripts/foundry-smoke-test.sh to call /api/health and verify OpenAI key loaded
+- [X] T035 [P] Add log assertion check in scripts/foundry-smoke-test.sh to scan workflow logs for accidental key exposure
+- [X] T036 Ensure backend/src/ code reads AZURE_OPENAI_API_KEY from process.env (verify no hardcoded keys)
 - [ ] T037 Update README.md or DEPLOYMENT-GUIDE.md with quickstart instructions for running foundry-on-demand workflow
-- [ ] T038 [P] Add resource tagging (env, service=openai, repo, owner, costCenter) to infra/bicep/openai-foundry.bicep
+- [X] T038 [P] Add resource tagging (env, service=openai, repo, owner, costCenter) to infra/bicep/openai-foundry.bicep
 - [ ] T039 Add environment protection rules for prod in .github/workflows/foundry-on-demand.yml (require approval for rotate-key)
 - [ ] T040 Run validation per specs/005-openai-foundry-automation/quickstart.md
 

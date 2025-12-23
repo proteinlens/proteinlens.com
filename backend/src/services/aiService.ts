@@ -90,11 +90,19 @@ Guidelines:
     attempt = 1
   ): Promise<AIAnalysisResponse> {
     try {
-      const response = await fetch(`${config.aiFoundryEndpoint}/chat/completions`, {
+      // Use Azure OpenAI endpoint (from Key Vault via AZURE_OPENAI_API_KEY)
+      const endpoint = config.azureOpenAIEndpoint || config.aiFoundryEndpoint;
+      const apiKey = config.azureOpenAIApiKey;
+      
+      if (!apiKey) {
+        throw new AIAnalysisError('Azure OpenAI API key not configured (AZURE_OPENAI_API_KEY)');
+      }
+      
+      const response = await fetch(`${endpoint}/openai/deployments/${config.azureOpenAIDeployment}/chat/completions?api-version=2024-02-15-preview`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'api-key': process.env.AI_API_KEY || '', // From Key Vault in production
+          'api-key': apiKey, // From Key Vault reference in production
         },
         body: JSON.stringify(requestBody),
       });

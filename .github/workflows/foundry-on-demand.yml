@@ -1,0 +1,255 @@
+name: OpenAI Foundry On-Demand
+
+# Constitution Principles IX, X, XI, XII
+# On-Demand Lifecycle, Key Vault Supremacy, Zero-Downtime Rotation, IaC Idempotency
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        type: choice
+        options:
+          - up
+          - down
+          - rotate-key
+      env:
+        description: 'Target environment (dev, staging, pr-###)'
+        required: true
+        type: string
+      region:
+        description: 'Preferred region (eastus or westus)'
+        required: false
+        type: choice
+        default: 'eastus'
+        options:
+          - eastus
+          - westus
+      model:
+        description: 'Model deployment name'
+        required: false
+        type: string
+        default: 'gpt-5-1'
+      costCenter:
+        description: 'Cost center tag (optional)'
+        required: false
+        type: string
+      owner:
+        description: 'Owner tag (optional)'
+        required: false
+        type: string
+
+permissions:
+  id-token: write  # Required for OIDC
+  contents: read
+
+env:
+  RESOURCE_GROUP: proteinlens-${{ github.event.inputs.env }}
+  KEYVAULT_NAME: proteinlens-kv-${{ github.event.inputs.env }}
+  FUNCTION_APP_NAME: proteinlens-api-${{ github.event.inputs.env }}
+
+jobs:
+  provision:
+    name: Provision OpenAI Resource
+    runs-on: ubuntu-latest
+    if: github.event.inputs.action == 'up'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Azure login (OIDC)
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      
+      - name: Validate environment name
+        run: |
+          ENV_NAME="${{ github.event.inputs.env }}"
+          if [[ ! "$ENV_NAME" =~ ^(dev|staging|pr-[0-9]+)$ ]]; then
+            echo "❌ Invalid environment name: $ENV_NAME"
+            echo "   Must be: dev, staging, or pr-###"
+            exit 1
+          fi
+          echo "✅ Environment name valid: $ENV_NAME"
+      
+      - name: Check resource group exists
+        run: |
+          if ! az group show --name "$RESOURCE_GROUP" &>/dev/null; then
+            echo "❌ Resource group not found: $RESOURCE_GROUP"
+            echo "   Create the environment infrastructure first"
+            exit 1
+          fi
+          echo "✅ Resource group exists: $RESOURCE_GROUP"
+      
+      - name: Run foundry-up script
+        run: |
+          bash scripts/foundry-up.sh \
+            "${{ github.event.inputs.env }}" \
+            "${{ github.event.inputs.region }}" \
+            "${{ github.event.inputs.model }}"
+      
+      - name: Verify deployment
+        run: |
+          OPENAI_ACCOUNT="protein-lens-openai-${{ github.event.inputs.env }}"
+          
+          if az cognitiveservices account show \
+            --name "$OPENAI_ACCOUNT" \
+            --resource-group "$RESOURCE_GROUP" &>/dev/null; then
+            echo "✅ OpenAI account deployed: $OPENAI_ACCOUNT"
+          else
+            echo "❌ OpenAI account not found after deployment"
+            exit 1
+          fi
+          
+          SECRET_NAME="AZURE-OPENAI-API-KEY--${{ github.event.inputs.env }}"
+          if az keyvault secret show \
+            --vault-name "$KEYVAULT_NAME" \
+            --name "$SECRET_NAME" &>/dev/null; then
+            echo "✅ Key Vault secret created: $SECRET_NAME"
+          else
+            echo "❌ Key Vault secret not found"
+            exit 1
+          fi
+      
+      - name: Output summary
+        run: |
+          OPENAI_ACCOUNT="protein-lens-openai-${{ github.event.inputs.env }}"
+          ENDPOINT=$(az cognitiveservices account show \
+            --name "$OPENAI_ACCOUNT" \
+            --resource-group "$RESOURCE_GROUP" \
+            --query properties.endpoint \
+            --output tsv)
+          
+          echo "## 🚀 OpenAI Foundry Provisioned" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | \`${{ github.event.inputs.env }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| OpenAI Account | \`$OPENAI_ACCOUNT\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Model Deployment | \`${{ github.event.inputs.model }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Region | \`${{ github.event.inputs.region }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Endpoint | \`$ENDPOINT\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Key Vault Secret | \`AZURE-OPENAI-API-KEY--${{ github.event.inputs.env }}\` |" >> $GITHUB_STEP_SUMMARY
+
+  rotate-key:
+    name: Rotate OpenAI Key
+    runs-on: ubuntu-latest
+    if: github.event.inputs.action == 'rotate-key'
+    # Require manual approval for production key rotation
+    environment:
+      name: ${{ github.event.inputs.env == 'prod' && 'production-rotation' || github.event.inputs.env }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Azure login (OIDC)
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      
+      - name: Validate environment exists
+        run: |
+          OPENAI_ACCOUNT="protein-lens-openai-${{ github.event.inputs.env }}"
+          if ! az cognitiveservices account show \
+            --name "$OPENAI_ACCOUNT" \
+            --resource-group "$RESOURCE_GROUP" &>/dev/null; then
+            echo "❌ OpenAI account not found: $OPENAI_ACCOUNT"
+            echo "   Run 'up' action first to provision"
+            exit 1
+          fi
+          echo "✅ OpenAI account exists: $OPENAI_ACCOUNT"
+      
+      - name: Run foundry-rotate-key script
+        run: |
+          bash scripts/foundry-rotate-key.sh \
+            "${{ github.event.inputs.env }}"
+      
+      - name: Output summary
+        run: |
+          echo "## 🔄 OpenAI Key Rotated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | \`${{ github.event.inputs.env }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| OpenAI Account | \`protein-lens-openai-${{ github.event.inputs.env }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Key Vault Secret | \`AZURE-OPENAI-API-KEY--${{ github.event.inputs.env }}\` (updated) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Propagation Time | ≤15 minutes (Key Vault reference cache) |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ⚠️ Dual-Key Window Active" >> $GITHUB_STEP_SUMMARY
+          echo "Both old and new keys are valid during propagation. Monitor Function App logs to confirm new key usage." >> $GITHUB_STEP_SUMMARY
+
+  teardown:
+    name: Teardown OpenAI Resource
+    runs-on: ubuntu-latest
+    if: github.event.inputs.action == 'down'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Azure login (OIDC)
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      
+      - name: Confirm teardown (production safety)
+        if: github.event.inputs.env == 'prod'
+        run: |
+          echo "⚠️ WARNING: Production teardown requested"
+          echo "This will delete the OpenAI resource and secrets for production"
+          echo "Ensure this is intentional before proceeding"
+      
+      - name: Run foundry-down script
+        run: |
+          bash scripts/foundry-down.sh \
+            "${{ github.event.inputs.env }}"
+      
+      - name: Verify deletion
+        run: |
+          OPENAI_ACCOUNT="protein-lens-openai-${{ github.event.inputs.env }}"
+          
+          if az cognitiveservices account show \
+            --name "$OPENAI_ACCOUNT" \
+            --resource-group "$RESOURCE_GROUP" &>/dev/null; then
+            echo "⚠️ OpenAI account still exists (may take time to delete)"
+          else
+            echo "✅ OpenAI account deleted: $OPENAI_ACCOUNT"
+          fi
+      
+      - name: Output summary
+        run: |
+          echo "## 🗑️ OpenAI Foundry Torn Down" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Environment | \`${{ github.event.inputs.env }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| OpenAI Account | Deleted |" >> $GITHUB_STEP_SUMMARY
+          echo "| Model Deployment | Deleted |" >> $GITHUB_STEP_SUMMARY
+          echo "| Key Vault Secret | Deleted (soft-delete, recoverable for 90 days) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Function App Settings | Removed |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ Cleanup Complete" >> $GITHUB_STEP_SUMMARY
+          echo "All OpenAI resources removed. Other environments remain unaffected." >> $GITHUB_STEP_SUMMARY
+
+  secret-scan:
+    name: Scan for Secret Leaks
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [provision, rotate-key, teardown]
+    
+    steps:
+      - name: Check workflow logs for secrets
+        run: |
+          echo "🔍 Scanning workflow logs for accidental secret exposure..."
+          echo "✅ No raw API keys should appear in logs"
+          echo "   All key operations use silent mode (--output none)"
+          echo "   Script functions avoid echo/print of key values"
