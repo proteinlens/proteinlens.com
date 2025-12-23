@@ -43,6 +43,12 @@ jobs:
           npm ci --verbose
           echo "✅ Dependencies installed"
 
+      - name: Generate Prisma Client
+        run: |
+          cd backend
+          npm run prisma:generate
+          echo "✅ Prisma client generated"
+
       - name: Build TypeScript
         run: |
           cd backend
