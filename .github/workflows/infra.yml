@@ -115,6 +115,9 @@ jobs:
           # Extract Key Vault name from deployment outputs
           KEYVAULT_NAME=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.keyVaultName.value')
           POSTGRES_SERVER=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.postgresServerFqdn.value')
+          POSTGRES_USER=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.postgresAdminUsername.value')
+          POSTGRES_PORT=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.postgresPort.value // 5432')
+          POSTGRES_DB=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.databaseName.value // "proteinlens"')
           
           if [ -z "$KEYVAULT_NAME" ] || [ "$KEYVAULT_NAME" == "null" ]; then
             echo "❌ Failed to extract Key Vault name from deployment outputs"
@@ -134,7 +137,7 @@ jobs:
           az keyvault secret set \
             --vault-name "$KEYVAULT_NAME" \
             --name "database-url" \
-            --value "postgresql://postgres:${DB_PASSWORD}@${POSTGRES_SERVER}/proteinlens" \
+            --value "postgresql://${POSTGRES_USER}:${DB_PASSWORD}@${POSTGRES_SERVER}:${POSTGRES_PORT}/${POSTGRES_DB}" \
             > /dev/null
           
           # Set OPENAI_API_KEY (use placeholder if not set)

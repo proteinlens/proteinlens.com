@@ -75,26 +75,19 @@ jobs:
             echo "❌ Build output directory not found"
             exit 1
           fi
-          # Create deployment package with required files at root
-          # Include prisma folder for database schema
-          # Exclude dev dependencies (@types, typescript) to reduce package size
-          zip -r -q ../backend-deploy.zip \
-            dist \
-            node_modules \
-            host.json \
-            package.json \
-            prisma \
-            -x "node_modules/@types/*" \
-            -x "node_modules/typescript/*" \
-            -x "*.test.js"
-          ls -lh ../backend-deploy.zip
-          echo "✅ Function App packaged"
+          # Stage a deployable Functions app with compiled JS at root
+          rm -rf .deploy && mkdir -p .deploy
+          cp host.json package.json .deploy/
+          cp -r prisma .deploy/prisma
+          cp -r node_modules .deploy/node_modules
+          rsync -a dist/ .deploy/
+          echo "✅ Deployment folder prepared at backend/.deploy"
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: backend-build
-          path: backend-deploy.zip
+          path: backend/.deploy
           retention-days: 1
 
   deploy:
@@ -144,7 +137,7 @@ jobs:
         uses: azure/functions-action@v1
         with:
           app-name: ${{ secrets.AZURE_FUNCTIONAPP_NAME }}
-          package: backend-deploy.zip
+          package: backend-build
           publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
         
       - name: Warm up
