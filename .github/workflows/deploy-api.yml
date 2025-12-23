@@ -101,10 +101,32 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download build artifact
-        uses: actions/download-artifact@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          name: backend-build
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'backend/package-lock.json'
+
+      - name: Install dependencies (deploy)
+        run: |
+          cd backend
+          npm ci --verbose
+
+      - name: Build (deploy)
+        run: |
+          cd backend
+          npm run prisma:generate
+          npm run build
+
+      - name: Stage deployment folder (deploy)
+        run: |
+          cd backend
+          rm -rf .deploy && mkdir -p .deploy
+          cp host.json package.json .deploy/
+          cp -r prisma .deploy/prisma
+          cp -r node_modules .deploy/node_modules
+          rsync -a dist/ .deploy/
 
       - name: Login to Azure via OIDC
         uses: azure/login@v1
@@ -137,7 +159,7 @@ jobs:
         uses: azure/functions-action@v1
         with:
           app-name: ${{ secrets.AZURE_FUNCTIONAPP_NAME }}
-          package: backend-build
+          package: backend/.deploy
           publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
         
       - name: Warm up

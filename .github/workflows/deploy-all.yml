@@ -1,0 +1,171 @@
+name: Deploy All (Infra → Backend → Frontend)
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment name (prod/staging/dev)
+        required: true
+        default: prod
+      resource_group:
+        description: Resource group name
+        required: true
+        default: proteinlens-prod-v3
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  NODE_VERSION: '20'
+  LOCATION: eastus2
+
+jobs:
+  infra:
+    name: Provision Infrastructure
+    runs-on: ubuntu-latest
+    outputs:
+      functionAppUrl: ${{ steps.outputs.outputs.functionAppUrl }}
+      staticWebAppUrl: ${{ steps.outputs.outputs.staticWebAppUrl }}
+      functionAppName: ${{ steps.outputs.outputs.functionAppName }}
+      keyVaultName: ${{ steps.outputs.outputs.keyVaultName }}
+      storageAccountName: ${{ steps.outputs.outputs.storageAccountName }}
+      staticWebAppsToken: ${{ steps.swa.outputs.token }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Validate Bicep
+        run: |
+          az bicep build --file infra/bicep/subscription-main.bicep
+
+      - name: Deploy Subscription Stack
+        id: deploy
+        env:
+          ENV: ${{ github.event.inputs.environment }}
+          RG: ${{ github.event.inputs.resource_group }}
+        run: |
+          DEPLOY_NAME="proteinlens-${ENV}-$(date +%s)"
+          az deployment sub create \
+            --location "$LOCATION" \
+            --template-file infra/bicep/subscription-main.bicep \
+            --parameters \
+              location="$LOCATION" \
+              resourceGroupName="$RG" \
+              environmentName="$ENV" \
+              appNamePrefix="proteinlens" \
+              postgresAdminPassword='${{ secrets.DATABASE_ADMIN_PASSWORD }}' \
+              openaiApiKey='${{ secrets.OPENAI_API_KEY }}' \
+              stripeSecretKey='${{ secrets.STRIPE_SECRET_KEY }}' \
+              stripeWebhookSecret='${{ secrets.STRIPE_WEBHOOK_SECRET }}' \
+            --name "$DEPLOY_NAME"
+
+      - name: Capture Outputs
+        id: outputs
+        env:
+          ENV: ${{ github.event.inputs.environment }}
+        run: |
+          LAST_DEPLOY=$(az deployment sub list --query "[?contains(name, 'proteinlens-${ENV}')]|[-1].name" -o tsv)
+          az deployment sub show --name "$LAST_DEPLOY" --query "properties.outputs" -o json > /tmp/outputs.json
+          echo "functionAppUrl=$(jq -r '.functionAppUrl.value' /tmp/outputs.json)" >> "$GITHUB_OUTPUT"
+          echo "staticWebAppUrl=$(jq -r '.staticWebAppUrl.value' /tmp/outputs.json)" >> "$GITHUB_OUTPUT"
+          echo "functionAppName=$(jq -r '.functionAppName.value' /tmp/outputs.json)" >> "$GITHUB_OUTPUT"
+          echo "keyVaultName=$(jq -r '.keyVaultName.value' /tmp/outputs.json)" >> "$GITHUB_OUTPUT"
+          echo "storageAccountName=$(jq -r '.storageAccountName.value' /tmp/outputs.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Retrieve Static Web Apps token
+        id: swa
+        env:
+          RG: ${{ github.event.inputs.resource_group }}
+        run: |
+          NAME=$(jq -r '.staticWebAppName.value' /tmp/outputs.json)
+          if [ -z "$NAME" ] || [ "$NAME" = "null" ]; then
+            echo "Token not available: static web app name missing"; exit 1;
+          fi
+          TOKEN=$(az staticwebapp secrets list --name "$NAME" --resource-group "$RG" --query properties.apiKey -o tsv)
+          echo "::add-mask::$TOKEN"
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
+  backend:
+    name: Deploy Backend API
+    runs-on: ubuntu-latest
+    needs: infra
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'backend/package-lock.json'
+
+      - name: Install & Build
+        run: |
+          cd backend
+          npm ci --verbose
+          npm run prisma:generate
+          npm run build
+
+      - name: Stage deployment folder
+        run: |
+          cd backend
+          rm -rf .deploy && mkdir -p .deploy
+          cp host.json package.json .deploy/
+          cp -r prisma .deploy/prisma
+          cp -r node_modules .deploy/node_modules
+          rsync -a dist/ .deploy/
+
+      - name: Deploy via publish profile
+        uses: azure/functions-action@v1
+        with:
+          app-name: ${{ needs.infra.outputs.functionAppName }}
+          package: backend/.deploy
+          publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
+
+      - name: Health check
+        run: |
+          URL="${{ needs.infra.outputs.functionAppUrl }}"
+          for i in {1..10}; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "$URL/api/health");
+            echo "Attempt $i: $code"; [ "$code" = "200" ] && exit 0; sleep 6;
+          done
+          echo "Health check failed"; exit 1
+
+  frontend:
+    name: Deploy Frontend Web
+    runs-on: ubuntu-latest
+    needs: [infra, backend]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Install & Build
+        env:
+          VITE_API_URL: ${{ needs.infra.outputs.functionAppUrl }}
+        run: |
+          cd frontend
+          npm ci --verbose
+          VITE_API_URL="$VITE_API_URL" npm run build
+
+      - name: Deploy to Static Web Apps
+        uses: azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ needs.infra.outputs.staticWebAppsToken }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: "upload"
+          app_location: "frontend/dist"
+          skip_app_build: true
