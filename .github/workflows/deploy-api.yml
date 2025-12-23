@@ -107,11 +107,11 @@ jobs:
       - name: Verify Function App exists
         run: |
           echo "🔍 Checking if Function App exists..."
-          if az functionapp show --name "${{ env.AZURE_FUNCTIONAPP_NAME }}" --resource-group proteinlens-prod &> /dev/null; then
-            echo "✅ Function App '${{ env.AZUsecrets.AZURE_FUNCTIONAPP_NAME }}" --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" &> /dev/null; then
+          if az functionapp show --name "${{ secrets.AZURE_FUNCTIONAPP_NAME }}" --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" &> /dev/null; then
             echo "✅ Function App '${{ secrets.AZURE_FUNCTIONAPP_NAME }}' found"
           else
-            echo "❌ Function App '${{ secrets
+            echo "❌ Function App '${{ secrets.AZURE_FUNCTIONAPP_NAME }}' does not exist"
+            echo ""
             echo "📋 Please deploy infrastructure first:"
             echo "   1. Go to Actions tab"
             echo "   2. Select 'Deploy Infrastructure' workflow"
