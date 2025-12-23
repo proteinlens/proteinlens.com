@@ -1,28 +1,35 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version Change: 1.0.0 → 2.0.0
-Change Type: MINOR (New principles added - UX/UI standards)
+Version Change: 2.0.0 → 3.0.0
+Change Type: MINOR (New principles added for infrastructure/DevOps governance)
 Principles Modified:
-  - NONE (existing 7 principles unchanged)
+  - Principle VII renamed from "Privacy & User Data Rights" to "Intelligent Analysis Infrastructure" (expanded scope, new AI Foundry focus)
 Principles Added:
-  - VIII. Mobile-First Design (NEW)
-  - IX. Fast Perceived Performance (NEW)
-  - X. Delight Without Friction (NEW)
-  - XI. Accessibility Baseline (NEW)
-  - XII. Design System Consistency (NEW)
-  - XIII. Trust UI (NEW)
-  - XIV. Action-First Screens (NEW)
+  - IX. On-Demand Resource Lifecycle (NEW - addresses resource disposability)
+  - X. Secrets Management & Key Vault Supremacy (NEW - addresses secrets handling)
+  - XI. Zero-Downtime Key Rotation (NEW - addresses key rotation strategy)
+  - XII. Infrastructure-as-Code Idempotency (NEW - addresses infrastructure idempotency)
+  - VIII. Privacy & User Data Rights (MOVED - now comes after new infrastructure principles)
 Added Sections:
-  - User Experience & Interface Standards (7 new UX principles)
+  - 4 new infrastructure/DevOps governance principles (IX-XII)
+  - Relabeled UX principles XIII-XIX (was VIII-XIV)
+Modified Sections:
+  - Principle VII expanded to include AI Foundry/GPT-5.1 specific requirements
+Principles Affected by Constitutional Changes:
+  - I. Zero Secrets in Client or Repository (reinforced by new Principle X)
+  - II. Least Privilege Access (works with new Principle X for secret access audit trails)
+  - IV. Traceability & Auditability (works with new Principle X for secret access logging)
 Templates Requiring Updates:
-  ✅ plan-template.md - Constitution Check section now includes UX principles
-  ✅ spec-template.md - Functional requirements must validate against mobile-first and accessibility
-  ✅ tasks-template.md - Frontend tasks must verify performance budgets and a11y compliance
-Follow-up TODOs: 
-  - Add Lighthouse performance budget CI check (mobile: <300ms FCP target)
-  - Configure accessibility linting (eslint-plugin-jsx-a11y)
-  - Document shadcn/ui + Tailwind token system in design system guide
+  ✅ plan-template.md - Constitution Check section must include resource lifecycle and infrastructure idempotency validation
+  ✅ spec-template.md - Infrastructure specs must document Key Vault references and rotation strategy
+  ✅ tasks-template.md - Infrastructure tasks must include idempotency testing and secret rotation procedures
+  ✅ commands/*.md - Infrastructure commands must verify "up" and "down" idempotency
+Follow-up TODOs:
+  - Add automated idempotency testing in CI/CD pipeline (deploy → verify → redeploy → diff should be empty)
+  - Implement Key Vault secret rotation automation (dual-key strategy)
+  - Add resource cleanup Lambda/runbook for ephemeral resource auto-deletion
+  - Implement Key Vault access audit logging in Application Insights
 -->
 
 # ProteinLens Constitution
@@ -92,7 +99,17 @@ Follow-up TODOs:
 
 **Rationale**: Prevents unexpected billing, optimizes performance, reduces redundant processing, and ensures sustainable operation.
 
-### VII. Privacy & User Data Rights
+### VII. Intelligent Analysis Infrastructure
+
+**Rules**:
+- AI analysis (meal nutrition, macros, confidence scoring) MUST use Azure AI Foundry with GPT-5.1 model capability
+- AI analysis results MUST include confidence scores (0-100%) alongside all predictions
+- Cache hit rates for analysis requests SHOULD be tracked and optimized
+- Model versioning MUST be tracked: every analysis result MUST store the model version/date used
+
+**Rationale**: Ensures consistent intelligent analysis capability, provides quantifiable confidence for trust UI, enables model upgrade tracking for auditability, and supports multi-model strategy as AI evolves.
+
+### VIII. Privacy & User Data Rights
 
 **Rules**:
 - Blob storage containers MUST have retention policies configured
@@ -103,9 +120,61 @@ Follow-up TODOs:
 
 **Rationale**: Respects user privacy rights, ensures regulatory compliance, prevents indefinite data accumulation, and builds user trust.
 
+### IX. On-Demand Resource Lifecycle (NON-NEGOTIABLE)
+
+**Rules**:
+- All infrastructure resources MUST support create and delete operations with zero leftovers
+- Ephemeral resources (e.g., temporary VMs, test deployments) MUST auto-delete after usage completes or TTL expires
+- Resource naming MUST include environment prefix (dev-, test-, prod-) to enable safe bulk deletion by lifecycle
+- Dependent resources (child resources, RBAC assignments, locks) MUST be recursively cleaned when parent is deleted
+- Deletion MUST be idempotent: deleting already-deleted resources MUST NOT fail or raise errors
+- Azure cleanup scripts MUST validate complete removal: no orphaned disks, NICs, NSGs, or role assignments
+
+**Rationale**: Prevents cloud cost accumulation from residual resources, reduces security attack surface, simplifies ephemeral testing environments, and ensures clean teardown for disaster recovery drills.
+
+### X. Secrets Management & Key Vault Supremacy (NON-NEGOTIABLE)
+
+**Rules**:
+- All secrets (API keys, connection strings, passwords, tokens) MUST be stored in Azure Key Vault or Azure App Service application settings
+- GitHub Secrets MUST NOT contain sensitive credentials; only non-sensitive identifiers (subscription IDs, tenant IDs, service principal client IDs)
+- OpenAI API key MUST have a single source of truth: Key Vault secret only; MUST NOT be stored in GitHub Secrets or .env files
+- Third-party service credentials (Stripe, PostgreSQL, etc.) MUST use managed identity or Key Vault reference where supported
+- Secrets retrieved at runtime MUST be cached in application memory; repeated Key Vault calls are FORBIDDEN (cache duration: 5 minutes minimum)
+- Secret access MUST be logged via Application Insights with user identity and reason (audit trail required)
+
+**Rationale**: Key Vault provides cryptographic protection, audit trails, and enables rotation without code changes. Centralizing secrets in one location prevents accidental exposure across multiple systems. Runtime caching reduces latency and API throttling risk.
+
+### XI. Zero-Downtime Key Rotation (NON-NEGOTIABLE)
+
+**Rules**:
+- Cryptographic keys and secrets MUST support dual-key strategy: active and staged keys coexist
+- Key rotation workflow MUST follow: (1) create new key, (2) stage both old and new as valid, (3) test acceptance with new key, (4) promote new key to active, (5) archive old key
+- Service clients MUST accept either old or new key during rotation window (typically 24 hours)
+- Rotation MUST NOT require service restart or downtime; all services MUST reload keys from Key Vault on each request or within 5-minute cache window
+- Rotation completion MUST be verified: monitor logs to confirm 100% of new requests use new key before archiving old key
+- Emergency revocation (e.g., leaked key) MUST retire old key immediately while gracefully rejecting old-key requests with clear error
+
+**Rationale**: Cryptographic keys must be rotated periodically for security. Dual-key strategy allows staged migration without service disruption. Client-side key refresh ensures no downtime during rotation.
+
+### XII. Infrastructure-as-Code Idempotency (NON-NEGOTIABLE)
+
+**Rules**:
+- "Up" operation (terraform apply / bicep deploy) MUST be safe to re-run multiple times without errors or resource duplication
+- "Down" operation (terraform destroy / bicep deletion) MUST succeed even if partial failure occurred on prior attempt
+- All Bicep modules MUST use conditional deployments with feature flags; disabled resources MUST be cleanly removed without orphans
+- State files (Terraform) or deployment outputs MUST accurately reflect actual resource state; drift detection MUST be run weekly
+- Idempotency tests MUST be automated: deploy → verify → redeploy → verify identical state (no changes detected)
+- Manual infrastructure changes (via Azure Portal) are FORBIDDEN; all changes MUST go through IaC (Bicep/Terraform)
+
+**Rationale**: Idempotent infrastructure enables safe re-deployment for disaster recovery, reduces human error in manual deployment, supports fully automated CI/CD without operational overhead, and makes troubleshooting deterministic.
+
 ## User Experience & Interface Standards
 
-### VIII. Mobile-First Design (NON-NEGOTIABLE)
+### XIII. Mobile-First Design (NON-NEGOTIABLE)
+
+## User Experience & Interface Standards
+
+### XIII. Mobile-First Design (NON-NEGOTIABLE)
 
 **Rules**:
 - All UI components MUST be designed for one-handed thumb-reachable operation on phones (primary target: 375px viewport width, iPhone SE/13/14/15)
@@ -117,7 +186,7 @@ Follow-up TODOs:
 
 **Rationale**: Majority of users access meal tracking apps on mobile during meal times. One-handed operation enables use while eating, cooking, or at restaurants. Mobile-first ensures core experience works for all users, then progressively enhances for larger screens.
 
-### IX. Fast Perceived Performance (NON-NEGOTIABLE)
+### XIV. Fast Perceived Performance (NON-NEGOTIABLE)
 
 **Rules**:
 - Initial meaningful content MUST render within 300ms of page load (First Contentful Paint)
@@ -129,7 +198,7 @@ Follow-up TODOs:
 
 **Rationale**: Users perceive systems as faster when they see immediate visual feedback. 300ms is the threshold where delays become perceptible. Skeleton screens reduce perceived wait time by 20-30% compared to spinners.
 
-### X. Delight Without Friction (NON-NEGOTIABLE)
+### XV. Delight Without Friction (NON-NEGOTIABLE)
 
 **Rules**:
 - Micro-animations MUST enhance understanding (e.g., button press feedback, list item removal)
@@ -141,7 +210,7 @@ Follow-up TODOs:
 
 **Rationale**: Micro-animations provide visual feedback that operations succeeded without requiring explicit confirmation dialogs. Blocking spinners break flow and frustrate users. Optimistic UI makes apps feel instant.
 
-### XI. Accessibility Baseline (NON-NEGOTIABLE)
+### XVI. Accessibility Baseline (NON-NEGOTIABLE)
 
 **Rules**:
 - All interactive elements MUST be keyboard-navigable (Tab, Enter, Escape, Arrow keys)
@@ -154,7 +223,7 @@ Follow-up TODOs:
 
 **Rationale**: 15% of global population has some form of disability. Keyboard navigation is essential for motor impairment users. High contrast benefits users in bright sunlight (common for meal photos). Accessibility improvements benefit all users.
 
-### XII. Design System Consistency (NON-NEGOTIABLE)
+### XVII. Design System Consistency (NON-NEGOTIABLE)
 
 **Rules**:
 - All UI components MUST use shadcn/ui component library (no custom alternatives without justification)
@@ -166,7 +235,7 @@ Follow-up TODOs:
 
 **Rationale**: Design system ensures visual consistency across the app. Tailwind tokens make global redesigns trivial (change token, entire app updates). shadcn/ui provides accessible primitives that work out of the box.
 
-### XIII. Trust UI (NON-NEGOTIABLE)
+### XVIII. Trust UI (NON-NEGOTIABLE)
 
 **Rules**:
 - AI analysis results MUST always display confidence level (e.g., "85% confident")
@@ -178,7 +247,7 @@ Follow-up TODOs:
 
 **Rationale**: AI nutrition analysis is probabilistic and may be inaccurate. Showing confidence builds trust by acknowledging uncertainty. Edit capability gives users control. Showing original image lets users verify AI interpretation.
 
-### XIV. Action-First Screens (NON-NEGOTIABLE)
+### XIX. Action-First Screens (NON-NEGOTIABLE)
 
 **Rules**:
 - Every screen MUST have a single, obvious primary action (e.g., "Upload Meal Photo" button)
@@ -246,4 +315,4 @@ Follow-up TODOs:
 
 **Version Control**: This document is maintained under version control. All changes MUST be committed with descriptive messages referencing the specific principles amended.
 
-**Version**: 2.0.0 | **Ratified**: 2025-12-22 | **Last Amended**: 2025-12-22
+**Version**: 3.0.0 | **Ratified**: 2025-12-22 | **Last Amended**: 2025-12-23
