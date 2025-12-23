@@ -45,17 +45,17 @@
 
 ### Bicep Modules Implementation
 
-- [ ] T008 [P] Create `infra/modules/keyvault.bicep` with:
+- [X] T008 [P] Create `infra/modules/keyvault.bicep` with:
   - Key Vault resource definition
   - Access policies for service principal and Function App Managed Identity
   - Output: Key Vault ID, URI (reference: [contracts/bicep-parameters.md](contracts/bicep-parameters.md))
 
-- [ ] T009 [P] Create `infra/modules/storage.bicep` with:
+- [X] T009 [P] Create `infra/modules/storage.bicep` with:
   - Storage Account resource (Standard LRS, no public blob access)
   - Blob container for meal photos
   - Output: Storage Account name, connection string reference (reference: [research.md](research.md#6-front-door-vs-direct-function-app-url))
 
-- [ ] T010 [P] Create `infra/modules/postgres.bicep` with:
+- [X] T010 [P] Create `infra/modules/postgres.bicep` with:
   - PostgreSQL Flexible Server (Standard_B1ms default, configurable)
   - Database name: `proteinlens`
   - Admin username from parameter (not 'admin' or 'postgres')
@@ -63,7 +63,7 @@
   - Firewall rule: Allow Azure services (all)
   - Output: PostgreSQL FQDN, database name (reference: [research.md](research.md#1-database-migration-strategy-from-github-actions))
 
-- [ ] T011 [P] Create `infra/modules/function-app.bicep` with:
+- [X] T011 [P] Create `infra/modules/function-app.bicep` with:
   - App Service Plan (Consumption tier, no auto-scale)
   - Function App (Node 20 runtime, identity type: SystemAssigned)
   - Application Insights for monitoring
@@ -75,12 +75,12 @@
     - `BLOB_STORAGE_CONNECTION` → `@Microsoft.KeyVault(SecretUri=...)`
   - Output: Function App name, default hostname, Managed Identity object ID
 
-- [ ] T012 [P] Create `infra/modules/static-web-app.bicep` with:
+- [X] T012 [P] Create `infra/modules/static-web-app.bicep` with:
   - Static Web Apps resource (Free tier)
   - App settings with `VITE_API_URL` environment variable
   - Output: Static Web App name, default domain, deployment token
 
-- [ ] T013 [P] Create `infra/modules/frontdoor.bicep` (optional, gated by parameter) with:
+- [X] T013 [P] Create `infra/modules/frontdoor.bicep` (optional, gated by parameter) with:
   - Azure Front Door instance
   - Backend pools for Function App and Static Web App
   - Routing rules for `/api/*` → Function App, `/*` → Static Web App
@@ -89,24 +89,24 @@
 
 ### Bicep Main Template & Parameters
 
-- [ ] T014 Create `infra/main.bicep` that:
+- [X] T014 Create `infra/main.bicep` that:
   - Declares all parameters per [contracts/bicep-parameters.md](contracts/bicep-parameters.md)
   - Imports and orchestrates all modules
   - Passes outputs from one module as inputs to next (Key Vault ID to Function App, Storage name to Function App, etc.)
   - Uses symbolic references for idempotency (e.g., `existing` keyword for Key Vault)
 
-- [ ] T015 Create `infra/parameters/prod.parameters.json` with:
+- [X] T015 Create `infra/parameters/prod.parameters.json` with:
   - Environment-specific values (region, SKUs, resource names)
   - Secure parameter references for passwords
   - All parameters per [contracts/bicep-parameters.md](contracts/bicep-parameters.md) (reference: [quickstart.md](quickstart.md#step-3-create-bicep-parameter-file))
 
-- [ ] T016 [P] Create `infra/parameters/dev.parameters.json` for future dev environment support
+- [X] T016 [P] Create `infra/parameters/dev.parameters.json` for future dev environment support
 
 ### Bicep Validation & Outputs
 
-- [ ] T017 Validate all Bicep files: `az bicep build infra/main.bicep` (no errors)
+- [X] T017 Validate all Bicep files: `az bicep build infra/main.bicep` (no errors)
 
-- [ ] T018 Add outputs to `infra/main.bicep` that include:
+- [X] T018 Add outputs to `infra/main.bicep` that include:
   - `resourceGroupName`: Name of created resource group
   - `functionAppName`: Function App name (e.g., `proteinlens-api-prod`)
   - `functionAppUrl`: HTTPS endpoint (e.g., `https://proteinlens-api-prod.azurewebsites.net`)
@@ -161,14 +161,14 @@
 
 ### Database Migrations Setup
 
-- [ ] T024 Add health check function to `backend/src/functions/health.ts`:
+- [X] T024 Add health check function to `backend/src/functions/health.ts`:
   - Endpoint: `GET /api/health`
   - Checks: database connection, blob storage access, Key Vault secret retrieval
   - Response: JSON with status (healthy/unhealthy) and detailed checks
   - Status code: 200 if healthy, 503 if any check fails
   - Reference: [research.md](research.md#5-health-endpoint-design-for-deployment-validation)
 
-- [ ] T025 Add database migration to Function App cold start in `backend/host.json` or startup script:
+- [X] T025 Add database migration to Function App cold start in `backend/host.json` or startup script:
   - Before Function App starts handling requests, execute `prisma migrate deploy`
   - Log migration results (applied migrations count, any errors)
   - Fail gracefully if migrations fail (Function App won't start, Azure shows deployment error)
@@ -226,13 +226,13 @@
 
 ### Frontend Build Configuration
 
-- [ ] T032 [P] Ensure `frontend/.env` or build process sets `VITE_API_URL`:
+- [X] T032 [P] Ensure `frontend/.env` or build process sets `VITE_API_URL`:
   - Default (development): `http://localhost:7071` (local backend)
   - Production (via workflow): `https://proteinlens-api-prod.azurewebsites.net` (or Front Door URL)
   - Variable must be injected during build: `VITE_API_URL=... npm run build`
   - Verify frontend components use this variable: `const API_URL = import.meta.env.VITE_API_URL`
 
-- [ ] T033 [P] Verify frontend build optimizations in `frontend/vite.config.ts`:
+- [X] T033 [P] Verify frontend build optimizations in `frontend/vite.config.ts`:
   - Tree-shaking enabled
   - Minification enabled
   - CSS bundling enabled
