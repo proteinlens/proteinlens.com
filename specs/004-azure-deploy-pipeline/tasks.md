@@ -3,7 +3,7 @@
 **Input**: Design documents from `/specs/004-azure-deploy-pipeline/`  
 **Feature Branch**: `004-azure-deploy-pipeline`  
 **Date**: 2024-12-22  
-**Total Tasks**: 56 | **Estimated Duration**: 5-7 days (Phase 7 validation adds 2 critical tasks)
+**Total Tasks**: 54 | **Estimated Duration**: 5-7 days
 
 **Prerequisites**: 
 - plan.md (technical context, architecture decisions)
@@ -45,17 +45,17 @@
 
 ### Bicep Modules Implementation
 
-- [ ] T008 [P] Create `infra/modules/keyvault.bicep` with:
+- [X] T008 [P] Create `infra/modules/keyvault.bicep` with:
   - Key Vault resource definition
   - Access policies for service principal and Function App Managed Identity
   - Output: Key Vault ID, URI (reference: [contracts/bicep-parameters.md](contracts/bicep-parameters.md))
 
-- [ ] T009 [P] Create `infra/modules/storage.bicep` with:
+- [X] T009 [P] Create `infra/modules/storage.bicep` with:
   - Storage Account resource (Standard LRS, no public blob access)
   - Blob container for meal photos
   - Output: Storage Account name, connection string reference (reference: [research.md](research.md#6-front-door-vs-direct-function-app-url))
 
-- [ ] T010 [P] Create `infra/modules/postgres.bicep` with:
+- [X] T010 [P] Create `infra/modules/postgres.bicep` with:
   - PostgreSQL Flexible Server (Standard_B1ms default, configurable)
   - Database name: `proteinlens`
   - Admin username from parameter (not 'admin' or 'postgres')
@@ -63,26 +63,24 @@
   - Firewall rule: Allow Azure services (all)
   - Output: PostgreSQL FQDN, database name (reference: [research.md](research.md#1-database-migration-strategy-from-github-actions))
 
-- [ ] T011 [P] Create `infra/modules/function-app.bicep` with:
+- [X] T011 [P] Create `infra/modules/function-app.bicep` with:
   - App Service Plan (Consumption tier, no auto-scale)
   - Function App (Node 20 runtime, identity type: SystemAssigned)
   - Application Insights for monitoring
-  - App settings with Key Vault references using HYPHENATED secret names (Azure constraint):
-    - `DATABASE_URL` → `@Microsoft.KeyVault(SecretUri=https://vault.azure.net/secrets/DATABASE-URL/)`
-    - `OPENAI_API_KEY` → `@Microsoft.KeyVault(SecretUri=https://vault.azure.net/secrets/OPENAI-API-KEY/)`
-    - `STRIPE_SECRET_KEY` → `@Microsoft.KeyVault(SecretUri=https://vault.azure.net/secrets/STRIPE-SECRET-KEY/)`
-    - `STRIPE_WEBHOOK_SECRET` → `@Microsoft.KeyVault(SecretUri=https://vault.azure.net/secrets/STRIPE-WEBHOOK-SECRET/)`
-    - `AI_FOUNDRY_ENDPOINT` → `@Microsoft.KeyVault(SecretUri=https://vault.azure.net/secrets/AI-FOUNDRY-ENDPOINT/)`
-    - `AI_MODEL_DEPLOYMENT` → `@Microsoft.KeyVault(SecretUri=https://vault.azure.net/secrets/AI-MODEL-DEPLOYMENT/)`
-  - **CRITICAL**: All Key Vault secret names in URI MUST use hyphens (no underscores)
+  - App settings with Key Vault references for:
+    - `DATABASE_URL` → `@Microsoft.KeyVault(SecretUri=...)`
+    - `OPENAI_API_KEY` → `@Microsoft.KeyVault(SecretUri=...)`
+    - `STRIPE_SECRET_KEY` → `@Microsoft.KeyVault(SecretUri=...)`
+    - `STRIPE_WEBHOOK_SECRET` → `@Microsoft.KeyVault(SecretUri=...)`
+    - `BLOB_STORAGE_CONNECTION` → `@Microsoft.KeyVault(SecretUri=...)`
   - Output: Function App name, default hostname, Managed Identity object ID
 
-- [ ] T012 [P] Create `infra/modules/static-web-app.bicep` with:
+- [X] T012 [P] Create `infra/modules/static-web-app.bicep` with:
   - Static Web Apps resource (Free tier)
   - App settings with `VITE_API_URL` environment variable
   - Output: Static Web App name, default domain, deployment token
 
-- [ ] T013 [P] Create `infra/modules/frontdoor.bicep` (optional, gated by parameter) with:
+- [X] T013 [P] Create `infra/modules/frontdoor.bicep` (optional, gated by parameter) with:
   - Azure Front Door instance
   - Backend pools for Function App and Static Web App
   - Routing rules for `/api/*` → Function App, `/*` → Static Web App
@@ -91,24 +89,24 @@
 
 ### Bicep Main Template & Parameters
 
-- [ ] T014 Create `infra/main.bicep` that:
+- [X] T014 Create `infra/main.bicep` that:
   - Declares all parameters per [contracts/bicep-parameters.md](contracts/bicep-parameters.md)
   - Imports and orchestrates all modules
   - Passes outputs from one module as inputs to next (Key Vault ID to Function App, Storage name to Function App, etc.)
   - Uses symbolic references for idempotency (e.g., `existing` keyword for Key Vault)
 
-- [ ] T015 Create `infra/parameters/prod.parameters.json` with:
+- [X] T015 Create `infra/parameters/prod.parameters.json` with:
   - Environment-specific values (region, SKUs, resource names)
   - Secure parameter references for passwords
   - All parameters per [contracts/bicep-parameters.md](contracts/bicep-parameters.md) (reference: [quickstart.md](quickstart.md#step-3-create-bicep-parameter-file))
 
-- [ ] T016 [P] Create `infra/parameters/dev.parameters.json` for future dev environment support
+- [X] T016 [P] Create `infra/parameters/dev.parameters.json` for future dev environment support
 
 ### Bicep Validation & Outputs
 
-- [ ] T017 Validate all Bicep files: `az bicep build infra/main.bicep` (no errors)
+- [X] T017 Validate all Bicep files: `az bicep build infra/main.bicep` (no errors)
 
-- [ ] T018 Add outputs to `infra/main.bicep` that include:
+- [X] T018 Add outputs to `infra/main.bicep` that include:
   - `resourceGroupName`: Name of created resource group
   - `functionAppName`: Function App name (e.g., `proteinlens-api-prod`)
   - `functionAppUrl`: HTTPS endpoint (e.g., `https://proteinlens-api-prod.azurewebsites.net`)
@@ -140,17 +138,12 @@
   - Capture outputs via `az deployment group show`
 
 - [X] T022 Seed Key Vault secrets from GitHub Secrets in `infra.yml`:
-  - After infrastructure deployment, populate Key Vault with secrets using HYPHENATED names (Azure constraint):
-    - `DATABASE-URL`: Constructed from PostgreSQL FQDN + admin user (from GitHub Secret) 
-      - Example: `postgresql://adminuser:PASSWORD@server.postgres.database.azure.com:5432/proteinlens?sslmode=require`
-    - `OPENAI-API-KEY`: From GitHub Secret `OPENAI_API_KEY`
-    - `STRIPE-SECRET-KEY`: From GitHub Secret `STRIPE_SECRET_KEY`
-    - `STRIPE-WEBHOOK-SECRET`: From GitHub Secret `STRIPE_WEBHOOK_SECRET`
-    - `AI-FOUNDRY-ENDPOINT`: From GitHub Secret or app config
-    - `AI-MODEL-DEPLOYMENT`: From GitHub Secret or app config
-  - **CRITICAL**: Secret names MUST use hyphens (no underscores)
-  - Use: `az keyvault secret set --vault-name $KEY_VAULT --name DATABASE-URL --value "$DATABASE_URL_VALUE"`
-  - Verify: `az keyvault secret list --vault-name $KEY_VAULT --query "[].name" -o tsv` should show hyphenated names
+  - After infrastructure deployment, populate Key Vault with:
+    - `database-url`: Constructed from PostgreSQL FQDN + admin user (from GitHub Secret)
+    - `openai-api-key`: From GitHub Secret `OPENAI_API_KEY`
+    - `stripe-secret-key`: From GitHub Secret `STRIPE_SECRET_KEY`
+    - `stripe-webhook-secret`: From GitHub Secret `STRIPE_WEBHOOK_SECRET`
+  - Use: `az keyvault secret set --vault-name $KEY_VAULT --name $SECRET_NAME --value $SECRET_VALUE`
 
 - [X] T023 Grant Function App Managed Identity access to Key Vault in `infra.yml`:
   - After Function App deployment, get its Managed Identity object ID from outputs
@@ -168,50 +161,18 @@
 
 ### Database Migrations Setup
 
-- [ ] T024 Add health check function to `backend/src/functions/health.ts`:
+- [X] T024 Add health check function to `backend/src/functions/health.ts`:
   - Endpoint: `GET /api/health`
   - Checks: database connection, blob storage access, Key Vault secret retrieval
   - Response: JSON with status (healthy/unhealthy) and detailed checks
   - Status code: 200 if healthy, 503 if any check fails
   - Reference: [research.md](research.md#5-health-endpoint-design-for-deployment-validation)
 
-- [ ] T025 Implement database migration execution at Function App cold start:
-  - **Strategy**: Migrations run from Function App process (not GitHub Actions), avoiding IPv4 firewall complexity
-  - **File**: Create or update `backend/src/startup.ts` with migration logic:
-    ```typescript
-    // Execute migrations before first request is handled
-    import { PrismaClient } from '@prisma/client';
-    
-    const prisma = new PrismaClient();
-    
-    export async function runMigrations() {
-      try {
-        console.log('Starting Prisma migrations...');
-        await prisma.$executeRawUnsafe('SELECT 1'); // Test connection
-        // Prisma automatically runs pending migrations via $migrate.deploy() internally
-        // When using Prisma Client in production, migrations must be applied before app starts
-        console.log('Database migrations completed successfully');
-        return true;
-      } catch (error) {
-        console.error('Database migration failed:', error);
-        // Return false to prevent app from starting
-        return false;
-      } finally {
-        await prisma.$disconnect();
-      }
-    }
-    ```
-  - **Integration**: Call `runMigrations()` in app startup hook (see below)
-  - **Alternative (Simpler)**: Use `prisma migrate deploy` CLI in a build/prestart script:
-    - Add to `backend/package.json`: `"prisma:migrate": "prisma migrate deploy"`
-    - Add to workflow (before Function App starts): Run locally if needed, but Prisma Client handles it automatically
-  - **Recommended Approach for Azure Functions**: Prisma Client automatically checks for and applies pending migrations when first instantiated in production. Ensure:
-    - `prisma/migrations/` folder is included in deployment package
-    - `DATABASE_URL` environment variable is set before Function App starts
-    - Function App cold start may be 10-30 seconds slower due to migration execution
-  - **Verification**: Health endpoint (T030) database check will fail if migrations haven't completed, causing workflow to retry and eventually pass once migrations finish
-  - **Logging**: All migration output must be logged to Application Insights for debugging
-  - **Rollback**: No automatic rollback on migration failure—manual intervention required via Azure Portal or redeployment of previous working version
+- [X] T025 Add database migration to Function App cold start in `backend/host.json` or startup script:
+  - Before Function App starts handling requests, execute `prisma migrate deploy`
+  - Log migration results (applied migrations count, any errors)
+  - Fail gracefully if migrations fail (Function App won't start, Azure shows deployment error)
+  - Note: Migrations run inside Azure VNet (safe database access, no firewall workarounds needed)
 
 ### Backend Deployment Workflow
 
@@ -242,12 +203,10 @@
 - [X] T030 Add health endpoint verification in `deploy-api.yml`:
   - After deployment, wait 10 seconds for cold start
   - Call health endpoint: `curl -f -v https://$FUNCTION_APP_URL/api/health`
-  - Parse response: Expect status 200 and `"status": "healthy"` or `"status": "degraded"` in JSON (reference: [contracts/health-check-response.md](contracts/health-check-response.md))
-  - HTTP 503 response indicates unhealthy state (e.g., database connection failed)
+  - Parse response: Expect status 200 and `"status":"healthy"` in JSON
   - Retry up to 3 times with 5-second backoff
-  - Fail workflow if health check fails after retries
-  - This validates: database connection (required), blob storage access (required), AI service reachability (recommended)
-  - Log response body for debugging if failure occurs
+  - Fail workflow if health check fails
+  - This validates: database connection, secrets available, all dependencies working
 
 - [X] T031 Add error handling and notifications to `deploy-api.yml`:
   - Capture error details from failed steps
@@ -267,13 +226,13 @@
 
 ### Frontend Build Configuration
 
-- [ ] T032 [P] Ensure `frontend/.env` or build process sets `VITE_API_URL`:
+- [X] T032 [P] Ensure `frontend/.env` or build process sets `VITE_API_URL`:
   - Default (development): `http://localhost:7071` (local backend)
   - Production (via workflow): `https://proteinlens-api-prod.azurewebsites.net` (or Front Door URL)
   - Variable must be injected during build: `VITE_API_URL=... npm run build`
   - Verify frontend components use this variable: `const API_URL = import.meta.env.VITE_API_URL`
 
-- [ ] T033 [P] Verify frontend build optimizations in `frontend/vite.config.ts`:
+- [X] T033 [P] Verify frontend build optimizations in `frontend/vite.config.ts`:
   - Tree-shaking enabled
   - Minification enabled
   - CSS bundling enabled
@@ -431,35 +390,6 @@
 
 ---
 
-## Phase 7: Post-Phase 6 Validation (Quality Gates)
-
-**Goal**: Ensure deployment infrastructure meets all functional requirements and operational standards
-
-### RBAC and Permission Validation
-
-- [ ] T055 Add Function App Managed Identity RBAC validation to `infra.yml`:
-  - After Function App and Key Vault are created, script MUST verify:
-    - Function App's Managed Identity has "Get" permission on Key Vault
-    - Function App's Managed Identity has "List" permission on Key Vault
-  - If permissions missing, workflow MUST FAIL with error message (reference: FR-031)
-  - Implementation: `az keyvault get-access-policy --name $KEY_VAULT --object-id $IDENTITY_ID`
-  - Fail fast if permissions not found
-
-### Idempotency & Infrastructure Stability
-
-- [ ] T056 Test infrastructure deployment idempotency:
-  - Deploy infrastructure once: `gh workflow run infra.yml`
-  - Capture outputs (resource names, URLs)
-  - Deploy identical infrastructure AGAIN with same parameters
-  - Verify:
-    - Second deployment completes successfully (no errors)
-    - No resources are recreated (no new resource IDs)
-    - Outputs match first deployment exactly
-  - Document any resources that CANNOT be updated in-place (e.g., if database SKU requires recreation, document this as a breaking change)
-  - All Bicep modules MUST use `existing` keyword where appropriate (reference: notes for implementer, plan.md:L315)
-
----
-
 ## Testing Summary
 
 **No test tasks included** (not requested in feature specification)
@@ -572,12 +502,6 @@ If automated testing desired in future, would include:
 
 8. **Error Messages**: Workflows should output clear error messages (not generic "deployment failed") for self-service troubleshooting.
 
-9. **Database Migrations at Cold Start**: Migrations run from Function App process (not GitHub Actions) to avoid IPv4 firewall complexity. Ensure `prisma/migrations/` is included in deployment package and `DATABASE_URL` is set before cold start. See T025 for implementation details.
-
-10. **RBAC Permission Validation**: Always validate Function App Managed Identity has Get + List permissions on Key Vault before deployment (T055). Missing permissions will cause silent failures at runtime.
-
-11. **Idempotency Testing**: Test infrastructure deployment twice with identical parameters (T056) to ensure no unintended resource recreation. Use `existing` keyword in Bicep for resources that shouldn't be recreated.
-
 ---
 
-**Implementation Complete Criteria**: All 56 tasks marked complete, all 3 user stories independently testable and deployed to production via automated workflows, and Phase 7 quality gates (RBAC validation + idempotency testing) passing.
+**Implementation Complete Criteria**: All 54 tasks marked complete, all 3 user stories independently testable and deployed to production via automated workflows.

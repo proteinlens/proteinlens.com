@@ -23,8 +23,21 @@
     "postgresServerName": {
       "value": "proteinlens-db-prod"
     },
+    "postgresAdminUsername": {
+      "value": "pgadmin"
+    },
+    "postgresAdminPassword": {
+      "value": "PLACEHOLDER_WILL_BE_OVERRIDDEN_IN_WORKFLOW"
+    },
     "staticWebAppName": {
       "value": "proteinlens-web-prod"
+    },
+    "frontDoorName": {
+      "value": "proteinlens-fd-prod"
+    },
+    "enableFrontDoor": {
+      "value": false
     }
   }
 }
+
