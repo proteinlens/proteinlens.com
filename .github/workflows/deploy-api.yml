@@ -131,91 +131,26 @@ jobs:
             exit 1
           fi
 
-      - name: Verify Storage RBAC Roles
-        run: |
-          echo "🔐 Storage RBAC roles should be configured by admin before deployment"
-          echo "Required roles:"
-          echo "  - Storage Blob Data Contributor"
-          echo "  - Storage Blob Delegator"
-          echo "✅ Proceeding with deployment (assumes roles are configured)"
-
-      - name: Get Storage Connection String
-        id: storage
-        run: |
-          CONN_STR=$(az storage account show-connection-string \
-            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
-            --name "${{ secrets.AZURE_STORAGE_ACCOUNT }}" \
-            --query connectionString -o tsv)
-          echo "connection_string=$CONN_STR" >> $GITHUB_OUTPUT
-
-      - name: Prepare Deployment Container
-        run: |
-          echo "📦 Ensuring deployments container exists..."
-          
-          az storage container create \
-            --account-name "${{ secrets.AZURE_STORAGE_ACCOUNT }}" \
-            --name "${{ secrets.AZURE_STORAGE_CONTAINER }}" \
-            --connection-string "${{ steps.storage.outputs.connection_string }}" \
-            --output none
-          
-          echo "✅ Deployments container ready"
-
       - name: Deploy to Azure Functions
+        uses: Azure/functions-action@v1
+        with:
+          app-name: ${{ secrets.AZURE_FUNCTIONAPP_NAME }}
+          package: backend-deploy.zip
+          respect-funcignore: true
+          publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
+          
+      - name: Verify Deployment
         run: |
-          set -euxo pipefail
-          
-          echo "📦 Uploading deployment package..."
-          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-          BLOB_NAME="backend-${TIMESTAMP}.zip"
-          
-          echo "Blob name: $BLOB_NAME"
-          echo "File size: $(ls -lh backend-deploy.zip | awk '{print $5}')"
-          
-          az storage blob upload \
-            --account-name "${{ secrets.AZURE_STORAGE_ACCOUNT }}" \
-            --container-name "${{ secrets.AZURE_STORAGE_CONTAINER }}" \
-            --name "$BLOB_NAME" \
-            --file backend-deploy.zip \
-            --connection-string "${{ steps.storage.outputs.connection_string }}" \
-            --overwrite true \
-            --output json
-          
-          echo "🔐 Creating account SAS URL..."
-          # Start time in the past to avoid clock-skew issues
-          START=$(date -u -d '15 minutes ago' +%Y-%m-%dT%H:%MZ 2>/dev/null || date -u -v-15M +%Y-%m-%dT%H:%MZ)
-          # Account SAS max expiry is 1 year
-          EXPIRY=$(date -u -d '365 days' +%Y-%m-%dT%H:%MZ 2>/dev/null || date -u -v+365d +%Y-%m-%dT%H:%MZ)
-          
-          echo "SAS start: $START"
-          echo "SAS expiry: $EXPIRY"
-          
-          PACKAGE_URL=$(az storage blob generate-sas \
-            --account-name "${{ secrets.AZURE_STORAGE_ACCOUNT }}" \
-            --container-name "${{ secrets.AZURE_STORAGE_CONTAINER }}" \
-            --name "$BLOB_NAME" \
-            --permissions r \
-            --start "$START" \
-            --expiry "$EXPIRY" \
-            --connection-string "${{ steps.storage.outputs.connection_string }}" \
-            --full-uri \
-            --output tsv)
-          
-          echo "✅ SAS URL generated (length: ${#PACKAGE_URL} chars)"
-          
-          echo "⚙️  Setting WEBSITE_RUN_FROM_PACKAGE..."
-          az functionapp config appsettings set \
-            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
-            --name "${{ secrets.AZURE_FUNCTIONAPP_NAME }}" \
-            --settings "WEBSITE_RUN_FROM_PACKAGE=$PACKAGE_URL" \
-            --output json
-          
-          echo "🔄 Restarting Function App to load new package..."
-          az functionapp restart \
-            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
-            --name "${{ secrets.AZURE_FUNCTIONAPP_NAME }}" \
-            --output json
-          
           echo "✅ Function App deployment completed"
+          echo "Testing health endpoint..."
+          for i in {1..5}; do
+            echo "Attempt $i..."
+            if curl -s https://${{ secrets.AZURE_FUNCTIONAPP_NAME }}.azurewebsites.net/api/health > /dev/null 2>&1; then
+              echo "✅ Health endpoint responding"
+              break
+            fi
+            if [ $i -lt 5 ]; then sleep 10; fi
+          done
 
       - name: Wait for cold start
         run: |
