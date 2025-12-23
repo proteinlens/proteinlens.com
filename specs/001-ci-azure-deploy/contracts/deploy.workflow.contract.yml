@@ -1,0 +1,144 @@
+name: Deploy (Contract)
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  infra:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Azure CLI version
+        uses: azure/cli@v2
+        with:
+          inlineScript: az version
+      - name: Bicep deploy (idempotent)
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            set -euo pipefail
+            RG="${{ vars.AZURE_RESOURCE_GROUP }}"
+            TEMPLATE="infra/bicep/main.bicep"
+            az group create -n "$RG" -l ${{ vars.AZURE_LOCATION }}
+            az deployment group create \
+              --resource-group "$RG" \
+              --template-file "$TEMPLATE" \
+              --parameters environment=prod
+      - name: Validate DNS zone in prod
+        if: github.ref == 'refs/heads/main'
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            set -euo pipefail
+            RG="${{ vars.AZURE_RESOURCE_GROUP }}"
+            ZONE=${{ vars.DNS_ZONE_NAME }}
+            if ! az network dns zone show -n "$ZONE" -g "$RG" >/dev/null 2>&1; then
+              echo "Move DNS zone to Azure DNS to enable zero-touch domains" >&2
+              exit 16
+            fi
+  deploy_backend:
+    runs-on: ubuntu-latest
+    needs: [infra]
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Build backend and package
+        run: |
+          set -euo pipefail
+          pushd backend
+          npm ci
+          npm run build --if-present || true
+          zip -r ../backend.zip . -x "node_modules/*" -x ".*" -x "tests/*"
+          popd
+      - name: Validate host.json at zip root
+        run: |
+          set -euo pipefail
+          unzip -l backend.zip | awk '{print $4}' | grep -E '^host.json$' >/dev/null || { echo "backend.zip missing host.json at root" >&2; exit 17; }
+      - name: Deploy Functions zip
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            set -euo pipefail
+            APP=${{ vars.FUNCTION_APP_NAME }}
+            az functionapp deployment source config-zip -g "${{ vars.AZURE_RESOURCE_GROUP }}" -n "$APP" --src backend.zip
+  deploy_frontend:
+    runs-on: ubuntu-latest
+    needs: [infra]
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Build frontend
+        run: |
+          set -euo pipefail
+          pushd frontend
+          npm ci
+          npm run build
+          test -f dist/index.html || { echo "frontend/dist/index.html missing" >&2; exit 18; }
+          popd
+      - name: Fetch SWA deploy token
+        id: token
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            set -euo pipefail
+            SWA=${{ vars.STATIC_WEB_APP_NAME }}
+            RG=${{ vars.AZURE_RESOURCE_GROUP }}
+            TOKEN=$(az staticwebapp secrets list --name "$SWA" --resource-group "$RG" --query properties.apiKey -o tsv)
+            if [ -z "$TOKEN" ]; then echo "Failed to retrieve SWA token" >&2; exit 19; fi
+            echo "token=$TOKEN" >> $GITHUB_OUTPUT
+      - name: Deploy SWA
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ steps.token.outputs.token }}
+          skip_app_build: true
+          app_location: frontend
+          output_location: dist
+  smoke_test:
+    runs-on: ubuntu-latest
+    needs: [deploy_backend, deploy_frontend]
+    steps:
+      - name: API health with retry
+        run: |
+          set -euo pipefail
+          URL="https://api.proteinlens.com/api/health"
+          for i in $(seq 1 10); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || true)
+            if [ "$code" = "200" ]; then echo OK; exit 0; fi
+            sleep $(( 2**i > 30 ? 30 : 2**i ))
+          done
+          echo "API health check failed" >&2
+          exit 20
+      - name: Web check with marker
+        run: |
+          set -euo pipefail
+          URL="https://www.proteinlens.com/"
+          for i in $(seq 1 10); do
+            body=$(curl -fsS "$URL" || true)
+            if echo "$body" | grep -q "<title>ProteinLens</title>"; then echo OK; exit 0; fi
+            sleep $(( 2**i > 30 ? 30 : 2**i ))
+          done
+          echo "Web check failed" >&2
+          exit 21
