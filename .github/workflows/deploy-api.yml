@@ -69,8 +69,8 @@ jobs:
             echo "❌ Build output directory not found"
             exit 1
           fi
-          # Create deployment package
-          zip -r -q ../backend-deploy.zip dist node_modules
+          # Create deployment package with required files at root
+          zip -r -q ../backend-deploy.zip dist node_modules host.json package.json
           ls -lh ../backend-deploy.zip
           echo "✅ Function App packaged"
 
