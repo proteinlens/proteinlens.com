@@ -142,7 +142,8 @@ jobs:
 
       - name: Deploy to Azure Functions
         run: |
-          echo "📦 Deploying Function App via ZIP..."
+          echo "📦 Deploying Function App via ZIP (using managed identity)..."
+          # Deploy using managed identity (no connection string needed)
           az functionapp deployment source config-zip \
             --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
             --name "${{ secrets.AZURE_FUNCTIONAPP_NAME }}" \
