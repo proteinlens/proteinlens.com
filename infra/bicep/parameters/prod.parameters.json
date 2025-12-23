@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "location": {
-      "value": "eastus"
+      "value": "eastus2"
     },
     "environmentName": {
       "value": "prod"
@@ -12,16 +12,16 @@
       "value": "proteinlens"
     },
     "storageAccountName": {
-      "value": "plprodsa92"
+      "value": "plprod1523"
     },
     "functionAppName": {
       "value": "proteinlens-api-prod"
     },
     "keyVaultName": {
-      "value": "proteinlens-kv-prod"
+      "value": "proteinlens-kv-1523"
     },
     "postgresServerName": {
-      "value": "proteinlens-db-prod-v2"
+      "value": "proteinlens-db-prod-1523"
     },
     "postgresAdminUsername": {
       "value": "pgadmin"
@@ -45,7 +45,7 @@
       "value": "proteinlens-ai-project-prod"
     },
     "enableAIFoundry": {
-      "value": true
+      "value": false
     }
   }
 }
