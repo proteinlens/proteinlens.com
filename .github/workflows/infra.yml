@@ -19,6 +19,7 @@ on:
 permissions:
   contents: read
   id-token: write
+  secrets: write
 
 env:
   AZURE_LOCATION: eastus
@@ -276,6 +277,25 @@ jobs:
           echo "::add-mask::$SWA_TOKEN"
           echo "swa_token=$SWA_TOKEN" >> "$GITHUB_OUTPUT"
 
+      - name: Set Static Web App Token as GitHub Secret
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          SWA_TOKEN="${{ steps.swa_token.outputs.swa_token }}"
+          
+          if [ -z "$SWA_TOKEN" ]; then
+            echo "❌ Static Web App token not available"
+            exit 1
+          fi
+          
+          echo "🔐 Setting AZURE_STATIC_WEB_APPS_API_TOKEN GitHub secret..."
+          
+          # Set the secret using GitHub CLI
+          echo "$SWA_TOKEN" | gh secret set AZURE_STATIC_WEB_APPS_API_TOKEN
+          
+          echo "✅ GitHub secret AZURE_STATIC_WEB_APPS_API_TOKEN set successfully"
+          echo "   Frontend deployments will now work automatically"
+
       - name: Output Deployment Results
         if: success()
         run: |
@@ -300,19 +320,11 @@ jobs:
           fi
           
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "## 🔐 Required GitHub Secrets" >> "$GITHUB_STEP_SUMMARY"
+          echo "## 🔐 GitHub Secrets Configuration" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "⚠️ **Action Required:** Set the following GitHub secret to enable frontend deployments:" >> "$GITHUB_STEP_SUMMARY"
+          echo "✅ **AZURE_STATIC_WEB_APPS_API_TOKEN** - Automatically configured" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "Secret Name: AZURE_STATIC_WEB_APPS_API_TOKEN" >> "$GITHUB_STEP_SUMMARY"
-          echo "Secret Value: (retrieved from Azure, see workflow logs)" >> "$GITHUB_STEP_SUMMARY"
-          echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "Run this command to set the secret:" >> "$GITHUB_STEP_SUMMARY"
-          echo "\`\`\`bash" >> "$GITHUB_STEP_SUMMARY"
-          echo "gh secret set AZURE_STATIC_WEB_APPS_API_TOKEN --body \"<token-from-workflow-output>\"" >> "$GITHUB_STEP_SUMMARY"
-          echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "Frontend deployments are now fully automated!" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Deployment Failed Notification
         if: failure()
