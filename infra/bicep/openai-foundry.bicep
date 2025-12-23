@@ -4,9 +4,9 @@
 param location string = resourceGroup().location
 param environmentName string
 param openAIAccountName string = 'protein-lens-openai-${environmentName}'
-param modelDeploymentName string = 'gpt-35-turbo'
-param modelName string = 'gpt-35-turbo' // Latest supported Azure OpenAI model
-param modelVersion string = '0613' // Latest stable version
+param modelDeploymentName string = 'gpt-4o'
+param modelName string = 'gpt-4o' // Latest stable multimodal model
+param modelVersion string = '2024-11-20' // Latest stable version
 param deploymentCapacity int = 10 // TPM capacity
 
 // Tags for cost tracking and governance (FR-014)
