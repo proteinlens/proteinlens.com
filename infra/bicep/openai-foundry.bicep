@@ -4,9 +4,9 @@
 param location string = resourceGroup().location
 param environmentName string
 param openAIAccountName string = 'protein-lens-openai-${environmentName}'
-param modelDeploymentName string = 'gpt-4o'
-param modelName string = 'gpt-4o' // Latest stable multimodal model
-param modelVersion string = '2024-11-20' // Latest stable version
+param modelDeploymentName string = 'gpt-5-1'
+param modelName string = 'gpt-5.1' // GPT-5.1 multimodal model
+param modelVersion string = '2025-11-13' // Latest GPT-5.1 version
 param deploymentCapacity int = 10 // TPM capacity
 
 // Tags for cost tracking and governance (FR-014)
