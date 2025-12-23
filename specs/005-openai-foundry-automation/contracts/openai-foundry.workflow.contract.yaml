@@ -1,0 +1,47 @@
+name: openai-foundry
+description: GitHub Actions workflow contract for provisioning, teardown, and key rotation
+inputs:
+  action:
+    type: string
+    enum: [up, down, rotate-key]
+    required: true
+    description: Operation to perform
+  env:
+    type: string
+    pattern: ^(dev|staging|pr-\d+)$
+    required: true
+    description: Target environment
+  region:
+    type: string
+    enum: [eastus, westus]
+    required: false
+    default: eastus
+    description: Preferred region; workflow may fallback on quota
+  model:
+    type: string
+    enum: [gpt-5-1]
+    required: false
+    default: gpt-5-1
+    description: Model deployment name
+  costCenter:
+    type: string
+    required: false
+  owner:
+    type: string
+    required: false
+outputs:
+  resourceName:
+    type: string
+    description: Name of the OpenAI resource for the env
+  deploymentName:
+    type: string
+    description: Model deployment name
+  secretName:
+    type: string
+    description: Key Vault secret name used
+  kvSecretUri:
+    type: string
+    description: Key Vault secret URI set in app setting
+constraints:
+  - No raw secrets printed to logs or stored in repo/frontend
+  - Idempotent: re-running the same inputs must be safe
