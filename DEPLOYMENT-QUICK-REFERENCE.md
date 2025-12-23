@@ -1,5 +1,11 @@
 # ProteinLens Deployment Quick Reference Card
 
+## Quick Links
+
+- [OpenAI Foundry On-Demand](OPENAI-FOUNDRY-GUIDE.md) - Provision/rotate/teardown Azure OpenAI
+- [Local Development](LOCAL-DEVELOPMENT.md) - Run locally
+- [Full Deployment Guide](DEPLOYMENT-QUICKSTART.md) - Complete setup
+
 ## 1-Minute Setup
 
 ```bash
@@ -19,19 +25,47 @@ npm run dev --prefix frontend &
 
 ## GitHub Secrets Checklist
 
-Before deploying, add these 9 secrets in **Settings → Secrets and variables → Actions**:
+Before deploying, add these secrets in **Settings → Secrets and variables → Actions**:
 
 | Secret | Value | How to Get |
 |--------|-------|-----------|
-| `AZURE_CREDENTIALS` | Service principal JSON | `az ad sp create-for-rbac --role Contributor --scopes /subscriptions/SUB_ID` |
+| `AZURE_CLIENT_ID` | Service principal client ID (OIDC) | `az ad sp create-for-rbac` |
+| `AZURE_TENANT_ID` | Your tenant ID | `az account show --query tenantId` |
 | `AZURE_SUBSCRIPTION_ID` | Your subscription ID | `az account show --query id` |
-| `AZURE_RESOURCE_GROUP` | Resource group name | Create in portal or use: `az group create --name proteinlens-prod --location eastus` |
 | `DATABASE_ADMIN_PASSWORD` | PostgreSQL admin password | Generate: `openssl rand -base64 32` |
-| `OPENAI_API_KEY` | OpenAI API key | Get from https://platform.openai.com/api-keys |
 | `STRIPE_SECRET_KEY` | Stripe secret key | Get from https://dashboard.stripe.com/apikeys |
 | `STRIPE_WEBHOOK_SECRET` | Stripe webhook secret | Create webhook endpoint, copy secret |
-| `AZURE_FUNCTIONAPP_PUBLISH_PROFILE` | Generated during infra deploy | *(Added after running infra.yml)* |
-| `AZURE_STATIC_WEB_APPS_API_TOKEN` | Generated during infra deploy | *(Added after running infra.yml)* |
+
+**⚠️ No longer needed** (moved to Key Vault):
+- ~~`OPENAI_API_KEY`~~ → Now provisioned via [OpenAI Foundry workflow](OPENAI-FOUNDRY-GUIDE.md)
+
+**Auto-generated** (added after infra deploy):
+- `AZURE_FUNCTIONAPP_PUBLISH_PROFILE`
+- `AZURE_STATIC_WEB_APPS_API_TOKEN`
+
+## OpenAI Foundry Setup (On-Demand)
+
+**After infrastructure is deployed**, provision OpenAI resources:
+
+```bash
+# Provision Azure OpenAI for your environment
+gh workflow run foundry-on-demand.yml \
+  -f action=up \
+  -f env=prod \
+  -f region=eastus
+
+# Rotate key periodically (zero downtime)
+gh workflow run foundry-on-demand.yml \
+  -f action=rotate-key \
+  -f env=prod
+
+# Teardown when not needed (cost savings)
+gh workflow run foundry-on-demand.yml \
+  -f action=down \
+  -f env=dev
+```
+
+See [OPENAI-FOUNDRY-GUIDE.md](OPENAI-FOUNDRY-GUIDE.md) for complete details.
 
 ## 60-Minute Deployment
 

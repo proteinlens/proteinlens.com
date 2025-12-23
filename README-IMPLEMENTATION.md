@@ -75,9 +75,16 @@ Create `backend/.env`:
 AZURE_STORAGE_ACCOUNT_NAME=your-storage-account
 BLOB_CONTAINER_NAME=meals
 
-# Azure AI Foundry
-AI_FOUNDRY_ENDPOINT=https://your-foundry.azure.com
-AI_MODEL_DEPLOYMENT=gpt-5.1-vision
+# Azure OpenAI (auto-provisioned via OpenAI Foundry workflow)
+# See OPENAI-FOUNDRY-GUIDE.md for setup instructions
+AZURE_OPENAI_API_KEY=@Microsoft.KeyVault(SecretUri=https://your-kv.vault.azure.net/secrets/AZURE-OPENAI-API-KEY--prod)
+AZURE_OPENAI_ENDPOINT=https://protein-lens-openai-prod.openai.azure.com/
+AZURE_OPENAI_DEPLOYMENT=gpt-4
+```
+
+**Note**: OpenAI resources are now provisioned on-demand via the Foundry workflow:
+- `gh workflow run foundry-on-demand.yml -f action=up -f env=prod`
+- See [OPENAI-FOUNDRY-GUIDE.md](OPENAI-FOUNDRY-GUIDE.md) for complete instructions
 AI_API_KEY=your-key-from-keyvault
 
 # Database

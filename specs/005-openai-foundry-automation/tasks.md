@@ -121,10 +121,10 @@ description: "Task list for OpenAI Foundry Automation feature implementation"
 - [X] T034 [P] Add smoke test script scripts/foundry-smoke-test.sh to call /api/health and verify OpenAI key loaded
 - [X] T035 [P] Add log assertion check in scripts/foundry-smoke-test.sh to scan workflow logs for accidental key exposure
 - [X] T036 Ensure backend/src/ code reads AZURE_OPENAI_API_KEY from process.env (verify no hardcoded keys)
-- [ ] T037 Update README.md or DEPLOYMENT-GUIDE.md with quickstart instructions for running foundry-on-demand workflow
+- [X] T037 Update README.md or DEPLOYMENT-GUIDE.md with quickstart instructions for running foundry-on-demand workflow
 - [X] T038 [P] Add resource tagging (env, service=openai, repo, owner, costCenter) to infra/bicep/openai-foundry.bicep
-- [ ] T039 Add environment protection rules for prod in .github/workflows/foundry-on-demand.yml (require approval for rotate-key)
-- [ ] T040 Run validation per specs/005-openai-foundry-automation/quickstart.md
+- [X] T039 Add environment protection rules for prod in .github/workflows/foundry-on-demand.yml (require approval for rotate-key)
+- [X] T040 Run validation per specs/005-openai-foundry-automation/quickstart.md
 
 ---
 
