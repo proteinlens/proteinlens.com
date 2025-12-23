@@ -3,11 +3,22 @@
 
 import Stripe from 'stripe';
 
-// Initialize Stripe client
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-12-15.clover' as Stripe.LatestApiVersion,
-  typescript: true,
-});
+// Lazy-loaded Stripe client (initialized on first use)
+let stripe: Stripe | null = null;
+
+function getStripeClient(): Stripe {
+  if (!stripe) {
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key || key.includes('REPLACE')) {
+      throw new Error('STRIPE_SECRET_KEY not configured. Set a valid Stripe secret key in environment.');
+    }
+    stripe = new Stripe(key, {
+      apiVersion: '2025-12-15.clover' as Stripe.LatestApiVersion,
+      typescript: true,
+    });
+  }
+  return stripe;
+}
 
 /**
  * Create a Stripe Checkout session for subscription
@@ -27,14 +38,14 @@ export async function createCheckoutSession(
   // Create customer if doesn't exist
   let stripeCustomerId = customerId;
   if (!stripeCustomerId) {
-    const customer = await stripe.customers.create({
+    const customer = await getStripeClient().customers.create({
       email: userEmail,
       metadata: { userId },
     });
     stripeCustomerId = customer.id;
   }
 
-  const session = await stripe.checkout.sessions.create({
+  const session = await getStripeClient().checkout.sessions.create({
     customer: stripeCustomerId,
     mode: 'subscription',
     payment_method_types: ['card'],
@@ -67,7 +78,7 @@ export async function createPortalSession(
 ): Promise<{ url: string }> {
   const appUrl = process.env.APP_URL || 'http://localhost:5173';
 
-  const session = await stripe.billingPortal.sessions.create({
+  const session = await getStripeClient().billingPortal.sessions.create({
     customer: customerId,
     return_url: `${appUrl}/settings`,
   });
@@ -86,7 +97,7 @@ export function verifyWebhookSignature(
 ): Stripe.Event {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
   
-  return stripe.webhooks.constructEvent(payload, signature, webhookSecret);
+  return getStripeClient().webhooks.constructEvent(payload, signature, webhookSecret);
 }
 
 /**
@@ -94,7 +105,7 @@ export function verifyWebhookSignature(
  */
 export async function getCustomer(customerId: string): Promise<Stripe.Customer | null> {
   try {
-    const customer = await stripe.customers.retrieve(customerId);
+    const customer = await getStripeClient().customers.retrieve(customerId);
     if (customer.deleted) return null;
     return customer as Stripe.Customer;
   } catch {
@@ -107,7 +118,7 @@ export async function getCustomer(customerId: string): Promise<Stripe.Customer |
  */
 export async function getSubscription(subscriptionId: string): Promise<Stripe.Subscription | null> {
   try {
-    return await stripe.subscriptions.retrieve(subscriptionId);
+    return await getStripeClient().subscriptions.retrieve(subscriptionId);
   } catch {
     return null;
   }
@@ -117,7 +128,7 @@ export async function getSubscription(subscriptionId: string): Promise<Stripe.Su
  * Cancel subscription at period end
  */
 export async function cancelSubscription(subscriptionId: string): Promise<Stripe.Subscription> {
-  return stripe.subscriptions.update(subscriptionId, {
+  return getStripeClient().subscriptions.update(subscriptionId, {
     cancel_at_period_end: true,
   });
 }
