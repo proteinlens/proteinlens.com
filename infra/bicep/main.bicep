@@ -16,6 +16,8 @@ param keyVaultName string = '${appNamePrefix}-kv-${environmentName}'
 param postgresServerName string = '${appNamePrefix}-db-${environmentName}'
 param staticWebAppName string = '${appNamePrefix}-web-${environmentName}'
 param frontDoorName string = '${appNamePrefix}-fd-${environmentName}'
+param aiHubName string = '${appNamePrefix}-ai-hub-${environmentName}'
+param aiProjectName string = '${appNamePrefix}-ai-project-${environmentName}'
 
 // Database parameters
 param postgresAdminUsername string = 'pgadmin'
@@ -24,6 +26,7 @@ param postgresAdminPassword string // Provided from Key Vault at deployment time
 
 // Feature flags
 param enableFrontDoor bool = false // Optional CDN/WAF layer
+param enableAIFoundry bool = true // Enable AI Foundry for GPT-5.1 integration
 
 // =============================================================================
 // DEPLOYMENTS
@@ -93,6 +96,19 @@ module frontDoor 'frontdoor.bicep' = if (enableFrontDoor) {
   }
 }
 
+// 7. AI Foundry (GPT-5.1 integration for intelligent meal analysis)
+module aiFoundry 'ai-foundry.bicep' = if (enableAIFoundry) {
+  name: 'ai-foundry-deployment'
+  params: {
+    location: location
+    aiHubName: aiHubName
+    aiProjectName: aiProjectName
+    keyVaultId: keyVault.outputs.keyVaultId
+    storageAccountId: storage.outputs.storageAccountId
+    applicationInsightsId: ''  // Will be added if Application Insights created
+  }
+}
+
 // =============================================================================
 // OUTPUTS (Referenced by deployment workflow)
 // =============================================================================
@@ -137,6 +153,13 @@ output frontDoorEnabled bool = enableFrontDoor
 @description('Front Door URL (empty if disabled)')
 output frontDoorUrl string = enableFrontDoor ? frontDoor.outputs.frontDoorEndpointUrl : ''
 output frontDoorName string = enableFrontDoor ? frontDoor.outputs.frontDoorName : ''
+
+// AI Foundry (GPT-5.1 integration)
+output aiFoundryEnabled bool = enableAIFoundry
+output aiHubName string = enableAIFoundry ? aiFoundry.outputs.aiHubName : ''
+output aiHubId string = enableAIFoundry ? aiFoundry.outputs.aiHubId : ''
+output aiProjectName string = enableAIFoundry ? aiFoundry.outputs.aiProjectName : ''
+output aiProjectId string = enableAIFoundry ? aiFoundry.outputs.aiProjectId : ''
 
 // Connection strings (for documentation/manual testing)
 @description('PostgreSQL connection string (with password placeholder)')
