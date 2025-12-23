@@ -1,11 +1,12 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "languageVersion": "2.0",
   "contentVersion": "1.0.0.0",
   "metadata": {
     "_generator": {
       "name": "bicep",
       "version": "0.39.26.7824",
-      "templateHash": "2748657151443166618"
+      "templateHash": "9492238961075227170"
     }
   },
   "parameters": {
@@ -21,9 +22,9 @@
       "type": "string",
       "defaultValue": "proteinlens"
     },
-    "storageAccountName": {
+    "storageAccountNameOverride": {
       "type": "string",
-      "defaultValue": "[format('{0}{1}{2}', parameters('appNamePrefix'), parameters('environmentName'), uniqueString(resourceGroup().id))]"
+      "defaultValue": ""
     },
     "functionAppName": {
       "type": "string",
@@ -69,8 +70,14 @@
       "defaultValue": true
     }
   },
-  "resources": [
-    {
+  "variables": {
+    "saPrefix": "[toLower(parameters('appNamePrefix'))]",
+    "saEnv": "[toLower(parameters('environmentName'))]",
+    "saSuffix": "[substring(uniqueString(resourceGroup().id), 0, 8)]",
+    "storageAccountName": "[if(greater(length(parameters('storageAccountNameOverride')), 0), parameters('storageAccountNameOverride'), format('{0}{1}{2}', variables('saPrefix'), variables('saEnv'), variables('saSuffix')))]"
+  },
+  "resources": {
+    "keyVault": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2025-04-01",
       "name": "keyvault-deployment",
@@ -147,7 +154,7 @@
         }
       }
     },
-    {
+    "storage": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2025-04-01",
       "name": "storage-deployment",
@@ -161,7 +168,7 @@
             "value": "[parameters('location')]"
           },
           "storageAccountName": {
-            "value": "[parameters('storageAccountName')]"
+            "value": "[variables('storageAccountName')]"
           },
           "blobContainerName": {
             "value": "meal-photos"
@@ -277,7 +284,7 @@
         }
       }
     },
-    {
+    "postgres": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2025-04-01",
       "name": "postgres-deployment",
@@ -426,7 +433,7 @@
         }
       }
     },
-    {
+    "functionApp": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2025-04-01",
       "name": "function-app-deployment",
@@ -443,10 +450,10 @@
             "value": "[parameters('functionAppName')]"
           },
           "storageAccountName": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'storage-deployment'), '2025-04-01').outputs.storageAccountName.value]"
+            "value": "[reference('storage').outputs.storageAccountName.value]"
           },
           "keyVaultUri": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyvault-deployment'), '2025-04-01').outputs.keyVaultUri.value]"
+            "value": "[reference('keyVault').outputs.keyVaultUri.value]"
           }
         },
         "template": {
@@ -596,11 +603,11 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'keyvault-deployment')]",
-        "[resourceId('Microsoft.Resources/deployments', 'storage-deployment')]"
+        "keyVault",
+        "storage"
       ]
     },
-    {
+    "staticWebApp": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2025-04-01",
       "name": "static-web-app-deployment",
@@ -617,7 +624,7 @@
             "value": "[parameters('staticWebAppName')]"
           },
           "apiUrl": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'function-app-deployment'), '2025-04-01').outputs.functionAppUrl.value]"
+            "value": "[reference('functionApp').outputs.functionAppUrl.value]"
           }
         },
         "template": {
@@ -705,10 +712,10 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'function-app-deployment')]"
+        "functionApp"
       ]
     },
-    {
+    "frontDoor": {
       "condition": "[parameters('enableFrontDoor')]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2025-04-01",
@@ -792,7 +799,7 @@
         }
       }
     },
-    {
+    "aiFoundry": {
       "condition": "[parameters('enableAIFoundry')]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2025-04-01",
@@ -813,10 +820,10 @@
             "value": "[parameters('aiProjectName')]"
           },
           "keyVaultId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyvault-deployment'), '2025-04-01').outputs.keyVaultId.value]"
+            "value": "[reference('keyVault').outputs.keyVaultId.value]"
           },
           "storageAccountId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'storage-deployment'), '2025-04-01').outputs.storageAccountId.value]"
+            "value": "[reference('storage').outputs.storageAccountId.value]"
           },
           "applicationInsightsId": {
             "value": ""
@@ -926,11 +933,11 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'keyvault-deployment')]",
-        "[resourceId('Microsoft.Resources/deployments', 'storage-deployment')]"
+        "keyVault",
+        "storage"
       ]
     }
-  ],
+  },
   "outputs": {
     "deploymentId": {
       "type": "string",
@@ -946,55 +953,55 @@
     },
     "keyVaultName": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyvault-deployment'), '2025-04-01').outputs.keyVaultName.value]"
+      "value": "[reference('keyVault').outputs.keyVaultName.value]"
     },
     "keyVaultId": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyvault-deployment'), '2025-04-01').outputs.keyVaultId.value]"
+      "value": "[reference('keyVault').outputs.keyVaultId.value]"
     },
     "keyVaultUri": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyvault-deployment'), '2025-04-01').outputs.keyVaultUri.value]"
+      "value": "[reference('keyVault').outputs.keyVaultUri.value]"
     },
     "functionAppName": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'function-app-deployment'), '2025-04-01').outputs.functionAppName.value]"
+      "value": "[reference('functionApp').outputs.functionAppName.value]"
     },
     "functionAppUrl": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'function-app-deployment'), '2025-04-01').outputs.functionAppUrl.value]"
+      "value": "[reference('functionApp').outputs.functionAppUrl.value]"
     },
     "functionAppManagedIdentityId": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'function-app-deployment'), '2025-04-01').outputs.functionAppPrincipalId.value]"
+      "value": "[reference('functionApp').outputs.functionAppPrincipalId.value]"
     },
     "functionAppPrincipalId": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'function-app-deployment'), '2025-04-01').outputs.functionAppPrincipalId.value]"
+      "value": "[reference('functionApp').outputs.functionAppPrincipalId.value]"
     },
     "postgresServerName": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'postgres-deployment'), '2025-04-01').outputs.postgresServerName.value]"
+      "value": "[reference('postgres').outputs.postgresServerName.value]"
     },
     "postgresServerFqdn": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'postgres-deployment'), '2025-04-01').outputs.postgresServerFqdn.value]"
+      "value": "[reference('postgres').outputs.postgresServerFqdn.value]"
     },
     "postgresAdminUsername": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'postgres-deployment'), '2025-04-01').outputs.postgresAdminUsername.value]"
+      "value": "[reference('postgres').outputs.postgresAdminUsername.value]"
     },
     "databaseName": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'postgres-deployment'), '2025-04-01').outputs.databaseName.value]"
+      "value": "[reference('postgres').outputs.databaseName.value]"
     },
     "postgresPort": {
       "type": "int",
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'postgres-deployment'), '2025-04-01').outputs.postgresPort.value]"
+      "value": "[reference('postgres').outputs.postgresPort.value]"
     },
     "storageAccountName": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'storage-deployment'), '2025-04-01').outputs.storageAccountName.value]"
+      "value": "[reference('storage').outputs.storageAccountName.value]"
     },
     "storageContainerName": {
       "type": "string",
@@ -1002,19 +1009,19 @@
     },
     "storageAccountId": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'storage-deployment'), '2025-04-01').outputs.storageAccountId.value]"
+      "value": "[reference('storage').outputs.storageAccountId.value]"
     },
     "staticWebAppName": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'static-web-app-deployment'), '2025-04-01').outputs.staticWebAppName.value]"
+      "value": "[reference('staticWebApp').outputs.staticWebAppName.value]"
     },
     "staticWebAppUrl": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'static-web-app-deployment'), '2025-04-01').outputs.staticWebAppUrl.value]"
+      "value": "[reference('staticWebApp').outputs.staticWebAppUrl.value]"
     },
     "staticWebAppDefaultHostname": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'static-web-app-deployment'), '2025-04-01').outputs.staticWebAppDefaultHostname.value]"
+      "value": "[reference('staticWebApp').outputs.staticWebAppDefaultHostname.value]"
     },
     "frontDoorEnabled": {
       "type": "bool",
@@ -1025,11 +1032,11 @@
       "metadata": {
         "description": "Front Door URL (empty if disabled)"
       },
-      "value": "[if(parameters('enableFrontDoor'), reference(resourceId('Microsoft.Resources/deployments', 'frontdoor-deployment'), '2025-04-01').outputs.frontDoorEndpointUrl.value, '')]"
+      "value": "[if(parameters('enableFrontDoor'), reference('frontDoor').outputs.frontDoorEndpointUrl.value, '')]"
     },
     "frontDoorName": {
       "type": "string",
-      "value": "[if(parameters('enableFrontDoor'), reference(resourceId('Microsoft.Resources/deployments', 'frontdoor-deployment'), '2025-04-01').outputs.frontDoorName.value, '')]"
+      "value": "[if(parameters('enableFrontDoor'), reference('frontDoor').outputs.frontDoorName.value, '')]"
     },
     "aiFoundryEnabled": {
       "type": "bool",
@@ -1037,26 +1044,26 @@
     },
     "aiHubName": {
       "type": "string",
-      "value": "[if(parameters('enableAIFoundry'), reference(resourceId('Microsoft.Resources/deployments', 'ai-foundry-deployment'), '2025-04-01').outputs.aiHubName.value, '')]"
+      "value": "[if(parameters('enableAIFoundry'), reference('aiFoundry').outputs.aiHubName.value, '')]"
     },
     "aiHubId": {
       "type": "string",
-      "value": "[if(parameters('enableAIFoundry'), reference(resourceId('Microsoft.Resources/deployments', 'ai-foundry-deployment'), '2025-04-01').outputs.aiHubId.value, '')]"
+      "value": "[if(parameters('enableAIFoundry'), reference('aiFoundry').outputs.aiHubId.value, '')]"
     },
     "aiProjectName": {
       "type": "string",
-      "value": "[if(parameters('enableAIFoundry'), reference(resourceId('Microsoft.Resources/deployments', 'ai-foundry-deployment'), '2025-04-01').outputs.aiProjectName.value, '')]"
+      "value": "[if(parameters('enableAIFoundry'), reference('aiFoundry').outputs.aiProjectName.value, '')]"
     },
     "aiProjectId": {
       "type": "string",
-      "value": "[if(parameters('enableAIFoundry'), reference(resourceId('Microsoft.Resources/deployments', 'ai-foundry-deployment'), '2025-04-01').outputs.aiProjectId.value, '')]"
+      "value": "[if(parameters('enableAIFoundry'), reference('aiFoundry').outputs.aiProjectId.value, '')]"
     },
     "databaseConnectionString": {
       "type": "string",
       "metadata": {
         "description": "PostgreSQL connection string (with password placeholder)"
       },
-      "value": "[format('postgresql://{0}:***@{1}:{2}/{3}', reference(resourceId('Microsoft.Resources/deployments', 'postgres-deployment'), '2025-04-01').outputs.postgresAdminUsername.value, reference(resourceId('Microsoft.Resources/deployments', 'postgres-deployment'), '2025-04-01').outputs.postgresServerFqdn.value, reference(resourceId('Microsoft.Resources/deployments', 'postgres-deployment'), '2025-04-01').outputs.postgresPort.value, reference(resourceId('Microsoft.Resources/deployments', 'postgres-deployment'), '2025-04-01').outputs.databaseName.value)]"
+      "value": "[format('postgresql://{0}:***@{1}:{2}/{3}', reference('postgres').outputs.postgresAdminUsername.value, reference('postgres').outputs.postgresServerFqdn.value, reference('postgres').outputs.postgresPort.value, reference('postgres').outputs.databaseName.value)]"
     }
   }
 }
