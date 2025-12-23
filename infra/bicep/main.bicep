@@ -9,8 +9,10 @@ param location string = resourceGroup().location
 param environmentName string = 'dev'
 param appNamePrefix string = 'proteinlens'
 
-// Resource naming
-param storageAccountName string = '${appNamePrefix}${environmentName}${uniqueString(resourceGroup().id)}'
+// Resource naming (ensure storage account name <=24 chars, lowercase, alphanumeric)
+var saPrefix string = toLower('${appNamePrefix}${environmentName}')
+var saSuffix string = substring(uniqueString(resourceGroup().id), 0, 8)
+param storageAccountName string = '${saPrefix}${saSuffix}'
 param functionAppName string = '${appNamePrefix}-api-${environmentName}'
 param keyVaultName string = '${appNamePrefix}-kv-${environmentName}'
 param postgresServerName string = '${appNamePrefix}-db-${environmentName}'
