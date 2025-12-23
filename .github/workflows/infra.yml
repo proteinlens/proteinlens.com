@@ -21,7 +21,7 @@ permissions:
   id-token: write
 
 env:
-  AZURE_LOCATION: eastus
+  AZURE_LOCATION: westus2
   RESOURCE_GROUP: proteinlens-${{ github.event.inputs.environment }}
 
 jobs:
