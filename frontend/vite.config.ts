@@ -42,7 +42,7 @@ export default defineConfig({
         // Split vendor code for better caching
         manualChunks: {
           vendor: ['react', 'react-dom', 'react-router-dom'],
-          shadcn: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-slots'],
+          // shadcn chunk removed - radix-ui dependencies not yet installed
         },
       },
     },
