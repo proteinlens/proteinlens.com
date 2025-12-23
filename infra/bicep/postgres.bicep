@@ -1,7 +1,7 @@
 // Azure PostgreSQL Flexible Server for ProteinLens
 // Constitution Principle I: Database credentials in Key Vault
 
-param location string = resourceGroup().location
+param location string = 'northeurope'
 param postgresServerName string
 param postgresAdminUsername string
 @secure()

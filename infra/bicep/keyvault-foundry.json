@@ -1,0 +1,68 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.39.26.7824",
+      "templateHash": "2152843779098744315"
+    }
+  },
+  "parameters": {
+    "keyVaultName": {
+      "type": "string"
+    },
+    "environmentName": {
+      "type": "string"
+    },
+    "secretName": {
+      "type": "string",
+      "defaultValue": "[format('AZURE-OPENAI-API-KEY--{0}', parameters('environmentName'))]"
+    },
+    "secretValue": {
+      "type": "securestring"
+    },
+    "functionAppPrincipalId": {
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2023-07-01",
+      "name": "[format('{0}/{1}', parameters('keyVaultName'), parameters('secretName'))]",
+      "properties": {
+        "value": "[parameters('secretValue')]",
+        "contentType": "text/plain",
+        "attributes": {
+          "enabled": true
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('keyVaultName'))]",
+      "name": "[guid(resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultName')), parameters('functionAppPrincipalId'), '4633458b-17de-408a-b874-0445c86b69e6')]",
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')]",
+        "principalId": "[parameters('functionAppPrincipalId')]",
+        "principalType": "ServicePrincipal"
+      }
+    }
+  ],
+  "outputs": {
+    "secretName": {
+      "type": "string",
+      "value": "[parameters('secretName')]"
+    },
+    "secretUri": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.KeyVault/vaults/secrets', parameters('keyVaultName'), parameters('secretName')), '2023-07-01').secretUri]"
+    },
+    "secretUriWithVersion": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.KeyVault/vaults/secrets', parameters('keyVaultName'), parameters('secretName')), '2023-07-01').secretUriWithVersion]"
+    }
+  }
+}

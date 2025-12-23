@@ -1,7 +1,7 @@
 // Azure Function App with Managed Identity
 // Constitution Principle II: Least Privilege Access
 
-param location string = resourceGroup().location
+param location string = 'northeurope'
 param functionAppName string
 param storageAccountName string
 param appServicePlanName string = '${functionAppName}-plan'
@@ -12,8 +12,8 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
   location: location
   kind: 'functionapp'
   sku: {
-    name: 'Y1'  // Consumption plan
-    tier: 'Dynamic'
+    name: 'EP1'  // Premium plan to avoid cold starts
+    tier: 'ElasticPremium'
   }
   properties: {
     reserved: true  // Required for Linux
@@ -105,3 +105,4 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
 output functionAppName string = functionApp.name
 output functionAppPrincipalId string = functionApp.identity.principalId
 output functionAppUrl string = 'https://${functionApp.properties.defaultHostName}'
+output functionAppDefaultHostname string = functionApp.properties.defaultHostName

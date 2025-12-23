@@ -1,0 +1,145 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.39.26.7824",
+      "templateHash": "13399289122989122924"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "northeurope"
+    },
+    "functionAppName": {
+      "type": "string"
+    },
+    "storageAccountName": {
+      "type": "string"
+    },
+    "appServicePlanName": {
+      "type": "string",
+      "defaultValue": "[format('{0}-plan', parameters('functionAppName'))]"
+    },
+    "keyVaultUri": {
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2023-01-01",
+      "name": "[parameters('appServicePlanName')]",
+      "location": "[parameters('location')]",
+      "kind": "functionapp",
+      "sku": {
+        "name": "EP1",
+        "tier": "ElasticPremium"
+      },
+      "properties": {
+        "reserved": true
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2023-01-01",
+      "name": "[parameters('functionAppName')]",
+      "location": "[parameters('location')]",
+      "kind": "functionapp,linux",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
+        "httpsOnly": true,
+        "siteConfig": {
+          "linuxFxVersion": "NODE|20",
+          "appSettings": [
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "node"
+            },
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~4"
+            },
+            {
+              "name": "AzureWebJobsStorage__accountName",
+              "value": "[parameters('storageAccountName')]"
+            },
+            {
+              "name": "AZURE_STORAGE_ACCOUNT_NAME",
+              "value": "[parameters('storageAccountName')]"
+            },
+            {
+              "name": "BLOB_CONTAINER_NAME",
+              "value": "meal-photos"
+            },
+            {
+              "name": "AI_FOUNDRY_ENDPOINT",
+              "value": "[format('@Microsoft.KeyVault(SecretUri={0}secrets/ai-foundry-endpoint/)', parameters('keyVaultUri'))]"
+            },
+            {
+              "name": "AI_MODEL_DEPLOYMENT",
+              "value": "[format('@Microsoft.KeyVault(SecretUri={0}secrets/ai-model-deployment/)', parameters('keyVaultUri'))]"
+            },
+            {
+              "name": "OPENAI_API_KEY",
+              "value": "[format('@Microsoft.KeyVault(SecretUri={0}secrets/openai-api-key/)', parameters('keyVaultUri'))]"
+            },
+            {
+              "name": "DATABASE_URL",
+              "value": "[format('@Microsoft.KeyVault(SecretUri={0}secrets/database-url/)', parameters('keyVaultUri'))]"
+            },
+            {
+              "name": "STRIPE_SECRET_KEY",
+              "value": "[format('@Microsoft.KeyVault(SecretUri={0}secrets/stripe-secret-key/)', parameters('keyVaultUri'))]"
+            },
+            {
+              "name": "STRIPE_WEBHOOK_SECRET",
+              "value": "[format('@Microsoft.KeyVault(SecretUri={0}secrets/stripe-webhook-secret/)', parameters('keyVaultUri'))]"
+            },
+            {
+              "name": "BLOB_STORAGE_CONNECTION",
+              "value": "[format('@Microsoft.KeyVault(SecretUri={0}secrets/blob-storage-connection/)', parameters('keyVaultUri'))]"
+            },
+            {
+              "name": "SAS_TOKEN_EXPIRY_MINUTES",
+              "value": "10"
+            },
+            {
+              "name": "MAX_FILE_SIZE_MB",
+              "value": "8"
+            }
+          ],
+          "cors": {
+            "allowedOrigins": [
+              "http://localhost:5173",
+              "http://localhost:3000"
+            ],
+            "supportCredentials": true
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "functionAppName": {
+      "type": "string",
+      "value": "[parameters('functionAppName')]"
+    },
+    "functionAppPrincipalId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Web/sites', parameters('functionAppName')), '2023-01-01', 'full').identity.principalId]"
+    },
+    "functionAppUrl": {
+      "type": "string",
+      "value": "[format('https://{0}', reference(resourceId('Microsoft.Web/sites', parameters('functionAppName')), '2023-01-01').defaultHostName)]"
+    }
+  }
+}

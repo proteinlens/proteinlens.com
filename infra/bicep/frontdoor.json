@@ -1,0 +1,281 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "languageVersion": "2.0",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.39.26.7824",
+      "templateHash": "12905374865836126646"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "global"
+    },
+    "frontDoorName": {
+      "type": "string"
+    },
+    "apiHostname": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "webHostname": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "customDomainRoot": {
+      "type": "string",
+      "defaultValue": "proteinlens.com"
+    },
+    "enableFrontDoor": {
+      "type": "bool",
+      "defaultValue": true
+    }
+  },
+  "variables": {
+    "wwwDomain": "[format('www.{0}', parameters('customDomainRoot'))]",
+    "apiDomain": "[format('api.{0}', parameters('customDomainRoot'))]"
+  },
+  "resources": {
+    "frontDoor": {
+      "condition": "[parameters('enableFrontDoor')]",
+      "type": "Microsoft.Cdn/profiles",
+      "apiVersion": "2023-05-01",
+      "name": "[parameters('frontDoorName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_AzureFrontDoor"
+      },
+      "properties": {
+        "originResponseTimeoutSeconds": 60
+      }
+    },
+    "endpoint": {
+      "condition": "[parameters('enableFrontDoor')]",
+      "type": "Microsoft.Cdn/profiles/afdEndpoints",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/{1}-ep', parameters('frontDoorName'), parameters('frontDoorName'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "enabledState": "Enabled"
+      },
+      "dependsOn": [
+        "frontDoor"
+      ]
+    },
+    "apiOriginGroup": {
+      "condition": "[and(parameters('enableFrontDoor'), not(empty(parameters('apiHostname'))))]",
+      "type": "Microsoft.Cdn/profiles/originGroups",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/api-origins', parameters('frontDoorName'))]",
+      "properties": {
+        "healthProbeSettings": {
+          "probePath": "/api/health",
+          "probeRequestType": "GET",
+          "probeProtocol": "Https",
+          "probeIntervalInSeconds": 60
+        },
+        "loadBalancingSettings": {
+          "additionalLatencyInMilliseconds": 0,
+          "sampleSize": 4,
+          "successfulSamplesRequired": 3
+        }
+      },
+      "dependsOn": [
+        "frontDoor"
+      ]
+    },
+    "webOriginGroup": {
+      "condition": "[and(parameters('enableFrontDoor'), not(empty(parameters('webHostname'))))]",
+      "type": "Microsoft.Cdn/profiles/originGroups",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/web-origins', parameters('frontDoorName'))]",
+      "properties": {
+        "healthProbeSettings": {
+          "probePath": "/",
+          "probeRequestType": "GET",
+          "probeProtocol": "Https",
+          "probeIntervalInSeconds": 60
+        },
+        "loadBalancingSettings": {
+          "additionalLatencyInMilliseconds": 0,
+          "sampleSize": 4,
+          "successfulSamplesRequired": 3
+        }
+      },
+      "dependsOn": [
+        "frontDoor"
+      ]
+    },
+    "apiOrigin": {
+      "condition": "[and(parameters('enableFrontDoor'), not(empty(parameters('apiHostname'))))]",
+      "type": "Microsoft.Cdn/profiles/originGroups/origins",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/{1}/api-origin', parameters('frontDoorName'), format('{0}/api-origins', parameters('frontDoorName')))]",
+      "properties": {
+        "hostName": "[parameters('apiHostname')]",
+        "httpPort": 80,
+        "httpsPort": 443,
+        "originHostHeader": "[parameters('apiHostname')]",
+        "priority": 1,
+        "weight": 50,
+        "enabledState": "Enabled"
+      },
+      "dependsOn": [
+        "apiOriginGroup",
+        "frontDoor"
+      ]
+    },
+    "webOrigin": {
+      "condition": "[and(parameters('enableFrontDoor'), not(empty(parameters('webHostname'))))]",
+      "type": "Microsoft.Cdn/profiles/originGroups/origins",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/{1}/web-origin', parameters('frontDoorName'), format('{0}/web-origins', parameters('frontDoorName')))]",
+      "properties": {
+        "hostName": "[parameters('webHostname')]",
+        "httpPort": 80,
+        "httpsPort": 443,
+        "originHostHeader": "[parameters('webHostname')]",
+        "priority": 1,
+        "weight": 50,
+        "enabledState": "Enabled"
+      },
+      "dependsOn": [
+        "frontDoor",
+        "webOriginGroup"
+      ]
+    },
+    "wwwCd": {
+      "condition": "[parameters('enableFrontDoor')]",
+      "type": "Microsoft.Cdn/profiles/customDomains",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/www', parameters('frontDoorName'))]",
+      "properties": {
+        "hostName": "[variables('wwwDomain')]",
+        "tlsSettings": {
+          "certificateType": "ManagedCertificate",
+          "minimumTlsVersion": "TLS12"
+        }
+      },
+      "dependsOn": [
+        "frontDoor"
+      ]
+    },
+    "apiCd": {
+      "condition": "[parameters('enableFrontDoor')]",
+      "type": "Microsoft.Cdn/profiles/customDomains",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/api', parameters('frontDoorName'))]",
+      "properties": {
+        "hostName": "[variables('apiDomain')]",
+        "tlsSettings": {
+          "certificateType": "ManagedCertificate",
+          "minimumTlsVersion": "TLS12"
+        }
+      },
+      "dependsOn": [
+        "frontDoor"
+      ]
+    },
+    "routeWeb": {
+      "condition": "[and(parameters('enableFrontDoor'), not(empty(parameters('webHostname'))))]",
+      "type": "Microsoft.Cdn/profiles/routes",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/route-web', parameters('frontDoorName'))]",
+      "properties": {
+        "supportedProtocols": [
+          "Http",
+          "Https"
+        ],
+        "patternSets": [],
+        "patternsToMatch": [
+          "/"
+        ],
+        "forwardingProtocol": "MatchRequest",
+        "httpsRedirect": "Enabled",
+        "originGroup": {
+          "id": "[resourceId('Microsoft.Cdn/profiles/originGroups', split(format('{0}/web-origins', parameters('frontDoorName')), '/')[0], split(format('{0}/web-origins', parameters('frontDoorName')), '/')[1])]"
+        },
+        "customDomains": [
+          {
+            "id": "[resourceId('Microsoft.Cdn/profiles/customDomains', split(format('{0}/www', parameters('frontDoorName')), '/')[0], split(format('{0}/www', parameters('frontDoorName')), '/')[1])]"
+          }
+        ],
+        "deploymentStatus": "NotStarted",
+        "enabledState": "Enabled",
+        "endpointName": "[format('{0}/{1}-ep', parameters('frontDoorName'), parameters('frontDoorName'))]",
+        "linkToDefaultDomain": "Disabled"
+      },
+      "dependsOn": [
+        "endpoint",
+        "frontDoor",
+        "webOriginGroup",
+        "wwwCd"
+      ]
+    },
+    "routeApi": {
+      "condition": "[and(parameters('enableFrontDoor'), not(empty(parameters('apiHostname'))))]",
+      "type": "Microsoft.Cdn/profiles/routes",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}/route-api', parameters('frontDoorName'))]",
+      "properties": {
+        "supportedProtocols": [
+          "Http",
+          "Https"
+        ],
+        "patternSets": [],
+        "patternsToMatch": [
+          "/api/*"
+        ],
+        "forwardingProtocol": "MatchRequest",
+        "httpsRedirect": "Enabled",
+        "originGroup": {
+          "id": "[resourceId('Microsoft.Cdn/profiles/originGroups', split(format('{0}/api-origins', parameters('frontDoorName')), '/')[0], split(format('{0}/api-origins', parameters('frontDoorName')), '/')[1])]"
+        },
+        "customDomains": [
+          {
+            "id": "[resourceId('Microsoft.Cdn/profiles/customDomains', split(format('{0}/api', parameters('frontDoorName')), '/')[0], split(format('{0}/api', parameters('frontDoorName')), '/')[1])]"
+          }
+        ],
+        "deploymentStatus": "NotStarted",
+        "enabledState": "Enabled",
+        "endpointName": "[format('{0}/{1}-ep', parameters('frontDoorName'), parameters('frontDoorName'))]",
+        "linkToDefaultDomain": "Disabled"
+      },
+      "dependsOn": [
+        "apiCd",
+        "apiOriginGroup",
+        "endpoint",
+        "frontDoor"
+      ]
+    }
+  },
+  "outputs": {
+    "frontDoorId": {
+      "type": "string",
+      "value": "[if(parameters('enableFrontDoor'), resourceId('Microsoft.Cdn/profiles', parameters('frontDoorName')), '')]"
+    },
+    "frontDoorName": {
+      "type": "string",
+      "value": "[if(parameters('enableFrontDoor'), parameters('frontDoorName'), '')]"
+    },
+    "frontDoorEndpointUrl": {
+      "type": "string",
+      "value": "[if(parameters('enableFrontDoor'), format('https://{0}.azurefd.net', parameters('frontDoorName')), '')]"
+    },
+    "frontDoorEndpointHostname": {
+      "type": "string",
+      "value": "[if(parameters('enableFrontDoor'), format('{0}.azurefd.net', parameters('frontDoorName')), '')]"
+    },
+    "webCustomDomain": {
+      "type": "string",
+      "value": "[if(parameters('enableFrontDoor'), variables('wwwDomain'), '')]"
+    },
+    "apiCustomDomain": {
+      "type": "string",
+      "value": "[if(parameters('enableFrontDoor'), variables('apiDomain'), '')]"
+    }
+  }
+}

@@ -1,0 +1,21 @@
+# Dependencies and build outputs
+node_modules/
+dist/
+build/
+out/
+coverage/
+.vite/
+.turbo/
+.parcel-cache/
+
+# Generated deployment artifacts
+backend/.deploy/
+frontend/dist/
+
+# Lockfiles (don’t reformat)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Env files
+.env*

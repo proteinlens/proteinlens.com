@@ -2,10 +2,13 @@
 targetScope = 'subscription'
 
 // Parameters
-param location string = 'eastus2'
+param location string = 'northeurope'
 param resourceGroupName string
 param environmentName string = 'prod'
 param appNamePrefix string = 'proteinlens'
+param enableFrontDoor bool = true
+@description('Optional Azure DNS zone resource ID for proteinlens.com. If provided, DNS records will be created.')
+param dnsZoneResourceId string = ''
 
 // Secure runtime secrets (passed from pipeline)
 @secure()
@@ -31,6 +34,7 @@ module rgStack './main.bicep' = {
     location: location
     environmentName: environmentName
     appNamePrefix: appNamePrefix
+    enableFrontDoor: enableFrontDoor
     postgresAdminPassword: postgresAdminPassword
   }
 }
@@ -78,3 +82,9 @@ output functionAppUrl string = rgStack.outputs.functionAppUrl
 output staticWebAppUrl string = rgStack.outputs.staticWebAppUrl
 output keyVaultUri string = rgStack.outputs.keyVaultUri
 output storageAccountName string = rgStack.outputs.storageAccountName
+output frontDoorEnabled bool = rgStack.outputs.frontDoorEnabled
+output frontDoorUrl string = rgStack.outputs.frontDoorUrl
+output webCustomDomain string = rgStack.outputs.webCustomDomain
+output apiCustomDomain string = rgStack.outputs.apiCustomDomain
+output frontDoorName string = rgStack.outputs.frontDoorName
+output frontDoorEndpointHostname string = rgStack.outputs.frontDoorEndpointHostname

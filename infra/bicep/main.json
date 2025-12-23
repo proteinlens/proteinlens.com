@@ -6,13 +6,13 @@
     "_generator": {
       "name": "bicep",
       "version": "0.39.26.7824",
-      "templateHash": "9492238961075227170"
+      "templateHash": "15016158266059778419"
     }
   },
   "parameters": {
     "location": {
       "type": "string",
-      "defaultValue": "[resourceGroup().location]"
+      "defaultValue": "northeurope"
     },
     "environmentName": {
       "type": "string",
@@ -30,7 +30,7 @@
       "type": "string",
       "defaultValue": "[format('{0}-api-{1}', parameters('appNamePrefix'), parameters('environmentName'))]"
     },
-    "keyVaultName": {
+    "keyVaultNamePrefix": {
       "type": "string",
       "defaultValue": "[format('{0}-kv-{1}', parameters('appNamePrefix'), parameters('environmentName'))]"
     },
@@ -74,7 +74,10 @@
     "saPrefix": "[toLower(parameters('appNamePrefix'))]",
     "saEnv": "[toLower(parameters('environmentName'))]",
     "saSuffix": "[substring(uniqueString(resourceGroup().id), 0, 8)]",
-    "storageAccountName": "[if(greater(length(parameters('storageAccountNameOverride')), 0), parameters('storageAccountNameOverride'), format('{0}{1}{2}', variables('saPrefix'), variables('saEnv'), variables('saSuffix')))]"
+    "storageAccountNameRaw": "[if(greater(length(parameters('storageAccountNameOverride')), 0), parameters('storageAccountNameOverride'), format('{0}{1}{2}', variables('saPrefix'), variables('saEnv'), variables('saSuffix')))]",
+    "storageAccountName": "[toLower(substring(variables('storageAccountNameRaw'), 0, 24))]",
+    "kvSuffix": "[substring(uniqueString(resourceGroup().id), 0, 6)]",
+    "keyVaultName": "[toLower(substring(format('{0}-{1}', parameters('keyVaultNamePrefix'), variables('kvSuffix')), 0, 24))]"
   },
   "resources": {
     "keyVault": {
@@ -91,7 +94,7 @@
             "value": "[parameters('location')]"
           },
           "keyVaultName": {
-            "value": "[parameters('keyVaultName')]"
+            "value": "[variables('keyVaultName')]"
           }
         },
         "template": {
@@ -101,20 +104,16 @@
             "_generator": {
               "name": "bicep",
               "version": "0.39.26.7824",
-              "templateHash": "16579586242449195085"
+              "templateHash": "16113867847948975879"
             }
           },
           "parameters": {
             "location": {
               "type": "string",
-              "defaultValue": "[resourceGroup().location]"
+              "defaultValue": "northeurope"
             },
             "keyVaultName": {
               "type": "string"
-            },
-            "tenantId": {
-              "type": "string",
-              "defaultValue": "[subscription().tenantId]"
             }
           },
           "resources": [
@@ -128,7 +127,7 @@
                   "family": "A",
                   "name": "standard"
                 },
-                "tenantId": "[parameters('tenantId')]",
+                "tenantId": "[subscription().tenantId]",
                 "enableRbacAuthorization": false,
                 "enableSoftDelete": true,
                 "softDeleteRetentionInDays": 90,
@@ -181,13 +180,13 @@
             "_generator": {
               "name": "bicep",
               "version": "0.39.26.7824",
-              "templateHash": "11889642119084453073"
+              "templateHash": "11131205222687699155"
             }
           },
           "parameters": {
             "location": {
               "type": "string",
-              "defaultValue": "[resourceGroup().location]"
+              "defaultValue": "northeurope"
             },
             "storageAccountName": {
               "type": "string"
@@ -323,13 +322,13 @@
             "_generator": {
               "name": "bicep",
               "version": "0.39.26.7824",
-              "templateHash": "16762703266057102411"
+              "templateHash": "15798049969927610093"
             }
           },
           "parameters": {
             "location": {
               "type": "string",
-              "defaultValue": "[resourceGroup().location]"
+              "defaultValue": "northeurope"
             },
             "postgresServerName": {
               "type": "string"
@@ -463,13 +462,13 @@
             "_generator": {
               "name": "bicep",
               "version": "0.39.26.7824",
-              "templateHash": "4248927992968466942"
+              "templateHash": "13399289122989122924"
             }
           },
           "parameters": {
             "location": {
               "type": "string",
-              "defaultValue": "[resourceGroup().location]"
+              "defaultValue": "northeurope"
             },
             "functionAppName": {
               "type": "string"
@@ -493,8 +492,8 @@
               "location": "[parameters('location')]",
               "kind": "functionapp",
               "sku": {
-                "name": "Y1",
-                "tier": "Dynamic"
+                "name": "EP1",
+                "tier": "ElasticPremium"
               },
               "properties": {
                 "reserved": true
@@ -634,13 +633,13 @@
             "_generator": {
               "name": "bicep",
               "version": "0.39.26.7824",
-              "templateHash": "10701136409652649467"
+              "templateHash": "12760134619071815234"
             }
           },
           "parameters": {
             "location": {
               "type": "string",
-              "defaultValue": "[resourceGroup().location]"
+              "defaultValue": "northeurope"
             },
             "staticWebAppName": {
               "type": "string"
@@ -836,13 +835,13 @@
             "_generator": {
               "name": "bicep",
               "version": "0.39.26.7824",
-              "templateHash": "1459046197239310688"
+              "templateHash": "8906499779362137976"
             }
           },
           "parameters": {
             "location": {
               "type": "string",
-              "defaultValue": "[resourceGroup().location]"
+              "defaultValue": "northeurope"
             },
             "aiHubName": {
               "type": "string"

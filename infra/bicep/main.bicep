@@ -5,7 +5,7 @@
 // PARAMETERS
 // =============================================================================
 
-param location string = resourceGroup().location
+param location string = 'northeurope'
 param environmentName string = 'dev'
 param appNamePrefix string = 'proteinlens'
 
@@ -14,9 +14,14 @@ param storageAccountNameOverride string = ''
 var saPrefix string = toLower(appNamePrefix)
 var saEnv string = toLower(environmentName)
 var saSuffix string = substring(uniqueString(resourceGroup().id), 0, 8)
-var storageAccountName string = length(storageAccountNameOverride) > 0 ? storageAccountNameOverride : '${saPrefix}${saEnv}${saSuffix}'
+var storageAccountNameRaw string = length(storageAccountNameOverride) > 0 ? storageAccountNameOverride : '${saPrefix}${saEnv}${saSuffix}'
+var storageAccountName string = toLower(substring(storageAccountNameRaw, 0, 24))
 param functionAppName string = '${appNamePrefix}-api-${environmentName}'
-param keyVaultName string = '${appNamePrefix}-kv-${environmentName}'
+
+// Key Vault unique naming (avoid VaultAlreadyExists via RG-scoped uniqueString)
+param keyVaultNamePrefix string = '${appNamePrefix}-kv-${environmentName}'
+var kvSuffix string = substring(uniqueString(resourceGroup().id), 0, 6)
+var keyVaultName string = toLower(substring('${keyVaultNamePrefix}-${kvSuffix}', 0, 24))
 param postgresServerName string = '${appNamePrefix}-db-${environmentName}'
 param staticWebAppName string = '${appNamePrefix}-web-${environmentName}'
 param frontDoorName string = '${appNamePrefix}-fd-${environmentName}'
@@ -97,6 +102,8 @@ module frontDoor 'frontdoor.bicep' = if (enableFrontDoor) {
     location: 'global'
     frontDoorName: frontDoorName
     enableFrontDoor: enableFrontDoor
+    apiHostname: functionApp.outputs.functionAppDefaultHostname
+    webHostname: staticWebApp.outputs.staticWebAppDefaultHostname
   }
 }
 
@@ -157,6 +164,9 @@ output frontDoorEnabled bool = enableFrontDoor
 @description('Front Door URL (empty if disabled)')
 output frontDoorUrl string = enableFrontDoor ? frontDoor.outputs.frontDoorEndpointUrl : ''
 output frontDoorName string = enableFrontDoor ? frontDoor.outputs.frontDoorName : ''
+output frontDoorEndpointHostname string = enableFrontDoor ? frontDoor.outputs.frontDoorEndpointHostname : ''
+output webCustomDomain string = enableFrontDoor ? frontDoor.outputs.webCustomDomain : ''
+output apiCustomDomain string = enableFrontDoor ? frontDoor.outputs.apiCustomDomain : ''
 
 // AI Foundry (GPT-5.1 integration)
 output aiFoundryEnabled bool = enableAIFoundry

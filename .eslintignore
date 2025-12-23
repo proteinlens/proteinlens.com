@@ -1,0 +1,17 @@
+# Ignore build outputs and deps
+node_modules/
+dist/
+build/
+out/
+coverage/
+.vite/
+.turbo/
+.parcel-cache/
+
+# Project-specific
+backend/.deploy/
+frontend/dist/
+
+# Env and config
+.env*
+.azure/

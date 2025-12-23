@@ -1,7 +1,7 @@
 // Azure OpenAI (Cognitive Services) for on-demand provisioning
 // Constitution Principles IX (On-Demand Lifecycle), X (Key Vault Supremacy)
 
-param location string = resourceGroup().location
+param location string = 'northeurope'
 param environmentName string
 param openAIAccountName string = 'protein-lens-openai-${environmentName}'
 param modelDeploymentName string = 'gpt-5-1'

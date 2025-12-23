@@ -1,7 +1,7 @@
 // Azure Static Web Apps for ProteinLens frontend
 // Provides CDN, SSL, authentication, and serverless functions
 
-param location string = resourceGroup().location
+param location string = 'northeurope'
 param staticWebAppName string
 param repositoryUrl string = 'https://github.com/your-org/proteinlens.com'
 param repositoryToken string = '' // GitHub personal access token (optional)

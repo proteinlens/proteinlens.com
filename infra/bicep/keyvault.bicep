@@ -1,9 +1,8 @@
 // Azure Key Vault for secrets management
 // Constitution Principle I: Zero Secrets in Client or Repository
 
-param location string = resourceGroup().location
+param location string = 'northeurope'
 param keyVaultName string
-param tenantId string = subscription().tenantId
 
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
   name: keyVaultName
@@ -13,7 +12,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
       family: 'A'
       name: 'standard'
     }
-    tenantId: tenantId
+    tenantId: subscription().tenantId
     enableRbacAuthorization: false
     enableSoftDelete: true
     softDeleteRetentionInDays: 90
