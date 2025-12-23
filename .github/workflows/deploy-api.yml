@@ -146,66 +146,71 @@ jobs:
           az functionapp config appsettings set \
             --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
             --name "${{ secrets.AZURE_FUNCTIONAPP_NAME }}" \
-            --settings \
-              WEBSITE_RUN_FROM_PACKAGE=1 \
-              ENABLE_MSBUILD=true \
-              SCM_DO_BUILD_DURING_DEPLOYMENT=true
+            --settings WEBSITE_RUN_FROM_PACKAGE=1
           echo "✅ Function App configured"
 
       - name: Upload ZIP to Storage
         run: |
           echo "📤 Uploading deployment package to Azure Storage..."
+          
+          # Find storage account in the resource group
           STORAGE_ACCOUNT=$(az storage account list \
             --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
             --query '[0].name' -o tsv)
           
-          # Create container if it doesn't exist
+          if [ -z "$STORAGE_ACCOUNT" ]; then
+            echo "❌ No storage account found"
+            exit 1
+          fi
+          
+          echo "Using storage account: $STORAGE_ACCOUNT"
+          
+          # Create container if needed
           az storage container create \
             --account-name "$STORAGE_ACCOUNT" \
             --name deployments \
-            --auth-mode login || true
+            --auth-mode login 2>/dev/null || true
           
-          # Upload ZIP
+          # Upload ZIP with timestamp
+          TIMESTAMP=$(date +%s)
+          BLOB_NAME="backend-${TIMESTAMP}.zip"
+          
           az storage blob upload \
             --account-name "$STORAGE_ACCOUNT" \
             --container-name deployments \
-            --name "backend-$(date +%s).zip" \
+            --name "$BLOB_NAME" \
             --file backend-deploy.zip \
             --auth-mode login
           
-          echo "✅ ZIP uploaded to storage"
-
-      - name: Deploy to Azure Functions
-        run: |
-          echo "📦 Deploying Function App from storage..."
-          STORAGE_ACCOUNT=$(az storage account list \
-            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
-            --query '[0].name' -o tsv)
+          echo "✅ ZIP uploaded to storage: $BLOB_NAME"
           
-          # Get latest ZIP blob URL
-          BLOB_URL=$(az storage blob list \
+          # Generate SAS URL valid for 1 hour
+          SAS_TOKEN=$(az storage blob generate-sas \
             --account-name "$STORAGE_ACCOUNT" \
             --container-name deployments \
-            --query 'sort_by([], &properties.creationTime)[-1].name' -o tsv)
-          
-          SAS_URL=$(az storage blob generate-sas \
-            --account-name "$STORAGE_ACCOUNT" \
-            --container-name deployments \
-            --name "$BLOB_URL" \
+            --name "$BLOB_NAME" \
             --permissions r \
-            --expiry $(date -u -d '+2 hours' '+%Y-%m-%dT%H:%M:%SZ') \
+            --expiry $(date -u -d '+1 hour' '+%Y-%m-%dT%H:%MZ') \
             --auth-mode login -o tsv)
           
-          FULL_URL="https://${STORAGE_ACCOUNT}.blob.core.windows.net/deployments/${BLOB_URL}?${SAS_URL}"
+          PACKAGE_URL="https://${STORAGE_ACCOUNT}.blob.core.windows.net/deployments/${BLOB_NAME}?${SAS_TOKEN}"
           
-          az functionapp deployment source config-zip \
+          # Save URL for next step
+          echo "PACKAGE_URL=${PACKAGE_URL}" >> $GITHUB_ENV
+          echo "✅ SAS URL generated"
+
+      - name: Deploy from Storage URL
+        run: |
+          echo "📦 Deploying Function App from package URL..."
+          
+          az functionapp config appsettings set \
             --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
             --name "${{ secrets.AZURE_FUNCTIONAPP_NAME }}" \
-            --src backend-deploy.zip
+            --settings WEBSITE_RUN_FROM_PACKAGE="${{ env.PACKAGE_URL }}"
           
-          echo "✅ ZIP deployment initiated"
-          echo "⏳ Waiting for functions to initialize (20s)..."
-          sleep 20
+          echo "✅ Function App configured with package URL"
+          echo "⏳ Waiting for deployment to complete (30s)..."
+          sleep 30
           
       - name: Verify Functions Deployed
         run: |
