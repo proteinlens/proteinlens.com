@@ -40,7 +40,7 @@ resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2023-
   parent: openAIAccount
   name: modelDeploymentName
   sku: {
-    name: 'Standard'
+    name: 'GlobalStandard'
     capacity: deploymentCapacity
   }
   properties: {
