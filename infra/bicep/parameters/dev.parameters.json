@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "location": {
-      "value": "eastus"
+      "value": "westus2"
     },
     "environmentName": {
       "value": "dev"
@@ -37,6 +37,15 @@
     },
     "enableFrontDoor": {
       "value": false
+    },
+    "aiHubName": {
+      "value": "proteinlens-ai-hub-dev"
+    },
+    "aiProjectName": {
+      "value": "proteinlens-ai-project-dev"
+    },
+    "enableAIFoundry": {
+      "value": true
     }
   }
 }
