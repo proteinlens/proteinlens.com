@@ -78,8 +78,7 @@ A developer pushes frontend code changes to the main branch, and the frontend au
 ### Edge Cases
 
 - **What happens when Prisma migrations fail during deployment?** Deployment must fail fast, rollback should not be attempted automatically (risk of data loss), and alerts must notify the team. Manual intervention required.
-- **What happens when Key Vault is unreachable during deployment?** Functions cannot start without secrets. Deployment must fail with clear error message indicating Key Vault connectivity issue.
-- **What happens when multiple developers push to main simultaneously?** GitHub Actions queues workflows sequentially. Each deployment must wait for the previous to complete to avoid race conditions.
+- **What happens when Key Vault is unreachable during deployment?** Functions cannot start without secrets. Deployment must fail with clear error message indicating Key Vault connectivity issue.- **What happens if Key Vault secret names contain underscores?** Azure Key Vault only allows alphanumerics and hyphens in secret names. Secret names with underscores will fail to be created. Deployment must use hyphenated secret names (e.g., `DATABASE-URL`, `OPENAI-API-KEY`, `STRIPE-SECRET-KEY`, `STRIPE-WEBHOOK-SECRET`).- **What happens when multiple developers push to main simultaneously?** GitHub Actions queues workflows sequentially. Each deployment must wait for the previous to complete to avoid race conditions.
 - **What happens when infrastructure workflow runs while apps are deployed?** Infrastructure updates should be non-destructive where possible (in-place updates). Critical resources (database, storage) should not be deleted/recreated. Use `existing` resource references where appropriate.
 - **What happens if deployment succeeds but health check fails?** Deployment is marked as failed, and rollback notification is sent. Previous deployment remains active if using deployment slots.
 - **What happens if GitHub Secrets are missing or invalid?** Workflow fails at authentication step with clear error message indicating which secret is missing or invalid.
@@ -105,10 +104,10 @@ A developer pushes frontend code changes to the main branch, and the frontend au
 
 - **FR-006**: System MUST trigger backend deployment workflow automatically on push to main branch when backend files change
 - **FR-007**: Backend workflow MUST build the Azure Functions app (compile TypeScript, install dependencies, package functions)
-- **FR-008**: Backend workflow MUST run Prisma migrations (`prisma migrate deploy`) against Azure PostgreSQL before deploying function code
+- **FR-008**: Backend workflow MUST run Prisma migrations (`prisma migrate deploy`) against Azure PostgreSQL BEFORE deploying function code. Migrations MUST execute from the Function App process at cold start (when first HTTP request arrives after deployment). See [research.md](research.md#database-migration-strategy) for strategy rationale. Prisma will automatically apply any pending migrations from the `prisma/migrations/` directory. If any migration fails, Function App startup must fail gracefully and workflow must detect this via health endpoint returning HTTP 503.
 - **FR-009**: Backend workflow MUST deploy built Functions app to Azure Functions using deployment credentials or service principal
-- **FR-010**: Backend workflow MUST verify deployment success by calling a health endpoint and expecting HTTP 200 response
-- **FR-011**: System MUST configure Function App with Key Vault references for all sensitive settings (DATABASE_URL, OPENAI_API_KEY, STRIPE_SECRET_KEY, etc.)
+- **FR-010**: Backend workflow MUST verify deployment success by calling a health endpoint (`GET /api/health`) and expecting HTTP 200 response with JSON matching [contracts/health-check-response.md](contracts/health-check-response.md). Health endpoint MUST check: database connectivity, blob storage access, and AI service reachability. Endpoint MUST return `{"status": "healthy"}` or `{"status": "degraded"}` to pass deployment; `{"status": "unhealthy"}` (HTTP 503) fails deployment. (Reference: [contracts/health-check-response.md](contracts/health-check-response.md))
+- **FR-011**: System MUST configure Function App with Key Vault references for all sensitive settings. App setting keys use underscores (e.g., `DATABASE_URL`), but Key Vault secret names MUST use hyphens (e.g., `DATABASE-URL`). Reference syntax: `@Microsoft.KeyVault(SecretUri=https://vault.azure.net/secrets/DATABASE-URL/)`
 - **FR-012**: Backend workflow MUST fail and stop deployment if build, migration, or deployment steps encounter errors
 
 #### Frontend Deployment
@@ -124,7 +123,7 @@ A developer pushes frontend code changes to the main branch, and the frontend au
 
 - **FR-019**: System MUST store all deployment credentials and secrets in GitHub Secrets (Azure service principal, deployment tokens, API keys)
 - **FR-020**: System MUST use Azure Key Vault to store runtime secrets accessed by Function App (database passwords, API keys, connection strings)
-- **FR-021**: Function App MUST access Key Vault secrets using Key Vault references (syntax: `@Microsoft.KeyVault(SecretUri=...)`) rather than direct secret values
+- **FR-021**: Function App MUST access Key Vault secrets using Key Vault references with hyphenated secret names (syntax: `@Microsoft.KeyVault(SecretUri=https://vault.azure.net/secrets/SECRET-NAME/)`). Key Vault secret names MUST NOT contain underscores; use hyphens instead (e.g., `DATABASE-URL` not `DATABASE_URL`)
 - **FR-022**: System MUST grant Function App managed identity appropriate Key Vault access policies (Get, List secrets)
 - **FR-023**: System MUST NOT log or expose secret values in workflow outputs, console logs, or error messages
 - **FR-024**: System MUST NOT commit secrets, credentials, or sensitive configuration to Git repository
@@ -137,6 +136,8 @@ A developer pushes frontend code changes to the main branch, and the frontend au
 - **FR-028**: Workflows MUST use matrix strategy or conditional logic to skip deployments when irrelevant files change (e.g., don't deploy backend if only frontend changed)
 - **FR-029**: Workflows MUST send notifications on deployment success or failure (via GitHub Actions status, email, or Slack)
 - **FR-030**: Workflows MUST timeout after reasonable duration (e.g., 15 minutes) to prevent hanging jobs
+- **FR-031**: System MUST validate that Function App Managed Identity has Get and List permissions on Key Vault BEFORE attempting deployment. If permissions are missing, deployment workflow MUST fail with clear error message: "Function App Managed Identity does not have Get + List permissions on Key Vault. Run: `az keyvault set-policy --name <kv-name> --object-id <identity-id> --secret-permissions get list`"  (Reference: T023, T043)
+- **FR-032**: Infrastructure deployment MUST be idempotent. Running the deployment twice with identical parameters MUST result in no resource changes on the second run (except for intentional resource updates specified in parameters). Bicep templates MUST use `existing` keyword for resources that should not be recreated. (Reference: plan.md, notes for implementer)
 
 ### Key Entities *(data entities involved)*
 

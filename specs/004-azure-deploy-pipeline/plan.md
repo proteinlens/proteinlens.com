@@ -54,14 +54,19 @@ This feature establishes a production-ready CI/CD pipeline for ProteinLens that 
 ### Core Principles (Backend & Infrastructure)
 
 **✅ I. Zero Secrets in Client or Repository**
-- **Status**: PASS
+- **Status**: PASS (with naming constraint clarification)
 - **Validation**: 
   - All secrets stored in GitHub Secrets (AZURE_CREDENTIALS, deployment tokens)
   - Runtime secrets stored in Azure Key Vault
   - Function App uses Key Vault references (not direct values)
   - Frontend build uses environment variables (VITE_API_URL), no secrets embedded
   - Bicep templates use secure parameters, outputs do not expose secrets
-- **Evidence**: FR-019, FR-020, FR-021, FR-023, FR-024 enforce zero secrets in repo
+  - **CRITICAL**: Key Vault secret names MUST use hyphens, not underscores (Azure constraint: underscores invalid)
+    - App setting `DATABASE_URL` → Key Vault secret `DATABASE-URL`
+    - App setting `OPENAI_API_KEY` → Key Vault secret `OPENAI-API-KEY`
+    - App setting `STRIPE_SECRET_KEY` → Key Vault secret `STRIPE-SECRET-KEY`
+    - App setting `STRIPE_WEBHOOK_SECRET` → Key Vault secret `STRIPE-WEBHOOK-SECRET`
+- **Evidence**: FR-019, FR-020, FR-021, FR-023, FR-024 enforce zero secrets in repo; FR-021 specifies hyphenated naming
 
 **✅ II. Least Privilege Access**
 - **Status**: PASS
