@@ -152,16 +152,58 @@ jobs:
               SCM_DO_BUILD_DURING_DEPLOYMENT=true
           echo "✅ Function App configured"
 
+      - name: Upload ZIP to Storage
+        run: |
+          echo "📤 Uploading deployment package to Azure Storage..."
+          STORAGE_ACCOUNT=$(az storage account list \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --query '[0].name' -o tsv)
+          
+          # Create container if it doesn't exist
+          az storage container create \
+            --account-name "$STORAGE_ACCOUNT" \
+            --name deployments \
+            --auth-mode login || true
+          
+          # Upload ZIP
+          az storage blob upload \
+            --account-name "$STORAGE_ACCOUNT" \
+            --container-name deployments \
+            --name "backend-$(date +%s).zip" \
+            --file backend-deploy.zip \
+            --auth-mode login
+          
+          echo "✅ ZIP uploaded to storage"
+
       - name: Deploy to Azure Functions
         run: |
-          echo "📦 Deploying Function App via ZIP..."
-          # Using az functionapp up which properly handles Node.js functions
+          echo "📦 Deploying Function App from storage..."
+          STORAGE_ACCOUNT=$(az storage account list \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --query '[0].name' -o tsv)
+          
+          # Get latest ZIP blob URL
+          BLOB_URL=$(az storage blob list \
+            --account-name "$STORAGE_ACCOUNT" \
+            --container-name deployments \
+            --query 'sort_by([], &properties.creationTime)[-1].name' -o tsv)
+          
+          SAS_URL=$(az storage blob generate-sas \
+            --account-name "$STORAGE_ACCOUNT" \
+            --container-name deployments \
+            --name "$BLOB_URL" \
+            --permissions r \
+            --expiry $(date -u -d '+2 hours' '+%Y-%m-%dT%H:%M:%SZ') \
+            --auth-mode login -o tsv)
+          
+          FULL_URL="https://${STORAGE_ACCOUNT}.blob.core.windows.net/deployments/${BLOB_URL}?${SAS_URL}"
+          
           az functionapp deployment source config-zip \
             --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
             --name "${{ secrets.AZURE_FUNCTIONAPP_NAME }}" \
             --src backend-deploy.zip
           
-          echo "✅ ZIP deployment completed"
+          echo "✅ ZIP deployment initiated"
           echo "⏳ Waiting for functions to initialize (20s)..."
           sleep 20
           
