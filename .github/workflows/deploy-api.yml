@@ -77,7 +77,16 @@ jobs:
           fi
           # Create deployment package with required files at root
           # Include prisma folder for database schema
-          zip -r -q ../backend-deploy.zip dist node_modules host.json package.json prisma
+          # Exclude dev dependencies (@types, typescript) to reduce package size
+          zip -r -q ../backend-deploy.zip \
+            dist \
+            node_modules \
+            host.json \
+            package.json \
+            prisma \
+            -x "node_modules/@types/*" \
+            -x "node_modules/typescript/*" \
+            -x "*.test.js"
           ls -lh ../backend-deploy.zip
           echo "✅ Function App packaged"
 
