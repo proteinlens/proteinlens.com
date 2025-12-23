@@ -1,7 +1,7 @@
 // Azure Blob Storage with CORS for direct frontend uploads
 // Constitution Principle III: Blob-First Ingestion
 
-param location string = resourceGroup().location
+param location string = 'northeurope'
 param storageAccountName string
 param blobContainerName string = 'meal-photos'
 

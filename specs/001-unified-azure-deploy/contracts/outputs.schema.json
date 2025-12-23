@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Unified Deploy Workflow Outputs",
+  "type": "object",
+  "properties": {
+    "frontendUrl": { "type": "string", "format": "uri" },
+    "backendUrl": { "type": "string", "format": "uri" },
+    "resourceGroup": { "type": "string" },
+    "subscriptionId": { "type": "string" },
+    "keyVaultName": { "type": "string" },
+    "storageAccountName": { "type": "string" },
+    "postgresServerName": { "type": "string" },
+    "postgresFqdn": { "type": "string" },
+    "functionAppName": { "type": "string" },
+    "staticWebAppName": { "type": "string" },
+    "frontDoorName": { "type": "string" },
+    "dnsZoneResourceId": { "type": "string" }
+  },
+  "required": [
+    "frontendUrl",
+    "backendUrl",
+    "resourceGroup",
+    "subscriptionId",
+    "keyVaultName",
+    "storageAccountName",
+    "postgresServerName",
+    "postgresFqdn",
+    "functionAppName",
+    "staticWebAppName",
+    "frontDoorName"
+  ]
+}

@@ -2,7 +2,7 @@
 // Azure Bicep configuration for monitoring and alerting
 
 @description('The location for all resources')
-param location string = resourceGroup().location
+param location string = 'northeurope'
 
 @description('Environment name (dev, staging, prod)')
 param environment string = 'prod'

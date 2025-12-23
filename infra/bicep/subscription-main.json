@@ -5,13 +5,13 @@
     "_generator": {
       "name": "bicep",
       "version": "0.39.26.7824",
-      "templateHash": "11909570020599993798"
+      "templateHash": "2503824165849693892"
     }
   },
   "parameters": {
     "location": {
       "type": "string",
-      "defaultValue": "eastus2"
+      "defaultValue": "northeurope"
     },
     "resourceGroupName": {
       "type": "string"
@@ -23,6 +23,17 @@
     "appNamePrefix": {
       "type": "string",
       "defaultValue": "proteinlens"
+    },
+    "enableFrontDoor": {
+      "type": "bool",
+      "defaultValue": true
+    },
+    "dnsZoneResourceId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Optional Azure DNS zone resource ID for proteinlens.com. If provided, DNS records will be created."
+      }
     },
     "postgresAdminPassword": {
       "type": "securestring"
@@ -67,24 +78,28 @@
           "appNamePrefix": {
             "value": "[parameters('appNamePrefix')]"
           },
+          "enableFrontDoor": {
+            "value": "[parameters('enableFrontDoor')]"
+          },
           "postgresAdminPassword": {
             "value": "[parameters('postgresAdminPassword')]"
           }
         },
         "template": {
           "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "languageVersion": "2.0",
           "contentVersion": "1.0.0.0",
           "metadata": {
             "_generator": {
               "name": "bicep",
               "version": "0.39.26.7824",
-              "templateHash": "2748657151443166618"
+              "templateHash": "3050037080934381612"
             }
           },
           "parameters": {
             "location": {
               "type": "string",
-              "defaultValue": "[resourceGroup().location]"
+              "defaultValue": "northeurope"
             },
             "environmentName": {
               "type": "string",
@@ -94,15 +109,15 @@
               "type": "string",
               "defaultValue": "proteinlens"
             },
-            "storageAccountName": {
+            "storageAccountNameOverride": {
               "type": "string",
-              "defaultValue": "[format('{0}{1}{2}', parameters('appNamePrefix'), parameters('environmentName'), uniqueString(resourceGroup().id))]"
+              "defaultValue": ""
             },
             "functionAppName": {
               "type": "string",
               "defaultValue": "[format('{0}-api-{1}', parameters('appNamePrefix'), parameters('environmentName'))]"
             },
-            "keyVaultName": {
+            "keyVaultNamePrefix": {
               "type": "string",
               "defaultValue": "[format('{0}-kv-{1}', parameters('appNamePrefix'), parameters('environmentName'))]"
             },
@@ -142,8 +157,17 @@
               "defaultValue": true
             }
           },
-          "resources": [
-            {
+          "variables": {
+            "saPrefix": "[toLower(parameters('appNamePrefix'))]",
+            "saEnv": "[toLower(parameters('environmentName'))]",
+            "saSuffix": "[substring(uniqueString(resourceGroup().id), 0, 8)]",
+            "storageAccountNameRaw": "[if(greater(length(parameters('storageAccountNameOverride')), 0), parameters('storageAccountNameOverride'), format('{0}{1}{2}', variables('saPrefix'), variables('saEnv'), variables('saSuffix')))]",
+            "storageAccountName": "[toLower(substring(variables('storageAccountNameRaw'), 0, 24))]",
+            "kvSuffix": "[substring(uniqueString(resourceGroup().id), 0, 6)]",
+            "keyVaultName": "[toLower(substring(format('{0}-{1}', parameters('keyVaultNamePrefix'), variables('kvSuffix')), 0, 24))]"
+          },
+          "resources": {
+            "keyVault": {
               "type": "Microsoft.Resources/deployments",
               "apiVersion": "2025-04-01",
               "name": "keyvault-deployment",
@@ -157,7 +181,7 @@
                     "value": "[parameters('location')]"
                   },
                   "keyVaultName": {
-                    "value": "[parameters('keyVaultName')]"
+                    "value": "[variables('keyVaultName')]"
                   }
                 },
                 "template": {
@@ -167,20 +191,16 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.39.26.7824",
-                      "templateHash": "16579586242449195085"
+                      "templateHash": "16113867847948975879"
                     }
                   },
                   "parameters": {
                     "location": {
                       "type": "string",
-                      "defaultValue": "[resourceGroup().location]"
+                      "defaultValue": "northeurope"
                     },
                     "keyVaultName": {
                       "type": "string"
-                    },
-                    "tenantId": {
-                      "type": "string",
-                      "defaultValue": "[subscription().tenantId]"
                     }
                   },
                   "resources": [
@@ -194,7 +214,7 @@
                           "family": "A",
                           "name": "standard"
                         },
-                        "tenantId": "[parameters('tenantId')]",
+                        "tenantId": "[subscription().tenantId]",
                         "enableRbacAuthorization": false,
                         "enableSoftDelete": true,
                         "softDeleteRetentionInDays": 90,
@@ -220,7 +240,7 @@
                 }
               }
             },
-            {
+            "storage": {
               "type": "Microsoft.Resources/deployments",
               "apiVersion": "2025-04-01",
               "name": "storage-deployment",
@@ -234,7 +254,7 @@
                     "value": "[parameters('location')]"
                   },
                   "storageAccountName": {
-                    "value": "[parameters('storageAccountName')]"
+                    "value": "[variables('storageAccountName')]"
                   },
                   "blobContainerName": {
                     "value": "meal-photos"
@@ -247,13 +267,13 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.39.26.7824",
-                      "templateHash": "11889642119084453073"
+                      "templateHash": "11131205222687699155"
                     }
                   },
                   "parameters": {
                     "location": {
                       "type": "string",
-                      "defaultValue": "[resourceGroup().location]"
+                      "defaultValue": "northeurope"
                     },
                     "storageAccountName": {
                       "type": "string"
@@ -350,7 +370,7 @@
                 }
               }
             },
-            {
+            "postgres": {
               "type": "Microsoft.Resources/deployments",
               "apiVersion": "2025-04-01",
               "name": "postgres-deployment",
@@ -389,13 +409,13 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.39.26.7824",
-                      "templateHash": "16762703266057102411"
+                      "templateHash": "15798049969927610093"
                     }
                   },
                   "parameters": {
                     "location": {
                       "type": "string",
-                      "defaultValue": "[resourceGroup().location]"
+                      "defaultValue": "northeurope"
                     },
                     "postgresServerName": {
                       "type": "string"
@@ -499,7 +519,7 @@
                 }
               }
             },
-            {
+            "functionApp": {
               "type": "Microsoft.Resources/deployments",
               "apiVersion": "2025-04-01",
               "name": "function-app-deployment",
@@ -516,10 +536,10 @@
                     "value": "[parameters('functionAppName')]"
                   },
                   "storageAccountName": {
-                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'storage-deployment'), '2025-04-01').outputs.storageAccountName.value]"
+                    "value": "[reference('storage').outputs.storageAccountName.value]"
                   },
                   "keyVaultUri": {
-                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyvault-deployment'), '2025-04-01').outputs.keyVaultUri.value]"
+                    "value": "[reference('keyVault').outputs.keyVaultUri.value]"
                   }
                 },
                 "template": {
@@ -529,13 +549,13 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.39.26.7824",
-                      "templateHash": "4248927992968466942"
+                      "templateHash": "4293518393743348368"
                     }
                   },
                   "parameters": {
                     "location": {
                       "type": "string",
-                      "defaultValue": "[resourceGroup().location]"
+                      "defaultValue": "northeurope"
                     },
                     "functionAppName": {
                       "type": "string"
@@ -559,8 +579,8 @@
                       "location": "[parameters('location')]",
                       "kind": "functionapp",
                       "sku": {
-                        "name": "Y1",
-                        "tier": "Dynamic"
+                        "name": "EP1",
+                        "tier": "ElasticPremium"
                       },
                       "properties": {
                         "reserved": true
@@ -664,16 +684,20 @@
                     "functionAppUrl": {
                       "type": "string",
                       "value": "[format('https://{0}', reference(resourceId('Microsoft.Web/sites', parameters('functionAppName')), '2023-01-01').defaultHostName)]"
+                    },
+                    "functionAppDefaultHostname": {
+                      "type": "string",
+                      "value": "[reference(resourceId('Microsoft.Web/sites', parameters('functionAppName')), '2023-01-01').defaultHostName]"
                     }
                   }
                 }
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Resources/deployments', 'keyvault-deployment')]",
-                "[resourceId('Microsoft.Resources/deployments', 'storage-deployment')]"
+                "keyVault",
+                "storage"
               ]
             },
-            {
+            "staticWebApp": {
               "type": "Microsoft.Resources/deployments",
               "apiVersion": "2025-04-01",
               "name": "static-web-app-deployment",
@@ -690,7 +714,7 @@
                     "value": "[parameters('staticWebAppName')]"
                   },
                   "apiUrl": {
-                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'function-app-deployment'), '2025-04-01').outputs.functionAppUrl.value]"
+                    "value": "[reference('functionApp').outputs.functionAppUrl.value]"
                   }
                 },
                 "template": {
@@ -700,13 +724,13 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.39.26.7824",
-                      "templateHash": "10701136409652649467"
+                      "templateHash": "12760134619071815234"
                     }
                   },
                   "parameters": {
                     "location": {
                       "type": "string",
-                      "defaultValue": "[resourceGroup().location]"
+                      "defaultValue": "northeurope"
                     },
                     "staticWebAppName": {
                       "type": "string"
@@ -778,10 +802,10 @@
                 }
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Resources/deployments', 'function-app-deployment')]"
+                "functionApp"
               ]
             },
-            {
+            "frontDoor": {
               "condition": "[parameters('enableFrontDoor')]",
               "type": "Microsoft.Resources/deployments",
               "apiVersion": "2025-04-01",
@@ -800,16 +824,23 @@
                   },
                   "enableFrontDoor": {
                     "value": "[parameters('enableFrontDoor')]"
+                  },
+                  "apiHostname": {
+                    "value": "[reference('functionApp').outputs.functionAppDefaultHostname.value]"
+                  },
+                  "webHostname": {
+                    "value": "[reference('staticWebApp').outputs.staticWebAppDefaultHostname.value]"
                   }
                 },
                 "template": {
                   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                  "languageVersion": "2.0",
                   "contentVersion": "1.0.0.0",
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
                       "version": "0.39.26.7824",
-                      "templateHash": "5610561798909485283"
+                      "templateHash": "12905374865836126646"
                     }
                   },
                   "parameters": {
@@ -820,21 +851,29 @@
                     "frontDoorName": {
                       "type": "string"
                     },
-                    "functionAppUrl": {
+                    "apiHostname": {
                       "type": "string",
                       "defaultValue": ""
                     },
-                    "staticWebAppUrl": {
+                    "webHostname": {
                       "type": "string",
                       "defaultValue": ""
+                    },
+                    "customDomainRoot": {
+                      "type": "string",
+                      "defaultValue": "proteinlens.com"
                     },
                     "enableFrontDoor": {
                       "type": "bool",
-                      "defaultValue": false
+                      "defaultValue": true
                     }
                   },
-                  "resources": [
-                    {
+                  "variables": {
+                    "wwwDomain": "[format('www.{0}', parameters('customDomainRoot'))]",
+                    "apiDomain": "[format('api.{0}', parameters('customDomainRoot'))]"
+                  },
+                  "resources": {
+                    "frontDoor": {
                       "condition": "[parameters('enableFrontDoor')]",
                       "type": "Microsoft.Cdn/profiles",
                       "apiVersion": "2023-05-01",
@@ -846,8 +885,207 @@
                       "properties": {
                         "originResponseTimeoutSeconds": 60
                       }
+                    },
+                    "endpoint": {
+                      "condition": "[parameters('enableFrontDoor')]",
+                      "type": "Microsoft.Cdn/profiles/afdEndpoints",
+                      "apiVersion": "2023-05-01",
+                      "name": "[format('{0}/{1}-ep', parameters('frontDoorName'), parameters('frontDoorName'))]",
+                      "location": "[parameters('location')]",
+                      "properties": {
+                        "enabledState": "Enabled"
+                      },
+                      "dependsOn": [
+                        "frontDoor"
+                      ]
+                    },
+                    "apiOriginGroup": {
+                      "condition": "[and(parameters('enableFrontDoor'), not(empty(parameters('apiHostname'))))]",
+                      "type": "Microsoft.Cdn/profiles/originGroups",
+                      "apiVersion": "2023-05-01",
+                      "name": "[format('{0}/api-origins', parameters('frontDoorName'))]",
+                      "properties": {
+                        "healthProbeSettings": {
+                          "probePath": "/api/health",
+                          "probeRequestType": "GET",
+                          "probeProtocol": "Https",
+                          "probeIntervalInSeconds": 60
+                        },
+                        "loadBalancingSettings": {
+                          "additionalLatencyInMilliseconds": 0,
+                          "sampleSize": 4,
+                          "successfulSamplesRequired": 3
+                        }
+                      },
+                      "dependsOn": [
+                        "frontDoor"
+                      ]
+                    },
+                    "webOriginGroup": {
+                      "condition": "[and(parameters('enableFrontDoor'), not(empty(parameters('webHostname'))))]",
+                      "type": "Microsoft.Cdn/profiles/originGroups",
+                      "apiVersion": "2023-05-01",
+                      "name": "[format('{0}/web-origins', parameters('frontDoorName'))]",
+                      "properties": {
+                        "healthProbeSettings": {
+                          "probePath": "/",
+                          "probeRequestType": "GET",
+                          "probeProtocol": "Https",
+                          "probeIntervalInSeconds": 60
+                        },
+                        "loadBalancingSettings": {
+                          "additionalLatencyInMilliseconds": 0,
+                          "sampleSize": 4,
+                          "successfulSamplesRequired": 3
+                        }
+                      },
+                      "dependsOn": [
+                        "frontDoor"
+                      ]
+                    },
+                    "apiOrigin": {
+                      "condition": "[and(parameters('enableFrontDoor'), not(empty(parameters('apiHostname'))))]",
+                      "type": "Microsoft.Cdn/profiles/originGroups/origins",
+                      "apiVersion": "2023-05-01",
+                      "name": "[format('{0}/{1}/api-origin', parameters('frontDoorName'), format('{0}/api-origins', parameters('frontDoorName')))]",
+                      "properties": {
+                        "hostName": "[parameters('apiHostname')]",
+                        "httpPort": 80,
+                        "httpsPort": 443,
+                        "originHostHeader": "[parameters('apiHostname')]",
+                        "priority": 1,
+                        "weight": 50,
+                        "enabledState": "Enabled"
+                      },
+                      "dependsOn": [
+                        "apiOriginGroup",
+                        "frontDoor"
+                      ]
+                    },
+                    "webOrigin": {
+                      "condition": "[and(parameters('enableFrontDoor'), not(empty(parameters('webHostname'))))]",
+                      "type": "Microsoft.Cdn/profiles/originGroups/origins",
+                      "apiVersion": "2023-05-01",
+                      "name": "[format('{0}/{1}/web-origin', parameters('frontDoorName'), format('{0}/web-origins', parameters('frontDoorName')))]",
+                      "properties": {
+                        "hostName": "[parameters('webHostname')]",
+                        "httpPort": 80,
+                        "httpsPort": 443,
+                        "originHostHeader": "[parameters('webHostname')]",
+                        "priority": 1,
+                        "weight": 50,
+                        "enabledState": "Enabled"
+                      },
+                      "dependsOn": [
+                        "frontDoor",
+                        "webOriginGroup"
+                      ]
+                    },
+                    "wwwCd": {
+                      "condition": "[parameters('enableFrontDoor')]",
+                      "type": "Microsoft.Cdn/profiles/customDomains",
+                      "apiVersion": "2023-05-01",
+                      "name": "[format('{0}/www', parameters('frontDoorName'))]",
+                      "properties": {
+                        "hostName": "[variables('wwwDomain')]",
+                        "tlsSettings": {
+                          "certificateType": "ManagedCertificate",
+                          "minimumTlsVersion": "TLS12"
+                        }
+                      },
+                      "dependsOn": [
+                        "frontDoor"
+                      ]
+                    },
+                    "apiCd": {
+                      "condition": "[parameters('enableFrontDoor')]",
+                      "type": "Microsoft.Cdn/profiles/customDomains",
+                      "apiVersion": "2023-05-01",
+                      "name": "[format('{0}/api', parameters('frontDoorName'))]",
+                      "properties": {
+                        "hostName": "[variables('apiDomain')]",
+                        "tlsSettings": {
+                          "certificateType": "ManagedCertificate",
+                          "minimumTlsVersion": "TLS12"
+                        }
+                      },
+                      "dependsOn": [
+                        "frontDoor"
+                      ]
+                    },
+                    "routeWeb": {
+                      "condition": "[and(parameters('enableFrontDoor'), not(empty(parameters('webHostname'))))]",
+                      "type": "Microsoft.Cdn/profiles/routes",
+                      "apiVersion": "2023-05-01",
+                      "name": "[format('{0}/route-web', parameters('frontDoorName'))]",
+                      "properties": {
+                        "supportedProtocols": [
+                          "Http",
+                          "Https"
+                        ],
+                        "patternSets": [],
+                        "patternsToMatch": [
+                          "/"
+                        ],
+                        "forwardingProtocol": "MatchRequest",
+                        "httpsRedirect": "Enabled",
+                        "originGroup": {
+                          "id": "[resourceId('Microsoft.Cdn/profiles/originGroups', split(format('{0}/web-origins', parameters('frontDoorName')), '/')[0], split(format('{0}/web-origins', parameters('frontDoorName')), '/')[1])]"
+                        },
+                        "customDomains": [
+                          {
+                            "id": "[resourceId('Microsoft.Cdn/profiles/customDomains', split(format('{0}/www', parameters('frontDoorName')), '/')[0], split(format('{0}/www', parameters('frontDoorName')), '/')[1])]"
+                          }
+                        ],
+                        "deploymentStatus": "NotStarted",
+                        "enabledState": "Enabled",
+                        "endpointName": "[format('{0}/{1}-ep', parameters('frontDoorName'), parameters('frontDoorName'))]",
+                        "linkToDefaultDomain": "Disabled"
+                      },
+                      "dependsOn": [
+                        "endpoint",
+                        "frontDoor",
+                        "webOriginGroup",
+                        "wwwCd"
+                      ]
+                    },
+                    "routeApi": {
+                      "condition": "[and(parameters('enableFrontDoor'), not(empty(parameters('apiHostname'))))]",
+                      "type": "Microsoft.Cdn/profiles/routes",
+                      "apiVersion": "2023-05-01",
+                      "name": "[format('{0}/route-api', parameters('frontDoorName'))]",
+                      "properties": {
+                        "supportedProtocols": [
+                          "Http",
+                          "Https"
+                        ],
+                        "patternSets": [],
+                        "patternsToMatch": [
+                          "/api/*"
+                        ],
+                        "forwardingProtocol": "MatchRequest",
+                        "httpsRedirect": "Enabled",
+                        "originGroup": {
+                          "id": "[resourceId('Microsoft.Cdn/profiles/originGroups', split(format('{0}/api-origins', parameters('frontDoorName')), '/')[0], split(format('{0}/api-origins', parameters('frontDoorName')), '/')[1])]"
+                        },
+                        "customDomains": [
+                          {
+                            "id": "[resourceId('Microsoft.Cdn/profiles/customDomains', split(format('{0}/api', parameters('frontDoorName')), '/')[0], split(format('{0}/api', parameters('frontDoorName')), '/')[1])]"
+                          }
+                        ],
+                        "deploymentStatus": "NotStarted",
+                        "enabledState": "Enabled",
+                        "endpointName": "[format('{0}/{1}-ep', parameters('frontDoorName'), parameters('frontDoorName'))]",
+                        "linkToDefaultDomain": "Disabled"
+                      },
+                      "dependsOn": [
+                        "apiCd",
+                        "apiOriginGroup",
+                        "endpoint",
+                        "frontDoor"
+                      ]
                     }
-                  ],
+                  },
                   "outputs": {
                     "frontDoorId": {
                       "type": "string",
@@ -860,12 +1098,28 @@
                     "frontDoorEndpointUrl": {
                       "type": "string",
                       "value": "[if(parameters('enableFrontDoor'), format('https://{0}.azurefd.net', parameters('frontDoorName')), '')]"
+                    },
+                    "frontDoorEndpointHostname": {
+                      "type": "string",
+                      "value": "[if(parameters('enableFrontDoor'), format('{0}.azurefd.net', parameters('frontDoorName')), '')]"
+                    },
+                    "webCustomDomain": {
+                      "type": "string",
+                      "value": "[if(parameters('enableFrontDoor'), variables('wwwDomain'), '')]"
+                    },
+                    "apiCustomDomain": {
+                      "type": "string",
+                      "value": "[if(parameters('enableFrontDoor'), variables('apiDomain'), '')]"
                     }
                   }
                 }
-              }
+              },
+              "dependsOn": [
+                "functionApp",
+                "staticWebApp"
+              ]
             },
-            {
+            "aiFoundry": {
               "condition": "[parameters('enableAIFoundry')]",
               "type": "Microsoft.Resources/deployments",
               "apiVersion": "2025-04-01",
@@ -886,10 +1140,10 @@
                     "value": "[parameters('aiProjectName')]"
                   },
                   "keyVaultId": {
-                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyvault-deployment'), '2025-04-01').outputs.keyVaultId.value]"
+                    "value": "[reference('keyVault').outputs.keyVaultId.value]"
                   },
                   "storageAccountId": {
-                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'storage-deployment'), '2025-04-01').outputs.storageAccountId.value]"
+                    "value": "[reference('storage').outputs.storageAccountId.value]"
                   },
                   "applicationInsightsId": {
                     "value": ""
@@ -902,13 +1156,13 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.39.26.7824",
-                      "templateHash": "1459046197239310688"
+                      "templateHash": "8906499779362137976"
                     }
                   },
                   "parameters": {
                     "location": {
                       "type": "string",
-                      "defaultValue": "[resourceGroup().location]"
+                      "defaultValue": "northeurope"
                     },
                     "aiHubName": {
                       "type": "string"
@@ -999,11 +1253,11 @@
                 }
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Resources/deployments', 'keyvault-deployment')]",
-                "[resourceId('Microsoft.Resources/deployments', 'storage-deployment')]"
+                "keyVault",
+                "storage"
               ]
             }
-          ],
+          },
           "outputs": {
             "deploymentId": {
               "type": "string",
@@ -1019,55 +1273,55 @@
             },
             "keyVaultName": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyvault-deployment'), '2025-04-01').outputs.keyVaultName.value]"
+              "value": "[reference('keyVault').outputs.keyVaultName.value]"
             },
             "keyVaultId": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyvault-deployment'), '2025-04-01').outputs.keyVaultId.value]"
+              "value": "[reference('keyVault').outputs.keyVaultId.value]"
             },
             "keyVaultUri": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyvault-deployment'), '2025-04-01').outputs.keyVaultUri.value]"
+              "value": "[reference('keyVault').outputs.keyVaultUri.value]"
             },
             "functionAppName": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'function-app-deployment'), '2025-04-01').outputs.functionAppName.value]"
+              "value": "[reference('functionApp').outputs.functionAppName.value]"
             },
             "functionAppUrl": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'function-app-deployment'), '2025-04-01').outputs.functionAppUrl.value]"
+              "value": "[reference('functionApp').outputs.functionAppUrl.value]"
             },
             "functionAppManagedIdentityId": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'function-app-deployment'), '2025-04-01').outputs.functionAppPrincipalId.value]"
+              "value": "[reference('functionApp').outputs.functionAppPrincipalId.value]"
             },
             "functionAppPrincipalId": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'function-app-deployment'), '2025-04-01').outputs.functionAppPrincipalId.value]"
+              "value": "[reference('functionApp').outputs.functionAppPrincipalId.value]"
             },
             "postgresServerName": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'postgres-deployment'), '2025-04-01').outputs.postgresServerName.value]"
+              "value": "[reference('postgres').outputs.postgresServerName.value]"
             },
             "postgresServerFqdn": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'postgres-deployment'), '2025-04-01').outputs.postgresServerFqdn.value]"
+              "value": "[reference('postgres').outputs.postgresServerFqdn.value]"
             },
             "postgresAdminUsername": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'postgres-deployment'), '2025-04-01').outputs.postgresAdminUsername.value]"
+              "value": "[reference('postgres').outputs.postgresAdminUsername.value]"
             },
             "databaseName": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'postgres-deployment'), '2025-04-01').outputs.databaseName.value]"
+              "value": "[reference('postgres').outputs.databaseName.value]"
             },
             "postgresPort": {
               "type": "int",
-              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'postgres-deployment'), '2025-04-01').outputs.postgresPort.value]"
+              "value": "[reference('postgres').outputs.postgresPort.value]"
             },
             "storageAccountName": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'storage-deployment'), '2025-04-01').outputs.storageAccountName.value]"
+              "value": "[reference('storage').outputs.storageAccountName.value]"
             },
             "storageContainerName": {
               "type": "string",
@@ -1075,19 +1329,19 @@
             },
             "storageAccountId": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'storage-deployment'), '2025-04-01').outputs.storageAccountId.value]"
+              "value": "[reference('storage').outputs.storageAccountId.value]"
             },
             "staticWebAppName": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'static-web-app-deployment'), '2025-04-01').outputs.staticWebAppName.value]"
+              "value": "[reference('staticWebApp').outputs.staticWebAppName.value]"
             },
             "staticWebAppUrl": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'static-web-app-deployment'), '2025-04-01').outputs.staticWebAppUrl.value]"
+              "value": "[reference('staticWebApp').outputs.staticWebAppUrl.value]"
             },
             "staticWebAppDefaultHostname": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'static-web-app-deployment'), '2025-04-01').outputs.staticWebAppDefaultHostname.value]"
+              "value": "[reference('staticWebApp').outputs.staticWebAppDefaultHostname.value]"
             },
             "frontDoorEnabled": {
               "type": "bool",
@@ -1098,11 +1352,23 @@
               "metadata": {
                 "description": "Front Door URL (empty if disabled)"
               },
-              "value": "[if(parameters('enableFrontDoor'), reference(resourceId('Microsoft.Resources/deployments', 'frontdoor-deployment'), '2025-04-01').outputs.frontDoorEndpointUrl.value, '')]"
+              "value": "[if(parameters('enableFrontDoor'), reference('frontDoor').outputs.frontDoorEndpointUrl.value, '')]"
             },
             "frontDoorName": {
               "type": "string",
-              "value": "[if(parameters('enableFrontDoor'), reference(resourceId('Microsoft.Resources/deployments', 'frontdoor-deployment'), '2025-04-01').outputs.frontDoorName.value, '')]"
+              "value": "[if(parameters('enableFrontDoor'), reference('frontDoor').outputs.frontDoorName.value, '')]"
+            },
+            "frontDoorEndpointHostname": {
+              "type": "string",
+              "value": "[if(parameters('enableFrontDoor'), reference('frontDoor').outputs.frontDoorEndpointHostname.value, '')]"
+            },
+            "webCustomDomain": {
+              "type": "string",
+              "value": "[if(parameters('enableFrontDoor'), reference('frontDoor').outputs.webCustomDomain.value, '')]"
+            },
+            "apiCustomDomain": {
+              "type": "string",
+              "value": "[if(parameters('enableFrontDoor'), reference('frontDoor').outputs.apiCustomDomain.value, '')]"
             },
             "aiFoundryEnabled": {
               "type": "bool",
@@ -1110,26 +1376,26 @@
             },
             "aiHubName": {
               "type": "string",
-              "value": "[if(parameters('enableAIFoundry'), reference(resourceId('Microsoft.Resources/deployments', 'ai-foundry-deployment'), '2025-04-01').outputs.aiHubName.value, '')]"
+              "value": "[if(parameters('enableAIFoundry'), reference('aiFoundry').outputs.aiHubName.value, '')]"
             },
             "aiHubId": {
               "type": "string",
-              "value": "[if(parameters('enableAIFoundry'), reference(resourceId('Microsoft.Resources/deployments', 'ai-foundry-deployment'), '2025-04-01').outputs.aiHubId.value, '')]"
+              "value": "[if(parameters('enableAIFoundry'), reference('aiFoundry').outputs.aiHubId.value, '')]"
             },
             "aiProjectName": {
               "type": "string",
-              "value": "[if(parameters('enableAIFoundry'), reference(resourceId('Microsoft.Resources/deployments', 'ai-foundry-deployment'), '2025-04-01').outputs.aiProjectName.value, '')]"
+              "value": "[if(parameters('enableAIFoundry'), reference('aiFoundry').outputs.aiProjectName.value, '')]"
             },
             "aiProjectId": {
               "type": "string",
-              "value": "[if(parameters('enableAIFoundry'), reference(resourceId('Microsoft.Resources/deployments', 'ai-foundry-deployment'), '2025-04-01').outputs.aiProjectId.value, '')]"
+              "value": "[if(parameters('enableAIFoundry'), reference('aiFoundry').outputs.aiProjectId.value, '')]"
             },
             "databaseConnectionString": {
               "type": "string",
               "metadata": {
                 "description": "PostgreSQL connection string (with password placeholder)"
               },
-              "value": "[format('postgresql://{0}:***@{1}:{2}/{3}', reference(resourceId('Microsoft.Resources/deployments', 'postgres-deployment'), '2025-04-01').outputs.postgresAdminUsername.value, reference(resourceId('Microsoft.Resources/deployments', 'postgres-deployment'), '2025-04-01').outputs.postgresServerFqdn.value, reference(resourceId('Microsoft.Resources/deployments', 'postgres-deployment'), '2025-04-01').outputs.postgresPort.value, reference(resourceId('Microsoft.Resources/deployments', 'postgres-deployment'), '2025-04-01').outputs.databaseName.value)]"
+              "value": "[format('postgresql://{0}:***@{1}:{2}/{3}', reference('postgres').outputs.postgresAdminUsername.value, reference('postgres').outputs.postgresServerFqdn.value, reference('postgres').outputs.postgresPort.value, reference('postgres').outputs.databaseName.value)]"
             }
           }
         }
@@ -1412,6 +1678,30 @@
     "storageAccountName": {
       "type": "string",
       "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'rg-stack'), '2025-04-01').outputs.storageAccountName.value]"
+    },
+    "frontDoorEnabled": {
+      "type": "bool",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'rg-stack'), '2025-04-01').outputs.frontDoorEnabled.value]"
+    },
+    "frontDoorUrl": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'rg-stack'), '2025-04-01').outputs.frontDoorUrl.value]"
+    },
+    "webCustomDomain": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'rg-stack'), '2025-04-01').outputs.webCustomDomain.value]"
+    },
+    "apiCustomDomain": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'rg-stack'), '2025-04-01').outputs.apiCustomDomain.value]"
+    },
+    "frontDoorName": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'rg-stack'), '2025-04-01').outputs.frontDoorName.value]"
+    },
+    "frontDoorEndpointHostname": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, parameters('resourceGroupName')), 'Microsoft.Resources/deployments', 'rg-stack'), '2025-04-01').outputs.frontDoorEndpointHostname.value]"
     }
   }
 }

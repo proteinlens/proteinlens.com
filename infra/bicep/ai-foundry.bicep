@@ -2,7 +2,7 @@
 // Provides access to GPT-5.1 and other AI models via Azure OpenAI
 // Constitution Principle VII: Intelligent Analysis
 
-param location string = resourceGroup().location
+param location string = 'northeurope'
 param aiHubName string
 param aiProjectName string
 param keyVaultId string

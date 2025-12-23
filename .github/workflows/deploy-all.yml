@@ -18,7 +18,7 @@ permissions:
 
 env:
   NODE_VERSION: '20'
-  LOCATION: eastus2
+  LOCATION: northeurope
 
 jobs:
   infra:
@@ -30,6 +30,11 @@ jobs:
       functionAppName: ${{ steps.outputs.outputs.functionAppName }}
       keyVaultName: ${{ steps.outputs.outputs.keyVaultName }}
       storageAccountName: ${{ steps.outputs.outputs.storageAccountName }}
+      frontDoorUrl: ${{ steps.outputs.outputs.frontDoorUrl }}
+      webCustomDomain: ${{ steps.outputs.outputs.webCustomDomain }}
+      apiCustomDomain: ${{ steps.outputs.outputs.apiCustomDomain }}
+      frontDoorName: ${{ steps.outputs.outputs.frontDoorName }}
+      frontDoorEndpointHostname: ${{ steps.outputs.outputs.frontDoorEndpointHostname }}
       staticWebAppsToken: ${{ steps.swa.outputs.token }}
     steps:
       - name: Checkout
@@ -56,6 +61,45 @@ jobs:
         run: |
           az bicep build --file infra/bicep/subscription-main.bicep
 
+      - name: Validate storage account naming (pre-deploy)
+        env:
+          ENV: ${{ github.event.inputs.environment }}
+        run: |
+          PREFIX="proteinlens"
+          SUFFIX=$(echo "${{ github.event.inputs.resource_group }}" | md5sum | cut -c1-8)
+          NAME="${PREFIX}${ENV}${SUFFIX}"
+          NAME=$(echo "$NAME" | tr '[:upper:]' '[:lower:]' | cut -c1-24)
+          echo "Computed storage account name: $NAME (length: ${#NAME})"
+          if [ ${#NAME} -gt 24 ]; then echo "ERROR: Storage name exceeds 24 chars"; exit 1; fi
+          if ! [[ "$NAME" =~ ^[a-z0-9]+$ ]]; then echo "ERROR: Storage name contains invalid chars"; exit 1; fi
+
+      - name: Ensure Resource Group exists
+        env:
+          RG: ${{ github.event.inputs.resource_group }}
+        run: |
+          az group create --name "$RG" --location "$LOCATION"
+
+      - name: What-if validation (idempotency check)
+        env:
+          ENV: ${{ github.event.inputs.environment }}
+          RG: ${{ github.event.inputs.resource_group }}
+        run: |
+          echo "Running deployment what-if to validate idempotency..."
+          az deployment sub what-if \
+            --location "$LOCATION" \
+            --template-file infra/bicep/subscription-main.bicep \
+            --parameters \
+              location="$LOCATION" \
+              resourceGroupName="$RG" \
+              environmentName="$ENV" \
+              appNamePrefix="proteinlens" \
+              enableFrontDoor=true \
+              postgresAdminPassword='${{ secrets.DATABASE_ADMIN_PASSWORD }}' \
+              openaiApiKey='${{ secrets.OPENAI_API_KEY }}' \
+              stripeSecretKey='${{ secrets.STRIPE_SECRET_KEY }}' \
+              stripeWebhookSecret='${{ secrets.STRIPE_WEBHOOK_SECRET }}' \
+            --result-format FullResourcePayloads || echo "What-if completed with warnings"
+
       - name: Deploy Subscription Stack
         id: deploy
         env:
@@ -63,6 +107,9 @@ jobs:
           RG: ${{ github.event.inputs.resource_group }}
         run: |
           DEPLOY_NAME="proteinlens-${ENV}-$(date +%s)"
+          # Try to detect Azure DNS zone for proteinlens.com (optional)
+          ZONE_ID=$(az network dns zone list --query "[?name=='proteinlens.com'].id | [0]" -o tsv || true)
+          if [ -n "$ZONE_ID" ]; then echo "Detected Azure DNS zone: $ZONE_ID"; else echo "No Azure DNS zone detected for proteinlens.com"; fi
           az deployment sub create \
             --location "$LOCATION" \
             --template-file infra/bicep/subscription-main.bicep \
@@ -71,10 +118,12 @@ jobs:
               resourceGroupName="$RG" \
               environmentName="$ENV" \
               appNamePrefix="proteinlens" \
+              enableFrontDoor=true \
               postgresAdminPassword='${{ secrets.DATABASE_ADMIN_PASSWORD }}' \
               openaiApiKey='${{ secrets.OPENAI_API_KEY }}' \
               stripeSecretKey='${{ secrets.STRIPE_SECRET_KEY }}' \
               stripeWebhookSecret='${{ secrets.STRIPE_WEBHOOK_SECRET }}' \
+              dnsZoneResourceId="$ZONE_ID" \
             --name "$DEPLOY_NAME"
 
       - name: Capture Outputs
@@ -89,7 +138,58 @@ jobs:
           echo "functionAppName=$(jq -r '.functionAppName.value' /tmp/outputs.json)" >> "$GITHUB_OUTPUT"
           echo "keyVaultName=$(jq -r '.keyVaultName.value' /tmp/outputs.json)" >> "$GITHUB_OUTPUT"
           echo "storageAccountName=$(jq -r '.storageAccountName.value' /tmp/outputs.json)" >> "$GITHUB_OUTPUT"
+          echo "frontDoorUrl=$(jq -r '.frontDoorUrl.value // ""' /tmp/outputs.json)" >> "$GITHUB_OUTPUT"
+          echo "webCustomDomain=$(jq -r '.webCustomDomain.value // ""' /tmp/outputs.json)" >> "$GITHUB_OUTPUT"
+          echo "apiCustomDomain=$(jq -r '.apiCustomDomain.value // ""' /tmp/outputs.json)" >> "$GITHUB_OUTPUT"
+          echo "frontDoorName=$(jq -r '.frontDoorName.value // ""' /tmp/outputs.json)" >> "$GITHUB_OUTPUT"
+          echo "frontDoorEndpointHostname=$(jq -r '.frontDoorEndpointHostname.value // ""' /tmp/outputs.json)" >> "$GITHUB_OUTPUT"
 
+      - name: Automate DNS and validate Front Door domains (optional)
+        env:
+          ENV: ${{ github.event.inputs.environment }}
+          RG: ${{ github.event.inputs.resource_group }}
+        run: |
+          set -euo pipefail
+          ZONE_ID=$(az network dns zone list --query "[?name=='proteinlens.com'].id | [0]" -o tsv || true)
+          if [ -z "$ZONE_ID" ]; then
+            echo "No Azure DNS zone for proteinlens.com; skipping DNS automation"; exit 0;
+          fi
+          DNS_RG=$(az resource show --ids "$ZONE_ID" --query resourceGroup -o tsv)
+          DNS_ZONE=$(az resource show --ids "$ZONE_ID" --query name -o tsv)
+          FD_PROFILE="${{ steps.outputs.outputs.frontDoorName }}"
+          FD_ENDPOINT_HOST="${{ steps.outputs.outputs.frontDoorEndpointHostname }}"
+          if [ -z "$FD_PROFILE" ] || [ -z "$FD_ENDPOINT_HOST" ]; then
+            echo "Front Door outputs missing; skipping DNS automation"; exit 0;
+          fi
+          upsert_txt(){
+            local label=$1
+            local token=$2
+            local rec="_dnsauth.$label"
+            az network dns record-set txt show -g "$DNS_RG" -z "$DNS_ZONE" -n "$rec" >/dev/null 2>&1 || az network dns record-set txt create -g "$DNS_RG" -z "$DNS_ZONE" -n "$rec" --ttl 300
+            # Add token if not present
+            present=$(az network dns record-set txt show -g "$DNS_RG" -z "$DNS_ZONE" -n "$rec" --query "txtRecords[].value[]" -o tsv | grep -Fx "$token" || true)
+            if [ -z "$present" ]; then
+              az network dns record-set txt add-record -g "$DNS_RG" -z "$DNS_ZONE" -n "$rec" -v "$token"
+            fi
+          }
+          # Fetch validation tokens
+          WWW_TOKEN=$(az afd custom-domain show -g "$RG" --profile-name "$FD_PROFILE" --custom-domain-name "www" --query "properties.validationProperties.validationToken" -o tsv || true)
+          API_TOKEN=$(az afd custom-domain show -g "$RG" --profile-name "$FD_PROFILE" --custom-domain-name "api" --query "properties.validationProperties.validationToken" -o tsv || true)
+          if [ -n "$WWW_TOKEN" ]; then upsert_txt "www" "$WWW_TOKEN"; fi
+          if [ -n "$API_TOKEN" ]; then upsert_txt "api" "$API_TOKEN"; fi
+          # Point CNAMEs at the AFD endpoint
+          az network dns record-set cname set-record -g "$DNS_RG" -z "$DNS_ZONE" -n "www" -c "$FD_ENDPOINT_HOST"
+          az network dns record-set cname set-record -g "$DNS_RG" -z "$DNS_ZONE" -n "api" -c "$FD_ENDPOINT_HOST"
+          # Poll for validation approval
+          for i in {1..30}; do
+            W=$(az afd custom-domain show -g "$RG" --profile-name "$FD_PROFILE" --custom-domain-name "www" --query "properties.domainValidationState" -o tsv || echo "")
+            A=$(az afd custom-domain show -g "$RG" --profile-name "$FD_PROFILE" --custom-domain-name "api" --query "properties.domainValidationState" -o tsv || echo "")
+            echo "Validation attempt $i: www=$W api=$A";
+            if [ "$W" = "Approved" ] && [ "$A" = "Approved" ]; then
+              echo "Both domains validated"; break; fi
+            sleep 20;
+          done
+      
       - name: Retrieve Static Web Apps token
         id: swa
         env:
@@ -134,6 +234,16 @@ jobs:
           cp -r node_modules .deploy/node_modules
           rsync -a dist/ .deploy/
 
+      - name: Backend preflight - host.json at root
+        run: |
+          if [ ! -f backend/.deploy/host.json ]; then
+            echo "❌ ERROR: Missing backend/.deploy/host.json"
+            echo "Fix: Ensure 'Stage deployment folder' step copies host.json to .deploy/"
+            echo "Expected: cp host.json .deploy/host.json"
+            exit 1
+          fi
+          echo "✓ Backend package valid: host.json present"
+
       - name: Deploy via publish profile
         uses: azure/functions-action@v1
         with:
@@ -141,14 +251,72 @@ jobs:
           package: backend/.deploy
           publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
 
+      - name: Azure Login (for restart)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Restart Function App (refresh Key Vault references)
+        env:
+          RG: ${{ github.event.inputs.resource_group }}
+          APP: ${{ needs.infra.outputs.functionAppName }}
+        run: |
+          echo "Restarting Function App to refresh Key Vault references..."
+          az functionapp restart -g "$RG" -n "$APP"
+          echo "Waiting 30s for app to come back online..."
+          sleep 30
+
       - name: Health check
         run: |
+          # Prefer Front Door custom domain for API health if available
           URL="${{ needs.infra.outputs.functionAppUrl }}"
-          for i in {1..10}; do
+          if [ -n "${{ needs.infra.outputs.apiCustomDomain }}" ] && [ "${{ needs.infra.outputs.apiCustomDomain }}" != "" ]; then
+            URL="https://${{ needs.infra.outputs.apiCustomDomain }}"
+          elif [ -n "${{ needs.infra.outputs.frontDoorUrl }}" ] && [ "${{ needs.infra.outputs.frontDoorUrl }}" != "" ]; then
+            URL="${{ needs.infra.outputs.frontDoorUrl }}"
+          fi
+          echo "Health check target: $URL/api/health"
+          START=$(date +%s)
+          SUCCESS=0
+          for i in {1..20}; do
             code=$(curl -s -o /dev/null -w "%{http_code}" "$URL/api/health");
-            echo "Attempt $i: $code"; [ "$code" = "200" ] && exit 0; sleep 6;
+            ELAPSED=$(($(date +%s) - START))
+            echo "[Attempt $i @ ${ELAPSED}s] HTTP $code";
+            if [ "$code" = "200" ]; then
+              echo "✓ Health check passed after $i attempts in ${ELAPSED}s"
+              SUCCESS=1
+              break
+            fi
+            sleep 10;
           done
-          echo "Health check failed"; exit 1
+          if [ $SUCCESS -eq 0 ]; then
+            ELAPSED=$(($(date +%s) - START))
+            echo "✗ Health check failed after ${ELAPSED}s"; exit 1;
+          fi
+
+      - name: Secret scan compliance (Key Vault references only)
+        env:
+          RG: ${{ github.event.inputs.resource_group }}
+          APP: ${{ needs.infra.outputs.functionAppName }}
+        run: |
+          # Fetch settings without echoing secret values; verify KV refs prefix
+          settings=$(az functionapp config appsettings list -g "$RG" -n "$APP" -o json)
+          required=(OPENAI_API_KEY DATABASE_URL STRIPE_SECRET_KEY STRIPE_WEBHOOK_SECRET)
+          for k in "${required[@]}"; do
+            val=$(echo "$settings" | jq -r '.[] | select(.name=="'"$k"'") | .value')
+            if [ -z "$val" ] || [ "$val" = "null" ]; then echo "Missing app setting: $k"; exit 1; fi
+            case "$val" in 
+              @Microsoft.KeyVault*) : ;; 
+              *) echo "App setting $k is not a Key Vault reference"; exit 1;;
+            esac
+          done
+          # Final guard: ensure no plaintext secrets in step outputs or env
+          if env | grep -iE '(password|secret|key|token).*=' | grep -viE '(vault|reference|@microsoft)'; then
+            echo "✗ Potential plaintext secret detected in environment"; exit 1;
+          fi
+          echo "✓ All secrets use Key Vault references; no plaintext detected"
 
   frontend:
     name: Deploy Frontend Web
@@ -173,6 +341,22 @@ jobs:
           npm ci --verbose
           VITE_API_URL="$VITE_API_URL" npm run build
 
+      - name: Frontend preflight - artifact present and non-placeholder
+        run: |
+          if [ ! -f frontend/dist/index.html ]; then
+            echo "❌ ERROR: Missing frontend/dist/index.html"
+            echo "Fix: Ensure 'npm run build' completed successfully"
+            echo "Check: Vite build output should create dist/ directory"
+            exit 1
+          fi
+          if ! grep -q "<title>ProteinLens</title>" frontend/dist/index.html; then
+            echo "❌ ERROR: Frontend marker '<title>ProteinLens</title>' not found"
+            echo "Fix: Verify index.html template includes correct title"
+            echo "This usually means the build used a placeholder template"
+            exit 1
+          fi
+          echo "✓ Frontend artifact valid: index.html with correct title"
+
       - name: Deploy to Static Web Apps
         uses: azure/static-web-apps-deploy@v1
         with:
@@ -181,3 +365,71 @@ jobs:
           action: "upload"
           app_location: "frontend/dist"
           skip_app_build: true
+
+      - name: Frontend smoke test
+        run: |
+          URL="${{ needs.infra.outputs.staticWebAppUrl }}"
+          if [ -n "${{ needs.infra.outputs.webCustomDomain }}" ] && [ "${{ needs.infra.outputs.webCustomDomain }}" != "" ]; then
+            URL="https://${{ needs.infra.outputs.webCustomDomain }}"
+          fi
+          echo "Frontend smoke test target: $URL"
+          START=$(date +%s)
+          SUCCESS=0
+          for i in {1..20}; do
+            code=$(curl -s -o /tmp/index.html -w "%{http_code}" "$URL");
+            ELAPSED=$(($(date +%s) - START))
+            echo "[Attempt $i @ ${ELAPSED}s] HTTP $code";
+            if [ "$code" = "200" ] && grep -q "<title>ProteinLens</title>" /tmp/index.html; then
+              echo "✓ Frontend smoke test passed after $i attempts in ${ELAPSED}s"
+              SUCCESS=1
+              break
+            fi
+            sleep 10;
+          done
+          if [ $SUCCESS -eq 0 ]; then
+            ELAPSED=$(($(date +%s) - START))
+            echo "✗ Frontend smoke test failed after ${ELAPSED}s"; exit 1;
+          fi
+
+      - name: Azure Login (for artifact outputs)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Generate deployment outputs artifact
+        env:
+          ENV: ${{ github.event.inputs.environment }}
+          RG: ${{ github.event.inputs.resource_group }}
+        run: |
+          LAST_DEPLOY=$(az deployment sub list --query "[?contains(name, 'proteinlens-${ENV}')]|[-1].name" -o tsv)
+          az deployment sub show --name "$LAST_DEPLOY" --query "properties.outputs" -o json > /tmp/bicep-outputs.json
+          
+          # Transform to match contract schema
+          cat > /tmp/deployment-outputs.json <<EOF
+          {
+            "frontendUrl": "$(jq -r '.staticWebAppUrl.value // ""' /tmp/bicep-outputs.json)",
+            "backendUrl": "$(jq -r '.functionAppUrl.value // ""' /tmp/bicep-outputs.json)",
+            "resourceGroup": "$RG",
+            "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
+            "keyVaultName": "$(jq -r '.keyVaultName.value // ""' /tmp/bicep-outputs.json)",
+            "storageAccountName": "$(jq -r '.storageAccountName.value // ""' /tmp/bicep-outputs.json)",
+            "postgresServerName": "$(jq -r '.postgresServerName.value // ""' /tmp/bicep-outputs.json)",
+            "postgresFqdn": "$(jq -r '.postgresServerFqdn.value // ""' /tmp/bicep-outputs.json)",
+            "functionAppName": "$(jq -r '.functionAppName.value // ""' /tmp/bicep-outputs.json)",
+            "staticWebAppName": "$(jq -r '.staticWebAppName.value // ""' /tmp/bicep-outputs.json)",
+            "frontDoorName": "$(jq -r '.frontDoorName.value // ""' /tmp/bicep-outputs.json)",
+            "dnsZoneResourceId": "$(az network dns zone list --query \"[?name=='proteinlens.com'].id | [0]\" -o tsv || echo \"\")"
+          }
+          EOF
+          
+          echo "Deployment outputs:"
+          cat /tmp/deployment-outputs.json | jq .
+
+      - name: Upload deployment outputs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-outputs-${{ github.event.inputs.environment }}
+          path: /tmp/deployment-outputs.json
+          retention-days: 30

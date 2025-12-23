@@ -1,0 +1,102 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.39.26.7824",
+      "templateHash": "8906499779362137976"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "northeurope"
+    },
+    "aiHubName": {
+      "type": "string"
+    },
+    "aiProjectName": {
+      "type": "string"
+    },
+    "keyVaultId": {
+      "type": "string"
+    },
+    "storageAccountId": {
+      "type": "string"
+    },
+    "applicationInsightsId": {
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.MachineLearningServices/workspaces",
+      "apiVersion": "2024-04-01",
+      "name": "[parameters('aiHubName')]",
+      "location": "[parameters('location')]",
+      "kind": "Hub",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "friendlyName": "ProteinLens AI Hub",
+        "description": "AI Foundry hub for GPT-5.1 meal analysis",
+        "keyVault": "[parameters('keyVaultId')]",
+        "storageAccount": "[parameters('storageAccountId')]",
+        "applicationInsights": "[parameters('applicationInsightsId')]",
+        "publicNetworkAccess": "Enabled",
+        "hbiWorkspace": false
+      }
+    },
+    {
+      "type": "Microsoft.MachineLearningServices/workspaces",
+      "apiVersion": "2024-04-01",
+      "name": "[parameters('aiProjectName')]",
+      "location": "[parameters('location')]",
+      "kind": "Project",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "friendlyName": "ProteinLens AI Project",
+        "description": "Project for GPT-5.1 integration",
+        "keyVault": "[parameters('keyVaultId')]",
+        "storageAccount": "[parameters('storageAccountId')]",
+        "applicationInsights": "[parameters('applicationInsightsId')]",
+        "hubResourceId": "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiHubName'))]",
+        "publicNetworkAccess": "Enabled",
+        "hbiWorkspace": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiHubName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "aiHubName": {
+      "type": "string",
+      "value": "[parameters('aiHubName')]"
+    },
+    "aiHubId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiHubName'))]"
+    },
+    "aiProjectName": {
+      "type": "string",
+      "value": "[parameters('aiProjectName')]"
+    },
+    "aiProjectId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiProjectName'))]"
+    },
+    "aiHubManagedIdentityId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiHubName')), '2024-04-01', 'full').identity.principalId]"
+    },
+    "aiProjectManagedIdentityId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiProjectName')), '2024-04-01', 'full').identity.principalId]"
+    }
+  }
+}
