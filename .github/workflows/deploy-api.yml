@@ -140,68 +140,15 @@ jobs:
             exit 1
           fi
 
-      - name: Configure Function App for ZIP deployment
+      - name: Deploy Function App via publish profile
+        uses: azure/functions-action@v1
+        with:
+          app-name: ${{ secrets.AZURE_FUNCTIONAPP_NAME }}
+          package: backend-deploy.zip
+          publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
+        
+      - name: Warm up
         run: |
-          echo "⚙️ Configuring Function App for ZIP deployment..."
-          az functionapp config appsettings set \
-            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
-            --name "${{ secrets.AZURE_FUNCTIONAPP_NAME }}" \
-            --settings WEBSITE_RUN_FROM_PACKAGE=1
-          echo "✅ Function App configured"
-
-      - name: Upload and Deploy from Storage
-        run: |
-          echo "📤 Uploading deployment package to Azure Storage..."
-          
-          STORAGE_ACCOUNT=$(az storage account list \
-            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
-            --query '[0].name' -o tsv)
-          
-          if [ -z "$STORAGE_ACCOUNT" ]; then
-            echo "❌ No storage account found"
-            exit 1
-          fi
-          
-          echo "Storage account: $STORAGE_ACCOUNT"
-          
-          # Create container if needed
-          az storage container create \
-            --account-name "$STORAGE_ACCOUNT" \
-            --name deployments \
-            --auth-mode login 2>/dev/null || true
-          
-          # Upload ZIP with timestamp using managed identity login
-          TIMESTAMP=$(date +%s)
-          BLOB_NAME="backend-${TIMESTAMP}.zip"
-          
-          az storage blob upload \
-            --account-name "$STORAGE_ACCOUNT" \
-            --container-name deployments \
-            --name "$BLOB_NAME" \
-            --file backend-deploy.zip \
-            --auth-mode login
-          
-          echo "✅ ZIP uploaded to storage: $BLOB_NAME"
-          
-          # Generate SAS URL valid for 1 hour using login mode
-          SAS_TOKEN=$(az storage blob generate-sas \
-            --account-name "$STORAGE_ACCOUNT" \
-            --container-name deployments \
-            --name "$BLOB_NAME" \
-            --permissions r \
-            --expiry $(date -u -d '+1 hour' '+%Y-%m-%dT%H:%MZ') \
-            --auth-mode login -o tsv)
-          
-          PACKAGE_URL="https://${STORAGE_ACCOUNT}.blob.core.windows.net/deployments/${BLOB_NAME}?${SAS_TOKEN}"
-          
-          echo "📦 Setting package URL for Function App..."
-          
-          az functionapp config appsettings set \
-            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
-            --name "${{ secrets.AZURE_FUNCTIONAPP_NAME }}" \
-            --settings WEBSITE_RUN_FROM_PACKAGE="${PACKAGE_URL}"
-          
-          echo "✅ Function App configured with package URL"
           echo "⏳ Waiting for deployment to complete (30s)..."
           sleep 30
           
