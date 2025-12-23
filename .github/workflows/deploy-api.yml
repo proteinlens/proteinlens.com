@@ -168,9 +168,9 @@ jobs:
           az storage container create \
             --account-name "$STORAGE_ACCOUNT" \
             --name deployments \
-            --auth-mode key 2>/dev/null || true
+            --auth-mode login 2>/dev/null || true
           
-          # Upload ZIP with timestamp using storage account key
+          # Upload ZIP with timestamp using managed identity login
           TIMESTAMP=$(date +%s)
           BLOB_NAME="backend-${TIMESTAMP}.zip"
           
@@ -179,18 +179,18 @@ jobs:
             --container-name deployments \
             --name "$BLOB_NAME" \
             --file backend-deploy.zip \
-            --auth-mode key
+            --auth-mode login
           
           echo "✅ ZIP uploaded to storage: $BLOB_NAME"
           
-          # Generate SAS URL valid for 1 hour
+          # Generate SAS URL valid for 1 hour using login mode
           SAS_TOKEN=$(az storage blob generate-sas \
             --account-name "$STORAGE_ACCOUNT" \
             --container-name deployments \
             --name "$BLOB_NAME" \
             --permissions r \
             --expiry $(date -u -d '+1 hour' '+%Y-%m-%dT%H:%MZ') \
-            --auth-mode key -o tsv)
+            --auth-mode login -o tsv)
           
           PACKAGE_URL="https://${STORAGE_ACCOUNT}.blob.core.windows.net/deployments/${BLOB_NAME}?${SAS_TOKEN}"
           
