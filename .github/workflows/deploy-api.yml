@@ -140,39 +140,70 @@ jobs:
             exit 1
           fi
 
+      - name: Configure Function App for ZIP deployment
+        run: |
+          echo "⚙️ Configuring Function App for ZIP deployment..."
+          az functionapp config appsettings set \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --name "${{ secrets.AZURE_FUNCTIONAPP_NAME }}" \
+            --settings \
+              WEBSITE_RUN_FROM_PACKAGE=1 \
+              ENABLE_MSBUILD=true \
+              SCM_DO_BUILD_DURING_DEPLOYMENT=true
+          echo "✅ Function App configured"
+
       - name: Deploy to Azure Functions
         run: |
-          echo "📦 Deploying Function App via ZIP (using managed identity)..."
-          # Deploy using managed identity (no connection string needed)
+          echo "📦 Deploying Function App via ZIP..."
+          # Using az functionapp up which properly handles Node.js functions
           az functionapp deployment source config-zip \
             --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
             --name "${{ secrets.AZURE_FUNCTIONAPP_NAME }}" \
-            --src backend-deploy.zip \
-            --build-remote false \
-            --output json | jq '.state' || true
+            --src backend-deploy.zip
           
-          echo "✅ ZIP deployment initiated"
-          echo "Waiting for cold start (30s)..."
-          sleep 30
+          echo "✅ ZIP deployment completed"
+          echo "⏳ Waiting for functions to initialize (20s)..."
+          sleep 20
           
-      - name: Verify Deployment
+      - name: Verify Functions Deployed
         run: |
-          echo "🔍 Testing Function App health endpoint..."
-          for i in {1..10}; do
-            echo "Attempt $i/10..."
-            if curl -s https://${{ secrets.AZURE_FUNCTIONAPP_NAME }}.azurewebsites.net/api/health -H "Content-Type: application/json" > /dev/null 2>&1; then
-              echo "✅ Health endpoint responding"
+          echo "🔍 Verifying functions deployed..."
+          FUNCTION_COUNT=$(az functionapp function list \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --name "${{ secrets.AZURE_FUNCTIONAPP_NAME }}" \
+            --query 'length(@)' -o tsv)
+          
+          echo "Found $FUNCTION_COUNT functions"
+          if [ "$FUNCTION_COUNT" -eq 0 ]; then
+            echo "❌ ERROR: No functions deployed!"
+            echo "Listing deployed functions:"
+            az functionapp function list \
+              --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+              --name "${{ secrets.AZURE_FUNCTIONAPP_NAME }}"
+            exit 1
+          else
+            echo "✅ Functions deployed successfully"
+            az functionapp function list \
+              --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+              --name "${{ secrets.AZURE_FUNCTIONAPP_NAME }}" \
+              --query '[].name' -o tsv
+          fi
+
+      - name: Test Health Endpoint
+        run: |
+          echo "🧪 Testing Function App health endpoint..."
+          for i in {1..5}; do
+            echo "Attempt $i/5..."
+            HTTP_CODE=$(curl -s -w "%{http_code}" -o /dev/null \
+              "https://${{ secrets.AZURE_FUNCTIONAPP_NAME }}.azurewebsites.net/api/health")
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "✅ Health endpoint responding with 200"
               exit 0
             fi
-            if [ $i -lt 10 ]; then sleep 10; fi
+            echo "Got HTTP $HTTP_CODE, retrying..."
+            if [ $i -lt 5 ]; then sleep 10; fi
           done
-          echo "⚠️ Health endpoint not yet responding (may take longer to warm up)"
-
-      - name: Wait for cold start
-        run: |
-          echo "⏳ Waiting for Function App cold start (10s)..."
-          sleep 10
-          echo "✅ Cold start period complete"
+          echo "⚠️ Health endpoint not ready yet (may be cold starting)"
 
   health-check:
     name: Verify Health Endpoint
