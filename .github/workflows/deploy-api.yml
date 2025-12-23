@@ -125,9 +125,9 @@ jobs:
             exit 1
           fi
 
-      - name: Grant Deployment Access to Storage
+      - name: Verify Storage RBAC Roles
         run: |
-          echo "🔐 Ensuring storage account has proper RBAC roles..."
+          echo "🔐 Verifying storage account RBAC roles..."
           
           # Get service principal object ID
           SP_OBJECT_ID=$(az ad sp show --id ${{ secrets.AZURE_CLIENT_ID }} --query id -o tsv)
@@ -138,25 +138,20 @@ jobs:
             --resource-group proteinlens-prod \
             --query id -o tsv)
           
-          # Grant Storage Blob Data Contributor for upload/create operations
-          az role assignment create \
-            --assignee "$SP_OBJECT_ID" \
-            --role "Storage Blob Data Contributor" \
+          # Check role assignments
+          ROLE_COUNT=$(az role assignment list \
+            --assignee-object-id "$SP_OBJECT_ID" \
             --scope "$STORAGE_ID" \
-            2>/dev/null || echo "⚠️  Blob Data Contributor role may already exist"
+            --query "length([?roleDefinitionName=='Storage Blob Data Contributor' || roleDefinitionName=='Storage Blob Delegator'])" \
+            -o tsv)
           
-          # Grant Storage Blob Delegator for user delegation SAS generation
-          az role assignment create \
-            --assignee "$SP_OBJECT_ID" \
-            --role "Storage Blob Delegator" \
-            --scope "$STORAGE_ID" \
-            2>/dev/null || echo "⚠️  Blob Delegator role may already exist"
+          if [ "$ROLE_COUNT" -lt 2 ]; then
+            echo "❌ Missing required RBAC roles. Expected 2, found $ROLE_COUNT"
+            echo "Please run the role assignment commands from the deployment guide."
+            exit 1
+          fi
           
-          # Wait for RBAC propagation
-          echo "⏳ Waiting 10s for role assignment propagation..."
-          sleep 10
-          
-          echo "✅ Storage RBAC configured"
+          echo "✅ Storage RBAC roles verified ($ROLE_COUNT roles found)"
 
       - name: Prepare Deployment Container
         run: |
@@ -172,11 +167,14 @@ jobs:
 
       - name: Deploy to Azure Functions
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           
           echo "📦 Uploading deployment package..."
           TIMESTAMP=$(date +%Y%m%d-%H%M%S)
           BLOB_NAME="backend-${TIMESTAMP}.zip"
+          
+          echo "Blob name: $BLOB_NAME"
+          echo "File size: $(ls -lh backend-deploy.zip | awk '{print $5}')"
           
           az storage blob upload \
             --account-name plprodsa85 \
@@ -185,12 +183,15 @@ jobs:
             --file backend-deploy.zip \
             --auth-mode login \
             --overwrite true \
-            --output none
+            --output json
           
           echo "🔐 Creating user delegation SAS URL..."
           # Start time in the past to avoid clock-skew issues
           START=$(date -u -d '15 minutes ago' +%Y-%m-%dT%H:%MZ 2>/dev/null || date -u -v-15M +%Y-%m-%dT%H:%MZ)
           EXPIRY=$(date -u -d '365 days' +%Y-%m-%dT%H:%MZ 2>/dev/null || date -u -v+365d +%Y-%m-%dT%H:%MZ)
+          
+          echo "SAS start: $START"
+          echo "SAS expiry: $EXPIRY"
           
           PACKAGE_URL=$(az storage blob generate-sas \
             --account-name plprodsa85 \
@@ -204,18 +205,20 @@ jobs:
             --full-uri \
             --output tsv)
           
+          echo "✅ SAS URL generated (length: ${#PACKAGE_URL} chars)"
+          
           echo "⚙️  Setting WEBSITE_RUN_FROM_PACKAGE..."
           az functionapp config appsettings set \
             --resource-group proteinlens-prod \
             --name "${{ env.AZURE_FUNCTIONAPP_NAME }}" \
             --settings "WEBSITE_RUN_FROM_PACKAGE=$PACKAGE_URL" \
-            --output none
+            --output json
           
           echo "🔄 Restarting Function App to load new package..."
           az functionapp restart \
             --resource-group proteinlens-prod \
             --name "${{ env.AZURE_FUNCTIONAPP_NAME }}" \
-            --output none
+            --output json
           
           echo "✅ Function App deployment completed"
 
