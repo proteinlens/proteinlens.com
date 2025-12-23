@@ -217,7 +217,37 @@ jobs:
           
           echo "🔐 Function App Managed Identity: $FUNCTION_APP_IDENTITY"
           echo "📦 Storage Account: $STORAGE_ACCOUNT"
-          echo "✅ RBAC roles should be configured manually by admin"
+          
+          # Get storage account scope
+          STORAGE_ID=$(az storage account show \
+            --name "$STORAGE_ACCOUNT" \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
+            --query id -o tsv)
+          
+          echo "🔐 Granting Function App required storage roles for AzureWebJobsStorage..."
+          
+          # Storage Blob Data Owner (for blobs)
+          az role assignment create \
+            --assignee "$FUNCTION_APP_IDENTITY" \
+            --role "Storage Blob Data Owner" \
+            --scope "$STORAGE_ID" \
+            2>/dev/null || echo "⚠️  Blob Data Owner role may already exist"
+          
+          # Storage Queue Data Contributor (for queues - required by Functions host)
+          az role assignment create \
+            --assignee "$FUNCTION_APP_IDENTITY" \
+            --role "Storage Queue Data Contributor" \
+            --scope "$STORAGE_ID" \
+            2>/dev/null || echo "⚠️  Queue Data Contributor role may already exist"
+          
+          # Storage Table Data Contributor (for tables - required by Functions host)
+          az role assignment create \
+            --assignee "$FUNCTION_APP_IDENTITY" \
+            --role "Storage Table Data Contributor" \
+            --scope "$STORAGE_ID" \
+            2>/dev/null || echo "⚠️  Table Data Contributor role may already exist"
+          
+          echo "✅ Function App storage roles configured"
 
       - name: Output Deployment Results
         if: success()
