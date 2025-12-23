@@ -12,7 +12,7 @@
       "value": "proteinlens"
     },
     "storageAccountName": {
-      "value": "plprodsa85"
+      "value": "plprodsa92"
     },
     "functionAppName": {
       "value": "proteinlens-api-prod"
@@ -21,7 +21,7 @@
       "value": "proteinlens-kv-prod"
     },
     "postgresServerName": {
-      "value": "proteinlens-db-prod"
+      "value": "proteinlens-db-prod-v2"
     },
     "postgresAdminUsername": {
       "value": "pgadmin"
