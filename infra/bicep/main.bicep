@@ -29,13 +29,12 @@ param enableFrontDoor bool = false // Optional CDN/WAF layer
 // DEPLOYMENTS
 // =============================================================================
 
-// 1. Key Vault (deployed first - PLACEHOLDER for Function App identity, will be updated later)
+// 1. Key Vault (deployed first)
 module keyVault 'keyvault.bicep' = {
   name: 'keyvault-deployment'
   params: {
     location: location
     keyVaultName: keyVaultName
-    functionAppPrincipalId: '' // Empty for now, updated after Function App creation
   }
 }
 
