@@ -10,9 +10,11 @@ param environmentName string = 'dev'
 param appNamePrefix string = 'proteinlens'
 
 // Resource naming (ensure storage account name <=24 chars, lowercase, alphanumeric)
-var saPrefix string = toLower('${appNamePrefix}${environmentName}')
+param storageAccountNameOverride string = ''
+var saPrefix string = toLower(appNamePrefix)
+var saEnv string = toLower(environmentName)
 var saSuffix string = substring(uniqueString(resourceGroup().id), 0, 8)
-param storageAccountName string = '${saPrefix}${saSuffix}'
+var storageAccountName string = length(storageAccountNameOverride) > 0 ? storageAccountNameOverride : '${saPrefix}${saEnv}${saSuffix}'
 param functionAppName string = '${appNamePrefix}-api-${environmentName}'
 param keyVaultName string = '${appNamePrefix}-kv-${environmentName}'
 param postgresServerName string = '${appNamePrefix}-db-${environmentName}'
