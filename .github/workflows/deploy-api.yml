@@ -104,20 +104,18 @@ jobs:
           cd .deploy
           npm install --omit=dev --ignore-scripts
           
-          # Install Prisma client explicitly (needed for prisma generate)
-          echo "📦 Installing @prisma/client..."
-          npm install @prisma/client --ignore-scripts
+          # Copy the already-generated Prisma client from the build step
+          # (prisma:generate was run earlier with full devDependencies)
+          echo "📦 Copying generated Prisma client..."
+          cp -r ../node_modules/.prisma node_modules/.prisma
+          cp -r ../node_modules/@prisma node_modules/@prisma
           
-          # Generate Prisma client (required - this creates .prisma/client)
-          echo "📦 Generating Prisma client..."
-          npx prisma generate
-          
-          # Verify Prisma client was generated
+          # Verify Prisma client was copied
           if [ ! -d "node_modules/.prisma/client" ]; then
-            echo "❌ Prisma client not generated - .prisma/client missing"
+            echo "❌ Prisma client not found - .prisma/client missing"
             exit 1
           fi
-          echo "✅ Prisma client generated"
+          echo "✅ Prisma client copied"
           
           # Verify @azure/functions is installed
           if [ ! -d "node_modules/@azure/functions" ]; then
