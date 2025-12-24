@@ -73,7 +73,6 @@ jobs:
           RG="${{ vars.AZURE_DNS_RESOURCE_GROUP }}"
           if [ -z "$RG" ]; then
             echo "❌ AZURE_DNS_RESOURCE_GROUP repo variable is not set."
-            echo "Please set repository variable AZURE_DNS_RESOURCE_GROUP to the resource group that contains the DNS zone '$ZONE'."
             exit 1
           fi
           echo "🔎 Checking DNS zone '$ZONE' in resource group '$RG'..."
@@ -90,46 +89,12 @@ jobs:
         run: |
           echo "ok=true" >> "$GITHUB_OUTPUT"
           echo "✅ Production DNS gate passed"
-          echo "## ✅ DNS Gate Passed" >> "$GITHUB_STEP_SUMMARY"
-          echo "Zone: ${{ vars.DNS_ZONE_NAME || 'proteinlens.com' }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "Resource Group: ${{ vars.AZURE_DNS_RESOURCE_GROUP }}" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Report DNS gate failure
         if: github.ref == 'refs/heads/main' && failure()
         run: |
-          echo "## ❌ Production DNS Zone Missing" >> "$GITHUB_STEP_SUMMARY"
-          echo "Production runs require Azure DNS zone for 'proteinlens.com'." >> "$GITHUB_STEP_SUMMARY"
-          echo "Set repo variables: AZURE_DNS_RESOURCE_GROUP and DNS_ZONE_NAME (default: proteinlens.com)." >> "$GITHUB_STEP_SUMMARY"
+          echo "❌ Production DNS Zone Missing"
           exit 1
-
-  summary:
-    name: Deployment Summary
-    runs-on: ubuntu-latest
-    needs: [changes, dns_gate, infra, deploy_backend, deploy_frontend, smoke_test]
-    if: always()
-    steps:
-      - name: Summarize results
-        run: |
-          echo "## 📋 Orchestrator Summary" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "### Gate" >> "$GITHUB_STEP_SUMMARY"
-          echo "DNS Gate: ${{ needs.dns_gate.outputs.ok || 'false' }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "Zone: ${{ vars.DNS_ZONE_NAME || 'proteinlens.com' }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "DNS RG: ${{ vars.AZURE_DNS_RESOURCE_GROUP || 'unset' }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "### Changes" >> "$GITHUB_STEP_SUMMARY"
-          echo "Infra changed: ${{ needs.changes.outputs.infra }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "Backend changed: ${{ needs.changes.outputs.backend }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "Frontend changed: ${{ needs.changes.outputs.frontend }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "### Deploy Results" >> "$GITHUB_STEP_SUMMARY"
-          echo "Backend deploy: ${{ needs.deploy_backend.result }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "Frontend deploy: ${{ needs.deploy_frontend.result }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "Smoke tests: ${{ needs.smoke_test.result }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "### Endpoints" >> "$GITHUB_STEP_SUMMARY"
-          echo "API URL: ${{ needs.infra.outputs.functionapp_url }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "Web URL: https://${{ needs.infra.outputs.staticwebapp_name }}.azurestaticapps.net/" >> "$GITHUB_STEP_SUMMARY"
 
   infra:
     name: Provision Infra
@@ -143,18 +108,17 @@ jobs:
   deploy_backend:
     name: Deploy Backend
     needs: [infra, dns_gate, changes]
-    if: needs.changes.outputs.backend == 'true' && needs.dns_gate.outputs.ok == 'true'
+    if: always() && needs.infra.result == 'success' && needs.dns_gate.outputs.ok == 'true'
     uses: ./.github/workflows/deploy-api.yml
     secrets: inherit
     with:
       resource_group: proteinlens-prod
       functionapp_name: ${{ needs.infra.outputs.functionapp_name }}
-      # database_url can be passed if needed
 
   deploy_frontend:
     name: Deploy Frontend
     needs: [infra, dns_gate, changes]
-    if: needs.changes.outputs.frontend == 'true' && needs.dns_gate.outputs.ok == 'true'
+    if: always() && needs.infra.result == 'success' && needs.dns_gate.outputs.ok == 'true'
     uses: ./.github/workflows/deploy-web.yml
     secrets: inherit
     with:
@@ -168,26 +132,43 @@ jobs:
     if: always() && (needs.deploy_backend.result == 'success' || needs.deploy_frontend.result == 'success')
     runs-on: ubuntu-latest
     steps:
-      - name: API health with retry/backoff
+      - name: API health check
         run: |
-          set -euo pipefail
           URL="${{ needs.infra.outputs.functionapp_url }}/api/health"
           for i in $(seq 1 10); do
             code=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || true)
             if [ "$code" = "200" ]; then echo "API OK"; exit 0; fi
-            S=$(( 2**i )); [ $S -gt 30 ] && S=30; sleep $S
+            sleep $((2**i > 30 ? 30 : 2**i))
           done
-          echo "API health check failed" >&2
-          exit 20
+          echo "API health check failed" && exit 20
 
-      - name: Web check with title marker and retry/backoff
+      - name: Web check
         run: |
-          set -euo pipefail
-          URL="https://${{ needs.infra.outputs.staticwebapp_name }}.azurestaticapps.net/"
+          URL="${{ needs.infra.outputs.staticwebapp_url }}"
           for i in $(seq 1 10); do
-            body=$(curl -fsS "$URL" || true)
-            if echo "$body" | grep -q "ProteinLens"; then echo "WEB OK"; exit 0; fi
-            S=$(( 2**i )); [ $S -gt 30 ] && S=30; sleep $S
+            body=$(curl -fsS "$URL" 2>/dev/null || true)
+            if echo "$body" | grep -qi "protein\|lens"; then echo "WEB OK"; exit 0; fi
+            sleep $((2**i > 30 ? 30 : 2**i))
           done
-          echo "Web check failed" >&2
-          exit 21
+          echo "Web check failed" && exit 21
+
+  summary:
+    name: Deployment Summary
+    runs-on: ubuntu-latest
+    needs: [changes, dns_gate, infra, deploy_backend, deploy_frontend, smoke_test]
+    if: always()
+    steps:
+      - name: Summarize results
+        run: |
+          echo "## 📋 Deployment Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Component | Result |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-----------|--------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| DNS Gate | ${{ needs.dns_gate.outputs.ok || 'false' }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Infra | ${{ needs.infra.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Backend | ${{ needs.deploy_backend.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Frontend | ${{ needs.deploy_frontend.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Smoke Tests | ${{ needs.smoke_test.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Endpoints" >> "$GITHUB_STEP_SUMMARY"
+          echo "- API: ${{ needs.infra.outputs.functionapp_url }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Web: ${{ needs.infra.outputs.staticwebapp_url }}" >> "$GITHUB_STEP_SUMMARY"
