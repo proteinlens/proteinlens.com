@@ -6,6 +6,7 @@ param functionAppName string
 param storageAccountName string
 param appServicePlanName string = '${functionAppName}-plan'
 param keyVaultUri string
+param customDomain string = 'api.proteinlens.com'
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
   name: appServicePlanName
@@ -108,6 +109,7 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
           'https://www.proteinlens.com'
           'https://proteinlens.com'
           'https://happy-stone-003f15b1e.azurestaticapps.net'
+          'https://api.proteinlens.com'
         ]
         supportCredentials: true
       }
@@ -117,5 +119,6 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
 
 output functionAppName string = functionApp.name
 output functionAppPrincipalId string = functionApp.identity.principalId
-output functionAppUrl string = 'https://${functionApp.properties.defaultHostName}'
+output functionAppUrl string = 'https://${customDomain}'
+output functionAppAzureUrl string = 'https://${functionApp.properties.defaultHostName}'
 output functionAppDefaultHostname string = functionApp.properties.defaultHostName

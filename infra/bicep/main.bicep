@@ -54,6 +54,9 @@ param postgresAdminPassword string // Provided from Key Vault at deployment time
 // Feature flags
 param enableFrontDoor bool = false // Optional CDN/WAF layer
 param enableAIFoundry bool = true // Enable AI Foundry for GPT-5.1 integration
+param enableCustomDomain bool = true // Enable custom domains (api.proteinlens.com, www.proteinlens.com)
+param apiCustomDomainName string = 'api.proteinlens.com'
+param webCustomDomainName string = 'www.proteinlens.com'
 
 // =============================================================================
 // DEPLOYMENTS
@@ -108,6 +111,16 @@ module functionApp 'function-app.bicep' = {
 // doesn't have Microsoft.Authorization/roleAssignments/write permission for ARM templates.
 // See "Verify Function App Storage Access" step in infra.yml.
 
+// 4b. Custom domain for Function App (api.proteinlens.com)
+// Prerequisites: DNS CNAME record api.proteinlens.com -> proteinlens-api-prod.azurewebsites.net
+module functionAppCustomDomain 'function-app-custom-domain.bicep' = if (enableCustomDomain && dnsZoneExists) {
+  name: 'function-app-custom-domain-deployment'
+  params: {
+    functionAppName: functionApp.outputs.functionAppName
+    customDomain: apiCustomDomainName
+  }
+}
+
 // 4d. Key Vault access policy for Function App (uses access policies, not RBAC)
 module kvAccessFunctionApp 'kv-access.bicep' = {
   name: 'kv-access-functionapp-deployment'
@@ -125,6 +138,16 @@ module staticWebApp 'static-web-app.bicep' = {
     location: swaLocation
     staticWebAppName: staticWebAppName
     apiUrl: functionApp.outputs.functionAppUrl
+  }
+}
+
+// 5b. Custom domain for Static Web App (www.proteinlens.com)
+// Prerequisites: DNS CNAME record www.proteinlens.com -> <staticwebapp>.azurestaticapps.net
+module staticWebAppCustomDomain 'static-web-app-custom-domain.bicep' = if (enableCustomDomain && dnsZoneExists) {
+  name: 'static-web-app-custom-domain-deployment'
+  params: {
+    staticWebAppName: staticWebApp.outputs.staticWebAppName
+    customDomain: webCustomDomainName
   }
 }
 
@@ -175,8 +198,10 @@ output keyVaultUri string = keyVault.outputs.keyVaultUri
 // Backend (Function App)
 output functionAppName string = functionApp.outputs.functionAppName
 output functionAppUrl string = functionApp.outputs.functionAppUrl
+output functionAppAzureUrl string = functionApp.outputs.functionAppAzureUrl
 output functionAppManagedIdentityId string = functionApp.outputs.functionAppPrincipalId
 output functionAppPrincipalId string = functionApp.outputs.functionAppPrincipalId
+output functionAppCustomDomainEnabled bool = enableCustomDomain && dnsZoneExists
 
 // Database
 output postgresServerName string = postgres.outputs.postgresServerName
@@ -192,8 +217,10 @@ output storageAccountId string = storage.outputs.storageAccountId
 
 // Frontend (Static Web App)
 output staticWebAppName string = staticWebApp.outputs.staticWebAppName
-output staticWebAppUrl string = staticWebApp.outputs.staticWebAppUrl
+output staticWebAppUrl string = enableCustomDomain && dnsZoneExists ? 'https://${webCustomDomainName}' : staticWebApp.outputs.staticWebAppUrl
+output staticWebAppAzureUrl string = staticWebApp.outputs.staticWebAppUrl
 output staticWebAppDefaultHostname string = staticWebApp.outputs.staticWebAppDefaultHostname
+output staticWebAppCustomDomainEnabled bool = enableCustomDomain && dnsZoneExists
 
 // Front Door (optional)
 output frontDoorEnabled bool = enableFrontDoor
