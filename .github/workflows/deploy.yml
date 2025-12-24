@@ -8,6 +8,7 @@ on:
 permissions:
   contents: read
   id-token: write
+  security-events: write
 
 env:
   RESOURCE_GROUP: proteinlens-prod
@@ -17,8 +18,80 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  secret_scan:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for comprehensive scan
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check for hardcoded API keys
+        run: |
+          echo "Scanning for common secret patterns..."
+          
+          # OpenAI API key pattern
+          if git grep -E 'sk-[A-Za-z0-9]{32,}' -- '*.ts' '*.js' '*.json' '*.yml' '*.yaml' 2>/dev/null; then
+            echo "❌ FAIL: OpenAI API key pattern detected"
+            exit 1
+          fi
+          
+          # Azure Cognitive Services key pattern
+          if git grep -E '[0-9a-f]{32}' -- '*.ts' '*.js' 2>/dev/null | grep -i 'key'; then
+            echo "⚠️ WARNING: Potential Azure key pattern detected"
+            echo "Review matches above to ensure they are not secrets"
+          fi
+          
+          # Generic API key assignments
+          if git grep -E '(apiKey|api_key|API_KEY)\s*=\s*["\x27][A-Za-z0-9+/=]{20,}["\x27]' -- '*.ts' '*.js' 2>/dev/null; then
+            echo "❌ FAIL: Hardcoded API key assignment detected"
+            exit 1
+          fi
+          
+          echo "✅ PASS: No obvious secrets detected"
+
+      - name: Check for Key Vault reference usage
+        run: |
+          echo "Verifying Key Vault references in config files..."
+          
+          # Check GitHub Actions workflows use Key Vault patterns
+          if grep -r 'AZURE_OPENAI_API_KEY' .github/workflows/ 2>/dev/null | grep -v '@Microsoft.KeyVault'; then
+            echo "⚠️ WARNING: AZURE_OPENAI_API_KEY used without Key Vault reference"
+          fi
+          
+          # Check Bicep files use Key Vault references
+          if grep -r 'OPENAI.*API.*KEY' infra/bicep/ 2>/dev/null | grep -v 'KeyVault' | grep -v 'keyvault'; then
+            echo "⚠️ WARNING: OpenAI key referenced in Bicep without Key Vault"
+          fi
+          
+          echo "✅ Key Vault reference check complete"
+
+      - name: Validate script safety
+        run: |
+          echo "Checking scripts avoid logging secrets..."
+          
+          # Check scripts use silent modes
+          if grep -E 'echo.*\$.*KEY' scripts/foundry-*.sh 2>/dev/null; then
+            echo "❌ FAIL: Script echoes variable that may contain key"
+            exit 1
+          fi
+          
+          # Verify --output none usage for sensitive commands
+          if [ -f scripts/foundry-up.sh ] && ! grep -q 'keyvault secret set.*--output none' scripts/foundry-up.sh; then
+            echo "⚠️ WARNING: Key Vault secret set may log output"
+          fi
+          
+          echo "✅ Script safety check complete"
+
   dns_gate:
     name: Production DNS Gate
+    needs: [secret_scan]
     runs-on: ubuntu-latest
     outputs:
       ok: ${{ steps.gate.outputs.ok || steps.gateprod.outputs.ok }}
@@ -133,7 +206,7 @@ jobs:
   summary:
     name: Deployment Summary
     runs-on: ubuntu-latest
-    needs: [dns_gate, infra, deploy_backend, deploy_frontend, health_check]
+    needs: [secret_scan, dns_gate, infra, deploy_backend, deploy_frontend, health_check]
     if: always()
     steps:
       - name: Summarize results
@@ -141,6 +214,7 @@ jobs:
           echo "## 📋 Deployment Summary" >> "$GITHUB_STEP_SUMMARY"
           echo "| Component | Result |" >> "$GITHUB_STEP_SUMMARY"
           echo "|-----------|--------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Secret Scan | ${{ needs.secret_scan.result }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| DNS Gate | ${{ needs.dns_gate.outputs.ok || 'false' }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Infra | ${{ needs.infra.result }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Backend | ${{ needs.deploy_backend.result }} |" >> "$GITHUB_STEP_SUMMARY"
