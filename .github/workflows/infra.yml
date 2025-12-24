@@ -79,6 +79,12 @@ jobs:
     name: Deploy Infrastructure
     runs-on: ubuntu-latest
     needs: validate
+    outputs:
+      key_vault_name: ${{ steps.extract.outputs.key_vault_name }}
+      functionapp_name: ${{ steps.extract.outputs.functionapp_name }}
+      staticwebapp_name: ${{ steps.extract.outputs.staticwebapp_name }}
+      functionapp_url: ${{ steps.extract.outputs.functionapp_url }}
+      staticwebapp_url: ${{ steps.extract.outputs.staticwebapp_url }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -332,11 +338,3 @@ jobs:
           echo "❌ Infrastructure deployment failed. Check logs above for details."
           exit 1
 
-  # Expose outputs for reusable workflow callers
-  deploy:
-    outputs:
-      key_vault_name: ${{ steps.extract.outputs.key_vault_name }}
-      functionapp_name: ${{ steps.extract.outputs.functionapp_name }}
-      staticwebapp_name: ${{ steps.extract.outputs.staticwebapp_name }}
-      functionapp_url: ${{ steps.extract.outputs.functionapp_url }}
-      staticwebapp_url: ${{ steps.extract.outputs.staticwebapp_url }}
