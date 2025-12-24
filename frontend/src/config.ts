@@ -16,7 +16,7 @@
  */
 export const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
-  (import.meta.env.DEV ? 'http://localhost:7071' : window.location.origin);
+  (import.meta.env.DEV ? 'http://localhost:7071' : '');
 
 /**
  * Application Environment

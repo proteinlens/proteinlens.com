@@ -105,7 +105,9 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
         allowedOrigins: [
           'http://localhost:5173'
           'http://localhost:3000'
-          // Add production frontend URLs
+          'https://www.proteinlens.com'
+          'https://proteinlens.com'
+          'https://happy-stone-003f15b1e.azurestaticapps.net'
         ]
         supportCredentials: true
       }
