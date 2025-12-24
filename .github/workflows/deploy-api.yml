@@ -102,7 +102,11 @@ jobs:
           # Install only production dependencies fresh
           echo "📦 Installing production dependencies..."
           cd .deploy
-          npm install --production --ignore-scripts
+          npm install --omit=dev --ignore-scripts
+          
+          # Install Prisma client explicitly (needed for prisma generate)
+          echo "📦 Installing @prisma/client..."
+          npm install @prisma/client --ignore-scripts
           
           # Generate Prisma client (required - this creates .prisma/client)
           echo "📦 Generating Prisma client..."
