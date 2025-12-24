@@ -36,10 +36,11 @@ var storageAccountNameRaw string = length(storageAccountNameOverride) > 0 ? stor
 var storageAccountName string = toLower(take(storageAccountNameRaw, 24))
 param functionAppName string = '${appNamePrefix}-api-${environmentName}'
 
-// Key Vault unique naming (avoid VaultAlreadyExists via RG-scoped uniqueString + deployment timestamp)
-param keyVaultNamePrefix string = '${appNamePrefix}-kv-${environmentName}'
-var kvSuffix string = take(uniqueString(resourceGroup().id, deployment().name), 8)
-var keyVaultName string = toLower(take('${keyVaultNamePrefix}-${kvSuffix}', 24))
+// Key Vault naming - use consistent name based on resource group only (not deployment name)
+// This prevents creating a new Key Vault on each deployment
+param keyVaultNameOverride string = ''
+var kvSuffix string = take(uniqueString(resourceGroup().id), 8)
+var keyVaultName string = length(keyVaultNameOverride) > 0 ? keyVaultNameOverride : toLower(take('${appNamePrefix}-kv-${kvSuffix}', 24))
 param postgresServerName string = '${appNamePrefix}-db-${environmentName}'
 param staticWebAppName string = '${appNamePrefix}-web-${environmentName}'
 param frontDoorName string = '${appNamePrefix}-fd-${environmentName}'
