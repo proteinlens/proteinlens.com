@@ -7,6 +7,7 @@
  */
 
 import { execSync } from 'child_process';
+import { existsSync } from 'fs';
 import { Logger } from './logger.js';
 
 interface MigrationResult {
@@ -36,6 +37,17 @@ export async function runMigrations(): Promise<MigrationResult> {
   };
 
   try {
+    // If Prisma CLI isn't packaged (production prune), skip safely
+    const prismaBin = `${process.cwd()}/node_modules/.bin/prisma`;
+    if (!existsSync(prismaBin)) {
+      Logger.info('[MIGRATION] Prisma CLI not found; skipping runtime migrations');
+      result.success = true;
+      result.appliedCount = 0;
+      result.endTime = Date.now();
+      result.durationMs = result.endTime - startTime;
+      return result;
+    }
+
     Logger.info('[MIGRATION] Starting Prisma migrations...');
 
     // Step 1: Verify database connectivity first
