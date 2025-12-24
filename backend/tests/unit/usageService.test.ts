@@ -2,23 +2,32 @@
 // Feature: 002-saas-billing
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { Plan, SubscriptionStatus } from '@prisma/client';
 
-// Mock Prisma client using class syntax
-vi.mock('@prisma/client', () => {
-  class MockPrismaClient {
-    user = {
-      findUnique: vi.fn(),
-      create: vi.fn(),
-    };
-    usage = {
-      count: vi.fn(),
-      create: vi.fn(),
-      findMany: vi.fn(),
-    };
-  }
+// Use vi.hoisted to create mocks that are available during vi.mock hoisting
+const { mockUserFindUnique, mockUserCreate, mockUsageCount, mockUsageCreate, mockUsageFindMany } = vi.hoisted(() => {
   return {
-    PrismaClient: MockPrismaClient,
+    mockUserFindUnique: vi.fn(),
+    mockUserCreate: vi.fn(),
+    mockUsageCount: vi.fn(),
+    mockUsageCreate: vi.fn(),
+    mockUsageFindMany: vi.fn(),
+  };
+});
+
+// Mock the prisma utils module - uses hoisted mock functions
+vi.mock('../../src/utils/prisma.js', () => {
+  return {
+    getPrismaClient: () => ({
+      user: {
+        findUnique: mockUserFindUnique,
+        create: mockUserCreate,
+      },
+      usage: {
+        count: mockUsageCount,
+        create: mockUsageCreate,
+        findMany: mockUsageFindMany,
+      },
+    }),
     Plan: {
       FREE: 'FREE',
       PRO: 'PRO',
@@ -36,19 +45,31 @@ vi.mock('@prisma/client', () => {
 });
 
 // Mock subscription service
-vi.mock('../../src/services/subscriptionService', () => ({
+vi.mock('../../src/services/subscriptionService.js', () => ({
   getUserPlan: vi.fn(),
   shouldHaveProAccess: vi.fn(),
 }));
 
-import * as usageService from '../../src/services/usageService';
-import { getUserPlan, shouldHaveProAccess } from '../../src/services/subscriptionService';
+// Now import the modules after mocks are set up
+import * as usageService from '../../src/services/usageService.js';
+import { getUserPlan, shouldHaveProAccess } from '../../src/services/subscriptionService.js';
+
+// Import enums from our mock for use in tests
+const Plan = { FREE: 'FREE', PRO: 'PRO' } as const;
+const SubscriptionStatus = { active: 'active', canceled: 'canceled', past_due: 'past_due', trialing: 'trialing' } as const;
 
 const FREE_SCANS_PER_WEEK = 5;
 
 describe('UsageService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset mock implementations
+    mockUserFindUnique.mockReset();
+    mockUserCreate.mockReset();
+    mockUsageCount.mockReset();
+    mockUsageCreate.mockReset();
+    mockUsageFindMany.mockReset();
+    console.log('Test setup complete');
   });
 
   afterEach(() => {
@@ -59,8 +80,8 @@ describe('UsageService', () => {
     it('should allow Pro users unlimited scans', async () => {
       // Setup
       vi.mocked(getUserPlan).mockResolvedValue({
-        plan: Plan.PRO,
-        subscriptionStatus: SubscriptionStatus.active,
+        plan: Plan.PRO as any,
+        subscriptionStatus: SubscriptionStatus.active as any,
         currentPeriodEnd: new Date('2025-12-31'),
         stripeCustomerId: 'cus_123',
         stripeSubscriptionId: 'sub_123',
@@ -80,7 +101,7 @@ describe('UsageService', () => {
     it('should allow Free users with scans remaining', async () => {
       // Setup
       vi.mocked(getUserPlan).mockResolvedValue({
-        plan: Plan.FREE,
+        plan: Plan.FREE as any,
         subscriptionStatus: null,
         currentPeriodEnd: null,
         stripeCustomerId: null,
@@ -89,9 +110,8 @@ describe('UsageService', () => {
       vi.mocked(shouldHaveProAccess).mockReturnValue(false);
 
       // Mock getUsageCount to return 3 (below limit)
-      const mockPrisma = (usageService as any).prisma;
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'internal-123' });
-      mockPrisma.usage.count.mockResolvedValue(3);
+      mockUserFindUnique.mockResolvedValue({ id: 'internal-123' });
+      mockUsageCount.mockResolvedValue(3);
 
       // Execute
       const result = await usageService.canPerformScan('user-123');
@@ -107,7 +127,7 @@ describe('UsageService', () => {
     it('should block Free users at quota limit', async () => {
       // Setup
       vi.mocked(getUserPlan).mockResolvedValue({
-        plan: Plan.FREE,
+        plan: Plan.FREE as any,
         subscriptionStatus: null,
         currentPeriodEnd: null,
         stripeCustomerId: null,
@@ -116,9 +136,8 @@ describe('UsageService', () => {
       vi.mocked(shouldHaveProAccess).mockReturnValue(false);
 
       // Mock getUsageCount to return 5 (at limit)
-      const mockPrisma = (usageService as any).prisma;
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'internal-123' });
-      mockPrisma.usage.count.mockResolvedValue(5);
+      mockUserFindUnique.mockResolvedValue({ id: 'internal-123' });
+      mockUsageCount.mockResolvedValue(5);
 
       // Execute
       const result = await usageService.canPerformScan('user-123');
@@ -133,7 +152,7 @@ describe('UsageService', () => {
     it('should block Free users over quota limit', async () => {
       // Setup
       vi.mocked(getUserPlan).mockResolvedValue({
-        plan: Plan.FREE,
+        plan: Plan.FREE as any,
         subscriptionStatus: null,
         currentPeriodEnd: null,
         stripeCustomerId: null,
@@ -142,9 +161,8 @@ describe('UsageService', () => {
       vi.mocked(shouldHaveProAccess).mockReturnValue(false);
 
       // Mock getUsageCount to return 7 (over limit - edge case)
-      const mockPrisma = (usageService as any).prisma;
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'internal-123' });
-      mockPrisma.usage.count.mockResolvedValue(7);
+      mockUserFindUnique.mockResolvedValue({ id: 'internal-123' });
+      mockUsageCount.mockResolvedValue(7);
 
       // Execute
       const result = await usageService.canPerformScan('user-123');
@@ -157,8 +175,7 @@ describe('UsageService', () => {
 
   describe('getUsageCount', () => {
     it('should return 0 for non-existent user', async () => {
-      const mockPrisma = (usageService as any).prisma;
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockUserFindUnique.mockResolvedValue(null);
 
       const count = await usageService.getUsageCount('non-existent');
 
@@ -166,14 +183,13 @@ describe('UsageService', () => {
     });
 
     it('should query usage within rolling 7-day window', async () => {
-      const mockPrisma = (usageService as any).prisma;
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'internal-123' });
-      mockPrisma.usage.count.mockResolvedValue(3);
+      mockUserFindUnique.mockResolvedValue({ id: 'internal-123' });
+      mockUsageCount.mockResolvedValue(3);
 
       await usageService.getUsageCount('user-123');
 
       // Verify the query includes date filter
-      expect(mockPrisma.usage.count).toHaveBeenCalledWith(
+      expect(mockUsageCount).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             userId: 'internal-123',
@@ -188,13 +204,12 @@ describe('UsageService', () => {
 
   describe('recordUsage', () => {
     it('should create usage record for existing user', async () => {
-      const mockPrisma = (usageService as any).prisma;
-      mockPrisma.user.findUnique.mockResolvedValue({ id: 'internal-123' });
-      mockPrisma.usage.create.mockResolvedValue({});
+      mockUserFindUnique.mockResolvedValue({ id: 'internal-123' });
+      mockUsageCreate.mockResolvedValue({});
 
       await usageService.recordUsage('user-123', 'MEAL_ANALYSIS' as any, 'meal-456');
 
-      expect(mockPrisma.usage.create).toHaveBeenCalledWith({
+      expect(mockUsageCreate).toHaveBeenCalledWith({
         data: {
           userId: 'internal-123',
           type: 'MEAL_ANALYSIS',
@@ -204,15 +219,14 @@ describe('UsageService', () => {
     });
 
     it('should create user if not exists (lazy creation)', async () => {
-      const mockPrisma = (usageService as any).prisma;
-      mockPrisma.user.findUnique.mockResolvedValue(null);
-      mockPrisma.user.create.mockResolvedValue({ id: 'new-internal-123' });
-      mockPrisma.usage.create.mockResolvedValue({});
+      mockUserFindUnique.mockResolvedValue(null);
+      mockUserCreate.mockResolvedValue({ id: 'new-internal-123' });
+      mockUsageCreate.mockResolvedValue({});
 
       await usageService.recordUsage('new-user');
 
-      expect(mockPrisma.user.create).toHaveBeenCalled();
-      expect(mockPrisma.usage.create).toHaveBeenCalledWith({
+      expect(mockUserCreate).toHaveBeenCalled();
+      expect(mockUsageCreate).toHaveBeenCalledWith({
         data: {
           userId: 'new-internal-123',
           type: 'MEAL_ANALYSIS',
