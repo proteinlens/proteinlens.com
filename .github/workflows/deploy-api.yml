@@ -78,12 +78,18 @@ jobs:
           fi
           # Stage a deployable Functions app
           rm -rf .deploy && mkdir -p .deploy
-          cp host.json package.json .deploy/
+          cp host.json .deploy/
           cp -r prisma .deploy/prisma
           cp -r node_modules .deploy/node_modules
-          rsync -a dist/ .deploy/
+          # Copy dist folder preserving structure (package.json main points to dist/index.js)
+          cp -r dist .deploy/dist
+          # Create production package.json with correct main entry
+          cat package.json | jq 'del(.devDependencies) | .main = "dist/index.js"' > .deploy/package.json
           echo "✅ Deployment folder prepared at backend/.deploy"
-          ls -la .deploy/
+          echo "📁 Structure:"
+          find .deploy -maxdepth 2 -type f | head -20
+          echo "📄 package.json main entry:"
+          cat .deploy/package.json | jq '.main'
 
       - name: Azure Login (OIDC)
         uses: azure/login@v2
