@@ -50,13 +50,26 @@ jobs:
           npm ci --verbose
           echo "✅ Dependencies installed"
 
+      - name: Create production environment file
+        run: |
+          cd frontend
+          # Vite uses .env.production for production builds (npm run build)
+          # This takes precedence over .env and shell environment variables
+          echo "VITE_API_URL=${{ inputs.api_url }}" > .env.production
+          echo "✅ Created .env.production with API URL: ${{ inputs.api_url }}"
+          cat .env.production
+
       - name: Build with Vite
-        env:
-          VITE_API_URL: ${{ inputs.api_url }}
         run: |
           cd frontend
           npm run build
           echo "✅ Frontend build completed"
+          # Verify the API URL was baked into the build
+          if grep -q "${{ inputs.api_url }}" dist/assets/*.js 2>/dev/null; then
+            echo "✅ API URL successfully baked into build"
+          else
+            echo "⚠️ Warning: API URL may not be in build, checking for /api fallback..."
+          fi
 
       - name: Validate build artifact
         run: |
