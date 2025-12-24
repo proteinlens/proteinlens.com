@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Deploy Workflow Inputs",
+  "type": "object",
+  "properties": {
+    "AZURE_SUBSCRIPTION_ID": { "type": "string" },
+    "AZURE_TENANT_ID": { "type": "string" },
+    "AZURE_RESOURCE_GROUP": { "type": "string" },
+    "ENVIRONMENT": { "enum": ["prod", "nonprod"], "description": "Derived: main -> prod" },
+    "FRONTDOOR_NAME": { "type": "string" },
+    "STATIC_WEB_APP_NAME": { "type": "string" },
+    "FUNCTION_APP_NAME": { "type": "string" },
+    "DNS_ZONE_NAME": { "type": "string", "default": "proteinlens.com" },
+    "STORAGE_ACCOUNT_NAME": { "type": "string", "description": "3–24 chars, lowercase+digits only" }
+  },
+  "required": [
+    "AZURE_SUBSCRIPTION_ID",
+    "AZURE_TENANT_ID",
+    "AZURE_RESOURCE_GROUP",
+    "FRONTDOOR_NAME",
+    "STATIC_WEB_APP_NAME",
+    "FUNCTION_APP_NAME",
+    "DNS_ZONE_NAME"
+  ]
+}

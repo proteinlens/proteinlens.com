@@ -5,23 +5,32 @@
 // PARAMETERS
 // =============================================================================
 
+@allowed([
+  'northeurope'
+])
 param location string = 'northeurope'
 param environmentName string = 'dev'
 param appNamePrefix string = 'proteinlens'
+@description('True when deploying production (used by pipeline policies)')
+param isProd bool = false
+@description('Primary domain for DNS policy checks')
+param dnsZoneName string = 'proteinlens.com'
+@description('Set by pipeline: whether Azure DNS zone exists (prod requires true)')
+param dnsZoneExists bool = false
 
 // Resource naming (ensure storage account name <=24 chars, lowercase, alphanumeric)
 param storageAccountNameOverride string = ''
 var saPrefix string = toLower(appNamePrefix)
 var saEnv string = toLower(environmentName)
-var saSuffix string = substring(uniqueString(resourceGroup().id), 0, 8)
+var saSuffix string = take(uniqueString(resourceGroup().id), 8)
 var storageAccountNameRaw string = length(storageAccountNameOverride) > 0 ? storageAccountNameOverride : '${saPrefix}${saEnv}${saSuffix}'
-var storageAccountName string = toLower(substring(storageAccountNameRaw, 0, 24))
+var storageAccountName string = toLower(take(storageAccountNameRaw, 24))
 param functionAppName string = '${appNamePrefix}-api-${environmentName}'
 
 // Key Vault unique naming (avoid VaultAlreadyExists via RG-scoped uniqueString + deployment timestamp)
 param keyVaultNamePrefix string = '${appNamePrefix}-kv-${environmentName}'
-var kvSuffix string = substring(uniqueString(resourceGroup().id, deployment().name), 0, 8)
-var keyVaultName string = toLower(substring('${keyVaultNamePrefix}-${kvSuffix}', 0, 24))
+var kvSuffix string = take(uniqueString(resourceGroup().id, deployment().name), 8)
+var keyVaultName string = toLower(take('${keyVaultNamePrefix}-${kvSuffix}', 24))
 param postgresServerName string = '${appNamePrefix}-db-${environmentName}'
 param staticWebAppName string = '${appNamePrefix}-web-${environmentName}'
 param frontDoorName string = '${appNamePrefix}-fd-${environmentName}'
@@ -126,6 +135,9 @@ module aiFoundry 'ai-foundry.bicep' = if (enableAIFoundry) {
 
 // Deployment metadata
 output deploymentId string = deployment().name
+output isProduction bool = isProd
+output dnsZone string = dnsZoneName
+output dnsZoneFound bool = dnsZoneExists
 
 // Resource Group
 output resourceGroupName string = resourceGroup().name
