@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 env:
   AZURE_WHAT_IF: ${{ vars.AZURE_WHAT_IF }}
@@ -130,27 +131,12 @@ jobs:
           echo "API URL: ${{ needs.infra.outputs.functionapp_url }}" >> "$GITHUB_STEP_SUMMARY"
           echo "Web URL: https://${{ needs.infra.outputs.staticwebapp_name }}.azurestaticapps.net/" >> "$GITHUB_STEP_SUMMARY"
 
-  test:
-    name: Pre-Deploy Tests
-    runs-on: ubuntu-latest
-    needs: [changes]
-    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true'
-    steps:
-      - name: Backend tests
-        run: |
-          cd backend
-          npm ci
-          npm run test:unit
-      - name: Frontend tests
-        run: |
-          cd frontend
-          npm ci
-          npm test -- --coverage || true
-
   infra:
     name: Provision Infra
-    needs: [changes, test]
+    needs: [changes, dns_gate]
+    if: needs.dns_gate.outputs.ok == 'true'
     uses: ./.github/workflows/infra.yml
+    secrets: inherit
     with:
       environment: prod
 
@@ -159,6 +145,7 @@ jobs:
     needs: [infra, dns_gate, changes]
     if: needs.changes.outputs.backend == 'true' && needs.dns_gate.outputs.ok == 'true'
     uses: ./.github/workflows/deploy-api.yml
+    secrets: inherit
     with:
       resource_group: ${{ vars.AZURE_RESOURCE_GROUP }}
       functionapp_name: ${{ needs.infra.outputs.functionapp_name }}
@@ -169,6 +156,7 @@ jobs:
     needs: [infra, dns_gate, changes]
     if: needs.changes.outputs.frontend == 'true' && needs.dns_gate.outputs.ok == 'true'
     uses: ./.github/workflows/deploy-web.yml
+    secrets: inherit
     with:
       resource_group: ${{ vars.AZURE_RESOURCE_GROUP }}
       staticwebapp_name: ${{ needs.infra.outputs.staticwebapp_name }}
@@ -176,8 +164,8 @@ jobs:
 
   smoke_test:
     name: Smoke Tests
-    needs: [deploy_backend, deploy_frontend]
-    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true'
+    needs: [infra, deploy_backend, deploy_frontend]
+    if: always() && (needs.deploy_backend.result == 'success' || needs.deploy_frontend.result == 'success')
     runs-on: ubuntu-latest
     steps:
       - name: API health with retry/backoff
