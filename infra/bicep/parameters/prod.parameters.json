@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "location": {
-      "value": "eastus2"
+      "value": "northeurope"
     },
     "environmentName": {
       "value": "prod"
@@ -11,14 +11,23 @@
     "appNamePrefix": {
       "value": "proteinlens"
     },
-    "storageAccountName": {
+    "isProd": {
+      "value": true
+    },
+    "dnsZoneName": {
+      "value": "proteinlens.com"
+    },
+    "dnsZoneExists": {
+      "value": true
+    },
+    "storageAccountNameOverride": {
       "value": "plprod1523"
     },
     "functionAppName": {
       "value": "proteinlens-api-prod"
     },
-    "keyVaultName": {
-      "value": "proteinlens-kv-1523"
+    "keyVaultNamePrefix": {
+      "value": "proteinlens-kv"
     },
     "postgresServerName": {
       "value": "proteinlens-db-prod-1523"
