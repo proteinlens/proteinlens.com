@@ -103,6 +103,46 @@ module functionApp 'function-app.bicep' = {
   }
 }
 
+// 4a. Storage RBAC for Function App (Blob Data Owner)
+module storageRbacBlob 'storage-rbac.bicep' = {
+  name: 'storage-rbac-blob-deployment'
+  params: {
+    storageAccountName: storage.outputs.storageAccountName
+    principalId: functionApp.outputs.functionAppPrincipalId
+    roleId: 'b7e6dc6d-f1e8-4753-8033-0f276bb0955b' // Storage Blob Data Owner
+  }
+}
+
+// 4b. Storage RBAC for Function App (Queue Data Contributor - required by Functions host)
+module storageRbacQueue 'storage-rbac.bicep' = {
+  name: 'storage-rbac-queue-deployment'
+  params: {
+    storageAccountName: storage.outputs.storageAccountName
+    principalId: functionApp.outputs.functionAppPrincipalId
+    roleId: '974c5e8b-45b9-4653-ba55-5f855dd0fb88' // Storage Queue Data Contributor
+  }
+}
+
+// 4c. Storage RBAC for Function App (Table Data Contributor - required by Functions host)
+module storageRbacTable 'storage-rbac.bicep' = {
+  name: 'storage-rbac-table-deployment'
+  params: {
+    storageAccountName: storage.outputs.storageAccountName
+    principalId: functionApp.outputs.functionAppPrincipalId
+    roleId: '0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3' // Storage Table Data Contributor
+  }
+}
+
+// 4d. Key Vault access policy for Function App
+module kvAccessFunctionApp 'kv-access.bicep' = {
+  name: 'kv-access-functionapp-deployment'
+  params: {
+    keyVaultName: keyVault.outputs.keyVaultName
+    principalId: functionApp.outputs.functionAppPrincipalId
+    secretPermissions: ['get', 'list']
+  }
+}
+
 // 5. Static Web App (frontend, can run in parallel with backend)
 module staticWebApp 'static-web-app.bicep' = {
   name: 'static-web-app-deployment'

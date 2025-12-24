@@ -42,6 +42,14 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
           value: '~4'
         }
         {
+          name: 'AzureWebJobsFeatureFlags'
+          value: 'EnableWorkerIndexing'
+        }
+        {
+          name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
+          value: 'false'
+        }
+        {
           name: 'AzureWebJobsStorage__accountName'
           value: storageAccountName
         }

@@ -6,13 +6,30 @@
     "_generator": {
       "name": "bicep",
       "version": "0.39.26.7824",
-      "templateHash": "15016158266059778419"
+      "templateHash": "11684739446795929813"
     }
   },
   "parameters": {
     "location": {
       "type": "string",
-      "defaultValue": "northeurope"
+      "defaultValue": "northeurope",
+      "allowedValues": [
+        "northeurope"
+      ]
+    },
+    "swaLocation": {
+      "type": "string",
+      "defaultValue": "westeurope",
+      "allowedValues": [
+        "westus2",
+        "centralus",
+        "eastus2",
+        "westeurope",
+        "eastasia"
+      ],
+      "metadata": {
+        "description": "Location for Static Web App (not available in all regions)"
+      }
     },
     "environmentName": {
       "type": "string",
@@ -21,6 +38,27 @@
     "appNamePrefix": {
       "type": "string",
       "defaultValue": "proteinlens"
+    },
+    "isProd": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "True when deploying production (used by pipeline policies)"
+      }
+    },
+    "dnsZoneName": {
+      "type": "string",
+      "defaultValue": "proteinlens.com",
+      "metadata": {
+        "description": "Primary domain for DNS policy checks"
+      }
+    },
+    "dnsZoneExists": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Set by pipeline: whether Azure DNS zone exists (prod requires true)"
+      }
     },
     "storageAccountNameOverride": {
       "type": "string",
@@ -73,11 +111,11 @@
   "variables": {
     "saPrefix": "[toLower(parameters('appNamePrefix'))]",
     "saEnv": "[toLower(parameters('environmentName'))]",
-    "saSuffix": "[substring(uniqueString(resourceGroup().id), 0, 8)]",
+    "saSuffix": "[take(uniqueString(resourceGroup().id), 8)]",
     "storageAccountNameRaw": "[if(greater(length(parameters('storageAccountNameOverride')), 0), parameters('storageAccountNameOverride'), format('{0}{1}{2}', variables('saPrefix'), variables('saEnv'), variables('saSuffix')))]",
-    "storageAccountName": "[toLower(substring(variables('storageAccountNameRaw'), 0, 24))]",
-    "kvSuffix": "[substring(uniqueString(resourceGroup().id), 0, 6)]",
-    "keyVaultName": "[toLower(substring(format('{0}-{1}', parameters('keyVaultNamePrefix'), variables('kvSuffix')), 0, 24))]"
+    "storageAccountName": "[toLower(take(variables('storageAccountNameRaw'), 24))]",
+    "kvSuffix": "[take(uniqueString(resourceGroup().id, deployment().name), 8)]",
+    "keyVaultName": "[toLower(take(format('{0}-{1}', parameters('keyVaultNamePrefix'), variables('kvSuffix')), 24))]"
   },
   "resources": {
     "keyVault": {
@@ -462,7 +500,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.39.26.7824",
-              "templateHash": "13399289122989122924"
+              "templateHash": "5074217488071091062"
             }
           },
           "parameters": {
@@ -521,6 +559,14 @@
                     {
                       "name": "FUNCTIONS_EXTENSION_VERSION",
                       "value": "~4"
+                    },
+                    {
+                      "name": "AzureWebJobsFeatureFlags",
+                      "value": "EnableWorkerIndexing"
+                    },
+                    {
+                      "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
+                      "value": "false"
                     },
                     {
                       "name": "AzureWebJobsStorage__accountName",
@@ -597,6 +643,10 @@
             "functionAppUrl": {
               "type": "string",
               "value": "[format('https://{0}', reference(resourceId('Microsoft.Web/sites', parameters('functionAppName')), '2023-01-01').defaultHostName)]"
+            },
+            "functionAppDefaultHostname": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/sites', parameters('functionAppName')), '2023-01-01').defaultHostName]"
             }
           }
         }
@@ -604,6 +654,265 @@
       "dependsOn": [
         "keyVault",
         "storage"
+      ]
+    },
+    "storageRbacBlob": {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "storage-rbac-blob-deployment",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "storageAccountName": {
+            "value": "[reference('storage').outputs.storageAccountName.value]"
+          },
+          "principalId": {
+            "value": "[reference('functionApp').outputs.functionAppPrincipalId.value]"
+          },
+          "roleId": {
+            "value": "b7e6dc6d-f1e8-4753-8033-0f276bb0955b"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "936260758375122197"
+            }
+          },
+          "parameters": {
+            "storageAccountName": {
+              "type": "string"
+            },
+            "principalId": {
+              "type": "string"
+            },
+            "roleId": {
+              "type": "string",
+              "defaultValue": "ba92f5b4-2d11-453d-a403-e96b0029c9fe"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.Storage/storageAccounts/{0}', parameters('storageAccountName'))]",
+              "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), parameters('principalId'), parameters('roleId'))]",
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleId'))]",
+                "principalId": "[parameters('principalId')]",
+                "principalType": "ServicePrincipal"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "functionApp",
+        "storage"
+      ]
+    },
+    "storageRbacQueue": {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "storage-rbac-queue-deployment",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "storageAccountName": {
+            "value": "[reference('storage').outputs.storageAccountName.value]"
+          },
+          "principalId": {
+            "value": "[reference('functionApp').outputs.functionAppPrincipalId.value]"
+          },
+          "roleId": {
+            "value": "974c5e8b-45b9-4653-ba55-5f855dd0fb88"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "936260758375122197"
+            }
+          },
+          "parameters": {
+            "storageAccountName": {
+              "type": "string"
+            },
+            "principalId": {
+              "type": "string"
+            },
+            "roleId": {
+              "type": "string",
+              "defaultValue": "ba92f5b4-2d11-453d-a403-e96b0029c9fe"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.Storage/storageAccounts/{0}', parameters('storageAccountName'))]",
+              "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), parameters('principalId'), parameters('roleId'))]",
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleId'))]",
+                "principalId": "[parameters('principalId')]",
+                "principalType": "ServicePrincipal"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "functionApp",
+        "storage"
+      ]
+    },
+    "storageRbacTable": {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "storage-rbac-table-deployment",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "storageAccountName": {
+            "value": "[reference('storage').outputs.storageAccountName.value]"
+          },
+          "principalId": {
+            "value": "[reference('functionApp').outputs.functionAppPrincipalId.value]"
+          },
+          "roleId": {
+            "value": "0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "936260758375122197"
+            }
+          },
+          "parameters": {
+            "storageAccountName": {
+              "type": "string"
+            },
+            "principalId": {
+              "type": "string"
+            },
+            "roleId": {
+              "type": "string",
+              "defaultValue": "ba92f5b4-2d11-453d-a403-e96b0029c9fe"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[format('Microsoft.Storage/storageAccounts/{0}', parameters('storageAccountName'))]",
+              "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), parameters('principalId'), parameters('roleId'))]",
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleId'))]",
+                "principalId": "[parameters('principalId')]",
+                "principalType": "ServicePrincipal"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "functionApp",
+        "storage"
+      ]
+    },
+    "kvAccessFunctionApp": {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "kv-access-functionapp-deployment",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "keyVaultName": {
+            "value": "[reference('keyVault').outputs.keyVaultName.value]"
+          },
+          "principalId": {
+            "value": "[reference('functionApp').outputs.functionAppPrincipalId.value]"
+          },
+          "secretPermissions": {
+            "value": [
+              "get",
+              "list"
+            ]
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "7031342046321505456"
+            }
+          },
+          "parameters": {
+            "keyVaultName": {
+              "type": "string"
+            },
+            "principalId": {
+              "type": "string"
+            },
+            "secretPermissions": {
+              "type": "array",
+              "defaultValue": [
+                "get",
+                "list"
+              ]
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.KeyVault/vaults/accessPolicies",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/{1}', parameters('keyVaultName'), 'add')]",
+              "properties": {
+                "accessPolicies": [
+                  {
+                    "tenantId": "[subscription().tenantId]",
+                    "objectId": "[parameters('principalId')]",
+                    "permissions": {
+                      "secrets": "[parameters('secretPermissions')]"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "functionApp",
+        "keyVault"
       ]
     },
     "staticWebApp": {
@@ -617,7 +926,7 @@
         "mode": "Incremental",
         "parameters": {
           "location": {
-            "value": "[parameters('location')]"
+            "value": "[parameters('swaLocation')]"
           },
           "staticWebAppName": {
             "value": "[parameters('staticWebAppName')]"
@@ -733,16 +1042,23 @@
           },
           "enableFrontDoor": {
             "value": "[parameters('enableFrontDoor')]"
+          },
+          "apiHostname": {
+            "value": "[reference('functionApp').outputs.functionAppDefaultHostname.value]"
+          },
+          "webHostname": {
+            "value": "[reference('staticWebApp').outputs.staticWebAppDefaultHostname.value]"
           }
         },
         "template": {
           "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "languageVersion": "2.0",
           "contentVersion": "1.0.0.0",
           "metadata": {
             "_generator": {
               "name": "bicep",
               "version": "0.39.26.7824",
-              "templateHash": "5610561798909485283"
+              "templateHash": "12905374865836126646"
             }
           },
           "parameters": {
@@ -753,21 +1069,29 @@
             "frontDoorName": {
               "type": "string"
             },
-            "functionAppUrl": {
+            "apiHostname": {
               "type": "string",
               "defaultValue": ""
             },
-            "staticWebAppUrl": {
+            "webHostname": {
               "type": "string",
               "defaultValue": ""
+            },
+            "customDomainRoot": {
+              "type": "string",
+              "defaultValue": "proteinlens.com"
             },
             "enableFrontDoor": {
               "type": "bool",
-              "defaultValue": false
+              "defaultValue": true
             }
           },
-          "resources": [
-            {
+          "variables": {
+            "wwwDomain": "[format('www.{0}', parameters('customDomainRoot'))]",
+            "apiDomain": "[format('api.{0}', parameters('customDomainRoot'))]"
+          },
+          "resources": {
+            "frontDoor": {
               "condition": "[parameters('enableFrontDoor')]",
               "type": "Microsoft.Cdn/profiles",
               "apiVersion": "2023-05-01",
@@ -779,8 +1103,207 @@
               "properties": {
                 "originResponseTimeoutSeconds": 60
               }
+            },
+            "endpoint": {
+              "condition": "[parameters('enableFrontDoor')]",
+              "type": "Microsoft.Cdn/profiles/afdEndpoints",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}-ep', parameters('frontDoorName'), parameters('frontDoorName'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "enabledState": "Enabled"
+              },
+              "dependsOn": [
+                "frontDoor"
+              ]
+            },
+            "apiOriginGroup": {
+              "condition": "[and(parameters('enableFrontDoor'), not(empty(parameters('apiHostname'))))]",
+              "type": "Microsoft.Cdn/profiles/originGroups",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/api-origins', parameters('frontDoorName'))]",
+              "properties": {
+                "healthProbeSettings": {
+                  "probePath": "/api/health",
+                  "probeRequestType": "GET",
+                  "probeProtocol": "Https",
+                  "probeIntervalInSeconds": 60
+                },
+                "loadBalancingSettings": {
+                  "additionalLatencyInMilliseconds": 0,
+                  "sampleSize": 4,
+                  "successfulSamplesRequired": 3
+                }
+              },
+              "dependsOn": [
+                "frontDoor"
+              ]
+            },
+            "webOriginGroup": {
+              "condition": "[and(parameters('enableFrontDoor'), not(empty(parameters('webHostname'))))]",
+              "type": "Microsoft.Cdn/profiles/originGroups",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/web-origins', parameters('frontDoorName'))]",
+              "properties": {
+                "healthProbeSettings": {
+                  "probePath": "/",
+                  "probeRequestType": "GET",
+                  "probeProtocol": "Https",
+                  "probeIntervalInSeconds": 60
+                },
+                "loadBalancingSettings": {
+                  "additionalLatencyInMilliseconds": 0,
+                  "sampleSize": 4,
+                  "successfulSamplesRequired": 3
+                }
+              },
+              "dependsOn": [
+                "frontDoor"
+              ]
+            },
+            "apiOrigin": {
+              "condition": "[and(parameters('enableFrontDoor'), not(empty(parameters('apiHostname'))))]",
+              "type": "Microsoft.Cdn/profiles/originGroups/origins",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}/api-origin', parameters('frontDoorName'), format('{0}/api-origins', parameters('frontDoorName')))]",
+              "properties": {
+                "hostName": "[parameters('apiHostname')]",
+                "httpPort": 80,
+                "httpsPort": 443,
+                "originHostHeader": "[parameters('apiHostname')]",
+                "priority": 1,
+                "weight": 50,
+                "enabledState": "Enabled"
+              },
+              "dependsOn": [
+                "apiOriginGroup",
+                "frontDoor"
+              ]
+            },
+            "webOrigin": {
+              "condition": "[and(parameters('enableFrontDoor'), not(empty(parameters('webHostname'))))]",
+              "type": "Microsoft.Cdn/profiles/originGroups/origins",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/{1}/web-origin', parameters('frontDoorName'), format('{0}/web-origins', parameters('frontDoorName')))]",
+              "properties": {
+                "hostName": "[parameters('webHostname')]",
+                "httpPort": 80,
+                "httpsPort": 443,
+                "originHostHeader": "[parameters('webHostname')]",
+                "priority": 1,
+                "weight": 50,
+                "enabledState": "Enabled"
+              },
+              "dependsOn": [
+                "frontDoor",
+                "webOriginGroup"
+              ]
+            },
+            "wwwCd": {
+              "condition": "[parameters('enableFrontDoor')]",
+              "type": "Microsoft.Cdn/profiles/customDomains",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/www', parameters('frontDoorName'))]",
+              "properties": {
+                "hostName": "[variables('wwwDomain')]",
+                "tlsSettings": {
+                  "certificateType": "ManagedCertificate",
+                  "minimumTlsVersion": "TLS12"
+                }
+              },
+              "dependsOn": [
+                "frontDoor"
+              ]
+            },
+            "apiCd": {
+              "condition": "[parameters('enableFrontDoor')]",
+              "type": "Microsoft.Cdn/profiles/customDomains",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/api', parameters('frontDoorName'))]",
+              "properties": {
+                "hostName": "[variables('apiDomain')]",
+                "tlsSettings": {
+                  "certificateType": "ManagedCertificate",
+                  "minimumTlsVersion": "TLS12"
+                }
+              },
+              "dependsOn": [
+                "frontDoor"
+              ]
+            },
+            "routeWeb": {
+              "condition": "[and(parameters('enableFrontDoor'), not(empty(parameters('webHostname'))))]",
+              "type": "Microsoft.Cdn/profiles/routes",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/route-web', parameters('frontDoorName'))]",
+              "properties": {
+                "supportedProtocols": [
+                  "Http",
+                  "Https"
+                ],
+                "patternSets": [],
+                "patternsToMatch": [
+                  "/"
+                ],
+                "forwardingProtocol": "MatchRequest",
+                "httpsRedirect": "Enabled",
+                "originGroup": {
+                  "id": "[resourceId('Microsoft.Cdn/profiles/originGroups', split(format('{0}/web-origins', parameters('frontDoorName')), '/')[0], split(format('{0}/web-origins', parameters('frontDoorName')), '/')[1])]"
+                },
+                "customDomains": [
+                  {
+                    "id": "[resourceId('Microsoft.Cdn/profiles/customDomains', split(format('{0}/www', parameters('frontDoorName')), '/')[0], split(format('{0}/www', parameters('frontDoorName')), '/')[1])]"
+                  }
+                ],
+                "deploymentStatus": "NotStarted",
+                "enabledState": "Enabled",
+                "endpointName": "[format('{0}/{1}-ep', parameters('frontDoorName'), parameters('frontDoorName'))]",
+                "linkToDefaultDomain": "Disabled"
+              },
+              "dependsOn": [
+                "endpoint",
+                "frontDoor",
+                "webOriginGroup",
+                "wwwCd"
+              ]
+            },
+            "routeApi": {
+              "condition": "[and(parameters('enableFrontDoor'), not(empty(parameters('apiHostname'))))]",
+              "type": "Microsoft.Cdn/profiles/routes",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/route-api', parameters('frontDoorName'))]",
+              "properties": {
+                "supportedProtocols": [
+                  "Http",
+                  "Https"
+                ],
+                "patternSets": [],
+                "patternsToMatch": [
+                  "/api/*"
+                ],
+                "forwardingProtocol": "MatchRequest",
+                "httpsRedirect": "Enabled",
+                "originGroup": {
+                  "id": "[resourceId('Microsoft.Cdn/profiles/originGroups', split(format('{0}/api-origins', parameters('frontDoorName')), '/')[0], split(format('{0}/api-origins', parameters('frontDoorName')), '/')[1])]"
+                },
+                "customDomains": [
+                  {
+                    "id": "[resourceId('Microsoft.Cdn/profiles/customDomains', split(format('{0}/api', parameters('frontDoorName')), '/')[0], split(format('{0}/api', parameters('frontDoorName')), '/')[1])]"
+                  }
+                ],
+                "deploymentStatus": "NotStarted",
+                "enabledState": "Enabled",
+                "endpointName": "[format('{0}/{1}-ep', parameters('frontDoorName'), parameters('frontDoorName'))]",
+                "linkToDefaultDomain": "Disabled"
+              },
+              "dependsOn": [
+                "apiCd",
+                "apiOriginGroup",
+                "endpoint",
+                "frontDoor"
+              ]
             }
-          ],
+          },
           "outputs": {
             "frontDoorId": {
               "type": "string",
@@ -793,10 +1316,26 @@
             "frontDoorEndpointUrl": {
               "type": "string",
               "value": "[if(parameters('enableFrontDoor'), format('https://{0}.azurefd.net', parameters('frontDoorName')), '')]"
+            },
+            "frontDoorEndpointHostname": {
+              "type": "string",
+              "value": "[if(parameters('enableFrontDoor'), format('{0}.azurefd.net', parameters('frontDoorName')), '')]"
+            },
+            "webCustomDomain": {
+              "type": "string",
+              "value": "[if(parameters('enableFrontDoor'), variables('wwwDomain'), '')]"
+            },
+            "apiCustomDomain": {
+              "type": "string",
+              "value": "[if(parameters('enableFrontDoor'), variables('apiDomain'), '')]"
             }
           }
         }
-      }
+      },
+      "dependsOn": [
+        "functionApp",
+        "staticWebApp"
+      ]
     },
     "aiFoundry": {
       "condition": "[parameters('enableAIFoundry')]",
@@ -942,6 +1481,18 @@
       "type": "string",
       "value": "[deployment().name]"
     },
+    "isProduction": {
+      "type": "bool",
+      "value": "[parameters('isProd')]"
+    },
+    "dnsZone": {
+      "type": "string",
+      "value": "[parameters('dnsZoneName')]"
+    },
+    "dnsZoneFound": {
+      "type": "bool",
+      "value": "[parameters('dnsZoneExists')]"
+    },
     "resourceGroupName": {
       "type": "string",
       "value": "[resourceGroup().name]"
@@ -1036,6 +1587,18 @@
     "frontDoorName": {
       "type": "string",
       "value": "[if(parameters('enableFrontDoor'), reference('frontDoor').outputs.frontDoorName.value, '')]"
+    },
+    "frontDoorEndpointHostname": {
+      "type": "string",
+      "value": "[if(parameters('enableFrontDoor'), reference('frontDoor').outputs.frontDoorEndpointHostname.value, '')]"
+    },
+    "webCustomDomain": {
+      "type": "string",
+      "value": "[if(parameters('enableFrontDoor'), reference('frontDoor').outputs.webCustomDomain.value, '')]"
+    },
+    "apiCustomDomain": {
+      "type": "string",
+      "value": "[if(parameters('enableFrontDoor'), reference('frontDoor').outputs.apiCustomDomain.value, '')]"
     },
     "aiFoundryEnabled": {
       "type": "bool",

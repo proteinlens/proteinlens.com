@@ -278,6 +278,33 @@ jobs:
             --value "$WEBHOOK_SECRET" \
             > /dev/null
           
+          # Set AI_FOUNDRY_ENDPOINT (placeholder - configure with actual Azure AI endpoint)
+          az keyvault secret set \
+            --vault-name "$KEYVAULT_NAME" \
+            --name "ai-foundry-endpoint" \
+            --value "https://YOUR-AI-ENDPOINT.cognitiveservices.azure.com/" \
+            > /dev/null
+          
+          # Set AI_MODEL_DEPLOYMENT (default model deployment name)
+          az keyvault secret set \
+            --vault-name "$KEYVAULT_NAME" \
+            --name "ai-model-deployment" \
+            --value "gpt-4o-mini" \
+            > /dev/null
+          
+          # Get storage account connection string for blob-storage-connection
+          STORAGE_ACCOUNT=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.storageAccountName.value')
+          STORAGE_CONN=$(az storage account show-connection-string \
+            --name "$STORAGE_ACCOUNT" \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
+            --query connectionString -o tsv)
+          
+          az keyvault secret set \
+            --vault-name "$KEYVAULT_NAME" \
+            --name "blob-storage-connection" \
+            --value "$STORAGE_CONN" \
+            > /dev/null
+          
           echo "✅ Key Vault secrets seeded successfully"
           echo ""
           echo "📝 Note: Update these secrets in GitHub repository settings:"
@@ -348,6 +375,23 @@ jobs:
             2>/dev/null || echo "⚠️  Table Data Contributor role may already exist"
           
           echo "✅ Function App storage roles configured"
+
+      - name: Configure Function App for ESM
+        run: |
+          FUNCTION_APP_NAME=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.functionAppName.value')
+          
+          echo "⚙️  Configuring Function App for Azure Functions v4 ESM..."
+          
+          # Enable Azure Functions v4 Node.js programming model with worker indexing
+          az functionapp config appsettings set \
+            --name "$FUNCTION_APP_NAME" \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
+            --settings \
+              "AzureWebJobsFeatureFlags=EnableWorkerIndexing" \
+              "SCM_DO_BUILD_DURING_DEPLOYMENT=false" \
+            --output none
+          
+          echo "✅ Function App ESM configuration complete"
 
       # Note: Frontend workflow will fetch SWA token at runtime; no repo secret is set here.
 

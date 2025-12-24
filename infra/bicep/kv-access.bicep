@@ -1,21 +1,22 @@
-// RG-scoped: Add Key Vault access policy for Function App identity
+// RG-scoped: Add Key Vault access policy for a principal
 param keyVaultName string
-param objectId string
+param principalId string
+param secretPermissions array = ['get', 'list']
 
-resource kv 'Microsoft.KeyVault/vaults@2019-09-01' existing = {
+resource kv 'Microsoft.KeyVault/vaults@2023-07-01' existing = {
   name: keyVaultName
 }
 
-resource accessPolicies 'Microsoft.KeyVault/vaults/accessPolicies@2019-09-01' = {
+resource accessPolicies 'Microsoft.KeyVault/vaults/accessPolicies@2023-07-01' = {
   name: 'add'
   parent: kv
   properties: {
     accessPolicies: [
       {
         tenantId: subscription().tenantId
-        objectId: objectId
+        objectId: principalId
         permissions: {
-          secrets: [ 'get', 'list' ]
+          secrets: secretPermissions
         }
       }
     ]
