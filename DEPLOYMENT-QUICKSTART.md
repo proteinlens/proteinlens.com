@@ -1,85 +1,72 @@
 # Quick Start: Deploy ProteinLens to Azure
 
-**Status**: All workflows ready - configure secrets and deploy!  
-**Estimated Time**: 1 hour setup + 30 minutes deployment  
+**Status**: Unified OIDC deploy ready — configure one secret + variables  
+**Estimated Time**: 20 minutes setup + 30 minutes deployment  
 
 ---
 
-## 🚀 Step 1: Create Azure Service Principal (5 min)
+## 🚀 Step 1: Configure Azure OIDC + Repo Variables (10 min)
+
+The pipeline uses Azure OpenID Connect (OIDC) — no client secrets or publish profiles. Create a federated credential for GitHub Actions and capture the App (Client) ID.
 
 ```bash
-# Create service principal
-az ad sp create-for-rbac --name "proteinlens-gh-actions" \
-  --role "Contributor" \
-  --scopes "/subscriptions/YOUR_SUBSCRIPTION_ID"
+# Prereqs: Azure CLI 2.63+, Owner on subscription
 
-# Save the JSON output - you'll need it next
-# Example output:
-# {
-#   "clientId": "...",
-#   "clientSecret": "...",
-#   "tenantId": "...",
-#   "subscriptionId": "...",
-# }
+# 1) Create an AAD App (or reuse an existing one)
+az ad app create --display-name "proteinlens-github-oidc" --query appId -o tsv
+# Copy the returned value as APP_ID
+
+# 2) Grant the app Contributor at resource-group scope
+az role assignment create \
+  --assignee APP_ID \
+  --role Contributor \
+  --scope "/subscriptions/$SUB_ID/resourceGroups/proteinlens-prod"
+
+# 3) Add federated credential for this GitHub repo (replace ORG/REPO)
+az ad app federated-credential create \
+  --id APP_ID \
+  --parameters '{
+    "name": "gh-actions",
+    "issuer": "https://token.actions.githubusercontent.com",
+    "subject": "repo:ORG/REPO:ref:refs/heads/main",
+    "audiences": ["api://AzureADTokenExchange"]
+  }'
+
+# 4) In GitHub → Settings → Secrets and variables → Actions:
+#    - Add secret AZURE_CLIENT_ID = APP_ID
+#    - Add variables: AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID, AZURE_RESOURCE_GROUP, DNS_ZONE_NAME
+#    - Add variable: AZURE_DNS_RESOURCE_GROUP (resource group containing the DNS zone)
+#    - Optional variable: AZURE_WHAT_IF (set 'false' to skip infra idempotency what-if)
 ```
 
 ---
 
-## 🔐 Step 2: Configure GitHub Secrets (10 min)
+## 🔐 Step 2: Key Vault Supremacy (No Sensitive Repo Secrets)
 
-**Navigate**: Your GitHub repo → Settings → Secrets and variables → Actions → Repository secrets
+All application secrets (database URL, OpenAI, Stripe, storage) are created and stored in Azure Key Vault by the workflow, and the Function App accesses them via Key Vault references.
 
-**Create these 9 secrets**:
+- Required secret: `AZURE_CLIENT_ID` (Client ID of the OIDC AAD App)
+- Required variables: `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_RESOURCE_GROUP`, `DNS_ZONE_NAME`, `AZURE_DNS_RESOURCE_GROUP`
+- No publish profiles or SWA tokens are needed; the workflow fetches runtime tokens where required.
 
-### Mandatory Secrets
-
-```bash
-# 1. Azure Service Principal (from step 1)
-gh secret set AZURE_CREDENTIALS --body '{paste-entire-json-from-above}'
-
-# 2. Subscription ID
-gh secret set AZURE_SUBSCRIPTION_ID --body "YOUR_SUBSCRIPTION_ID"
-
-# 3. Resource Group (will be created)
-gh secret set AZURE_RESOURCE_GROUP --body "proteinlens-prod"
-
-# 4. Database Admin Password (must be complex!)
-gh secret set DATABASE_ADMIN_PASSWORD --body "P@ssw0rd-Secure123!"
-
-# 5. OpenAI API Key (get from https://platform.openai.com/api-keys)
-gh secret set OPENAI_API_KEY --body "sk-..."
-
-# 6. Stripe Secret Key (get from https://dashboard.stripe.com)
-gh secret set STRIPE_SECRET_KEY --body "sk_live_..."
-
-# 7. Stripe Webhook Secret (get from Stripe Dashboard → Webhooks)
-gh secret set STRIPE_WEBHOOK_SECRET --body "whsec_..."
-```
-
-Verify all 7 are set:
-```bash
-gh secret list
-```
+### Production DNS Gate (main branch)
+- The orchestrator enforces a DNS gate on `main`.
+- It requires the Azure DNS zone for `proteinlens.com` to exist in `AZURE_DNS_RESOURCE_GROUP`.
+- If missing, the run fails fast with guidance. Non-production branches skip this gate and use default hostnames.
 
 ---
 
-## 🏗️ Step 3: Deploy Infrastructure (15-20 min)
+## 🏗️ Step 3: Run Orchestrated Deploy (Infra-first)
 
 ### Via GitHub UI
-1. Go to **Actions** → **Deploy Infrastructure**
+1. Go to **Actions** → **Deploy**
 2. Click **Run workflow**
-3. Select environment: **prod**
-4. Enter confirmation: `deploy-infra`
-5. Click **Run workflow**
-6. Monitor the progress (watch logs)
+3. Confirm run on branch `main` (prod)
+4. Monitor progress — infra deploys first (with idempotency what-if), then validation + secret seeding, then incremental app deploys
 
 ### Via CLI
 ```bash
-gh workflow run infra.yml \
-  -f environment=prod \
-  -f confirm_deploy=deploy-infra
-
-# Watch progress
+gh workflow run deploy.yml
 gh run watch
 ```
 
@@ -90,57 +77,15 @@ gh run watch
 
 ---
 
-## 📋 Step 4: Extract Deployment Credentials (5 min)
+## 📋 Step 4: No Credential Extraction Needed
 
-After infrastructure deployment completes:
-
-```bash
-# Get Function App publish profile
-az webapp deployment list-publishing-profiles \
-  --resource-group proteinlens-prod \
-  --name proteinlens-api-prod \
-  --xml > publish-profile.xml
-
-# Add to GitHub Secrets
-gh secret set AZURE_FUNCTIONAPP_PUBLISH_PROFILE --body "$(cat publish-profile.xml)"
-
-# Get Static Web Apps deployment token
-SWATOKENID=$(az staticwebapp secrets list \
-  --resource-group proteinlens-prod \
-  --name proteinlens-web-prod \
-  --query properties.apiKey -o tsv)
-
-gh secret set AZURE_STATIC_WEB_APPS_API_TOKEN --body "$SWATOKENID"
-
-# Verify
-gh secret list | grep -E "PROFILE|SWA"
-```
+Publish profiles and static tokens are not used. The workflow logs all resource names and URLs. Secrets are stored in Key Vault and permissions are granted automatically.
 
 ---
 
-## 🚀 Step 5: Deploy Backend & Frontend (5-8 min each)
+## 🚀 Step 5: App Deploys Are Incremental
 
-### Option A: Automatic (Recommended)
-```bash
-# Push any change to main
-git commit -m "trigger deployment" --allow-empty
-git push origin main
-
-# Backend and frontend will deploy automatically
-# Go to Actions to monitor
-```
-
-### Option B: Manual
-```bash
-# Trigger backend
-gh workflow run deploy-api.yml
-
-# Trigger frontend  
-gh workflow run deploy-web.yml
-
-# Watch
-gh run watch
-```
+Push changes to `infra/**`, `backend/**`, or `frontend/**` and the pipeline deploys only the affected parts. You can also manually run `Deploy` from Actions.
 
 **✅ Success indicators**:
 - Both workflows show ✅ in Actions
@@ -182,10 +127,10 @@ export STATIC_WEB_APP_URL=https://proteinlens.azurestaticapps.net
 
 ## 📊 Verification Checklist
 
-- [ ] All 9 GitHub Secrets set
+- [ ] `AZURE_CLIENT_ID` secret set
+- [ ] Required variables set: tenant, subscription, resource group, DNS zone
 - [ ] Infrastructure deployment completed successfully
-- [ ] Resource Group visible in Azure Portal (8 resources)
-- [ ] Deployment credentials extracted (publish profile + SWA token)
+- [ ] Resource Group visible in Azure Portal
 - [ ] Backend deployment succeeded
 - [ ] Frontend deployment succeeded
 - [ ] Health endpoint returns status="healthy"
@@ -199,7 +144,7 @@ export STATIC_WEB_APP_URL=https://proteinlens.azurestaticapps.net
 ### "Secret not found" error
 ```bash
 gh secret list
-# All 9 secrets should appear
+# Ensure AZURE_CLIENT_ID is present
 ```
 
 ### Infrastructure deployment fails
@@ -245,7 +190,7 @@ az staticwebapp log list \
 - **Complete Workflow Guide**: [.github/workflows/README.md](.github/workflows/README.md)
 - **Secrets Setup & Rotation**: [.github/SECRETS_README.md](.github/SECRETS_README.md)
 - **Implementation Details**: [DEPLOYMENT-PIPELINE-IMPLEMENTATION.md](DEPLOYMENT-PIPELINE-IMPLEMENTATION.md)
-- **Feature 004 Spec**: [specs/004-azure-deploy-pipeline/](specs/004-azure-deploy-pipeline/)
+- **Incremental Deploy Spec**: [specs/001-incremental-deploy/spec.md](specs/001-incremental-deploy/spec.md)
 
 ---
 

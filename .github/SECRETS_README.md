@@ -1,66 +1,50 @@
 # GitHub Secrets Configuration
 
-This document describes all GitHub Secrets required for the ProteinLens deployment pipeline.
+This document describes the minimal GitHub repository secret and variables required for the unified ProteinLens deployment pipeline using Azure OIDC.
 
 ## Required Secrets
 
 All secrets must be set in the GitHub repository settings (`Settings → Secrets and variables → Actions → Repository secrets`).
 
-### Infrastructure Secrets
+### Repository Secret
 
-#### AZURE_CREDENTIALS
+#### AZURE_CLIENT_ID
 
-**Purpose**: Authentication for Azure CLI and Azure Functions deployment
-
-**Format**: JSON containing Azure service principal credentials
+**Purpose**: Client ID of Azure AD application configured with a GitHub OIDC federated credential. Used by `azure/login@v2` to obtain tokens without any client secret.
 
 **How to Obtain**:
 ```bash
-# Create a service principal
-az ad sp create-for-rbac --name "proteinlens-gh-actions" \
-  --role "Contributor" \
-  --scopes "/subscriptions/{subscription-id}" \
-  --json-auth
+# Create or reuse an Azure AD app and capture its appId
+APP_ID=$(az ad app create --display-name "proteinlens-github-oidc" --query appId -o tsv)
 
-# Output will be in this format:
-{
-  "clientId": "00000000-0000-0000-0000-000000000000",
-  "clientSecret": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-  "subscriptionId": "00000000-0000-0000-0000-000000000000",
-  "tenantId": "00000000-0000-0000-0000-000000000000",
-  "activeDirectoryEndpointUrl": "https://login.microsoftonline.com",
-  "resourceManagerEndpointUrl": "https://management.azure.com/",
-  "activeDirectoryGraphResourceId": "https://graph.windows.net/",
-  "sqlManagementEndpointUrl": "https://management.core.windows.net:8443/",
-  "galleryEndpointUrl": "https://gallery.azure.com/",
-  "managementEndpointUrl": "https://management.core.windows.net/"
-}
+# Add federated credential for this GitHub repo (replace ORG/REPO)
+az ad app federated-credential create \
+  --id "$APP_ID" \
+  --parameters '{
+    "name": "gh-actions",
+    "issuer": "https://token.actions.githubusercontent.com",
+    "subject": "repo:ORG/REPO:ref:refs/heads/main",
+    "audiences": ["api://AzureADTokenExchange"]
+  }'
 ```
 
 **Set in GitHub**:
 ```bash
-gh secret set AZURE_CREDENTIALS --body '$(az ad sp create-for-rbac --name "proteinlens-gh-actions" --role "Contributor" --scopes "/subscriptions/{subscription-id}" --json-auth)'
+gh secret set AZURE_CLIENT_ID --body "$APP_ID"
 ```
 
-**Rotation**: Quarterly - Use `az ad sp credential reset` to rotate without changing client ID
+**Rotation**: Not applicable (no client secret). If you need to change the app, update the federated credential and the secret value.
 
 ---
 
-#### AZURE_SUBSCRIPTION_ID
+### Repository Variables
 
-**Purpose**: Azure subscription identifier
+Set these as repository-level variables (not secrets):
 
-**Format**: UUID (e.g., `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`)
-
-**How to Obtain**:
-```bash
-az account show --query id -o tsv
-```
-
-**Set in GitHub**:
-```bash
-gh secret set AZURE_SUBSCRIPTION_ID --body "$(az account show --query id -o tsv)"
-```
+- `AZURE_TENANT_ID`: `az account show --query tenantId -o tsv`
+- `AZURE_SUBSCRIPTION_ID`: `az account show --query id -o tsv`
+- `AZURE_RESOURCE_GROUP`: e.g., `proteinlens-prod`
+- `DNS_ZONE_NAME`: e.g., `proteinlens.com`
 
 ---
 
@@ -79,66 +63,22 @@ gh secret set AZURE_RESOURCE_GROUP --body "proteinlens-prod"
 
 ---
 
-### Database Secrets
+### Optional Infra Parameter
 
-#### DATABASE_ADMIN_PASSWORD
+#### POSTGRES_ADMIN_PASSWORD
 
-**Purpose**: PostgreSQL admin user password
-
-**Requirements**:
-- Minimum 12 characters
-- Must contain uppercase, lowercase, digits, and special characters
-- Cannot contain PostgreSQL reserved words
-- Examples of invalid: `P@ssw0rd`, `admin123` (too short or weak)
-
-**Format**: String (URL-safe characters recommended)
-
-**Example**: `P@ssw0rd-Xyz123-Secure!`
-
-**Generate Secure Password**:
-```bash
-openssl rand -base64 32
-# Example output: AbCdEfGhIjKlMnOpQrStUvWxYz123456+/=
-```
+**Purpose**: If your Bicep requires an explicit admin password parameter, set this as a GitHub Secret used only during infra deployment. Application access uses Key Vault; no app code reads this value.
 
 **Set in GitHub**:
 ```bash
-gh secret set DATABASE_ADMIN_PASSWORD --body "YourSecurePassword123!"
+gh secret set POSTGRES_ADMIN_PASSWORD --body "YourSecurePassword123!"
 ```
-
-**Security Notes**:
-- Store in password manager
-- Never log or print in CI/CD output
-- Rotate quarterly: Update in Key Vault, then in PostgreSQL
-- GitHub Actions automatically masks this value in logs
 
 ---
 
-### API Keys & Credentials
+### Application Secrets Live in Key Vault
 
-#### OPENAI_API_KEY
-
-**Purpose**: OpenAI API authentication for AI Foundry integration
-
-**Format**: String starting with `sk-`
-
-**How to Obtain**:
-1. Go to [OpenAI Platform](https://platform.openai.com)
-2. Login or create account
-3. Navigate to **API keys**
-4. Click **Create new secret key**
-5. Copy the key (only shown once!)
-
-**Set in GitHub**:
-```bash
-gh secret set OPENAI_API_KEY --body "sk-..."
-```
-
-**Security Notes**:
-- Grant minimum required permissions (API scope restrictions)
-- Set usage limits in OpenAI account
-- Monitor usage in [OpenAI Billing](https://platform.openai.com/account/billing)
-- Rotate if exposed: Generate new key, update GitHub Secret, revoke old key
+OpenAI, Stripe, storage connection strings, and the database URL are created and stored in Azure Key Vault by the workflow. The Function App reads them via Key Vault references. Do not store these in GitHub; manage them in Key Vault.
 
 ---
 
@@ -196,36 +136,9 @@ gh secret set STRIPE_WEBHOOK_SECRET --body "whsec_..."
 
 ### Azure Functions & Static Web Apps
 
-#### AZURE_FUNCTIONAPP_PUBLISH_PROFILE
+#### Removed: Publish Profiles and SWA Tokens
 
-**Purpose**: Deployment credentials for Azure Functions
-
-**Format**: XML file contents (multiline)
-
-**When Available**: After infrastructure deployment completes
-
-**How to Obtain**:
-```bash
-# After infrastructure deployed, download publish profile
-az webapp deployment list-publishing-profiles \
-  --resource-group proteinlens-prod \
-  --name proteinlens-api-prod \
-  --xml > publish-profile.xml
-
-# View the file (contains sensitive credentials)
-cat publish-profile.xml
-```
-
-**Set in GitHub**:
-```bash
-gh secret set AZURE_FUNCTIONAPP_PUBLISH_PROFILE --body "$(cat publish-profile.xml)"
-```
-
-**Security Notes**:
-- Contains username and password for FTP/WebDeploy deployment
-- Regenerate quarterly: Run `az webapp deployment slot create` for new profile
-- Cannot be downloaded twice (must regenerate)
-- GitHub Actions automatically masks all content in logs
+Publish profiles and static deployment tokens are not used. The workflow authenticates via OIDC and fetches any runtime tokens securely without storing them in repository secrets.
 
 ---
 
@@ -261,55 +174,33 @@ gh secret set AZURE_STATIC_WEB_APPS_API_TOKEN --body "$(az staticwebapp secrets 
 
 ---
 
-## Secret Rotation Schedule
+## Secret & Variable Review
 
-| Secret | Rotation Frequency | Owner | Notes |
-|--------|-------------------|-------|-------|
-| AZURE_CREDENTIALS | Quarterly | DevOps | Use `az ad sp credential reset` |
-| DATABASE_ADMIN_PASSWORD | Quarterly | DevOps | Update in both PostgreSQL and Key Vault |
-| OPENAI_API_KEY | Quarterly | Engineering | Monitor usage, set spending limits |
-| STRIPE_SECRET_KEY | Quarterly | Engineering | Use separate keys per environment |
-| STRIPE_WEBHOOK_SECRET | Quarterly | Engineering | Create new webhook, update secret |
-| AZURE_FUNCTIONAPP_PUBLISH_PROFILE | Quarterly | DevOps | Regenerate via `az webapp deployment` |
-| AZURE_STATIC_WEB_APPS_API_TOKEN | Quarterly | DevOps | Regenerate via `az staticwebapp secrets reset-api-key` |
+| Item | Type | Rotation | Notes |
+|------|------|---------|-------|
+| AZURE_CLIENT_ID | Secret | N/A | OIDC auth; no client secret required |
+| AZURE_TENANT_ID | Variable | N/A | Tenant context |
+| AZURE_SUBSCRIPTION_ID | Variable | N/A | Subscription context |
+| AZURE_RESOURCE_GROUP | Variable | N/A | Target resource group |
+| DNS_ZONE_NAME | Variable | N/A | Used for DNS validation |
+| POSTGRES_ADMIN_PASSWORD | Secret | Quarterly | Only if Bicep parameter requires it |
 
 ---
 
 ## Verification Checklist
 
-Before running deployment workflows, verify all secrets are set:
+Before running deployment workflows, verify the required secret and variables are set:
 
 ```bash
 #!/bin/bash
 # Check all required secrets are set
 
-REQUIRED_SECRETS=(
-  "AZURE_CREDENTIALS"
-  "AZURE_SUBSCRIPTION_ID"
-  "AZURE_RESOURCE_GROUP"
-  "DATABASE_ADMIN_PASSWORD"
-  "OPENAI_API_KEY"
-  "STRIPE_SECRET_KEY"
-  "STRIPE_WEBHOOK_SECRET"
-)
+REQUIRED_SECRET="AZURE_CLIENT_ID"
 
-echo "Checking GitHub Secrets..."
-gh secret list
-
-echo ""
-echo "Verifying required secrets (after infrastructure deployed):"
-DEPLOYMENT_SECRETS=(
-  "AZURE_FUNCTIONAPP_PUBLISH_PROFILE"
-  "AZURE_STATIC_WEB_APPS_API_TOKEN"
-)
-
-for secret in "${DEPLOYMENT_SECRETS[@]}"; do
-  if gh secret list | grep -q "$secret"; then
-    echo "✓ $secret"
-  else
-    echo "✗ $secret (required after infra deployment)"
-  fi
-done
+echo "Checking GitHub Secret $REQUIRED_SECRET and variables..."
+gh secret list | grep -q "$REQUIRED_SECRET" && echo "✓ $REQUIRED_SECRET" || echo "✗ $REQUIRED_SECRET missing"
+echo "Variables:"
+gh variable list | grep -E "AZURE_TENANT_ID|AZURE_SUBSCRIPTION_ID|AZURE_RESOURCE_GROUP|DNS_ZONE_NAME" || echo "Configure required variables"
 ```
 
 ---
@@ -386,11 +277,7 @@ az monitor app-insights metrics show \
 
 **Solution**:
 ```bash
-# Verify secret is set
-gh secret list
-
-# If missing, set it
-gh secret set SECRET_NAME --body "value"
+gh secret list | grep AZURE_CLIENT_ID || gh secret set AZURE_CLIENT_ID --body "APP_ID"
 ```
 
 ### Secret Masking Not Working

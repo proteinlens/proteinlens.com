@@ -2,59 +2,30 @@
 
 Complete this checklist **before** your first production deployment to ensure security best practices are met.
 
-## GitHub Secrets Configuration
+## GitHub Secret & Variables Configuration
 
-- [ ] **AZURE_CREDENTIALS** - Service principal JSON set up
-  - [ ] Service principal created in Azure
-  - [ ] Secret value verified (valid JSON)
+- [ ] **AZURE_CLIENT_ID** - Azure AD app (OIDC) Client ID set
+  - [ ] Federated credential created for this GitHub repo
   - [ ] Not exposed in any logs or commits
-  - [ ] Scope limited to subscription
+  - [ ] Role assignment scoped to target resource group
 
-- [ ] **AZURE_SUBSCRIPTION_ID** - Subscription ID configured
-  - [ ] Correct subscription ID used (verify against Azure portal)
-  - [ ] Not using a different subscription by mistake
+- [ ] **Repository Variables** configured
+  - [ ] `AZURE_TENANT_ID`
+  - [ ] `AZURE_SUBSCRIPTION_ID`
+  - [ ] `AZURE_RESOURCE_GROUP`
+  - [ ] `DNS_ZONE_NAME`
 
-- [ ] **AZURE_RESOURCE_GROUP** - Resource group name set
-  - [ ] Resource group name matches deployment configuration
-  - [ ] Group exists or will be created by infra workflow
-
-- [ ] **DATABASE_ADMIN_PASSWORD** - PostgreSQL admin password
+- [ ] **POSTGRES_ADMIN_PASSWORD** (optional) set if Bicep requires
   - [ ] Strong password (16+ chars, mixed case, numbers, symbols)
   - [ ] Not shared in plaintext anywhere
   - [ ] Stored in secure location (1Password, Vault, etc.)
 
-- [ ] **OPENAI_API_KEY** - OpenAI API key configured
-  - [ ] API key valid and active
-  - [ ] Usage limits set on OpenAI account
-  - [ ] Not expired
-
-- [ ] **STRIPE_SECRET_KEY** - Stripe secret key configured
-  - [ ] Using live (not test) key for production
-  - [ ] API version matches backend expectations
-  - [ ] Webhook signing key set up separately
-
-- [ ] **STRIPE_WEBHOOK_SECRET** - Stripe webhook secret configured
-  - [ ] Webhook endpoint created in Stripe dashboard
-  - [ ] Secret matches webhook configuration
-  - [ ] Webhook events enabled: charge.succeeded, charge.failed, etc.
-
-- [ ] **AZURE_FUNCTIONAPP_PUBLISH_PROFILE** - Generated after infra deployment
-  - [ ] Created by infra.yml workflow
-  - [ ] Only added after infrastructure deployed
-  - [ ] Not committed to git
-
-- [ ] **AZURE_STATIC_WEB_APPS_API_TOKEN** - Generated after SWA creation
-  - [ ] Created by infra.yml workflow
-  - [ ] Only added after infrastructure deployed
-  - [ ] Not committed to git
-
 ## Azure Setup
 
-- [ ] **Service Principal Created**
-  - [ ] Role: Contributor on subscription
-  - [ ] Not using Owner role
-  - [ ] Client secret has expiration date set
-  - [ ] Secret rotated every 90 days
+- [ ] **Azure AD App Configured for OIDC**
+  - [ ] App (Client) ID recorded as `AZURE_CLIENT_ID`
+  - [ ] Federated credential added (issuer: GitHub, subject: repo)
+  - [ ] Role: Contributor on resource group scope
 
 - [ ] **Resource Group Prepared**
   - [ ] Naming follows pattern: proteinlens-{environment}
@@ -122,10 +93,10 @@ Complete this checklist **before** your first production deployment to ensure se
   - [ ] Stale PR approvals dismissed
 
 - [ ] **Workflows Validated**
-  - [ ] infra.yml requires confirmation (`confirm_deploy=deploy-infra`)
+  - [ ] `deploy.yml` runs infra-first and is incremental
   - [ ] Workflows mask secrets in logs
   - [ ] Artifact uploads don't include secrets
-  - [ ] Manual workflow_dispatch triggers for infra
+  - [ ] Manual `workflow_dispatch` supported
 
 - [ ] **API Security**
   - [ ] CORS configured for allowed domains only
@@ -193,10 +164,10 @@ Complete this checklist **before** your first production deployment to ensure se
   - [ ] Update GitHub Secrets
   - [ ] Update Key Vault
 
-- [ ] **Compromised Service Principal**
-  - [ ] Delete old service principal in Azure AD
-  - [ ] Create new service principal
-  - [ ] Update AZURE_CREDENTIALS secret
+- [ ] **Compromised Azure AD App**
+  - [ ] Update federated credential configuration
+  - [ ] Rotate role assignments as needed
+  - [ ] Update `AZURE_CLIENT_ID` secret if app changed
   - [ ] Audit recent deployments
 
 - [ ] **Database Password Compromised**

@@ -1,180 +1,96 @@
 # GitHub Workflows for ProteinLens Deployment
 
-This directory contains the automated deployment workflows for ProteinLens infrastructure, backend API, and frontend web application.
+This directory contains the automated deployment workflow for ProteinLens infrastructure, backend API, and frontend web application.
 
 ## Workflows Overview
 
-### 1. **infra.yml** - Infrastructure Provisioning
+### 1. **deploy.yml** — Incremental Infra + App Deploy
 
-**Trigger**: Manual (`workflow_dispatch`)
+**Trigger**: Automatic on push to `main`; Manual (`workflow_dispatch`)
 
-**Purpose**: Deploy all Azure infrastructure (Function App, Static Web App, PostgreSQL, Key Vault, Storage) using Bicep Infrastructure as Code.
+**Purpose**: Idempotent infrastructure first, then incremental application deploys:
+- Infra updates via Bicep (`infra/bicep/main.bicep`)
+- Backend deploy only when `backend/**` changes
+- Frontend deploy only when `frontend/**` changes
+- Smoke tests verify API and Web endpoints
 
 **Prerequisites**:
 - Azure subscription with sufficient quota
-- Service Principal credentials (in `AZURE_CREDENTIALS` secret)
-- Resource Group exists or will be created
+- GitHub OIDC federated credentials for Azure login (no client secret)
+- Repository variables configured (see below)
 
 **Workflow Steps**:
-1. **Validate** - Syntax and deployment validation
-2. **Deploy** - Create/update all Azure resources
-3. **Seed Secrets** - Populate Key Vault with runtime secrets
-4. **Grant Access** - Configure Function App Managed Identity permissions
+1. **Changes Detection** — Path filters: `infra/**`, `backend/**`, `frontend/**`
+2. **Tests** — Run unit tests for changed app components
+3. **Infra** — Azure login (OIDC) → Bicep deploy → outputs capture
+4. **Infra Validation** — Seed Key Vault secrets; grant Function App identity access; add CORS for SWA
+5. **Env URLs** — Compute API/Web URLs for current environment
+6. **Backend Deploy** — Build, Prisma migrate (CI), zip deploy
+7. **Frontend Deploy** — Build, SWA deploy using token fetched via Azure CLI
+8. **Smoke Tests** — API `GET /api/health` and Web `GET /` with retry/backoff
 
-**Required Secrets**:
-- `AZURE_CREDENTIALS` - JSON with clientId, clientSecret, tenantId, subscriptionId
-- `AZURE_SUBSCRIPTION_ID` - Azure subscription ID
-- `AZURE_RESOURCE_GROUP` - Resource group name (created if needed)
-- `DATABASE_ADMIN_PASSWORD` - PostgreSQL admin password
-- `OPENAI_API_KEY` - OpenAI API key
-- `STRIPE_SECRET_KEY` - Stripe secret key
-- `STRIPE_WEBHOOK_SECRET` - Stripe webhook secret
+**Required Repository Variables**:
+- `AZURE_TENANT_ID` — Azure tenant ID
+- `AZURE_SUBSCRIPTION_ID` — Azure subscription ID
+- `AZURE_RESOURCE_GROUP` — Resource group name
+- `AZURE_LOCATION` — Azure region (must be `northeurope` per Bicep)
+- `DNS_ZONE_NAME` — Domain zone (e.g., `proteinlens.com`)
+- `FUNCTION_APP_NAME` — Azure Function App name
+- `STATIC_WEB_APP_NAME` — Azure Static Web App name
+- `AZURE_WHAT_IF` — Optional (`true` to preview infra changes)
+
+**Required GitHub Secret (non-sensitive)**:
+- `AZURE_CLIENT_ID` — Client ID for OIDC federated credential (GUID; not a secret)
+
+**Secrets Policy (Key Vault Supremacy)**:
+- Sensitive credentials (database admin password, OpenAI API key, Stripe keys) MUST NOT be stored in GitHub Secrets
+- These secrets are stored in Azure Key Vault and referenced by the Function App at runtime
+- The workflow seeds Key Vault values and grants access to the Function App’s managed identity
 
 **Manual Run**:
 ```bash
-gh workflow run infra.yml -f environment=prod -f confirm_deploy=deploy-infra
+gh workflow run deploy.yml
 ```
 
 **Outputs**:
-- Function App URL, name, Managed Identity ID
+- Function App URL, name, Managed Identity principal ID
 - Static Web App name, URL
-- PostgreSQL server FQDN
+- PostgreSQL server FQDN (from infra outputs)
 - Key Vault name, URI
-- Storage Account name, container name
-
----
-
-### 2. **deploy-api.yml** - Backend Deployment
-
-**Trigger**: 
-- Automatic on push to `main` (path filter: `backend/**`)
-- Manual (`workflow_dispatch`)
-
-**Purpose**: Build, test, and deploy the TypeScript/Azure Functions backend with database migrations and health validation.
-
-**Workflow Steps**:
-1. **Build**
-   - Setup Node.js 20
-   - Install dependencies (`npm ci`)
-   - Compile TypeScript
-   - Run linting
-   - Run unit tests
-   - Package Function App deployment
-
-2. **Deploy**
-   - Login to Azure
-   - Deploy to Azure Functions using publish profile
-   - Wait for cold start (10s)
-
-3. **Health Check**
-   - Call `/api/health?deep=true` endpoint
-   - Verify database, storage, and AI service connectivity
-   - Retry up to 5 times with 5s backoff
-   - Fail workflow if health check fails
-
-4. **Summary** - Report results to GitHub Actions summary
-
-**Required Secrets**:
-- `AZURE_CREDENTIALS` - For Azure login
-- `AZURE_FUNCTIONAPP_PUBLISH_PROFILE` - Function App publish profile
-
-**Key Environment Variables**:
-- `AZURE_FUNCTIONAPP_NAME` - Function App name (default: `proteinlens-api-prod`)
-- `NODE_VERSION` - Node.js version (default: `20`)
-
-**Manual Run**:
-```bash
-gh workflow run deploy-api.yml
-```
-
-**Outputs**:
-- Build artifacts (TypeScript compiled, node_modules)
-- Deployment status and Function App URL
-- Health check validation results
-
----
-
-### 3. **deploy-web.yml** - Frontend Deployment
-
-**Trigger**:
-- Automatic on push to `main` (path filter: `frontend/**`)
-- Manual (`workflow_dispatch`)
-
-**Purpose**: Build the React/Vite frontend with production optimizations and deploy to Azure Static Web Apps.
-
-**Workflow Steps**:
-1. **Build**
-   - Setup Node.js 20
-   - Install dependencies (`npm ci`)
-   - Build with Vite (with `VITE_API_URL` injected)
-   - Verify build size (<300KB)
-   - Run linting and tests
-
-2. **Deploy**
-   - Download build artifact
-   - Deploy to Azure Static Web Apps using API token
-   - Validate deployment token format
-
-3. **Smoke Test**
-   - Wait for deployment to propagate (15s)
-   - Test homepage accessibility (HTTP 200)
-   - Verify HTML content
-   - Retry up to 5 times
-
-4. **Summary** - Report results to GitHub Actions summary
-
-**Required Secrets**:
-- `AZURE_STATIC_WEB_APPS_API_TOKEN` - Static Web Apps deployment token
-- `GITHUB_TOKEN` - Automatic (provided by GitHub Actions)
-
-**Key Environment Variables**:
-- `VITE_API_URL` - Backend API URL (default: `https://proteinlens-api-prod.azurewebsites.net`)
-- `NODE_VERSION` - Node.js version (default: `20`)
-
-**Manual Run**:
-```bash
-gh workflow run deploy-web.yml
-```
-
-**Outputs**:
-- Build artifacts (dist/ folder with optimized frontend)
-- Deployment status and Static Web App URL
-- Smoke test validation results
+- Storage Account name
 
 ---
 
 ## Setup Instructions
 
-### 1. Create GitHub Secrets
-
-Required secrets (all **must** be set before running workflows):
+### 1. Configure OIDC and Repository Variables
 
 ```bash
-# Infrastructure secrets
-gh secret set AZURE_CREDENTIALS --body '{
-  "clientId": "xxxx",
-  "clientSecret": "xxxx",
-  "tenantId": "xxxx",
-  "subscriptionId": "xxxx"
-}'
+# Set non-sensitive secret: OIDC Client ID (GUID)
+gh secret set AZURE_CLIENT_ID --body "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 
-gh secret set AZURE_SUBSCRIPTION_ID --body "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-gh secret set AZURE_RESOURCE_GROUP --body "proteinlens-prod"
-
-# Database secret
-gh secret set DATABASE_ADMIN_PASSWORD --body "SecurePassword123!"
-
-# API keys
-gh secret set OPENAI_API_KEY --body "sk-..."
-gh secret set STRIPE_SECRET_KEY --body "sk_live_..."
-gh secret set STRIPE_WEBHOOK_SECRET --body "whsec_..."
-
-# Deployment credentials (after first infrastructure deployment)
-gh secret set AZURE_FUNCTIONAPP_PUBLISH_PROFILE --body "$(cat publish-profile.xml)"
-gh secret set AZURE_STATIC_WEB_APPS_API_TOKEN --body "..."
+# Set repository variables (recommended)
+gh variable set AZURE_TENANT_ID --value "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+gh variable set AZURE_SUBSCRIPTION_ID --value "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+gh variable set AZURE_RESOURCE_GROUP --value "proteinlens-prod"
+gh variable set AZURE_LOCATION --value "northeurope"
+gh variable set DNS_ZONE_NAME --value "proteinlens.com"
+gh variable set FUNCTION_APP_NAME --value "proteinlens-api-prod"
+gh variable set STATIC_WEB_APP_NAME --value "proteinlens-web-prod"
+gh variable set AZURE_WHAT_IF --value "false"
 ```
 
-### 2. Create Bicep Parameter Files
+### 2. Key Vault Secrets (do NOT store in GitHub)
+
+Sensitive secrets live in Azure Key Vault and are referenced at runtime:
+- `database-url` (constructed from PostgreSQL FQDN, admin username+password, database name)
+- `openai-api-key` (if using Azure OpenAI)
+- `stripe-secret-key`, `stripe-webhook-secret` (if using Stripe)
+- `blob-storage-connection`
+
+The workflow seeds these secrets via Azure CLI after infra deployment and grants Function App access.
+
+### 3. Create Bicep Parameter Files
 
 Create environment-specific parameter files in `infra/bicep/parameters/`:
 
@@ -182,7 +98,7 @@ Create environment-specific parameter files in `infra/bicep/parameters/`:
 ```json
 {
   "parameters": {
-    "location": { "value": "eastus" },
+      "location": { "value": "northeurope" },
     "environmentName": { "value": "prod" },
     "appNamePrefix": { "value": "proteinlens" }
   }
@@ -193,49 +109,37 @@ Create environment-specific parameter files in `infra/bicep/parameters/`:
 ```json
 {
   "parameters": {
-    "location": { "value": "eastus" },
+      "location": { "value": "northeurope" },
     "environmentName": { "value": "dev" }
   }
 }
 ```
 
-### 3. Deploy Infrastructure
+### 4. Deploy Infrastructure
 
 Run the infrastructure workflow manually:
 
 ```bash
-gh workflow run infra.yml -f environment=prod -f confirm_deploy=deploy-infra
+gh workflow run deploy.yml
 ```
 
 Monitor the deployment in GitHub Actions. Once complete, extract outputs:
 
 ```bash
-# Get Function App publish profile
-az webapp deployment list-publishing-profiles \
-  --resource-group proteinlens-prod \
-  --name proteinlens-api-prod \
-  --xml > publish-profile.xml
-
-gh secret set AZURE_FUNCTIONAPP_PUBLISH_PROFILE --body "$(cat publish-profile.xml)"
-
-# Get Static Web Apps deployment token
-az staticwebapp secrets list \
-  --resource-group proteinlens-prod \
-  --name proteinlens-web-prod \
-  --query properties.apiKey -o tsv | gh secret set AZURE_STATIC_WEB_APPS_API_TOKEN --body -
+# (No publish profile or SWA token secrets required)
+# SWA deployment token is fetched at runtime via Azure CLI in the workflow.
 ```
 
-### 4. Deploy Backend and Frontend
+### 5. Deploy Backend and Frontend
 
 Once infrastructure is deployed and secrets are configured:
 
 ```bash
-# Push changes to trigger automatic deployments
+# Push changes to trigger incremental deployments
 git push origin main
 
-# Or manually trigger
-gh workflow run deploy-api.yml
-gh workflow run deploy-web.yml
+# Or manually trigger the unified workflow
+gh workflow run deploy.yml
 ```
 
 ---
@@ -330,10 +234,10 @@ FUNCTION_APP_URL=http://localhost:7071 STATIC_WEB_APP_URL=http://localhost:5173 
 
 ## Security Best Practices
 
-1. **Secret Rotation**: Rotate GitHub Secrets quarterly
-   - OpenAI API key
-   - Stripe secret key
-   - Database admin password
+1. **Secret Rotation**: Rotate Key Vault secrets per policy (no sensitive GitHub Secrets)
+   - OpenAI API key (Key Vault)
+   - Stripe secret key (Key Vault)
+   - Database admin password (Key Vault)
 
 2. **Branch Protection**: Require status checks to pass before merging
    - All workflows must pass
@@ -346,8 +250,8 @@ FUNCTION_APP_URL=http://localhost:7071 STATIC_WEB_APP_URL=http://localhost:5173 
 
 4. **Least Privilege**: Workflows use minimal required permissions
    - Function App: Managed Identity with scoped Key Vault access
-   - Service Principal: Deployment-only permissions
-   - No PAT tokens or long-lived credentials
+   - OIDC federated credential: RG-scoped contributor for deploy; SWA/Functions contributor as needed
+   - No PAT tokens or long-lived credentials; no publish profiles
 
 ---
 

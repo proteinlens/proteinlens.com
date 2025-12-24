@@ -1,0 +1,22 @@
+openapi: 3.0.3
+info:
+  title: ProteinLens Smoke Test Contracts
+  version: 1.0.0
+servers:
+  - url: https://api.proteinlens.com
+    description: Production API
+  - url: https://www.proteinlens.com
+    description: Production Web
+paths:
+  /api/health:
+    get:
+      summary: Health Check
+      responses:
+        '200':
+          description: OK
+  /:
+    get:
+      summary: Web Root
+      responses:
+        '200':
+          description: OK (contains title marker)

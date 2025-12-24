@@ -11,6 +11,11 @@ Auto-generated from all feature plans. Last updated: 2025-12-22
 - PostgreSQL Flexible Server (prod), Azure Blob Storage (for assets/state), Key Vault (secrets) (001-unified-azure-deploy)
 - GitHub Actions YAML, Azure CLI 2.63+, Bicep v0.30+ + `azure/login` (OIDC), `azure/cli` action, `actions/upload-artifact`, `actions/download-artifact`, `actions/setup-node` (for smoke), Front Door + Static Web Apps + Function App Azure services (001-ci-azure-deploy)
 - N/A (pipeline artifacts only) (001-ci-azure-deploy)
+- GitHub Actions YAML; Azure CLI 2.63+; Bicep 0.30+ + `azure/login`, `azure/cli`, `actions/setup-node`, `dorny/paths-filter` (001-incremental-deploy)
+- N/A (CI artifacts only; app storage provisioned via infra) (001-incremental-deploy)
+- Backend Node.js 20 (TypeScript), Frontend React + Vite (TS), Bicep 0.30+ + Azure CLI, GitHub Actions, Prisma, Vitest, Tailwind (001-incremental-deploy)
+- PostgreSQL Flexible Server, Azure Storage (Blob) (001-incremental-deploy)
+- Backend: Node.js 20.x (Azure Functions); Frontend: React + Vite + TypeScrip + Azure Functions, Azure Static Web Apps, Azure CLI, GitHub Actions, Prisma, Vites (001-incremental-deploy)
 
 - TypeScript 5.3+ / Node.js 20 + Azure Functions v4, Prisma 5.8+, Stripe SDK, React 18, Vite 5 (002-saas-billing)
 
@@ -30,9 +35,9 @@ npm test && npm run lint
 TypeScript 5.3+ / Node.js 20: Follow standard conventions
 
 ## Recent Changes
-- 001-ci-azure-deploy: Added GitHub Actions YAML, Azure CLI 2.63+, Bicep v0.30+ + `azure/login` (OIDC), `azure/cli` action, `actions/upload-artifact`, `actions/download-artifact`, `actions/setup-node` (for smoke), Front Door + Static Web Apps + Function App Azure services
-- 001-unified-azure-deploy: Added Node.js 20 (Azure Functions), TypeScript (backend/frontend), Bicep (IaC) + Azure Functions, Azure Static Web Apps, Azure Front Door Standard, Azure Key Vault, Azure Storage (Blob), Azure Database for PostgreSQL Flexible Server, Azure AI Foundry (GPT‑5‑1), GitHub Actions
-- 005-openai-foundry-automation: Added Bicep (latest), GitHub Actions YAML, Bash; Node.js 20 for helper scripts (optional) + Azure CLI (`az`), Bicep CLI, Azure Resource Manager; Azure Functions (existing)
+- 001-incremental-deploy: Added Backend: Node.js 20.x (Azure Functions); Frontend: React + Vite + TypeScrip + Azure Functions, Azure Static Web Apps, Azure CLI, GitHub Actions, Prisma, Vites
+- 001-incremental-deploy: Added Backend Node.js 20 (TypeScript), Frontend React + Vite (TS), Bicep 0.30+ + Azure CLI, GitHub Actions, Prisma, Vitest, Tailwind
+- 001-incremental-deploy: Added GitHub Actions YAML; Azure CLI 2.63+; Bicep 0.30+ + `azure/login`, `azure/cli`, `actions/setup-node`, `dorny/paths-filter`
 
 
 <!-- MANUAL ADDITIONS START -->

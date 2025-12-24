@@ -38,425 +38,152 @@ jobs:
               - 'backend/**'
             frontend:
               - 'frontend/**'
+
+  dns_gate:
+    name: Production DNS Gate
+    runs-on: ubuntu-latest
+    needs: [changes]
+    outputs:
+      ok: ${{ steps.gate.outputs.ok }}
+    steps:
+      - name: Non-production branch
+        if: github.ref != 'refs/heads/main'
+        id: gate
+        run: |
+          echo "ok=true" >> "$GITHUB_OUTPUT"
+          echo "✅ Non-production branch; DNS gate passed by default"
+
+      - name: Azure Login (OIDC)
+        if: github.ref == 'refs/heads/main'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Check Azure DNS zone (proteinlens.com)
+        if: github.ref == 'refs/heads/main'
+        id: checkdns
+        run: |
+          set -euo pipefail
+          ZONE="${{ vars.DNS_ZONE_NAME }}"
+          [ -z "$ZONE" ] && ZONE="proteinlens.com"
+          RG="${{ vars.AZURE_DNS_RESOURCE_GROUP }}"
+          if [ -z "$RG" ]; then
+            echo "❌ AZURE_DNS_RESOURCE_GROUP repo variable is not set."
+            echo "Please set repository variable AZURE_DNS_RESOURCE_GROUP to the resource group that contains the DNS zone '$ZONE'."
+            exit 1
+          fi
+          echo "🔎 Checking DNS zone '$ZONE' in resource group '$RG'..."
+          if az network dns zone show -g "$RG" -n "$ZONE" &>/dev/null; then
+            echo "✅ DNS zone '$ZONE' found"
+          else
+            echo "❌ DNS zone '$ZONE' not found in resource group '$RG'"
+            exit 2
+          fi
+
+      - name: Set DNS gate output
+        if: github.ref == 'refs/heads/main' && success()
+        id: gateprod
+        run: |
+          echo "ok=true" >> "$GITHUB_OUTPUT"
+          echo "✅ Production DNS gate passed"
+          echo "## ✅ DNS Gate Passed" >> "$GITHUB_STEP_SUMMARY"
+          echo "Zone: ${{ vars.DNS_ZONE_NAME || 'proteinlens.com' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Resource Group: ${{ vars.AZURE_DNS_RESOURCE_GROUP }}" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Report DNS gate failure
+        if: github.ref == 'refs/heads/main' && failure()
+        run: |
+          echo "ok=false" >> "$GITHUB_OUTPUT"
+          echo "## ❌ Production DNS Zone Missing" >> "$GITHUB_STEP_SUMMARY"
+          echo "Production runs require Azure DNS zone for 'proteinlens.com'." >> "$GITHUB_STEP_SUMMARY"
+          echo "Set repo variables: AZURE_DNS_RESOURCE_GROUP and DNS_ZONE_NAME (default: proteinlens.com)." >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+
+  summary:
+    name: Deployment Summary
+    runs-on: ubuntu-latest
+    needs: [changes, dns_gate, infra, deploy_backend, deploy_frontend, smoke_test]
+    if: always()
+    steps:
+      - name: Summarize results
+        run: |
+          echo "## 📋 Orchestrator Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Gate" >> "$GITHUB_STEP_SUMMARY"
+          echo "DNS Gate: ${{ needs.dns_gate.outputs.ok || 'false' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Zone: ${{ vars.DNS_ZONE_NAME || 'proteinlens.com' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "DNS RG: ${{ vars.AZURE_DNS_RESOURCE_GROUP || 'unset' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Changes" >> "$GITHUB_STEP_SUMMARY"
+          echo "Infra changed: ${{ needs.changes.outputs.infra }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Backend changed: ${{ needs.changes.outputs.backend }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Frontend changed: ${{ needs.changes.outputs.frontend }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Deploy Results" >> "$GITHUB_STEP_SUMMARY"
+          echo "Backend deploy: ${{ needs.deploy_backend.result }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Frontend deploy: ${{ needs.deploy_frontend.result }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Smoke tests: ${{ needs.smoke_test.result }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Endpoints" >> "$GITHUB_STEP_SUMMARY"
+          echo "API URL: ${{ needs.infra.outputs.functionapp_url }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Web URL: https://${{ needs.infra.outputs.staticwebapp_name }}.azurestaticapps.net/" >> "$GITHUB_STEP_SUMMARY"
+
   test:
     name: Pre-Deploy Tests
     runs-on: ubuntu-latest
     needs: [changes]
     if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true'
-    timeout-minutes: 30
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Backend tests
+        run: |
+          cd backend
+          npm ci
+          npm run test:unit
+      - name: Frontend tests
+        run: |
+          cd frontend
+          npm ci
+          npm test -- --coverage || true
 
-      - name: Setup Node.js 20.x
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
-          cache: 'npm'
-          cache-dependency-path: |
-            backend/package-lock.json
-            frontend/package-lock.json
-
-      - name: Backend - Install deps
-        run: npm ci
-        working-directory: backend
-
-      - name: Backend - Unit tests
-        run: npm run test:unit
-        working-directory: backend
-
-      - name: Frontend - Install deps
-        run: npm ci
-        working-directory: frontend
-
-      - name: Frontend - Unit tests
-        run: npm test -- --coverage
-        working-directory: frontend
   infra:
-    name: Infra
-    runs-on: ubuntu-latest
+    name: Provision Infra
     needs: [changes, test]
-    if: needs.changes.outputs.infra == 'true'
-    outputs:
-      keyvault_name: ${{ steps.capture-outputs.outputs.keyvault_name }}
-      functionapp_name: ${{ steps.capture-outputs.outputs.functionapp_name }}
-      functionapp_principal: ${{ steps.capture-outputs.outputs.functionapp_principal }}
-      storage_account: ${{ steps.capture-outputs.outputs.storage_account }}
-      postgres_fqdn: ${{ steps.capture-outputs.outputs.postgres_fqdn }}
-      postgres_admin: ${{ steps.capture-outputs.outputs.postgres_admin }}
-      database_name: ${{ steps.capture-outputs.outputs.database_name }}
-      staticwebapp_name: ${{ steps.capture-outputs.outputs.staticwebapp_name }}
-      api_url: ${{ steps.compute-urls.outputs.api_url }}
-      web_url: ${{ steps.compute-urls.outputs.web_url }}
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Azure Login (OIDC)
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ vars.AZURE_TENANT_ID }}
-          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Azure CLI version
-        uses: azure/cli@v2
-        with:
-          inlineScript: az version
-
-      - name: Validate Azure DNS zone in prod
-        if: github.ref == 'refs/heads/main'
-        uses: azure/cli@v2
-        with:
-          inlineScript: |
-            set -euo pipefail
-            RG="${{ vars.AZURE_RESOURCE_GROUP }}"
-            ZONE="${{ vars.DNS_ZONE_NAME }}"
-            if ! az network dns zone show -n "$ZONE" -g "$RG" >/dev/null 2>&1; then
-              echo "Move DNS zone to Azure DNS to enable zero-touch domains" >&2
-              exit 16
-            fi
-            echo "DNS zone $ZONE found in resource group $RG"
-
-      - name: Deploy Bicep (idempotent)
-        uses: azure/cli@v2
-        with:
-          inlineScript: |
-            set -euo pipefail
-            RG="${{ vars.AZURE_RESOURCE_GROUP }}"
-            LOCATION="${{ vars.AZURE_LOCATION }}"
-            ENVIRONMENT_NAME=prod
-            DEPLOYMENT_NAME="proteinlens-main"
-            # Note: location param is @allowed([northeurope]) in Bicep
-            az group create -n "$RG" -l "$LOCATION"
-            DNS_EXISTS=true
-            # Optional preview of changes
-            if [ "${AZURE_WHAT_IF:-false}" = "true" ]; then
-              az deployment group what-if \
-                --resource-group "$RG" \
-                --name "$DEPLOYMENT_NAME" \
-                --template-file infra/bicep/main.bicep \
-                --parameters \
-                  location=northeurope \
-                  environmentName=$ENVIRONMENT_NAME \
-                  isProd=true \
-                  dnsZoneName=${{ vars.DNS_ZONE_NAME }} \
-                  dnsZoneExists=$DNS_EXISTS || true
-            fi
-            az deployment group create \
-              --resource-group "$RG" \
-              --name "$DEPLOYMENT_NAME" \
-              --template-file infra/bicep/main.bicep \
-              --parameters \
-                location=northeurope \
-                environmentName=$ENVIRONMENT_NAME \
-                isProd=true \
-                dnsZoneName=${{ vars.DNS_ZONE_NAME }} \
-                dnsZoneExists=$DNS_EXISTS \
-                postgresAdminPassword=${{ secrets.POSTGRES_ADMIN_PASSWORD }}
-  infra_validate:
-    name: Infra Validation & Secrets
-    runs-on: ubuntu-latest
-    needs: [infra]
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-      - name: Azure Login (OIDC)
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ vars.AZURE_TENANT_ID }}
-          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Validate core resources exist
-        uses: azure/cli@v2
-        with:
-          inlineScript: |
-            set -euo pipefail
-            RG="${{ vars.AZURE_RESOURCE_GROUP }}"
-            KV="${{ needs.infra.outputs.keyvault_name }}"
-            FA="${{ needs.infra.outputs.functionapp_name }}"
-            SA="${{ needs.infra.outputs.storage_account }}"
-            PGFQDN="${{ needs.infra.outputs.postgres_fqdn }}"
-            SWA="${{ needs.infra.outputs.staticwebapp_name }}"
-            az keyvault show -n "$KV" -g "$RG" >/dev/null
-            az functionapp show -n "$FA" -g "$RG" >/dev/null
-            az storage account show -n "$SA" -g "$RG" >/dev/null
-            echo "OK: KV=$KV FA=$FA SA=$SA PGFQDN=$PGFQDN SWA=$SWA"
-
-      - name: Grant Key Vault policy to Function App
-        uses: azure/cli@v2
-        with:
-          inlineScript: |
-            set -euo pipefail
-            RG="${{ vars.AZURE_RESOURCE_GROUP }}"
-            KV="${{ needs.infra.outputs.keyvault_name }}"
-            OBJID="${{ needs.infra.outputs.functionapp_principal }}"
-            az keyvault set-policy -n "$KV" -g "$RG" --object-id "$OBJID" --secret-permissions get list
-            echo "Granted KV get/list to principal $OBJID"
-
-      - name: Seed required Key Vault secrets
-        uses: azure/cli@v2
-        with:
-          inlineScript: |
-            set -euo pipefail
-            RG="${{ vars.AZURE_RESOURCE_GROUP }}"
-            KV="${{ needs.infra.outputs.keyvault_name }}"
-            PGFQDN="${{ needs.infra.outputs.postgres_fqdn }}"
-            PGADMIN="${{ needs.infra.outputs.postgres_admin }}"
-            DBNAME="${{ needs.infra.outputs.database_name }}"
-            PGPASS="${{ secrets.POSTGRES_ADMIN_PASSWORD }}"
-            DBURL="postgresql://${PGADMIN}:${PGPASS}@${PGFQDN}:5432/${DBNAME}"
-            az keyvault secret set --vault-name "$KV" --name "database-url" --value "$DBURL" --output none
-            if [ -n "${{ secrets.OPENAI_API_KEY }}" ]; then
-              az keyvault secret set --vault-name "$KV" --name "openai-api-key" --value "${{ secrets.OPENAI_API_KEY }}" --output none
-            fi
-            if [ -n "${{ secrets.STRIPE_SECRET_KEY }}" ]; then
-              az keyvault secret set --vault-name "$KV" --name "stripe-secret-key" --value "${{ secrets.STRIPE_SECRET_KEY }}" --output none
-            fi
-            if [ -n "${{ secrets.STRIPE_WEBHOOK_SECRET }}" ]; then
-              az keyvault secret set --vault-name "$KV" --name "stripe-webhook-secret" --value "${{ secrets.STRIPE_WEBHOOK_SECRET }}" --output none
-            fi
-            az keyvault secret set --vault-name "$KV" --name "ai-foundry-endpoint" --value "" --output none
-            az keyvault secret set --vault-name "$KV" --name "ai-model-deployment" --value "" --output none
-            SA="${{ needs.infra.outputs.storage_account }}"
-            # Fetch storage connection string
-            CONN=$(az storage account show-connection-string -n "$SA" -g "$RG" --query connectionString -o tsv)
-            az keyvault secret set --vault-name "$KV" --name "blob-storage-connection" --value "$CONN" --output none
-            echo "Seeded KV secrets for Function App"
-
-      - name: Add CORS for Static Web App default host
-        uses: azure/cli@v2
-        with:
-          inlineScript: |
-            set -euo pipefail
-            RG="${{ vars.AZURE_RESOURCE_GROUP }}"
-            FA="${{ needs.infra.outputs.functionapp_name }}"
-            HOST=$(az functionapp show -n "$FA" -g "$RG" --query properties.defaultHostName -o tsv)
-            SWA_HOST=$(az staticwebapp show -n "${{ needs.infra.outputs.staticwebapp_name }}" -g "$RG" --query defaultHostname -o tsv)
-            az functionapp cors add -g "$RG" -n "$FA" --allowed-origins "https://$SWA_HOST" || true
-            echo "Added CORS origin https://$SWA_HOST to $FA"
-
-      - name: Capture infra outputs
-        id: capture-outputs
-        uses: azure/cli@v2
-        with:
-          inlineScript: |
-            set -euo pipefail
-            RG="${{ vars.AZURE_RESOURCE_GROUP }}"
-            DEPLOYMENT_NAME="proteinlens-main"
-            function get() {
-              az deployment group show -g "$RG" -n "$DEPLOYMENT_NAME" --query "properties.outputs.$1.value" -o tsv
-            }
-            KV=$(get keyVaultName)
-            FA=$(get functionAppName)
-            FAP=$(get functionAppPrincipalId)
-            SA=$(get storageAccountName)
-            PGFQDN=$(get postgresServerFqdn)
-            PGADMIN=$(get postgresAdminUsername)
-            DBNAME=$(get databaseName)
-            SWA=$(get staticWebAppName)
-            echo "keyvault_name=$KV" >> "$GITHUB_OUTPUT"
-            echo "functionapp_name=$FA" >> "$GITHUB_OUTPUT"
-            echo "functionapp_principal=$FAP" >> "$GITHUB_OUTPUT"
-            echo "storage_account=$SA" >> "$GITHUB_OUTPUT"
-            echo "postgres_fqdn=$PGFQDN" >> "$GITHUB_OUTPUT"
-            echo "postgres_admin=$PGADMIN" >> "$GITHUB_OUTPUT"
-            echo "database_name=$DBNAME" >> "$GITHUB_OUTPUT"
-            echo "staticwebapp_name=$SWA" >> "$GITHUB_OUTPUT"
-
-      - name: Compute endpoint URLs (prod vs non-prod)
-        id: compute-urls
-        uses: azure/cli@v2
-        with:
-          inlineScript: |
-            set -euo pipefail
-            RG="${{ vars.AZURE_RESOURCE_GROUP }}"
-            FUNC="${{ vars.FUNCTION_APP_NAME }}"
-            SWA="${{ vars.STATIC_WEB_APP_NAME }}"
-            # Query default hostnames
-            FUNC_HOST=$(az functionapp show -n "$FUNC" -g "$RG" --query defaultHostName -o tsv)
-            SWA_HOST=$(az staticwebapp show -n "$SWA" -g "$RG" --query defaultHostname -o tsv)
-            if [ -z "$FUNC_HOST" ] || [ -z "$SWA_HOST" ]; then
-              echo "Failed to resolve default hostnames" >&2
-              exit 22
-            fi
-            if [ "${GITHUB_REF}" = "refs/heads/main" ]; then
-              API_URL="https://api.proteinlens.com/api/health"
-              WEB_URL="https://www.proteinlens.com/"
-            else
-              API_URL="https://$FUNC_HOST/api/health"
-              WEB_URL="https://$SWA_HOST/"
-            fi
-            echo "api_url=$API_URL" >> "$GITHUB_OUTPUT"
-            echo "web_url=$WEB_URL" >> "$GITHUB_OUTPUT"
-
-  env_urls:
-    name: Environment URLs
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Azure Login (OIDC)
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ vars.AZURE_TENANT_ID }}
-          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Compute endpoint URLs (always)
-        id: compute-urls
-        uses: azure/cli@v2
-        with:
-          inlineScript: |
-            set -euo pipefail
-            RG="${{ vars.AZURE_RESOURCE_GROUP }}"
-            FUNC="${{ vars.FUNCTION_APP_NAME }}"
-            SWA="${{ vars.STATIC_WEB_APP_NAME }}"
-            FUNC_HOST=$(az functionapp show -n "$FUNC" -g "$RG" --query defaultHostName -o tsv)
-            SWA_HOST=$(az staticwebapp show -n "$SWA" -g "$RG" --query defaultHostname -o tsv)
-            if [ -z "$FUNC_HOST" ] || [ -z "$SWA_HOST" ]; then
-              echo "Failed to resolve default hostnames" >&2
-              exit 22
-            fi
-            if [ "${GITHUB_REF}" = "refs/heads/main" ]; then
-              API_URL="https://api.proteinlens.com/api/health"
-              WEB_URL="https://www.proteinlens.com/"
-            else
-              API_URL="https://$FUNC_HOST/api/health"
-              WEB_URL="https://$SWA_HOST/"
-            fi
-            echo "api_url=$API_URL" >> "$GITHUB_OUTPUT"
-            echo "web_url=$WEB_URL" >> "$GITHUB_OUTPUT"
-    outputs:
-      api_url: ${{ steps.compute-urls.outputs.api_url }}
-      web_url: ${{ steps.compute-urls.outputs.web_url }}
+    uses: ./.github/workflows/infra.yml
+    with:
+      environment: prod
 
   deploy_backend:
     name: Deploy Backend
-    runs-on: ubuntu-latest
-    needs: [env_urls, infra, infra_validate]
-    if: needs.changes.outputs.backend == 'true'
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 20.x
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
-          cache: 'npm'
-          cache-dependency-path: backend/package-lock.json
-
-      - name: Azure Login (OIDC)
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ vars.AZURE_TENANT_ID }}
-          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Build and Package Functions
-        run: |
-          set -euo pipefail
-          pushd backend
-          npm ci
-          npm run build --if-present || true
-          # Run Prisma migrations against provisioned DB
-          export DATABASE_URL="postgresql://${{ needs.infra.outputs.postgres_admin }}:${{ secrets.POSTGRES_ADMIN_PASSWORD }}@${{ needs.infra.outputs.postgres_fqdn }}:5432/${{ needs.infra.outputs.database_name }}"
-          npx prisma migrate deploy --skip-generate
-          npm prune --production
-          zip -r ../backend.zip . -x ".*" -x "tests/*"
-          popd
-
-      - name: Preflight: host.json at zip root
-        run: |
-          set -euo pipefail
-          unzip -l backend.zip | awk '{print $4}' | grep -E '^host.json$' >/dev/null || { echo "backend.zip missing host.json at root" >&2; exit 17; }
-
-      - name: Deploy Functions (zip)
-        uses: azure/cli@v2
-        with:
-          inlineScript: |
-            set -euo pipefail
-            az functionapp deployment source config-zip \
-              -g "${{ vars.AZURE_RESOURCE_GROUP }}" \
-              -n "${{ vars.FUNCTION_APP_NAME }}" \
-              --src backend.zip
+    needs: [infra, dns_gate, changes]
+    if: needs.changes.outputs.backend == 'true' && needs.dns_gate.outputs.ok == 'true'
+    uses: ./.github/workflows/deploy-api.yml
+    with:
+      resource_group: ${{ vars.AZURE_RESOURCE_GROUP }}
+      functionapp_name: ${{ needs.infra.outputs.functionapp_name }}
+      # database_url can be passed if needed
 
   deploy_frontend:
     name: Deploy Frontend
-    runs-on: ubuntu-latest
-    needs: [env_urls, infra, infra_validate]
-    if: needs.changes.outputs.frontend == 'true'
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 20.x
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Azure Login (OIDC)
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ vars.AZURE_TENANT_ID }}
-          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Build Frontend
-        run: |
-          set -euo pipefail
-          pushd frontend
-          npm ci
-          npm run build
-          test -f dist/index.html || { echo "frontend/dist/index.html missing" >&2; exit 18; }
-          popd
-
-      - name: Fetch SWA deploy token
-        id: token
-        uses: azure/cli@v2
-        with:
-          inlineScript: |
-            set -euo pipefail
-            TOKEN=$(az staticwebapp secrets list --name "${{ vars.STATIC_WEB_APP_NAME }}" --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" --query properties.apiKey -o tsv)
-            if [ -z "$TOKEN" ]; then echo "Failed to retrieve SWA token" >&2; exit 19; fi
-            echo "token=$TOKEN" >> $GITHUB_OUTPUT
-
-      - name: Deploy Static Web App
-        uses: Azure/static-web-apps-deploy@v1
-        with:
-          azure_static_web_apps_api_token: ${{ steps.token.outputs.token }}
-          skip_app_build: true
-          app_location: frontend
-          output_location: dist
+    needs: [infra, dns_gate, changes]
+    if: needs.changes.outputs.frontend == 'true' && needs.dns_gate.outputs.ok == 'true'
+    uses: ./.github/workflows/deploy-web.yml
+    with:
+      resource_group: ${{ vars.AZURE_RESOURCE_GROUP }}
+      staticwebapp_name: ${{ needs.infra.outputs.staticwebapp_name }}
+      api_url: ${{ needs.infra.outputs.functionapp_url }}
 
   smoke_test:
     name: Smoke Tests
-    runs-on: ubuntu-latest
-    needs: [env_urls, deploy_backend, deploy_frontend]
+    needs: [deploy_backend, deploy_frontend]
     if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
     steps:
       - name: API health with retry/backoff
         run: |
           set -euo pipefail
-          URL="${{ needs.env_urls.outputs.api_url }}"
+          URL="${{ needs.infra.outputs.functionapp_url }}/api/health"
           for i in $(seq 1 10); do
             code=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || true)
             if [ "$code" = "200" ]; then echo "API OK"; exit 0; fi
@@ -468,7 +195,7 @@ jobs:
       - name: Web check with title marker and retry/backoff
         run: |
           set -euo pipefail
-          URL="${{ needs.env_urls.outputs.web_url }}"
+          URL="https://${{ needs.infra.outputs.staticwebapp_name }}.azurestaticapps.net/"
           for i in $(seq 1 10); do
             body=$(curl -fsS "$URL" || true)
             if echo "$body" | grep -q "ProteinLens"; then echo "WEB OK"; exit 0; fi

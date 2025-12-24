@@ -8,6 +8,20 @@ on:
       - 'frontend/**'
       - '.github/workflows/deploy-web.yml'
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      resource_group:
+        description: 'Azure Resource Group'
+        required: true
+        type: string
+      staticwebapp_name:
+        description: 'Static Web App Name'
+        required: true
+        type: string
+      api_url:
+        description: 'API base URL for Vite build'
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -16,7 +30,6 @@ permissions:
 
 env:
   NODE_VERSION: '20'
-  VITE_API_URL: 'https://proteinlens-api-prod.azurewebsites.net'
 
 jobs:
   build:
@@ -37,7 +50,7 @@ jobs:
         run: |
           echo "Node: $(node --version)"
           echo "npm: $(npm --version)"
-          echo "Vite API URL: ${{ env.VITE_API_URL }}"
+          echo "Vite API URL: ${{ inputs.api_url }}"
 
       - name: Install dependencies
         run: |
@@ -47,11 +60,19 @@ jobs:
 
       - name: Build with Vite
         env:
-          VITE_API_URL: ${{ env.VITE_API_URL }}
+          VITE_API_URL: ${{ inputs.api_url }}
         run: |
           cd frontend
-          VITE_API_URL=${{ env.VITE_API_URL }} npm run build
+          VITE_API_URL="${{ inputs.api_url }}" npm run build
           echo "✅ Frontend build completed"
+
+      - name: Validate build artifact
+        run: |
+          if [ ! -f "frontend/dist/index.html" ]; then
+            echo "❌ Missing frontend/dist/index.html"
+            echo "Frontend artifact must include dist/index.html (FR-006)"
+            exit 1
+          fi
 
       - name: Check build size
         run: |
@@ -103,15 +124,34 @@ jobs:
           name: frontend-build
           path: frontend/dist
 
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Fetch Static Web App token
+        id: swa
+        run: |
+          RG="${{ inputs.resource_group || vars.AZURE_RESOURCE_GROUP }}"
+          SWA_NAME="${{ inputs.staticwebapp_name }}"
+          TOKEN=$(az staticwebapp secrets list --name "$SWA_NAME" --resource-group "$RG" --query properties.apiKey -o tsv)
+          if [ -z "$TOKEN" ]; then
+            echo "❌ Failed to retrieve SWA token"
+            exit 1
+          fi
+          echo "::add-mask::$TOKEN"
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+
       - name: Deploy to Static Web Apps
         uses: azure/static-web-apps-deploy@v1
         with:
-          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          azure_static_web_apps_api_token: ${{ steps.swa.outputs.token }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: 'upload'
           app_location: 'frontend/dist'
           skip_app_build: true
-          skip_deploy_on_missing_secrets: true
 
   smoke-test:
     name: Smoke Test
@@ -130,7 +170,7 @@ jobs:
         timeout-minutes: 3
         run: |
           # Extract SWA URL from Static Web Apps or use default
-          SWA_URL="https://proteinlens.azurestaticapps.net"
+          SWA_URL="https://${{ inputs.staticwebapp_name }}.azurestaticapps.net"
           MAX_RETRIES=5
           RETRY_DELAY=5
           RETRY_COUNT=0
@@ -184,8 +224,8 @@ jobs:
           echo "| Deploy | ✅ Passed |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Smoke Test | ✅ Passed |" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "**API URL**: ${{ env.VITE_API_URL }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "**Site URL**: https://proteinlens.azurestaticapps.net" >> "$GITHUB_STEP_SUMMARY"
+          echo "**API URL**: ${{ inputs.api_url }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Site URL**: https://${{ inputs.staticwebapp_name }}.azurestaticapps.net" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Report Build Failure
         if: failure()

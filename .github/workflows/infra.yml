@@ -15,14 +15,36 @@ on:
       confirm_deploy:
         description: 'Type "deploy-infra" to confirm deployment'
         required: true
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        type: string
+    outputs:
+      key_vault_name:
+        description: 'Key Vault name'
+        value: ${{ jobs.deploy.outputs.key_vault_name }}
+      functionapp_name:
+        description: 'Function App name'
+        value: ${{ jobs.deploy.outputs.functionapp_name }}
+      staticwebapp_name:
+        description: 'Static Web App name'
+        value: ${{ jobs.deploy.outputs.staticwebapp_name }}
+      functionapp_url:
+        description: 'Function App URL'
+        value: ${{ jobs.deploy.outputs.functionapp_url }}
+      staticwebapp_url:
+        description: 'Static Web App URL'
+        value: ${{ jobs.deploy.outputs.staticwebapp_url }}
 
 permissions:
   contents: read
   id-token: write
 
 env:
-  AZURE_LOCATION: eastus
-  RESOURCE_GROUP: proteinlens-${{ github.event.inputs.environment }}
+  AZURE_LOCATION: northeurope
+  RESOURCE_GROUP: proteinlens-${{ inputs.environment }}
 
 jobs:
   validate:
@@ -33,6 +55,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Validate confirmation
+        if: github.event_name == 'workflow_dispatch'
         run: |
           if [ "${{ github.event.inputs.confirm_deploy }}" != "deploy-infra" ]; then
             echo "❌ Deployment confirmation failed. Expected 'deploy-infra' but got '${{ github.event.inputs.confirm_deploy }}'"
@@ -41,11 +64,11 @@ jobs:
           echo "✅ Deployment confirmed"
 
       - name: Login to Azure
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
       - name: Validate Bicep syntax
         run: |
@@ -61,11 +84,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Login to Azure
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
       - name: Create Resource Group
         run: |
@@ -80,12 +103,38 @@ jobs:
           DEPLOYMENT_OUTPUT=$(az deployment group create \
             --resource-group "${{ env.RESOURCE_GROUP }}" \
             --template-file infra/bicep/main.bicep \
-            --parameters "@infra/bicep/parameters/${{ github.event.inputs.environment }}.parameters.json" \
+            --parameters "@infra/bicep/parameters/${{ inputs.environment }}.parameters.json" \
             --query properties.outputs \
             --output json)
           
           echo "deployment_output=$(echo "$DEPLOYMENT_OUTPUT" | jq -c .)" >> "$GITHUB_OUTPUT"
           echo "✅ Infrastructure deployment completed"
+
+      - name: Verify IaC Idempotency (what-if)
+        if: ${{ vars.AZURE_WHAT_IF != 'false' }}
+        run: |
+          set -euo pipefail
+          echo "🔎 Running what-if to validate idempotency..."
+          az deployment group what-if \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
+            --template-file infra/bicep/main.bicep \
+            --parameters "@infra/bicep/parameters/${{ inputs.environment }}.parameters.json" | tee whatif.txt
+          if grep -q "No changes" whatif.txt; then
+            echo "✅ Idempotency verified: no changes"
+          else
+            echo "❌ Idempotency check detected potential changes. Review what-if diff above."
+            exit 2
+          fi
+
+      - name: Extract Outputs
+        id: extract
+        run: |
+          OUTPUTS='${{ steps.deploy.outputs.deployment_output }}'
+          echo "key_vault_name=$(echo "$OUTPUTS" | jq -r '.keyVaultName.value')" >> "$GITHUB_OUTPUT"
+          echo "functionapp_name=$(echo "$OUTPUTS" | jq -r '.functionAppName.value')" >> "$GITHUB_OUTPUT"
+          echo "staticwebapp_name=$(echo "$OUTPUTS" | jq -r '.staticWebAppName.value')" >> "$GITHUB_OUTPUT"
+          echo "functionapp_url=$(echo "$OUTPUTS" | jq -r '.functionAppUrl.value')" >> "$GITHUB_OUTPUT"
+          echo "staticwebapp_url=$(echo "$OUTPUTS" | jq -r '.staticWebAppUrl.value')" >> "$GITHUB_OUTPUT"
 
       - name: Grant Workflow Access to Key Vault
         run: |
@@ -105,9 +154,7 @@ jobs:
 
       - name: Seed Key Vault Secrets
         env:
-          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
-          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          DATABASE_ADMIN_PASSWORD: ${{ secrets.DATABASE_ADMIN_PASSWORD }}
+          DATABASE_ADMIN_PASSWORD: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
@@ -188,8 +235,6 @@ jobs:
           echo "   - STRIPE_WEBHOOK_SECRET"
 
       - name: Grant Function App Key Vault Access
-        env:
-          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
         run: |
           FUNCTION_APP_IDENTITY=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.functionAppManagedIdentityId.value')
           KEYVAULT_NAME=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.keyVaultName.value')
@@ -252,51 +297,7 @@ jobs:
           
           echo "✅ Function App storage roles configured"
 
-      - name: Get Static Web App Deployment Token
-        id: swa_token
-        run: |
-          STATIC_WEB_APP_NAME=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.staticWebAppName.value')
-          
-          if [ -z "$STATIC_WEB_APP_NAME" ] || [ "$STATIC_WEB_APP_NAME" == "null" ]; then
-            echo "❌ Failed to extract Static Web App name"
-            exit 1
-          fi
-          
-          echo "🔐 Retrieving Static Web App deployment token..."
-          
-          # Get the deployment token (API key)
-          SWA_TOKEN=$(az staticwebapp secrets list \
-            --name "$STATIC_WEB_APP_NAME" \
-            --resource-group "${{ env.RESOURCE_GROUP }}" \
-            --query properties.apiKey -o tsv)
-          
-          if [ -z "$SWA_TOKEN" ]; then
-            echo "❌ Failed to retrieve Static Web App deployment token"
-            exit 1
-          fi
-          
-          echo "✅ Static Web App deployment token retrieved"
-          echo "::add-mask::$SWA_TOKEN"
-          echo "swa_token=$SWA_TOKEN" >> "$GITHUB_OUTPUT"
-
-      - name: Set Static Web App Token as GitHub Secret
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          SWA_TOKEN="${{ steps.swa_token.outputs.swa_token }}"
-          
-          if [ -z "$SWA_TOKEN" ]; then
-            echo "❌ Static Web App token not available"
-            exit 1
-          fi
-          
-          echo "🔐 Setting AZURE_STATIC_WEB_APPS_API_TOKEN GitHub secret..."
-          
-          # Set the secret using GitHub CLI
-          echo "$SWA_TOKEN" | gh secret set AZURE_STATIC_WEB_APPS_API_TOKEN
-          
-          echo "✅ GitHub secret AZURE_STATIC_WEB_APPS_API_TOKEN set successfully"
-          echo "   Frontend deployments will now work automatically"
+      # Note: Frontend workflow will fetch SWA token at runtime; no repo secret is set here.
 
       - name: Output Deployment Results
         if: success()
@@ -322,14 +323,20 @@ jobs:
           fi
           
           echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "## 🔐 GitHub Secrets Configuration" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "✅ **AZURE_STATIC_WEB_APPS_API_TOKEN** - Automatically configured" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "Frontend deployments are now fully automated!" >> "$GITHUB_STEP_SUMMARY"
+          echo "## 🔐 Frontend Deployment Readiness" >> "$GITHUB_STEP_SUMMARY"
+          echo "Static Web App is provisioned; token will be fetched at runtime by the frontend workflow." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Deployment Failed Notification
         if: failure()
         run: |
           echo "❌ Infrastructure deployment failed. Check logs above for details."
           exit 1
+
+  # Expose outputs for reusable workflow callers
+  deploy:
+    outputs:
+      key_vault_name: ${{ steps.extract.outputs.key_vault_name }}
+      functionapp_name: ${{ steps.extract.outputs.functionapp_name }}
+      staticwebapp_name: ${{ steps.extract.outputs.staticwebapp_name }}
+      functionapp_url: ${{ steps.extract.outputs.functionapp_url }}
+      staticwebapp_url: ${{ steps.extract.outputs.staticwebapp_url }}
