@@ -4,23 +4,29 @@ This guide helps troubleshoot common issues encountered during ProteinLens deplo
 
 ## Workflow Failures
 
-### Infrastructure Workflow (infra.yml) Failures
+### Unified Deploy Workflow (deploy.yml) Failures
 
-#### Error: "confirm_deploy does not equal 'deploy-infra'"
+#### Error: "Azure login failed (OIDC)"
 
-**Symptom**: Workflow stops at confirmation validation step
+**Symptom**: Workflow fails during `azure/login@v2`
 ```
-Error: confirm_deploy validation failed. Must set confirm_deploy=deploy-infra to proceed
+Error: Failed to exchange OIDC token for Azure token
 ```
 
-**Root Cause**: Safety gate - requires explicit confirmation to deploy infrastructure
+**Root Cause**: Azure AD app not configured with federated credential for this repo/branch, or incorrect `AZURE_CLIENT_ID`.
 
 **Solution**:
 ```bash
-# Run workflow with correct parameter:
-gh workflow run infra.yml \
-  -f environment=prod \
-  -f confirm_deploy=deploy-infra
+# Verify federated credential
+az ad app federated-credential list --id $AZURE_CLIENT_ID
+
+# Create credential if missing
+az ad app federated-credential create --id $AZURE_CLIENT_ID --parameters '{
+   "name": "gh-actions",
+   "issuer": "https://token.actions.githubusercontent.com",
+   "subject": "repo:ORG/REPO:ref:refs/heads/main",
+   "audiences": ["api://AzureADTokenExchange"]
+}'
 ```
 
 ---
@@ -54,23 +60,23 @@ InvalidTemplate | The template is invalid: Template validation failed:
 
 ---
 
-#### Error: "ServicePrincipalNotFound" or "InvalidServicePrincipalId"
+#### Error: "PrincipalNotFound" or insufficient permissions
 
 **Symptom**: Error granting Managed Identity access to Key Vault
 ```
 No matching service principal found in directory for XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
 ```
 
-**Root Cause**: Service principal doesn't have permission to grant Key Vault access, or Managed Identity not properly created
+**Root Cause**: Azure AD app lacks required role assignments to grant Key Vault access, or Managed Identity not properly created
 
 **Solution**:
-1. Verify service principal has "Owner" or "User Access Administrator" role on subscription:
+1. Verify Azure AD app has "Owner" or "User Access Administrator" role on resource group:
    ```bash
    az role assignment list \
      --assignee $AZURE_CLIENT_ID \
      --output table
    ```
-2. Wait 30 seconds after infrastructure deployment before granting access (propagation delay)
+2. Wait 30-60 seconds after infrastructure deployment before granting access (propagation delay)
 3. Verify Function App Managed Identity was created:
    ```bash
    az functionapp identity show \
@@ -115,7 +121,7 @@ The subscription does not have enough quota of compute resources in the 'eastus'
 Operation failed with status: 'Forbidden'. Details: Activity ID: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
 ```
 
-**Root Cause**: Service principal doesn't have permission to create/read Key Vault secrets
+**Root Cause**: Azure AD app doesn't have permission to create/read Key Vault secrets
 
 **Solution**:
 1. Verify service principal has Key Vault Administrator role:
@@ -133,7 +139,7 @@ Operation failed with status: 'Forbidden'. Details: Activity ID: XXXXXXXX-XXXX-X
 
 ---
 
-### Backend Deployment Workflow (deploy-api.yml) Failures
+### Backend Deployment Failures (deploy.yml)
 
 #### Error: "npm ERR! code E401 Unauthorized"
 
@@ -231,35 +237,36 @@ Waiting 5 seconds before retry...
 
 ---
 
-#### Error: "No such file or directory: .azure/functions/..."
+#### Error: "Zip deploy failed"
 
-**Symptom**: Azure Functions deployment fails
+**Symptom**: Azure Functions deployment fails during config-zip step
 ```
-Error: ENOENT: no such file or directory, open '.azure/functions/proteinlens-api-prod'
+Error: Deployment failed with status code 403 or 500
 ```
 
-**Root Cause**: Publish profile not found or wrong structure
+**Root Cause**: Missing Azure login context (OIDC), wrong resource group/name, or invalid zip content structure.
 
 **Solution**:
-1. Regenerate publish profile:
+1. Ensure Azure login succeeded in workflow (`azure/login@v2` with `AZURE_CLIENT_ID`).
+2. Verify resource group and app name:
+   ```bash
+   az functionapp show -g proteinlens-prod -n proteinlens-api-prod -o table
+   ```
+3. Validate zip content (contains host.json at root and function folders):
+   ```bash
+   unzip -l backend/dist.zip | head -50
+   ```
+4. Retry deploy locally for diagnosis:
    ```bash
    az functionapp deployment source config-zip \
      --resource-group proteinlens-prod \
      --name proteinlens-api-prod \
      --src-path ./backend/dist.zip
    ```
-2. Or retrieve publish profile:
-   ```bash
-   az functionapp deployment list-publishing-profiles \
-     --resource-group proteinlens-prod \
-     --name proteinlens-api-prod \
-     --output xml > publish-profile.xml
-   ```
-3. Store in GitHub Secrets as `AZURE_FUNCTIONAPP_PUBLISH_PROFILE`
 
 ---
 
-### Frontend Deployment Workflow (deploy-web.yml) Failures
+### Frontend Deployment Failures (deploy.yml)
 
 #### Error: "Build size exceeds 300KB"
 
@@ -314,8 +321,8 @@ Error: Cannot POST http://undefined/api/users
    ```
 3. Check workflow passes environment:
    ```bash
-   grep "VITE_API_URL" .github/workflows/deploy-web.yml
-   # Should see: VITE_API_URL=$API_URL npm run build --prefix frontend
+   grep "VITE_API_URL" .github/workflows/deploy.yml
+   # Should set VITE_API_URL during build
    ```
 4. Verify vite.config.ts doesn't override:
    ```bash
@@ -366,7 +373,7 @@ Total wait time: 10 minutes
 **Symptom**: Frontend deploys but smoke test fails
 ```
 Failed to fetch homepage: HTTP 404
-URL: https://proteinlens-web-prod.azurewebsites.net
+URL: https://proteinlens.azurestaticapps.net
 ```
 
 **Root Cause**: Static Web App not yet healthy, or SPA routing not configured
@@ -387,7 +394,7 @@ URL: https://proteinlens-web-prod.azurewebsites.net
    ```
 2. Verify homepage loads:
    ```bash
-   curl -v https://proteinlens-web-prod.azurewebsites.net
+   curl -v https://proteinlens.azurestaticapps.net
    # Should return 200 and HTML content
    ```
 3. Check if Static Web App still building:

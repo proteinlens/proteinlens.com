@@ -8,7 +8,7 @@
 
 ## 🎯 Implementation Overview
 
-Implemented comprehensive CI/CD infrastructure for ProteinLens deployment pipeline with automated workflows for infrastructure provisioning, backend API deployment, and frontend web deployment.
+Implemented an infra-first, orchestrated CI/CD pipeline using GitHub Actions with Azure OIDC login. Workflows are split and reusable: `infra.yml` (provision + idempotency), `deploy-api.yml` (backend), `deploy-web.yml` (frontend), orchestrated by `deploy.yml` (changes detection, DNS gate, smoke tests). Infrastructure is provisioned via Bicep, Key Vault is validated and seeded, and incremental backend/frontend deployments follow.
 
 ### Completed Components
 
@@ -20,29 +20,29 @@ Implemented comprehensive CI/CD infrastructure for ProteinLens deployment pipeli
 - ✅ `infra/bicep/parameters/` directory with prod and dev parameter files
 - ✅ Updated `infra/bicep/main.bicep` with comprehensive outputs
 
-**GitHub Actions Workflows**:
-- ✅ **`infra.yml`** (Infrastructure Provisioning)
-  - Manual trigger with confirmation gate
-  - Validation: Bicep syntax and deployment validation
-  - Deployment: Resource creation via Bicep templates
-  - Secrets Management: Key Vault population from GitHub Secrets
-  - Access Control: Function App Managed Identity permissions
-  - Outputs: Resource names, URLs, connection info
+**GitHub Actions Workflow**:
+- ✅ **`deploy.yml`** (Orchestrator)
+  - Changes detection: path filters for `infra/**`, `backend/**`, `frontend/**`
+  - Tests: pre-deploy unit tests to gate app deploys
+  - DNS Gate: production (`main`) requires Azure DNS zone for `proteinlens.com` in `AZURE_DNS_RESOURCE_GROUP`; fail-fast if missing
+  - Infra: Calls reusable `infra.yml` (Bicep deploy + idempotency what-if); outputs captured
+  - Backend: Calls reusable `deploy-api.yml` (build, optional CI Prisma migrate, zip deploy via OIDC)
+  - Frontend: Calls reusable `deploy-web.yml` (build, runtime-fetched SWA token, deploy)
+  - Smoke tests: API health and web root checks with retry/backoff; final orchestrator summary with gate status and endpoints
 
-- ✅ **`deploy-api.yml`** (Backend Deployment)
-  - Auto-trigger on push to main (path filter: `backend/**`)
-  - Build: TypeScript compilation, linting, unit tests
-  - Deploy: Azure Functions package upload with publish profile
-  - Health Check: Deep health endpoint validation with retries
-  - Summary: Deployment results to GitHub Actions summary
+- ✅ **`infra.yml`** (Reusable Infra)
+  - Azure OIDC login; create/update Resource Group
+  - Bicep deploy; expose outputs (Function App/SWA names + URLs)
+  - Key Vault policy for workflow and Function App; seed secrets
+  - Idempotency: Azure `what-if` check (toggle with `AZURE_WHAT_IF` variable)
 
-- ✅ **`deploy-web.yml`** (Frontend Deployment)
-  - Auto-trigger on push to main (path filter: `frontend/**`)
-  - Build: Vite build with `VITE_API_URL` injection
-  - Size Check: Verify <300KB (constitution principle)
-  - Deploy: Static Web Apps upload with API token
-  - Smoke Test: Homepage accessibility verification
-  - Summary: Build size and deployment status reporting
+- ✅ **`deploy-api.yml`** (Reusable Backend)
+  - Build/lint/test; explicit `host.json` validation (FR-005)
+  - Zip deploy via Azure CLI with OIDC; health verification using inputs
+
+- ✅ **`deploy-web.yml`** (Reusable Frontend)
+  - Vite build with `VITE_API_URL`; explicit `dist/index.html` validation (FR-006)
+  - Fetch SWA token at runtime; deploy and smoke test
 
 **Key Vault Integration**:
 - ✅ Updated `infra/bicep/function-app.bicep` with 7 Key Vault references:
@@ -70,7 +70,8 @@ Implemented comprehensive CI/CD infrastructure for ProteinLens deployment pipeli
 
 **Documentation**:
 - ✅ `.github/workflows/README.md` - Comprehensive workflow documentation
-- ✅ `.github/SECRETS_README.md` - GitHub Secrets setup and rotation guide
+- ✅ `.github/SECRETS_README.md` - GitHub Secrets and variables setup (incl. DNS gate)
+- ✅ `DEPLOYMENT-QUICKSTART.md` - Orchestrator, DNS gate, idempotency what-if
 - ✅ `specs/004-azure-deploy-pipeline/tasks.md` - 54 implementation tasks (T001-T054)
 
 ---
@@ -100,56 +101,39 @@ Implemented comprehensive CI/CD infrastructure for ProteinLens deployment pipeli
 
 ---
 
-## 🔐 GitHub Secrets Required
+## 🔐 Repo Secret and Variables
 
-All secrets must be configured before running workflows:
+Minimal configuration required:
 
-### Infrastructure Secrets (Required Immediately)
-- `AZURE_CREDENTIALS` - Service principal JSON for Azure authentication
-- `AZURE_SUBSCRIPTION_ID` - Azure subscription identifier
-- `AZURE_RESOURCE_GROUP` - Resource group name
-- `DATABASE_ADMIN_PASSWORD` - PostgreSQL admin password
+- Secret: `AZURE_CLIENT_ID` — Client ID of the Azure AD app with GitHub OIDC federated credential
+- Variables: `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_RESOURCE_GROUP`, `DNS_ZONE_NAME`, `AZURE_DNS_RESOURCE_GROUP`
+- Optional: `AZURE_WHAT_IF` — set to `false` to skip infra idempotency what-if check
 
-### API Keys (Required Immediately)
-- `OPENAI_API_KEY` - OpenAI API key for AI integration
-- `STRIPE_SECRET_KEY` - Stripe API key for payments
-- `STRIPE_WEBHOOK_SECRET` - Stripe webhook signing secret
-
-### Deployment Secrets (Required After Infrastructure Deployed)
-- `AZURE_FUNCTIONAPP_PUBLISH_PROFILE` - Function App deployment credentials
-- `AZURE_STATIC_WEB_APPS_API_TOKEN` - Static Web Apps deployment token
-
-**Setup Instructions**: See [`.github/SECRETS_README.md`](.github/SECRETS_README.md)
+Application secrets (database URL, OpenAI, Stripe, storage) are stored in Azure Key Vault and seeded/granted by the workflow. No publish profiles or static tokens are stored in the repo.
 
 ---
 
 ## 📦 Workflow Execution Flow
 
-### 1. Infrastructure Deployment (Manual)
+### 1. Infra Deployment (Inside Unified Workflow)
+### 1. Infra Deployment (Reusable `infra.yml` via Orchestrator)
 
 ```
-Trigger: gh workflow run infra.yml -f environment=prod -f confirm_deploy=deploy-infra
+Trigger: gh workflow run deploy.yml (or push to main)
 
-↓ Step 1: Validate Bicep Template (< 1 min)
-  - Syntax validation
-  - Deployment validation
-
-↓ Step 2: Deploy Infrastructure (10-15 min)
-  - Create Resource Group
-  - Deploy all Bicep modules
+↓ Validate & Deploy via Bicep (OIDC)
+  - Syntax + deployment validation
+  - Resource creation/update
   - Capture outputs
 
-↓ Step 3: Seed Key Vault Secrets (1 min)
-  - database-url from PostgreSQL FQDN
-  - openai-api-key from GitHub Secret
-  - stripe-secret-key from GitHub Secret
-  - stripe-webhook-secret from GitHub Secret
+↓ Seed Key Vault + Grant Access
+  - Create/rotate secrets
+  - Add Function App access policy
 
-↓ Step 4: Grant Function App Access (1 min)
-  - Create Key Vault access policy
-  - Function App can read secrets
+↓ Idempotency Check (what-if; optional via `AZURE_WHAT_IF`)
+  - Run Azure what-if and assert zero changes
 
-Output: Resource names, URLs, connection info
+Output: Resource names, URLs, KV status
 ```
 
 ### 2. Backend Deployment (Automatic on Push)
@@ -162,10 +146,10 @@ Trigger: git push origin main (changes in backend/**)
   - npm run build (TypeScript compilation)
   - npm run lint (code quality)
   - npm run test (unit tests)
-  - Package dist/ + node_modules
+  - Validate `host.json` at package root; package dist/ + node_modules
 
 ↓ Step 2: Deploy to Azure Functions (2-3 min)
-  - Upload package via publish profile
+  - Zip deploy via Azure OIDC login
   - Wait for cold start
 
 ↓ Step 3: Health Check (up to 30 sec)
@@ -183,14 +167,14 @@ Trigger: git push origin main (changes in frontend/**)
 
 ↓ Step 1: Build Frontend (3-5 min)
   - npm ci (clean dependencies)
-  - VITE_API_URL=https://proteinlens-api-prod.azurewebsites.net npm run build
+  - VITE_API_URL=<{function app url}> npm run build
   - Verify size < 300KB
   - npm run lint (code quality)
   - npm run test (unit tests)
 
 ↓ Step 2: Deploy to Static Web Apps (2-3 min)
   - Upload dist/ folder
-  - Deploy token authentication
+  - Fetch deployment token at runtime via Azure CLI
 
 ↓ Step 3: Smoke Test (up to 30 sec)
   - Call https://proteinlens.azurestaticapps.net/
@@ -205,8 +189,8 @@ Trigger: git push origin main (changes in frontend/**)
 ## ✅ Validation Checklist
 
 **Before Running Workflows**:
-- [ ] All GitHub Secrets set (see [`.github/SECRETS_README.md`](.github/SECRETS_README.md))
-- [ ] Service principal created with Contributor role
+- [ ] `AZURE_CLIENT_ID` secret set; variables configured
+- [ ] Azure AD app has federated credential for this repo
 - [ ] Bicep CLI installed: `az bicep version`
 - [ ] Azure CLI installed: `az --version`
 - [ ] Node.js 20+: `node --version`
@@ -214,10 +198,8 @@ Trigger: git push origin main (changes in frontend/**)
 **After Infrastructure Deployment**:
 - [ ] Resource Group created in Azure Portal
 - [ ] Function App, Static Web App, PostgreSQL visible
-- [ ] Key Vault populated with 4 secrets
-- [ ] Extract deployment profile and deployment token
-- [ ] Set `AZURE_FUNCTIONAPP_PUBLISH_PROFILE` GitHub Secret
-- [ ] Set `AZURE_STATIC_WEB_APPS_API_TOKEN` GitHub Secret
+- [ ] Key Vault populated and Function App access granted
+- [ ] Idempotency step reports “no changes detected”
 
 **After Backend Deployment**:
 - [ ] Backend deployment successful in GitHub Actions
