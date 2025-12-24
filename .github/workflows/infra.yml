@@ -108,11 +108,53 @@ jobs:
         run: |
           DEPLOYMENT_NAME="infra-${{ github.run_id }}-${{ github.run_attempt }}"
           echo "📦 Deployment name: $DEPLOYMENT_NAME"
-          DEPLOYMENT_OUTPUT=$(az deployment group create \
+          
+          # Start deployment without waiting
+          az deployment group create \
             --name "$DEPLOYMENT_NAME" \
             --resource-group "${{ env.RESOURCE_GROUP }}" \
             --template-file infra/bicep/main.bicep \
             --parameters "@infra/bicep/parameters/${{ inputs.environment }}.parameters.json" \
+            --no-wait
+          
+          echo "⏳ Waiting for deployment to complete..."
+          # Poll for completion with 20 minute timeout
+          TIMEOUT=1200
+          ELAPSED=0
+          while [ $ELAPSED -lt $TIMEOUT ]; do
+            STATE=$(az deployment group show \
+              --name "$DEPLOYMENT_NAME" \
+              --resource-group "${{ env.RESOURCE_GROUP }}" \
+              --query properties.provisioningState \
+              --output tsv 2>/dev/null || echo "NotFound")
+            
+            echo "⏰ ${ELAPSED}s: Deployment state: $STATE"
+            
+            if [ "$STATE" = "Succeeded" ]; then
+              echo "✅ Deployment succeeded"
+              break
+            elif [ "$STATE" = "Failed" ] || [ "$STATE" = "Canceled" ]; then
+              echo "❌ Deployment failed with state: $STATE"
+              az deployment group show \
+                --name "$DEPLOYMENT_NAME" \
+                --resource-group "${{ env.RESOURCE_GROUP }}" \
+                --query properties.error
+              exit 1
+            fi
+            
+            sleep 10
+            ELAPSED=$((ELAPSED + 10))
+          done
+          
+          if [ $ELAPSED -ge $TIMEOUT ]; then
+            echo "❌ Deployment timed out after ${TIMEOUT}s"
+            exit 1
+          fi
+          
+          # Get deployment outputs
+          DEPLOYMENT_OUTPUT=$(az deployment group show \
+            --name "$DEPLOYMENT_NAME" \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
             --query properties.outputs \
             --output json)
           
