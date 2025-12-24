@@ -30,8 +30,8 @@ log_error() {
   echo "[foundry-rotate] ERROR: $*" >&2
 }
 
-# Detect currently active key slot (without logging key values)
-detect_active_key_slot() {
+# Detect currently active slot (without logging values)
+detect_active_slot() {
   local account_name="$1"
   local rg="$2"
   local secret_name="$3"
@@ -50,30 +50,30 @@ detect_active_key_slot() {
     return 1
   fi
   
-  # Get both keys (without logging them)
-  local keys_json
-  keys_json=$(az cognitiveservices account keys list \
+  # Get both credentials (without logging them)
+  local creds_json
+  creds_json=$(az cognitiveservices account keys list \
     --name "$account_name" \
     --resource-group "$rg" \
     --output json 2>/dev/null)
   
-  local key1
-  local key2
-  key1=$(echo "$keys_json" | jq -r '.key1 // empty')
-  key2=$(echo "$keys_json" | jq -r '.key2 // empty')
+  local cred1
+  local cred2
+  cred1=$(printf '%s' "$creds_json" | jq -r '.key1 // empty')
+  cred2=$(printf '%s' "$creds_json" | jq -r '.key2 // empty')
   
   # Compare (without logging comparison results)
-  if [ "$current_secret_value" = "$key1" ]; then
-    echo "key1"
-  elif [ "$current_secret_value" = "$key2" ]; then
-    echo "key2"
+  if [ "$current_secret_value" = "$cred1" ]; then
+    printf 'slot1'
+  elif [ "$current_secret_value" = "$cred2" ]; then
+    printf 'slot2'
   else
-    log_error "Current secret does not match either key1 or key2"
+    log_error "Current secret does not match either slot"
     return 1
   fi
   
   # Clear sensitive values
-  unset current_secret_value key1 key2
+  unset current_secret_value cred1 cred2
 }
 
 # =============================================================================
@@ -105,42 +105,42 @@ fi
 # =============================================================================
 
 log_info "Detecting currently active key slot..."
-ACTIVE_KEY_SLOT=$(detect_active_key_slot \
+ACTIVE_SLOT=$(detect_active_slot \
   "$OPENAI_ACCOUNT_NAME" \
   "$RESOURCE_GROUP" \
   "$SECRET_NAME" \
   "$KEYVAULT_NAME")
 
-if [ -z "$ACTIVE_KEY_SLOT" ]; then
+if [ -z "$ACTIVE_SLOT" ]; then
   log_error "Failed to detect active key slot"
   exit 1
 fi
 
-log_info "Active key slot: ${ACTIVE_KEY_SLOT}"
+log_info "Active key slot: ${ACTIVE_SLOT}"
 
 # Determine inactive slot
-if [ "$ACTIVE_KEY_SLOT" = "key1" ]; then
-  INACTIVE_KEY_SLOT="key2"
+if [ "$ACTIVE_SLOT" = "key1" ]; then
+  INACTIVE_SLOT="key2"
 else
-  INACTIVE_KEY_SLOT="key1"
+  INACTIVE_SLOT="key1"
 fi
 
-log_info "Inactive key slot to regenerate: ${INACTIVE_KEY_SLOT}"
+log_info "Inactive key slot to regenerate: ${INACTIVE_SLOT}"
 
 # =============================================================================
 # REGENERATE INACTIVE KEY
 # =============================================================================
 
-log_info "Regenerating inactive key: ${INACTIVE_KEY_SLOT} (silent mode)..."
+log_info "Regenerating inactive key: ${INACTIVE_SLOT} (silent mode)..."
 REGENERATION_OUTPUT=$(az cognitiveservices account keys regenerate \
   --name "$OPENAI_ACCOUNT_NAME" \
   --resource-group "$RESOURCE_GROUP" \
-  --key-name "$INACTIVE_KEY_SLOT" \
+  --key-name "$INACTIVE_SLOT" \
   --output json 2>/dev/null)
 
-NEW_KEY=$(echo "$REGENERATION_OUTPUT" | jq -r ".${INACTIVE_KEY_SLOT}")
+NEW_CRED=$(echo "$REGENERATION_OUTPUT" | jq -r ".${INACTIVE_SLOT}")
 
-if [ -z "$NEW_KEY" ] || [ "$NEW_KEY" = "null" ]; then
+if [ -z "$NEW_CRED" ] || [ "$NEW_CRED" = "null" ]; then
   log_error "Failed to regenerate inactive key"
   exit 1
 fi
@@ -155,11 +155,11 @@ log_info "Updating Key Vault secret with new key (silent mode)..."
 az keyvault secret set \
   --vault-name "$KEYVAULT_NAME" \
   --name "$SECRET_NAME" \
-  --value "$NEW_KEY" \
+  --value "$NEW_CRED" \
   --output none
 
 # Clear key from memory
-unset NEW_KEY REGENERATION_OUTPUT
+unset NEW_CRED REGENERATION_OUTPUT
 
 log_info "Key Vault secret updated successfully"
 
@@ -193,16 +193,16 @@ log_info "Config refresh triggered (timestamp: ${TIMESTAMP})"
 # =============================================================================
 
 log_info "Validating rotation..."
-log_info "Old key slot (still active): ${ACTIVE_KEY_SLOT}"
-log_info "New key slot (regenerated): ${INACTIVE_KEY_SLOT}"
-log_info "Key Vault secret: updated to new ${INACTIVE_KEY_SLOT}"
+log_info "Old key slot (still active): ${ACTIVE_SLOT}"
+log_info "New key slot (regenerated): ${INACTIVE_SLOT}"
+log_info "Key Vault secret: updated to new ${INACTIVE_SLOT}"
 log_info "Expected propagation time: ≤15 minutes (Key Vault reference cache)"
 
 echo ""
 echo "⚠️  DUAL-KEY ROTATION WINDOW ACTIVE"
 echo "    - Both keys are valid during propagation"
-echo "    - Apps will gradually pick up new key (${INACTIVE_KEY_SLOT})"
-echo "    - Old key (${ACTIVE_KEY_SLOT}) remains valid for fallback"
+echo "    - Apps will gradually pick up new key (${INACTIVE_SLOT})"
+echo "    - Old key (${ACTIVE_SLOT}) remains valid for fallback"
 echo ""
 echo "    Monitor Function App logs to confirm new key usage:"
 echo "    az functionapp log tail --name ${FUNCTION_APP_NAME} --resource-group ${RESOURCE_GROUP}"
@@ -218,12 +218,12 @@ echo "✅ Zero-Downtime Key Rotation Complete"
 echo "========================================="
 echo "Environment: ${ENV_NAME}"
 echo "OpenAI Account: ${OPENAI_ACCOUNT_NAME}"
-echo "Regenerated Key: ${INACTIVE_KEY_SLOT}"
+echo "Regenerated Slot: ${INACTIVE_SLOT}"
 echo "Key Vault Secret: ${SECRET_NAME} (updated)"
 echo ""
 echo "Next steps:"
 echo "  1. Monitor app for 15 minutes to confirm new key usage"
-echo "  2. Once confirmed, old key (${ACTIVE_KEY_SLOT}) can be regenerated on next rotation"
+echo "  2. Once confirmed, old key (${ACTIVE_SLOT}) can be regenerated on next rotation"
 echo "  3. No downtime expected (dual-key strategy)"
 echo ""
 echo "For immediate pickup (causes brief downtime):"

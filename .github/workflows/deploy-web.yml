@@ -26,7 +26,6 @@ on:
 permissions:
   contents: read
   id-token: write
-  pull-requests: write
 
 env:
   NODE_VERSION: '20'

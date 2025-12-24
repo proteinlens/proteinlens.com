@@ -21,14 +21,14 @@ APP_SETTINGS=$(az functionapp config appsettings list \
   --resource-group "$RESOURCE_GROUP" \
   --output json)
 
-OPENAI_KEY_SETTING=$(echo "$APP_SETTINGS" | jq -r '.[] | select(.name=="AZURE_OPENAI_API_KEY") | .value')
+OPENAI_SETTING=$(printf '%s' "$APP_SETTINGS" | jq -r '.[] | select(.name=="AZURE_OPENAI_API_KEY") | .value')
 
-if [[ "$OPENAI_KEY_SETTING" == @Microsoft.KeyVault* ]]; then
-  echo "✅ PASS: Function App uses Key Vault reference"
-  echo "   Setting: ${OPENAI_KEY_SETTING:0:50}..."
+if [[ "$OPENAI_SETTING" == @Microsoft.KeyVault* ]]; then
+  echo "✅ PASS: Function App uses Vault reference"
+  echo "   Reference prefix: ${OPENAI_SETTING:0:30}..."
 else
-  echo "❌ FAIL: Function App does NOT use Key Vault reference"
-  echo "   Setting value: $OPENAI_KEY_SETTING"
+  echo "❌ FAIL: Function App does NOT use Vault reference"
+  echo "   (value hidden for security)"
   exit 1
 fi
 
