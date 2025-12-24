@@ -190,7 +190,8 @@ export async function liveness(request: HttpRequest, context: InvocationContext)
  */
 export async function readiness(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
   try {
-    // Check database is reachable
+    // Check database is reachable - get Prisma client lazily
+    const prisma = getPrismaClient();
     await prisma.$queryRaw`SELECT 1`;
     
     return {
