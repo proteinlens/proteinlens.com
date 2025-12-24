@@ -11,6 +11,7 @@ permissions:
 
 env:
   AZURE_WHAT_IF: ${{ vars.AZURE_WHAT_IF }}
+  RESOURCE_GROUP: proteinlens-prod
 
 concurrency:
   group: deploy-${{ github.ref }}
@@ -146,7 +147,7 @@ jobs:
     uses: ./.github/workflows/deploy-api.yml
     secrets: inherit
     with:
-      resource_group: ${{ vars.AZURE_RESOURCE_GROUP }}
+      resource_group: proteinlens-prod
       functionapp_name: ${{ needs.infra.outputs.functionapp_name }}
       # database_url can be passed if needed
 
@@ -157,7 +158,7 @@ jobs:
     uses: ./.github/workflows/deploy-web.yml
     secrets: inherit
     with:
-      resource_group: ${{ vars.AZURE_RESOURCE_GROUP }}
+      resource_group: proteinlens-prod
       staticwebapp_name: ${{ needs.infra.outputs.staticwebapp_name }}
       api_url: ${{ needs.infra.outputs.functionapp_url }}
 
