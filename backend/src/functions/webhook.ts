@@ -9,9 +9,12 @@ import {
   downgradeToFree, 
   logSubscriptionEvent,
   updateStripeCustomerId,
-  prisma,
-} from '../services/subscriptionService';
-import { Plan, SubscriptionStatus } from '@prisma/client';
+  Plan,
+  SubscriptionStatus,
+} from '../services/subscriptionService.js';
+import { getPrismaClient } from '../utils/prisma.js';
+
+const prisma = getPrismaClient();
 
 /**
  * POST /api/billing/webhook

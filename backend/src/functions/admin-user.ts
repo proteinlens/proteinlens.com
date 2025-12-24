@@ -3,14 +3,14 @@
 // T075: GET /api/admin/users/:userId endpoint
 
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
-import { PrismaClient } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import { Logger } from '../utils/logger.js';
 import { requireAdmin, getAdminIdentity } from '../middleware/adminMiddleware.js';
+import { getPrismaClient } from '../utils/prisma.js';
 import { getUserPlan } from '../services/subscriptionService.js';
 import { getUsageCount } from '../services/usageService.js';
 
-const prisma = new PrismaClient();
+const prisma = getPrismaClient();
 
 /**
  * GET /api/admin/users/:userId

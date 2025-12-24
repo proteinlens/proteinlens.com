@@ -4,11 +4,11 @@
  */
 
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
-import { PrismaClient } from '@prisma/client';
 import { BlobServiceClient } from '@azure/storage-blob';
 import { DefaultAzureCredential } from '@azure/identity';
 import { Logger } from '../utils/logger.js';
 import { config } from '../utils/config.js';
+import { getPrismaClient } from '../utils/prisma.js';
 
 interface HealthStatus {
   status: 'healthy' | 'degraded' | 'unhealthy';
@@ -29,7 +29,7 @@ interface CheckResult {
 }
 
 const startTime = Date.now();
-const prisma = new PrismaClient();
+const prisma = getPrismaClient();
 
 /**
  * Check database connectivity

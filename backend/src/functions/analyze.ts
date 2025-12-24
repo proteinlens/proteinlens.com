@@ -14,8 +14,7 @@ import { mealService } from '../services/mealService.js';
 import { AnalyzeRequestSchema, AIAnalysisResponse } from '../models/schemas.js';
 import { ValidationError, BlobNotFoundError } from '../utils/errors.js';
 import { enforceWeeklyQuota, extractUserId } from '../middleware/quotaMiddleware.js';
-import { recordUsage } from '../services/usageService.js';
-import { UsageType } from '@prisma/client';
+import { recordUsage, UsageType } from '../services/usageService.js';
 
 export async function analyzeMeal(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
   const requestId = uuidv4();

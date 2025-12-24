@@ -4,13 +4,13 @@
 // T065-T067: DELETE endpoint with transaction and logging
 
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
-import { PrismaClient } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import { Logger } from '../utils/logger.js';
 import { blobService } from '../services/blobService.js';
+import { getPrismaClient } from '../utils/prisma.js';
 import { extractUserId } from '../middleware/quotaMiddleware.js';
 
-const prisma = new PrismaClient();
+const prisma = getPrismaClient();
 
 export async function deleteMeal(
   request: HttpRequest,

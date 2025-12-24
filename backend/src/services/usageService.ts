@@ -1,11 +1,14 @@
 // Usage tracking service for scan quota enforcement
 // Feature: 002-saas-billing
 
-import { PrismaClient, Plan, UsageType } from '@prisma/client';
-import { BILLING_CONSTANTS } from '../models/subscription';
-import { shouldHaveProAccess, getUserPlan } from './subscriptionService';
+import { getPrismaClient, Plan, UsageType } from '../utils/prisma.js';
+import { BILLING_CONSTANTS } from '../models/subscription.js';
+import { shouldHaveProAccess, getUserPlan } from './subscriptionService.js';
 
-const prisma = new PrismaClient();
+const prisma = getPrismaClient();
+
+// Re-export UsageType for use in other modules
+export { UsageType };
 
 /**
  * Rolling window in days for Free tier quota

@@ -2,22 +2,14 @@
 // Constitution Principle IV: Traceability & Auditability
 // T033: Prisma integration for meal analysis persistence
 
-import { PrismaClient, MealAnalysis } from '@prisma/client';
+import { getPrismaClient } from '../utils/prisma.js';
+import type { MealAnalysis } from '../utils/prisma.js';
 import { Logger } from '../utils/logger.js';
 import { AIAnalysisResponse } from '../models/schemas.js';
 import { config } from '../utils/config.js';
 import crypto from 'crypto';
 
-const prisma = new PrismaClient({
-  log: [
-    { level: 'warn', emit: 'event' },
-    { level: 'error', emit: 'event' },
-  ],
-});
-
-// Log Prisma warnings/errors
-prisma.$on('warn', (e) => Logger.warn('Prisma warning', { message: e.message }));
-prisma.$on('error', (e) => Logger.error('Prisma error', new Error(e.message), {}));
+const prisma = getPrismaClient();
 
 class MealService {
   /**

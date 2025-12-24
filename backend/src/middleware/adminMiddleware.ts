@@ -3,9 +3,9 @@
 // T076: Admin role check middleware
 
 import { HttpRequest, HttpResponseInit } from '@azure/functions';
-import { PrismaClient } from '@prisma/client';
+import { getPrismaClient } from '../utils/prisma.js';
 
-const prisma = new PrismaClient();
+const prisma = getPrismaClient();
 
 // Admin email allowlist (in production, this would be in database or Azure AD)
 const ADMIN_EMAILS = process.env.ADMIN_EMAILS?.split(',') || [];

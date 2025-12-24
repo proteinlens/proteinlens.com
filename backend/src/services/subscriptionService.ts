@@ -1,10 +1,14 @@
 // Subscription service for plan management
 // Feature: 002-saas-billing
 
-import { PrismaClient, Plan, SubscriptionStatus, User } from '@prisma/client';
-import { BILLING_CONSTANTS } from '../models/subscription';
+import { getPrismaClient, Plan, SubscriptionStatus } from '../utils/prisma.js';
+import type { User } from '../utils/prisma.js';
+import { BILLING_CONSTANTS } from '../models/subscription.js';
 
-const prisma = new PrismaClient();
+const prisma = getPrismaClient();
+
+// Re-export Plan and SubscriptionStatus for use in other modules
+export { Plan, SubscriptionStatus };
 
 /**
  * Grace period in days after subscription ends
