@@ -9,6 +9,15 @@
   'northeurope'
 ])
 param location string = 'northeurope'
+@description('Location for Static Web App (not available in all regions)')
+@allowed([
+  'westus2'
+  'centralus'
+  'eastus2'
+  'westeurope'
+  'eastasia'
+])
+param swaLocation string = 'westeurope'
 param environmentName string = 'dev'
 param appNamePrefix string = 'proteinlens'
 @description('True when deploying production (used by pipeline policies)')
@@ -98,7 +107,7 @@ module functionApp 'function-app.bicep' = {
 module staticWebApp 'static-web-app.bicep' = {
   name: 'static-web-app-deployment'
   params: {
-    location: location
+    location: swaLocation
     staticWebAppName: staticWebAppName
     apiUrl: functionApp.outputs.functionAppUrl
   }
