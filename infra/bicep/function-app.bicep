@@ -7,11 +7,6 @@ param storageAccountName string
 param appServicePlanName string = '${functionAppName}-plan'
 param keyVaultUri string
 
-// Reference existing storage account to get connection string
-resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {
-  name: storageAccountName
-}
-
 resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
   name: appServicePlanName
   location: location
@@ -54,11 +49,12 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
           name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
           value: 'false'
         }
-        // Use connection string for AzureWebJobsStorage (avoids RBAC requirement)
-        // The Functions host needs this for internal operations (leases, triggers, etc.)
+        // Use managed identity for AzureWebJobsStorage
+        // RBAC roles (Blob Data Owner, Queue/Table Data Contributor) must be assigned
+        // Storage account has allowSharedKeyAccess=false, so connection string won't work
         {
-          name: 'AzureWebJobsStorage'
-          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};EndpointSuffix=${environment().suffixes.storage};AccountKey=${storageAccount.listKeys().keys[0].value}'
+          name: 'AzureWebJobsStorage__accountName'
+          value: storageAccountName
         }
         {
           name: 'AZURE_STORAGE_ACCOUNT_NAME'

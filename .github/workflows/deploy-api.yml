@@ -151,10 +151,42 @@ jobs:
             exit 1
           fi
 
-      # NOTE: Storage RBAC is no longer required because AzureWebJobsStorage
-      # now uses connection string auth (configured in function-app.bicep).
-      # This eliminates the 403 errors from the Functions host trying to
-      # acquire blob leases without proper RBAC permissions.
+      - name: Verify Storage RBAC (informational)
+        continue-on-error: true
+        run: |
+          RG="${{ inputs.resource_group }}"
+          FA_NAME="${{ inputs.functionapp_name }}"
+          
+          FUNC_IDENTITY=$(az functionapp identity show --name "$FA_NAME" --resource-group "$RG" --query "principalId" -o tsv 2>/dev/null || echo "")
+          STORAGE_NAME=$(az functionapp config appsettings list --name "$FA_NAME" --resource-group "$RG" --query "[?name=='AzureWebJobsStorage__accountName'].value" -o tsv 2>/dev/null || echo "")
+          
+          if [ -z "$FUNC_IDENTITY" ] || [ -z "$STORAGE_NAME" ]; then
+            echo "⚠️ Could not check RBAC - identity or storage not found"
+            exit 0
+          fi
+          
+          STORAGE_ID=$(az storage account show --name "$STORAGE_NAME" --resource-group "$RG" --query "id" -o tsv 2>/dev/null || echo "")
+          
+          echo "🔐 Checking Storage RBAC for Function App identity: $FUNC_IDENTITY"
+          ROLES=$(az role assignment list --assignee "$FUNC_IDENTITY" --scope "$STORAGE_ID" --query "[].roleDefinitionName" -o tsv 2>/dev/null || echo "")
+          
+          if echo "$ROLES" | grep -q "Storage Blob Data Owner"; then
+            echo "✅ Storage Blob Data Owner: assigned"
+          else
+            echo "⚠️ Storage Blob Data Owner: NOT assigned - Functions may fail"
+          fi
+          
+          if echo "$ROLES" | grep -q "Storage Queue Data Contributor"; then
+            echo "✅ Storage Queue Data Contributor: assigned"
+          else
+            echo "⚠️ Storage Queue Data Contributor: NOT assigned - Functions may fail"
+          fi
+          
+          if echo "$ROLES" | grep -q "Storage Table Data Contributor"; then
+            echo "✅ Storage Table Data Contributor: assigned"
+          else
+            echo "⚠️ Storage Table Data Contributor: NOT assigned - Functions may fail"
+          fi
 
       - name: Configure Function App Settings
         run: |

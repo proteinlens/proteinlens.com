@@ -332,10 +332,53 @@ jobs:
           
           echo "✅ Function App Key Vault access granted"
 
-      # NOTE: Storage RBAC is no longer required because AzureWebJobsStorage
-      # now uses connection string auth (configured in function-app.bicep).
-      # This is more reliable than managed identity RBAC which requires
-      # the deployment service principal to have roleAssignment/write permission.
+      - name: Grant Function App Storage RBAC
+        run: |
+          FUNCTION_APP_IDENTITY=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.functionAppManagedIdentityId.value')
+          STORAGE_ACCOUNT=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.storageAccountName.value')
+          
+          if [ -z "$FUNCTION_APP_IDENTITY" ] || [ "$FUNCTION_APP_IDENTITY" == "null" ]; then
+            echo "⚠️ Function App Managed Identity not available"
+            echo "   RBAC must be assigned manually or by an admin with roleAssignments/write permission"
+            exit 0
+          fi
+          
+          echo "🔐 Function App Managed Identity: $FUNCTION_APP_IDENTITY"
+          echo "📦 Storage Account: $STORAGE_ACCOUNT"
+          
+          # Get storage account scope
+          STORAGE_ID=$(az storage account show \
+            --name "$STORAGE_ACCOUNT" \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
+            --query id -o tsv)
+          
+          echo "🔐 Granting Function App required storage roles..."
+          echo "   Note: This requires the deployment SP to have roleAssignments/write permission"
+          echo "   If this fails, assign roles manually via Azure Portal or CLI with Owner permissions"
+          
+          # Storage Blob Data Owner (for blobs)
+          az role assignment create \
+            --assignee "$FUNCTION_APP_IDENTITY" \
+            --role "Storage Blob Data Owner" \
+            --scope "$STORAGE_ID" \
+            2>&1 || echo "⚠️ Failed to assign Blob Data Owner - may already exist or permission denied"
+          
+          # Storage Queue Data Contributor (for queues - required by Functions host)
+          az role assignment create \
+            --assignee "$FUNCTION_APP_IDENTITY" \
+            --role "Storage Queue Data Contributor" \
+            --scope "$STORAGE_ID" \
+            2>&1 || echo "⚠️ Failed to assign Queue Data Contributor - may already exist or permission denied"
+          
+          # Storage Table Data Contributor (for tables - required by Functions host)
+          az role assignment create \
+            --assignee "$FUNCTION_APP_IDENTITY" \
+            --role "Storage Table Data Contributor" \
+            --scope "$STORAGE_ID" \
+            2>&1 || echo "⚠️ Failed to assign Table Data Contributor - may already exist or permission denied"
+          
+          echo "✅ Storage RBAC assignment attempted"
+          echo "   If errors occurred above, ensure roles are assigned manually"
 
       - name: Configure Function App for ESM
         run: |
