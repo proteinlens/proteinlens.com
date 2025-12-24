@@ -47,12 +47,6 @@ Feature: Incremental CI Deploy (specs/001-incremental-deploy/spec.md)
 - [X] T026 [P] Harden backend verification to use inputs (no secrets) in `.github/workflows/deploy-api.yml`
 - [X] T027 [P] Remove legacy workflows `deploy-all.yml`, `infra-unified.yml` from `.github/workflows/`
  - [X] T028 Add docs: idempotency, OIDC, KV supremacy in `DEPLOYMENT-PIPELINE-IMPLEMENTATION.md`
-- [ ] T029 Plan Postgres Entra ID/MI adoption and remove password dependency from CI migrations
-
-## Dependencies (Story Order)
-
-- US1 → US2 → US3
-- US1 must complete before US2/US3 (orchestration and outputs)
 
 ## Parallel Execution Examples
 
