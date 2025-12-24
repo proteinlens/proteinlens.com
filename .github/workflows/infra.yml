@@ -332,49 +332,10 @@ jobs:
           
           echo "✅ Function App Key Vault access granted"
 
-      - name: Verify Function App Storage Access
-        run: |
-          FUNCTION_APP_IDENTITY=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.functionAppManagedIdentityId.value')
-          STORAGE_ACCOUNT=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.storageAccountName.value')
-          
-          if [ -z "$FUNCTION_APP_IDENTITY" ] || [ "$FUNCTION_APP_IDENTITY" == "null" ]; then
-            echo "❌ Failed to extract Function App Managed Identity"
-            exit 1
-          fi
-          
-          echo "🔐 Function App Managed Identity: $FUNCTION_APP_IDENTITY"
-          echo "📦 Storage Account: $STORAGE_ACCOUNT"
-          
-          # Get storage account scope
-          STORAGE_ID=$(az storage account show \
-            --name "$STORAGE_ACCOUNT" \
-            --resource-group "${{ env.RESOURCE_GROUP }}" \
-            --query id -o tsv)
-          
-          echo "🔐 Granting Function App required storage roles for AzureWebJobsStorage..."
-          
-          # Storage Blob Data Owner (for blobs)
-          az role assignment create \
-            --assignee "$FUNCTION_APP_IDENTITY" \
-            --role "Storage Blob Data Owner" \
-            --scope "$STORAGE_ID" \
-            2>/dev/null || echo "⚠️  Blob Data Owner role may already exist"
-          
-          # Storage Queue Data Contributor (for queues - required by Functions host)
-          az role assignment create \
-            --assignee "$FUNCTION_APP_IDENTITY" \
-            --role "Storage Queue Data Contributor" \
-            --scope "$STORAGE_ID" \
-            2>/dev/null || echo "⚠️  Queue Data Contributor role may already exist"
-          
-          # Storage Table Data Contributor (for tables - required by Functions host)
-          az role assignment create \
-            --assignee "$FUNCTION_APP_IDENTITY" \
-            --role "Storage Table Data Contributor" \
-            --scope "$STORAGE_ID" \
-            2>/dev/null || echo "⚠️  Table Data Contributor role may already exist"
-          
-          echo "✅ Function App storage roles configured"
+      # NOTE: Storage RBAC is no longer required because AzureWebJobsStorage
+      # now uses connection string auth (configured in function-app.bicep).
+      # This is more reliable than managed identity RBAC which requires
+      # the deployment service principal to have roleAssignment/write permission.
 
       - name: Configure Function App for ESM
         run: |

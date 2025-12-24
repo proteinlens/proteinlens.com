@@ -149,83 +149,10 @@ jobs:
             exit 1
           fi
 
-      - name: Ensure Storage RBAC Permissions (FIRST)
-        run: |
-          RG="${{ inputs.resource_group }}"
-          FA_NAME="${{ inputs.functionapp_name }}"
-          
-          # Get Function App managed identity
-          FUNC_IDENTITY=$(az functionapp identity show \
-            --name "$FA_NAME" \
-            --resource-group "$RG" \
-            --query "principalId" -o tsv)
-          
-          if [ -z "$FUNC_IDENTITY" ]; then
-            echo "⚠️ No managed identity found for Function App"
-            exit 0
-          fi
-          
-          # Get storage account from Function App settings
-          STORAGE_NAME=$(az functionapp config appsettings list \
-            --name "$FA_NAME" \
-            --resource-group "$RG" \
-            --query "[?name=='AzureWebJobsStorage__accountName'].value" -o tsv)
-          
-          if [ -z "$STORAGE_NAME" ]; then
-            # Try getting from AZURE_STORAGE_ACCOUNT_NAME
-            STORAGE_NAME=$(az functionapp config appsettings list \
-              --name "$FA_NAME" \
-              --resource-group "$RG" \
-              --query "[?name=='AZURE_STORAGE_ACCOUNT_NAME'].value" -o tsv)
-          fi
-          
-          if [ -z "$STORAGE_NAME" ]; then
-            echo "⚠️ Could not determine storage account name"
-            exit 0
-          fi
-          
-          echo "📦 Storage Account: $STORAGE_NAME"
-          echo "🔐 Function App Identity: $FUNC_IDENTITY"
-          
-          # Get storage account ID
-          STORAGE_ID=$(az storage account show \
-            --name "$STORAGE_NAME" \
-            --resource-group "$RG" \
-            --query "id" -o tsv 2>/dev/null || echo "")
-          
-          if [ -z "$STORAGE_ID" ]; then
-            echo "⚠️ Storage account not found in resource group"
-            exit 0
-          fi
-          
-          echo "🔐 Ensuring storage RBAC roles..."
-          
-          # Storage Blob Data Owner
-          az role assignment create \
-            --assignee "$FUNC_IDENTITY" \
-            --role "Storage Blob Data Owner" \
-            --scope "$STORAGE_ID" \
-            2>/dev/null || echo "  - Blob Data Owner: already assigned"
-          
-          # Storage Queue Data Contributor
-          az role assignment create \
-            --assignee "$FUNC_IDENTITY" \
-            --role "Storage Queue Data Contributor" \
-            --scope "$STORAGE_ID" \
-            2>/dev/null || echo "  - Queue Data Contributor: already assigned"
-          
-          # Storage Table Data Contributor
-          az role assignment create \
-            --assignee "$FUNC_IDENTITY" \
-            --role "Storage Table Data Contributor" \
-            --scope "$STORAGE_ID" \
-            2>/dev/null || echo "  - Table Data Contributor: already assigned"
-          
-          echo "✅ Storage RBAC permissions verified"
-          
-          # Wait for RBAC propagation before any other operations
-          echo "⏳ Waiting 30s for RBAC propagation..."
-          sleep 30
+      # NOTE: Storage RBAC is no longer required because AzureWebJobsStorage
+      # now uses connection string auth (configured in function-app.bicep).
+      # This eliminates the 403 errors from the Functions host trying to
+      # acquire blob leases without proper RBAC permissions.
 
       - name: Configure Function App Settings
         run: |
