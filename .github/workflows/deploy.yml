@@ -45,7 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [changes]
     outputs:
-      ok: ${{ steps.gate.outputs.ok }}
+      ok: ${{ steps.gate.outputs.ok || steps.gateprod.outputs.ok }}
     steps:
       - name: Non-production branch
         if: github.ref != 'refs/heads/main'
@@ -96,7 +96,6 @@ jobs:
       - name: Report DNS gate failure
         if: github.ref == 'refs/heads/main' && failure()
         run: |
-          echo "ok=false" >> "$GITHUB_OUTPUT"
           echo "## ❌ Production DNS Zone Missing" >> "$GITHUB_STEP_SUMMARY"
           echo "Production runs require Azure DNS zone for 'proteinlens.com'." >> "$GITHUB_STEP_SUMMARY"
           echo "Set repo variables: AZURE_DNS_RESOURCE_GROUP and DNS_ZONE_NAME (default: proteinlens.com)." >> "$GITHUB_STEP_SUMMARY"
