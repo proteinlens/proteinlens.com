@@ -79,3 +79,7 @@ secrets.json
 *.pem
 *.key
 *.p8
+# Deployment artifacts
+backend/.deploy/
+backend/deploy.zip
+

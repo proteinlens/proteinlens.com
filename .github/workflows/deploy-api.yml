@@ -76,20 +76,48 @@ jobs:
             echo "❌ Build output directory not found"
             exit 1
           fi
+          
           # Stage a deployable Functions app
+          # Azure Functions v4 with ESM requires:
+          # 1. Files at root level (not in dist/)
+          # 2. package.json with "type": "module" and correct "main"
+          # 3. All production dependencies in node_modules
           rm -rf .deploy && mkdir -p .deploy
+          
+          # Copy host.json
           cp host.json .deploy/
+          
+          # Copy Prisma schema and migrations
           cp -r prisma .deploy/prisma
-          cp -r node_modules .deploy/node_modules
-          # Copy dist folder preserving structure (package.json main points to dist/index.js)
-          cp -r dist .deploy/dist
-          # Create production package.json with correct main entry
-          cat package.json | jq 'del(.devDependencies) | .main = "dist/index.js"' > .deploy/package.json
+          
+          # Copy compiled JS files to ROOT (not in dist subfolder)
+          cp -r dist/* .deploy/
+          
+          # Create production package.json
+          # - main points to index.js (now at root)
+          # - type: module for ESM
+          # - remove devDependencies
+          cat package.json | jq 'del(.devDependencies) | .main = "index.js"' > .deploy/package.json
+          
+          # Install only production dependencies fresh
+          echo "📦 Installing production dependencies..."
+          cd .deploy
+          npm install --production --ignore-scripts
+          
+          # Verify @azure/functions is installed
+          if [ ! -d "node_modules/@azure/functions" ]; then
+            echo "❌ @azure/functions not found in node_modules"
+            exit 1
+          fi
+          
+          cd ..
           echo "✅ Deployment folder prepared at backend/.deploy"
           echo "📁 Structure:"
-          find .deploy -maxdepth 2 -type f | head -20
-          echo "📄 package.json main entry:"
-          cat .deploy/package.json | jq '.main'
+          find .deploy -maxdepth 2 -type f | head -30
+          echo "📄 package.json:"
+          cat .deploy/package.json | jq '{name, type, main}'
+          echo "📦 Key dependencies:"
+          ls -la .deploy/node_modules/@azure/ || echo "No @azure packages"
 
       - name: Azure Login (OIDC)
         uses: azure/login@v2
@@ -109,6 +137,97 @@ jobs:
             echo "❌ Function App not found"
             exit 1
           fi
+
+      - name: Configure Function App Settings
+        run: |
+          RG="${{ inputs.resource_group }}"
+          FA_NAME="${{ inputs.functionapp_name }}"
+          echo "⚙️ Configuring Function App settings for Azure Functions v4 + ESM..."
+          
+          # Enable Azure Functions v4 Node.js programming model
+          az functionapp config appsettings set \
+            --name "$FA_NAME" \
+            --resource-group "$RG" \
+            --settings \
+              "AzureWebJobsFeatureFlags=EnableWorkerIndexing" \
+              "SCM_DO_BUILD_DURING_DEPLOYMENT=false" \
+            --output none
+          
+          echo "✅ Function App settings configured"
+
+      - name: Ensure Storage RBAC Permissions
+        run: |
+          RG="${{ inputs.resource_group }}"
+          FA_NAME="${{ inputs.functionapp_name }}"
+          
+          # Get Function App managed identity
+          FUNC_IDENTITY=$(az functionapp identity show \
+            --name "$FA_NAME" \
+            --resource-group "$RG" \
+            --query "principalId" -o tsv)
+          
+          if [ -z "$FUNC_IDENTITY" ]; then
+            echo "⚠️ No managed identity found for Function App"
+            exit 0
+          fi
+          
+          # Get storage account from Function App settings
+          STORAGE_NAME=$(az functionapp config appsettings list \
+            --name "$FA_NAME" \
+            --resource-group "$RG" \
+            --query "[?name=='AzureWebJobsStorage__accountName'].value" -o tsv)
+          
+          if [ -z "$STORAGE_NAME" ]; then
+            # Try getting from AZURE_STORAGE_ACCOUNT_NAME
+            STORAGE_NAME=$(az functionapp config appsettings list \
+              --name "$FA_NAME" \
+              --resource-group "$RG" \
+              --query "[?name=='AZURE_STORAGE_ACCOUNT_NAME'].value" -o tsv)
+          fi
+          
+          if [ -z "$STORAGE_NAME" ]; then
+            echo "⚠️ Could not determine storage account name"
+            exit 0
+          fi
+          
+          echo "📦 Storage Account: $STORAGE_NAME"
+          echo "🔐 Function App Identity: $FUNC_IDENTITY"
+          
+          # Get storage account ID
+          STORAGE_ID=$(az storage account show \
+            --name "$STORAGE_NAME" \
+            --resource-group "$RG" \
+            --query "id" -o tsv 2>/dev/null || echo "")
+          
+          if [ -z "$STORAGE_ID" ]; then
+            echo "⚠️ Storage account not found in resource group"
+            exit 0
+          fi
+          
+          echo "🔐 Ensuring storage RBAC roles..."
+          
+          # Storage Blob Data Owner
+          az role assignment create \
+            --assignee "$FUNC_IDENTITY" \
+            --role "Storage Blob Data Owner" \
+            --scope "$STORAGE_ID" \
+            2>/dev/null || echo "  - Blob Data Owner: already assigned"
+          
+          # Storage Queue Data Contributor
+          az role assignment create \
+            --assignee "$FUNC_IDENTITY" \
+            --role "Storage Queue Data Contributor" \
+            --scope "$STORAGE_ID" \
+            2>/dev/null || echo "  - Queue Data Contributor: already assigned"
+          
+          # Storage Table Data Contributor
+          az role assignment create \
+            --assignee "$FUNC_IDENTITY" \
+            --role "Storage Table Data Contributor" \
+            --scope "$STORAGE_ID" \
+            2>/dev/null || echo "  - Table Data Contributor: already assigned"
+          
+          echo "✅ Storage RBAC permissions verified"
 
       - name: Create deployment zip
         run: |
@@ -130,21 +249,56 @@ jobs:
 
       - name: Warm up
         run: |
-          echo "⏳ Waiting for deployment to complete (30s)..."
-          sleep 30
+          RG="${{ inputs.resource_group }}"
+          FA_NAME="${{ inputs.functionapp_name }}"
+          
+          echo "🔄 Restarting Function App to apply settings..."
+          az functionapp restart --name "$FA_NAME" --resource-group "$RG"
+          
+          echo "⏳ Waiting for Function App to start (60s for RBAC propagation)..."
+          sleep 60
 
       - name: Verify Functions Deployed
         run: |
           RG="${{ inputs.resource_group }}"
           FA_NAME="${{ inputs.functionapp_name }}"
+          
+          # Get Function App URL
+          FA_URL=$(az functionapp show \
+            --name "$FA_NAME" \
+            --resource-group "$RG" \
+            --query "defaultHostName" -o tsv)
+          
+          echo "🔍 Function App URL: https://$FA_URL"
+          
+          # Test health endpoint
+          echo "🏥 Testing health endpoint..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://$FA_URL/api/health" || echo "000")
+          
+          if [ "$HTTP_STATUS" = "200" ]; then
+            echo "✅ Health endpoint responding (HTTP $HTTP_STATUS)"
+          elif [ "$HTTP_STATUS" = "404" ]; then
+            echo "⚠️ Health endpoint not found (HTTP 404) - functions may still be loading"
+          else
+            echo "⚠️ Health endpoint returned HTTP $HTTP_STATUS"
+          fi
+          
+          # List registered functions
+          echo "📋 Checking registered functions..."
           FUNCTION_COUNT=$(az functionapp function list \
             --resource-group "$RG" \
             --name "$FA_NAME" \
             --query 'length(@)' -o tsv 2>/dev/null || echo "0")
+          
           echo "Found $FUNCTION_COUNT functions"
+          
           if [ "$FUNCTION_COUNT" -eq 0 ]; then
-            echo "⚠️ No functions detected yet (may be cold starting)"
+            echo "⚠️ No functions detected yet"
+            echo "   This may indicate:"
+            echo "   - Functions are still loading (cold start)"
+            echo "   - Entry point configuration issue"
+            echo "   - Check Azure Portal > Function App > Functions for details"
           else
-            echo "✅ Functions deployed successfully"
+            echo "✅ Functions deployed successfully:"
             az functionapp function list --resource-group "$RG" --name "$FA_NAME" --query '[].name' -o tsv
           fi
