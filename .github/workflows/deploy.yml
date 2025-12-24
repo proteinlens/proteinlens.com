@@ -175,32 +175,32 @@ jobs:
         run: |
           URL="${{ needs.infra.outputs.functionapp_url }}/api/health"
           echo "🔍 Testing API health: $URL"
-          for i in $(seq 1 10); do
-            code=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || true)
+          for i in $(seq 1 5); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$URL" || true)
             echo "Attempt $i: HTTP $code"
             if [ "$code" = "200" ]; then
               echo "✅ API health check passed"
               exit 0
             fi
-            sleep $((2**i > 30 ? 30 : 2**i))
+            sleep 5
           done
-          echo "❌ API health check failed after 10 attempts"
+          echo "❌ API health check failed after 5 attempts"
           exit 1
 
       - name: Frontend check (index.html -> 200)
         run: |
           URL="${{ needs.infra.outputs.staticwebapp_url }}"
           echo "🔍 Testing frontend: $URL"
-          for i in $(seq 1 10); do
-            code=$(curl -s -o /dev/null -w "%{http_code}" "$URL" || true)
+          for i in $(seq 1 5); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$URL" || true)
             echo "Attempt $i: HTTP $code"
             if [ "$code" = "200" ]; then
               echo "✅ Frontend check passed"
               exit 0
             fi
-            sleep $((2**i > 30 ? 30 : 2**i))
+            sleep 5
           done
-          echo "❌ Frontend check failed after 10 attempts"
+          echo "❌ Frontend check failed after 5 attempts"
           exit 1
 
   summary:
