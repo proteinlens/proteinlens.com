@@ -29,7 +29,8 @@ interface CheckResult {
 }
 
 const startTime = Date.now();
-const prisma = getPrismaClient();
+// Lazy initialization - don't connect to DB at module load time
+// This prevents the health check from hanging if DB is unavailable
 
 /**
  * Check database connectivity
@@ -37,6 +38,8 @@ const prisma = getPrismaClient();
 async function checkDatabase(): Promise<CheckResult> {
   const start = Date.now();
   try {
+    // Get Prisma client lazily - only when actually checking database
+    const prisma = getPrismaClient();
     // Simple query to verify connection
     await prisma.$queryRaw`SELECT 1`;
     return {
