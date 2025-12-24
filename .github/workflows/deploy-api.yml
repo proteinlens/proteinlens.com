@@ -138,24 +138,7 @@ jobs:
             exit 1
           fi
 
-      - name: Configure Function App Settings
-        run: |
-          RG="${{ inputs.resource_group }}"
-          FA_NAME="${{ inputs.functionapp_name }}"
-          echo "⚙️ Configuring Function App settings for Azure Functions v4 + ESM..."
-          
-          # Enable Azure Functions v4 Node.js programming model
-          az functionapp config appsettings set \
-            --name "$FA_NAME" \
-            --resource-group "$RG" \
-            --settings \
-              "AzureWebJobsFeatureFlags=EnableWorkerIndexing" \
-              "SCM_DO_BUILD_DURING_DEPLOYMENT=false" \
-            --output none
-          
-          echo "✅ Function App settings configured"
-
-      - name: Ensure Storage RBAC Permissions
+      - name: Ensure Storage RBAC Permissions (FIRST)
         run: |
           RG="${{ inputs.resource_group }}"
           FA_NAME="${{ inputs.functionapp_name }}"
@@ -228,6 +211,31 @@ jobs:
             2>/dev/null || echo "  - Table Data Contributor: already assigned"
           
           echo "✅ Storage RBAC permissions verified"
+          
+          # Wait for RBAC propagation before any other operations
+          echo "⏳ Waiting 30s for RBAC propagation..."
+          sleep 30
+
+      - name: Configure Function App Settings
+        run: |
+          RG="${{ inputs.resource_group }}"
+          FA_NAME="${{ inputs.functionapp_name }}"
+          echo "⚙️ Configuring Function App settings for Azure Functions v4 + ESM..."
+          
+          # Enable Azure Functions v4 Node.js programming model
+          az functionapp config appsettings set \
+            --name "$FA_NAME" \
+            --resource-group "$RG" \
+            --settings \
+              "AzureWebJobsFeatureFlags=EnableWorkerIndexing" \
+              "SCM_DO_BUILD_DURING_DEPLOYMENT=false" \
+            --output none
+          
+          echo "✅ Function App settings configured"
+          
+          # CRITICAL: Wait for SCM to stabilize after settings change
+          echo "⏳ Waiting 60s for SCM container to stabilize..."
+          sleep 60
 
       - name: Create deployment zip
         run: |
@@ -241,11 +249,30 @@ jobs:
           RG="${{ inputs.resource_group }}"
           FA_NAME="${{ inputs.functionapp_name }}"
           echo "🚀 Deploying to $FA_NAME in $RG"
-          az functionapp deployment source config-zip \
-            --resource-group "$RG" \
-            --name "$FA_NAME" \
-            --src backend/deploy.zip
-          echo "✅ Deployment completed"
+          
+          # Deploy with retry logic for SCM conflicts
+          MAX_RETRIES=3
+          RETRY_DELAY=30
+          for i in $(seq 1 $MAX_RETRIES); do
+            echo "📤 Deployment attempt $i of $MAX_RETRIES..."
+            if az functionapp deployment source config-zip \
+              --resource-group "$RG" \
+              --name "$FA_NAME" \
+              --src backend/deploy.zip \
+              --timeout 300; then
+              echo "✅ Deployment completed successfully"
+              break
+            else
+              if [ $i -lt $MAX_RETRIES ]; then
+                echo "⚠️ Deployment failed, waiting ${RETRY_DELAY}s before retry..."
+                sleep $RETRY_DELAY
+                RETRY_DELAY=$((RETRY_DELAY * 2))
+              else
+                echo "❌ Deployment failed after $MAX_RETRIES attempts"
+                exit 1
+              fi
+            fi
+          done
 
       - name: Warm up
         run: |
