@@ -106,7 +106,10 @@ jobs:
       - name: Deploy Bicep Template
         id: deploy
         run: |
+          DEPLOYMENT_NAME="infra-${{ github.run_id }}-${{ github.run_attempt }}"
+          echo "📦 Deployment name: $DEPLOYMENT_NAME"
           DEPLOYMENT_OUTPUT=$(az deployment group create \
+            --name "$DEPLOYMENT_NAME" \
             --resource-group "${{ env.RESOURCE_GROUP }}" \
             --template-file infra/bicep/main.bicep \
             --parameters "@infra/bicep/parameters/${{ inputs.environment }}.parameters.json" \
@@ -122,6 +125,7 @@ jobs:
           set -euo pipefail
           echo "🔎 Running what-if to validate idempotency..."
           az deployment group what-if \
+            --name "whatif-${{ github.run_id }}" \
             --resource-group "${{ env.RESOURCE_GROUP }}" \
             --template-file infra/bicep/main.bicep \
             --parameters "@infra/bicep/parameters/${{ inputs.environment }}.parameters.json" | tee whatif.txt
