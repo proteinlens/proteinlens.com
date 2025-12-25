@@ -50,6 +50,9 @@
     "enableFrontDoor": {
       "value": false
     },
+    "enableCustomDomain": {
+      "value": false
+    },
     "aiHubName": {
       "value": "proteinlens-ai-hub-prod"
     },

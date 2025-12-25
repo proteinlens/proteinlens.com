@@ -119,6 +119,7 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
 
 output functionAppName string = functionApp.name
 output functionAppPrincipalId string = functionApp.identity.principalId
-output functionAppUrl string = 'https://${customDomain}'
+// Always output Azure URL - custom domain binding is separate
+output functionAppUrl string = 'https://${functionApp.properties.defaultHostName}'
 output functionAppAzureUrl string = 'https://${functionApp.properties.defaultHostName}'
 output functionAppDefaultHostname string = functionApp.properties.defaultHostName
