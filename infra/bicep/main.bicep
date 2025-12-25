@@ -44,8 +44,7 @@ var keyVaultName string = length(keyVaultNameOverride) > 0 ? keyVaultNameOverrid
 param postgresServerName string = '${appNamePrefix}-db-${environmentName}'
 param staticWebAppName string = '${appNamePrefix}-web-${environmentName}'
 param frontDoorName string = '${appNamePrefix}-fd-${environmentName}'
-param aiHubName string = '${appNamePrefix}-ai-hub-${environmentName}'
-param aiProjectName string = '${appNamePrefix}-ai-project-${environmentName}'
+param openAIAccountName string = '${appNamePrefix}-openai-${environmentName}'
 
 // Database parameters
 param postgresAdminUsername string = 'pgadmin'
@@ -165,16 +164,28 @@ module frontDoor 'frontdoor.bicep' = if (enableFrontDoor) {
   }
 }
 
-// 7. AI Foundry (GPT-5.1 integration for intelligent meal analysis)
-module aiFoundry 'ai-foundry.bicep' = if (enableAIFoundry) {
-  name: 'ai-foundry-deployment'
+// 7. Azure OpenAI (GPT-5.1 integration for intelligent meal analysis)
+module openAI 'openai-foundry.bicep' = if (enableAIFoundry) {
+  name: 'openai-deployment'
   params: {
     location: location
-    aiHubName: aiHubName
-    aiProjectName: aiProjectName
-    keyVaultId: keyVault.outputs.keyVaultId
-    storageAccountId: storage.outputs.storageAccountId
-    applicationInsightsId: ''  // Will be added if Application Insights created
+    environmentName: environmentName
+    openAIAccountName: openAIAccountName
+    modelDeploymentName: 'gpt-5-1'
+    modelName: 'gpt-5.1'
+    modelVersion: '2025-11-13'
+    deploymentCapacity: 10
+  }
+}
+
+// 7b. Store OpenAI secrets in Key Vault
+module openAISecrets 'openai-secrets.bicep' = if (enableAIFoundry) {
+  name: 'openai-secrets-deployment'
+  params: {
+    keyVaultName: keyVault.outputs.keyVaultName
+    openAIEndpoint: openAI.outputs.openAIEndpoint
+    openAIDeploymentName: openAI.outputs.modelDeploymentName
+    openAIAccountName: openAI.outputs.openAIAccountName
   }
 }
 
@@ -233,12 +244,11 @@ output frontDoorEndpointHostname string = enableFrontDoor ? frontDoor.outputs.fr
 output webCustomDomain string = enableFrontDoor ? frontDoor.outputs.webCustomDomain : ''
 output apiCustomDomain string = enableFrontDoor ? frontDoor.outputs.apiCustomDomain : ''
 
-// AI Foundry (GPT-5.1 integration)
-output aiFoundryEnabled bool = enableAIFoundry
-output aiHubName string = enableAIFoundry ? aiFoundry.outputs.aiHubName : ''
-output aiHubId string = enableAIFoundry ? aiFoundry.outputs.aiHubId : ''
-output aiProjectName string = enableAIFoundry ? aiFoundry.outputs.aiProjectName : ''
-output aiProjectId string = enableAIFoundry ? aiFoundry.outputs.aiProjectId : ''
+// Azure OpenAI (GPT-5.1 integration)
+output openAIEnabled bool = enableAIFoundry
+output openAIAccountName string = enableAIFoundry ? openAI.outputs.openAIAccountName : ''
+output openAIEndpoint string = enableAIFoundry ? openAI.outputs.openAIEndpoint : ''
+output openAIDeploymentName string = enableAIFoundry ? openAI.outputs.modelDeploymentName : ''
 
 // Connection strings (for documentation/manual testing)
 @description('PostgreSQL connection string (with password placeholder)')

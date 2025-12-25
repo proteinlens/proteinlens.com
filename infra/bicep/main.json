@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.39.26.7824",
-      "templateHash": "11684739446795929813"
+      "templateHash": "15390749105916815849"
     }
   },
   "parameters": {
@@ -68,9 +68,9 @@
       "type": "string",
       "defaultValue": "[format('{0}-api-{1}', parameters('appNamePrefix'), parameters('environmentName'))]"
     },
-    "keyVaultNamePrefix": {
+    "keyVaultNameOverride": {
       "type": "string",
-      "defaultValue": "[format('{0}-kv-{1}', parameters('appNamePrefix'), parameters('environmentName'))]"
+      "defaultValue": ""
     },
     "postgresServerName": {
       "type": "string",
@@ -84,13 +84,9 @@
       "type": "string",
       "defaultValue": "[format('{0}-fd-{1}', parameters('appNamePrefix'), parameters('environmentName'))]"
     },
-    "aiHubName": {
+    "openAIAccountName": {
       "type": "string",
-      "defaultValue": "[format('{0}-ai-hub-{1}', parameters('appNamePrefix'), parameters('environmentName'))]"
-    },
-    "aiProjectName": {
-      "type": "string",
-      "defaultValue": "[format('{0}-ai-project-{1}', parameters('appNamePrefix'), parameters('environmentName'))]"
+      "defaultValue": "[format('{0}-openai-{1}', parameters('appNamePrefix'), parameters('environmentName'))]"
     },
     "postgresAdminUsername": {
       "type": "string",
@@ -106,6 +102,18 @@
     "enableAIFoundry": {
       "type": "bool",
       "defaultValue": true
+    },
+    "enableCustomDomain": {
+      "type": "bool",
+      "defaultValue": true
+    },
+    "apiCustomDomainName": {
+      "type": "string",
+      "defaultValue": "api.proteinlens.com"
+    },
+    "webCustomDomainName": {
+      "type": "string",
+      "defaultValue": "www.proteinlens.com"
     }
   },
   "variables": {
@@ -114,8 +122,8 @@
     "saSuffix": "[take(uniqueString(resourceGroup().id), 8)]",
     "storageAccountNameRaw": "[if(greater(length(parameters('storageAccountNameOverride')), 0), parameters('storageAccountNameOverride'), format('{0}{1}{2}', variables('saPrefix'), variables('saEnv'), variables('saSuffix')))]",
     "storageAccountName": "[toLower(take(variables('storageAccountNameRaw'), 24))]",
-    "kvSuffix": "[take(uniqueString(resourceGroup().id, deployment().name), 8)]",
-    "keyVaultName": "[toLower(take(format('{0}-{1}', parameters('keyVaultNamePrefix'), variables('kvSuffix')), 24))]"
+    "kvSuffix": "[take(uniqueString(resourceGroup().id), 8)]",
+    "keyVaultName": "[if(greater(length(parameters('keyVaultNameOverride')), 0), parameters('keyVaultNameOverride'), toLower(take(format('{0}-kv-{1}', parameters('appNamePrefix'), variables('kvSuffix')), 24)))]"
   },
   "resources": {
     "keyVault": {
@@ -218,7 +226,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.39.26.7824",
-              "templateHash": "11131205222687699155"
+              "templateHash": "9946880608849978033"
             }
           },
           "parameters": {
@@ -265,7 +273,10 @@
                     {
                       "allowedOrigins": [
                         "http://localhost:5173",
-                        "http://localhost:3000"
+                        "http://localhost:3000",
+                        "https://www.proteinlens.com",
+                        "https://proteinlens.com",
+                        "https://happy-stone-003f15b1e.azurestaticapps.net"
                       ],
                       "allowedMethods": [
                         "GET",
@@ -500,7 +511,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.39.26.7824",
-              "templateHash": "5074217488071091062"
+              "templateHash": "8584495934461176404"
             }
           },
           "parameters": {
@@ -581,6 +592,18 @@
                       "value": "meal-photos"
                     },
                     {
+                      "name": "AZURE_OPENAI_ENDPOINT",
+                      "value": "[format('@Microsoft.KeyVault(SecretUri={0}secrets/ai-foundry-endpoint/)', parameters('keyVaultUri'))]"
+                    },
+                    {
+                      "name": "AZURE_OPENAI_DEPLOYMENT",
+                      "value": "[format('@Microsoft.KeyVault(SecretUri={0}secrets/ai-model-deployment/)', parameters('keyVaultUri'))]"
+                    },
+                    {
+                      "name": "AZURE_OPENAI_API_KEY",
+                      "value": "[format('@Microsoft.KeyVault(SecretUri={0}secrets/openai-api-key/)', parameters('keyVaultUri'))]"
+                    },
+                    {
                       "name": "AI_FOUNDRY_ENDPOINT",
                       "value": "[format('@Microsoft.KeyVault(SecretUri={0}secrets/ai-foundry-endpoint/)', parameters('keyVaultUri'))]"
                     },
@@ -620,7 +643,11 @@
                   "cors": {
                     "allowedOrigins": [
                       "http://localhost:5173",
-                      "http://localhost:3000"
+                      "http://localhost:3000",
+                      "https://www.proteinlens.com",
+                      "https://proteinlens.com",
+                      "https://happy-stone-003f15b1e.azurestaticapps.net",
+                      "https://api.proteinlens.com"
                     ],
                     "supportCredentials": true
                   }
@@ -644,6 +671,10 @@
               "type": "string",
               "value": "[format('https://{0}', reference(resourceId('Microsoft.Web/sites', parameters('functionAppName')), '2023-01-01').defaultHostName)]"
             },
+            "functionAppAzureUrl": {
+              "type": "string",
+              "value": "[format('https://{0}', reference(resourceId('Microsoft.Web/sites', parameters('functionAppName')), '2023-01-01').defaultHostName)]"
+            },
             "functionAppDefaultHostname": {
               "type": "string",
               "value": "[reference(resourceId('Microsoft.Web/sites', parameters('functionAppName')), '2023-01-01').defaultHostName]"
@@ -656,24 +687,25 @@
         "storage"
       ]
     },
-    "storageRbacBlob": {
+    "functionAppCustomDomain": {
+      "condition": "[parameters('enableCustomDomain')]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2025-04-01",
-      "name": "storage-rbac-blob-deployment",
+      "name": "function-app-custom-domain-deployment",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
         },
         "mode": "Incremental",
         "parameters": {
-          "storageAccountName": {
-            "value": "[reference('storage').outputs.storageAccountName.value]"
+          "functionAppName": {
+            "value": "[reference('functionApp').outputs.functionAppName.value]"
           },
-          "principalId": {
-            "value": "[reference('functionApp').outputs.functionAppPrincipalId.value]"
+          "customDomain": {
+            "value": "[parameters('apiCustomDomainName')]"
           },
-          "roleId": {
-            "value": "b7e6dc6d-f1e8-4753-8033-0f276bb0955b"
+          "location": {
+            "value": "[parameters('location')]"
           }
         },
         "template": {
@@ -683,163 +715,65 @@
             "_generator": {
               "name": "bicep",
               "version": "0.39.26.7824",
-              "templateHash": "936260758375122197"
+              "templateHash": "15659052713422513765"
             }
           },
           "parameters": {
-            "storageAccountName": {
+            "functionAppName": {
               "type": "string"
             },
-            "principalId": {
-              "type": "string"
-            },
-            "roleId": {
+            "customDomain": {
               "type": "string",
-              "defaultValue": "ba92f5b4-2d11-453d-a403-e96b0029c9fe"
+              "defaultValue": "api.proteinlens.com"
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "northeurope"
             }
           },
           "resources": [
             {
-              "type": "Microsoft.Authorization/roleAssignments",
-              "apiVersion": "2022-04-01",
-              "scope": "[format('Microsoft.Storage/storageAccounts/{0}', parameters('storageAccountName'))]",
-              "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), parameters('principalId'), parameters('roleId'))]",
+              "type": "Microsoft.Web/sites/hostNameBindings",
+              "apiVersion": "2023-01-01",
+              "name": "[format('{0}/{1}', parameters('functionAppName'), parameters('customDomain'))]",
               "properties": {
-                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleId'))]",
-                "principalId": "[parameters('principalId')]",
-                "principalType": "ServicePrincipal"
+                "siteName": "[parameters('functionAppName')]",
+                "hostNameType": "Verified",
+                "sslState": "Disabled"
               }
+            },
+            {
+              "type": "Microsoft.Web/certificates",
+              "apiVersion": "2023-01-01",
+              "name": "[format('{0}-{1}-cert', parameters('functionAppName'), replace(parameters('customDomain'), '.', '-'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "serverFarmId": "[reference(resourceId('Microsoft.Web/sites', parameters('functionAppName')), '2023-01-01').serverFarmId]",
+                "canonicalName": "[parameters('customDomain')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/sites/hostNameBindings', parameters('functionAppName'), parameters('customDomain'))]"
+              ]
             }
-          ]
-        }
-      },
-      "dependsOn": [
-        "functionApp",
-        "storage"
-      ]
-    },
-    "storageRbacQueue": {
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2025-04-01",
-      "name": "storage-rbac-queue-deployment",
-      "properties": {
-        "expressionEvaluationOptions": {
-          "scope": "inner"
-        },
-        "mode": "Incremental",
-        "parameters": {
-          "storageAccountName": {
-            "value": "[reference('storage').outputs.storageAccountName.value]"
-          },
-          "principalId": {
-            "value": "[reference('functionApp').outputs.functionAppPrincipalId.value]"
-          },
-          "roleId": {
-            "value": "974c5e8b-45b9-4653-ba55-5f855dd0fb88"
+          ],
+          "outputs": {
+            "customDomain": {
+              "type": "string",
+              "value": "[parameters('customDomain')]"
+            },
+            "certificateThumbprint": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/certificates', format('{0}-{1}-cert', parameters('functionAppName'), replace(parameters('customDomain'), '.', '-'))), '2023-01-01').thumbprint]"
+            },
+            "certificateName": {
+              "type": "string",
+              "value": "[format('{0}-{1}-cert', parameters('functionAppName'), replace(parameters('customDomain'), '.', '-'))]"
+            }
           }
-        },
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "metadata": {
-            "_generator": {
-              "name": "bicep",
-              "version": "0.39.26.7824",
-              "templateHash": "936260758375122197"
-            }
-          },
-          "parameters": {
-            "storageAccountName": {
-              "type": "string"
-            },
-            "principalId": {
-              "type": "string"
-            },
-            "roleId": {
-              "type": "string",
-              "defaultValue": "ba92f5b4-2d11-453d-a403-e96b0029c9fe"
-            }
-          },
-          "resources": [
-            {
-              "type": "Microsoft.Authorization/roleAssignments",
-              "apiVersion": "2022-04-01",
-              "scope": "[format('Microsoft.Storage/storageAccounts/{0}', parameters('storageAccountName'))]",
-              "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), parameters('principalId'), parameters('roleId'))]",
-              "properties": {
-                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleId'))]",
-                "principalId": "[parameters('principalId')]",
-                "principalType": "ServicePrincipal"
-              }
-            }
-          ]
         }
       },
       "dependsOn": [
-        "functionApp",
-        "storage"
-      ]
-    },
-    "storageRbacTable": {
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2025-04-01",
-      "name": "storage-rbac-table-deployment",
-      "properties": {
-        "expressionEvaluationOptions": {
-          "scope": "inner"
-        },
-        "mode": "Incremental",
-        "parameters": {
-          "storageAccountName": {
-            "value": "[reference('storage').outputs.storageAccountName.value]"
-          },
-          "principalId": {
-            "value": "[reference('functionApp').outputs.functionAppPrincipalId.value]"
-          },
-          "roleId": {
-            "value": "0a9a7e1f-b9d0-4cc4-a60d-0319b160aaa3"
-          }
-        },
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "metadata": {
-            "_generator": {
-              "name": "bicep",
-              "version": "0.39.26.7824",
-              "templateHash": "936260758375122197"
-            }
-          },
-          "parameters": {
-            "storageAccountName": {
-              "type": "string"
-            },
-            "principalId": {
-              "type": "string"
-            },
-            "roleId": {
-              "type": "string",
-              "defaultValue": "ba92f5b4-2d11-453d-a403-e96b0029c9fe"
-            }
-          },
-          "resources": [
-            {
-              "type": "Microsoft.Authorization/roleAssignments",
-              "apiVersion": "2022-04-01",
-              "scope": "[format('Microsoft.Storage/storageAccounts/{0}', parameters('storageAccountName'))]",
-              "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), parameters('principalId'), parameters('roleId'))]",
-              "properties": {
-                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleId'))]",
-                "principalId": "[parameters('principalId')]",
-                "principalType": "ServicePrincipal"
-              }
-            }
-          ]
-        }
-      },
-      "dependsOn": [
-        "functionApp",
-        "storage"
+        "functionApp"
       ]
     },
     "kvAccessFunctionApp": {
@@ -1021,6 +955,67 @@
       },
       "dependsOn": [
         "functionApp"
+      ]
+    },
+    "staticWebAppCustomDomain": {
+      "condition": "[parameters('enableCustomDomain')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "static-web-app-custom-domain-deployment",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "staticWebAppName": {
+            "value": "[reference('staticWebApp').outputs.staticWebAppName.value]"
+          },
+          "customDomain": {
+            "value": "[parameters('webCustomDomainName')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "7067937578363115239"
+            }
+          },
+          "parameters": {
+            "staticWebAppName": {
+              "type": "string"
+            },
+            "customDomain": {
+              "type": "string",
+              "defaultValue": "www.proteinlens.com"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Web/staticSites/customDomains",
+              "apiVersion": "2023-01-01",
+              "name": "[format('{0}/{1}', parameters('staticWebAppName'), parameters('customDomain'))]",
+              "properties": {}
+            }
+          ],
+          "outputs": {
+            "customDomain": {
+              "type": "string",
+              "value": "[parameters('customDomain')]"
+            },
+            "validationStatus": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/staticSites/customDomains', parameters('staticWebAppName'), parameters('customDomain')), '2023-01-01').status]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "staticWebApp"
       ]
     },
     "frontDoor": {
@@ -1337,11 +1332,11 @@
         "staticWebApp"
       ]
     },
-    "aiFoundry": {
+    "openAI": {
       "condition": "[parameters('enableAIFoundry')]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2025-04-01",
-      "name": "ai-foundry-deployment",
+      "name": "openai-deployment",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -1351,20 +1346,23 @@
           "location": {
             "value": "[parameters('location')]"
           },
-          "aiHubName": {
-            "value": "[parameters('aiHubName')]"
+          "environmentName": {
+            "value": "[parameters('environmentName')]"
           },
-          "aiProjectName": {
-            "value": "[parameters('aiProjectName')]"
+          "openAIAccountName": {
+            "value": "[parameters('openAIAccountName')]"
           },
-          "keyVaultId": {
-            "value": "[reference('keyVault').outputs.keyVaultId.value]"
+          "modelDeploymentName": {
+            "value": "gpt-5-1"
           },
-          "storageAccountId": {
-            "value": "[reference('storage').outputs.storageAccountId.value]"
+          "modelName": {
+            "value": "gpt-5.1"
           },
-          "applicationInsightsId": {
-            "value": ""
+          "modelVersion": {
+            "value": "2025-11-13"
+          },
+          "deploymentCapacity": {
+            "value": 10
           }
         },
         "template": {
@@ -1374,7 +1372,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.39.26.7824",
-              "templateHash": "8906499779362137976"
+              "templateHash": "6317139259206380302"
             }
           },
           "parameters": {
@@ -1382,97 +1380,196 @@
               "type": "string",
               "defaultValue": "northeurope"
             },
-            "aiHubName": {
+            "environmentName": {
               "type": "string"
             },
-            "aiProjectName": {
+            "openAIAccountName": {
+              "type": "string",
+              "defaultValue": "[format('protein-lens-openai-{0}', parameters('environmentName'))]"
+            },
+            "modelDeploymentName": {
+              "type": "string",
+              "defaultValue": "gpt-5-1"
+            },
+            "modelName": {
+              "type": "string",
+              "defaultValue": "gpt-5.1"
+            },
+            "modelVersion": {
+              "type": "string",
+              "defaultValue": "2025-11-13"
+            },
+            "deploymentCapacity": {
+              "type": "int",
+              "defaultValue": 10
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {
+                "environment": "[parameters('environmentName')]",
+                "service": "openai",
+                "repo": "proteinlens",
+                "managedBy": "bicep"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.CognitiveServices/accounts",
+              "apiVersion": "2023-10-01-preview",
+              "name": "[parameters('openAIAccountName')]",
+              "location": "[parameters('location')]",
+              "kind": "OpenAI",
+              "sku": {
+                "name": "S0"
+              },
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "customSubDomainName": "[parameters('openAIAccountName')]",
+                "publicNetworkAccess": "Enabled",
+                "networkAcls": {
+                  "defaultAction": "Allow"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.CognitiveServices/accounts/deployments",
+              "apiVersion": "2023-10-01-preview",
+              "name": "[format('{0}/{1}', parameters('openAIAccountName'), parameters('modelDeploymentName'))]",
+              "sku": {
+                "name": "GlobalStandard",
+                "capacity": "[parameters('deploymentCapacity')]"
+              },
+              "properties": {
+                "model": {
+                  "format": "OpenAI",
+                  "name": "[parameters('modelName')]",
+                  "version": "[parameters('modelVersion')]"
+                },
+                "raiPolicyName": "Microsoft.Default"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.CognitiveServices/accounts', parameters('openAIAccountName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "openAIAccountName": {
+              "type": "string",
+              "value": "[parameters('openAIAccountName')]"
+            },
+            "openAIAccountId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('openAIAccountName'))]"
+            },
+            "openAIEndpoint": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('openAIAccountName')), '2023-10-01-preview').endpoint]"
+            },
+            "modelDeploymentName": {
+              "type": "string",
+              "value": "[parameters('modelDeploymentName')]"
+            },
+            "location": {
+              "type": "string",
+              "value": "[parameters('location')]"
+            }
+          }
+        }
+      }
+    },
+    "openAISecrets": {
+      "condition": "[parameters('enableAIFoundry')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "openai-secrets-deployment",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "keyVaultName": {
+            "value": "[reference('keyVault').outputs.keyVaultName.value]"
+          },
+          "openAIEndpoint": {
+            "value": "[reference('openAI').outputs.openAIEndpoint.value]"
+          },
+          "openAIDeploymentName": {
+            "value": "[reference('openAI').outputs.modelDeploymentName.value]"
+          },
+          "openAIAccountName": {
+            "value": "[reference('openAI').outputs.openAIAccountName.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "7212686761850630262"
+            }
+          },
+          "parameters": {
+            "keyVaultName": {
               "type": "string"
             },
-            "keyVaultId": {
+            "openAIEndpoint": {
               "type": "string"
             },
-            "storageAccountId": {
+            "openAIDeploymentName": {
               "type": "string"
             },
-            "applicationInsightsId": {
+            "openAIAccountName": {
               "type": "string"
             }
           },
           "resources": [
             {
-              "type": "Microsoft.MachineLearningServices/workspaces",
-              "apiVersion": "2024-04-01",
-              "name": "[parameters('aiHubName')]",
-              "location": "[parameters('location')]",
-              "kind": "Hub",
-              "identity": {
-                "type": "SystemAssigned"
-              },
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/{1}', parameters('keyVaultName'), 'ai-foundry-endpoint')]",
               "properties": {
-                "friendlyName": "ProteinLens AI Hub",
-                "description": "AI Foundry hub for GPT-5.1 meal analysis",
-                "keyVault": "[parameters('keyVaultId')]",
-                "storageAccount": "[parameters('storageAccountId')]",
-                "applicationInsights": "[parameters('applicationInsightsId')]",
-                "publicNetworkAccess": "Enabled",
-                "hbiWorkspace": false
+                "value": "[parameters('openAIEndpoint')]",
+                "contentType": "Azure OpenAI Endpoint URL"
               }
             },
             {
-              "type": "Microsoft.MachineLearningServices/workspaces",
-              "apiVersion": "2024-04-01",
-              "name": "[parameters('aiProjectName')]",
-              "location": "[parameters('location')]",
-              "kind": "Project",
-              "identity": {
-                "type": "SystemAssigned"
-              },
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/{1}', parameters('keyVaultName'), 'ai-model-deployment')]",
               "properties": {
-                "friendlyName": "ProteinLens AI Project",
-                "description": "Project for GPT-5.1 integration",
-                "keyVault": "[parameters('keyVaultId')]",
-                "storageAccount": "[parameters('storageAccountId')]",
-                "applicationInsights": "[parameters('applicationInsightsId')]",
-                "hubResourceId": "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiHubName'))]",
-                "publicNetworkAccess": "Enabled",
-                "hbiWorkspace": false
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiHubName'))]"
-              ]
+                "value": "[parameters('openAIDeploymentName')]",
+                "contentType": "Azure OpenAI Model Deployment Name"
+              }
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/{1}', parameters('keyVaultName'), 'openai-account-name')]",
+              "properties": {
+                "value": "[parameters('openAIAccountName')]",
+                "contentType": "Azure OpenAI Account Name"
+              }
             }
           ],
           "outputs": {
-            "aiHubName": {
+            "endpointSecretUri": {
               "type": "string",
-              "value": "[parameters('aiHubName')]"
+              "value": "[reference(resourceId('Microsoft.KeyVault/vaults/secrets', parameters('keyVaultName'), 'ai-foundry-endpoint'), '2023-07-01').secretUri]"
             },
-            "aiHubId": {
+            "deploymentSecretUri": {
               "type": "string",
-              "value": "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiHubName'))]"
-            },
-            "aiProjectName": {
-              "type": "string",
-              "value": "[parameters('aiProjectName')]"
-            },
-            "aiProjectId": {
-              "type": "string",
-              "value": "[resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiProjectName'))]"
-            },
-            "aiHubManagedIdentityId": {
-              "type": "string",
-              "value": "[reference(resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiHubName')), '2024-04-01', 'full').identity.principalId]"
-            },
-            "aiProjectManagedIdentityId": {
-              "type": "string",
-              "value": "[reference(resourceId('Microsoft.MachineLearningServices/workspaces', parameters('aiProjectName')), '2024-04-01', 'full').identity.principalId]"
+              "value": "[reference(resourceId('Microsoft.KeyVault/vaults/secrets', parameters('keyVaultName'), 'ai-model-deployment'), '2023-07-01').secretUri]"
             }
           }
         }
       },
       "dependsOn": [
         "keyVault",
-        "storage"
+        "openAI"
       ]
     }
   },
@@ -1521,6 +1618,10 @@
       "type": "string",
       "value": "[reference('functionApp').outputs.functionAppUrl.value]"
     },
+    "functionAppAzureUrl": {
+      "type": "string",
+      "value": "[reference('functionApp').outputs.functionAppAzureUrl.value]"
+    },
     "functionAppManagedIdentityId": {
       "type": "string",
       "value": "[reference('functionApp').outputs.functionAppPrincipalId.value]"
@@ -1528,6 +1629,10 @@
     "functionAppPrincipalId": {
       "type": "string",
       "value": "[reference('functionApp').outputs.functionAppPrincipalId.value]"
+    },
+    "functionAppCustomDomainEnabled": {
+      "type": "bool",
+      "value": "[parameters('enableCustomDomain')]"
     },
     "postgresServerName": {
       "type": "string",
@@ -1567,11 +1672,19 @@
     },
     "staticWebAppUrl": {
       "type": "string",
+      "value": "[if(parameters('enableCustomDomain'), format('https://{0}', parameters('webCustomDomainName')), reference('staticWebApp').outputs.staticWebAppUrl.value)]"
+    },
+    "staticWebAppAzureUrl": {
+      "type": "string",
       "value": "[reference('staticWebApp').outputs.staticWebAppUrl.value]"
     },
     "staticWebAppDefaultHostname": {
       "type": "string",
       "value": "[reference('staticWebApp').outputs.staticWebAppDefaultHostname.value]"
+    },
+    "staticWebAppCustomDomainEnabled": {
+      "type": "bool",
+      "value": "[parameters('enableCustomDomain')]"
     },
     "frontDoorEnabled": {
       "type": "bool",
@@ -1600,25 +1713,21 @@
       "type": "string",
       "value": "[if(parameters('enableFrontDoor'), reference('frontDoor').outputs.apiCustomDomain.value, '')]"
     },
-    "aiFoundryEnabled": {
+    "openAIEnabled": {
       "type": "bool",
       "value": "[parameters('enableAIFoundry')]"
     },
-    "aiHubName": {
+    "openAIAccountName": {
       "type": "string",
-      "value": "[if(parameters('enableAIFoundry'), reference('aiFoundry').outputs.aiHubName.value, '')]"
+      "value": "[if(parameters('enableAIFoundry'), reference('openAI').outputs.openAIAccountName.value, '')]"
     },
-    "aiHubId": {
+    "openAIEndpoint": {
       "type": "string",
-      "value": "[if(parameters('enableAIFoundry'), reference('aiFoundry').outputs.aiHubId.value, '')]"
+      "value": "[if(parameters('enableAIFoundry'), reference('openAI').outputs.openAIEndpoint.value, '')]"
     },
-    "aiProjectName": {
+    "openAIDeploymentName": {
       "type": "string",
-      "value": "[if(parameters('enableAIFoundry'), reference('aiFoundry').outputs.aiProjectName.value, '')]"
-    },
-    "aiProjectId": {
-      "type": "string",
-      "value": "[if(parameters('enableAIFoundry'), reference('aiFoundry').outputs.aiProjectId.value, '')]"
+      "value": "[if(parameters('enableAIFoundry'), reference('openAI').outputs.modelDeploymentName.value, '')]"
     },
     "databaseConnectionString": {
       "type": "string",

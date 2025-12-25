@@ -6,7 +6,6 @@ param functionAppName string
 param storageAccountName string
 param appServicePlanName string = '${functionAppName}-plan'
 param keyVaultUri string
-param customDomain string = 'api.proteinlens.com'
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
   name: appServicePlanName
@@ -65,6 +64,20 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
           name: 'BLOB_CONTAINER_NAME'
           value: 'meal-photos'
         }
+        // Azure OpenAI settings (new naming convention)
+        {
+          name: 'AZURE_OPENAI_ENDPOINT'
+          value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/ai-foundry-endpoint/)'
+        }
+        {
+          name: 'AZURE_OPENAI_DEPLOYMENT'
+          value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/ai-model-deployment/)'
+        }
+        {
+          name: 'AZURE_OPENAI_API_KEY'
+          value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/openai-api-key/)'
+        }
+        // Legacy AI Foundry settings (for backward compatibility)
         {
           name: 'AI_FOUNDRY_ENDPOINT'
           value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/ai-foundry-endpoint/)'
