@@ -24,6 +24,7 @@ import './functions/update-meal';
 import './functions/delete-meal';
 import './functions/export';
 import './functions/health';
+import './functions/me';
 
 // Feature 002: SaaS Billing
 import './functions/plans';
