@@ -34,7 +34,6 @@ const Navigation: React.FC = () => {
   const navItems = [
     { path: '/', label: 'Scan', icon: '📸' },
     { path: '/history', label: 'History', icon: '📊' },
-    { path: '/pricing', label: 'Pro', icon: '✨' },
     { path: '/settings', label: 'Settings', icon: '⚙️' },
   ];
   
@@ -146,35 +145,28 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <BrowserRouter>
-          <Routes>
-            {/* HomePage renders without Navigation/PageContainer wrappers */}
-            <Route path="/" element={<HomePage />} />
-            
-            {/* Other routes use the standard layout */}
-            <Route path="/*" element={
-              <div className="app flex flex-col min-h-screen bg-background text-foreground">
-                <Navigation />
-                <PageContainer>
-                  <Suspense fallback={
-                    <div className="flex items-center justify-center min-h-screen">
-                      <div className="text-center">
-                        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                        <p className="text-muted-foreground">Loading...</p>
-                      </div>
-                    </div>
-                  }>
-                    <Routes>
-                      <Route path="/history" element={<History />} />
-                      <Route path="/pricing" element={<PricingPage />} />
-                      <Route path="/settings" element={<Settings />} />
-                      <Route path="/billing/success" element={<CheckoutSuccessPage />} />
-                    </Routes>
-                  </Suspense>
-                </PageContainer>
-                <BottomNav />
-              </div>
-            } />
-          </Routes>
+          <div className="app flex flex-col min-h-screen bg-background text-foreground">
+            <Navigation />
+            <PageContainer>
+              <Suspense fallback={
+                <div className="flex items-center justify-center min-h-screen">
+                  <div className="text-center">
+                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                    <p className="text-muted-foreground">Loading...</p>
+                  </div>
+                </div>
+              }>
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/history" element={<History />} />
+                  <Route path="/pricing" element={<PricingPage />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/billing/success" element={<CheckoutSuccessPage />} />
+                </Routes>
+              </Suspense>
+            </PageContainer>
+            <BottomNav />
+          </div>
         </BrowserRouter>
       </ThemeProvider>
     </QueryClientProvider>
