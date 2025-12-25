@@ -1,6 +1,9 @@
 import React, { useCallback, useRef, useState } from 'react'
 import imageCompression from 'browser-image-compression'
 import { apiClient } from '@/services/apiClient'
+import { FriendlyError } from '@/components/ui/FriendlyError'
+import { FunLoading } from '@/components/ui/FunLoading'
+import { getRandomMessage, successMessages } from '@/utils/friendlyErrors'
 
 interface FoodItem {
   name: string
@@ -18,6 +21,9 @@ interface AnalysisResult {
 
 type UploadState = 'idle' | 'selected' | 'uploading' | 'analyzing' | 'done' | 'error'
 
+// Max retry attempts for transient errors
+const MAX_RETRIES = 3
+
 export function HomePage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isDragActive, setIsDragActive] = useState(false)
@@ -27,6 +33,8 @@ export function HomePage() {
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<AnalysisResult | null>(null)
   const [progress, setProgress] = useState(0)
+  const [retryCount, setRetryCount] = useState(0)
+  const [successMessage] = useState(() => getRandomMessage(successMessages))
 
   const validateFile = (file: File): string | null => {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
@@ -57,11 +65,13 @@ export function HomePage() {
     if (e.dataTransfer.files?.[0]) handleFileSelected(e.dataTransfer.files[0])
   }
 
-  const handleAnalyze = async () => {
+  const handleAnalyze = async (isRetry = false) => {
     if (!selectedFile) return
     try {
       setUploadState('uploading')
       setProgress(10)
+      setError(null)
+      
       let fileToUpload = selectedFile
       if (selectedFile.size > 1024 * 1024) {
         fileToUpload = await imageCompression(selectedFile, { maxSizeMB: 0.8, maxWidthOrHeight: 1920, useWebWorker: true })
@@ -76,9 +86,25 @@ export function HomePage() {
       setProgress(100)
       setResult(analysisResponse)
       setUploadState('done')
+      setRetryCount(0) // Reset retry count on success
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Analysis failed')
+      const errorMessage = err instanceof Error ? err.message : 'Analysis failed'
+      setError(errorMessage)
       setUploadState('error')
+      
+      // Auto-retry for transient errors (network, server issues)
+      const isTransientError = errorMessage.toLowerCase().includes('network') || 
+                               errorMessage.toLowerCase().includes('fetch') ||
+                               errorMessage.toLowerCase().includes('500') ||
+                               errorMessage.toLowerCase().includes('503') ||
+                               errorMessage.toLowerCase().includes('timeout')
+      
+      if (isTransientError && retryCount < MAX_RETRIES && !isRetry) {
+        setRetryCount(prev => prev + 1)
+        // Exponential backoff: 2s, 4s, 8s
+        const delay = Math.pow(2, retryCount + 1) * 1000
+        setTimeout(() => handleAnalyze(true), delay)
+      }
     }
   }
 
@@ -89,6 +115,7 @@ export function HomePage() {
     setError(null)
     setResult(null)
     setProgress(0)
+    setRetryCount(0)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -97,7 +124,7 @@ export function HomePage() {
     return (
       <div className="max-w-xl mx-auto px-4 py-8">
         <div className="inline-block bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-4">
-          ✓ Analysis Complete
+          {successMessage.emoji} {successMessage.text}
         </div>
         <h1 className="text-2xl font-bold text-foreground mb-5">Your Meal Analysis</h1>
         {previewUrl && <img src={previewUrl} alt="Meal" className="w-full h-48 object-cover rounded-2xl mb-5" />}
@@ -109,7 +136,7 @@ export function HomePage() {
           <span className="text-5xl">💪</span>
         </div>
         <div className="bg-card border border-border rounded-2xl overflow-hidden mb-5">
-          <h2 className="text-sm font-semibold p-4 border-b border-border">Detected Foods</h2>
+          <h2 className="text-sm font-semibold p-4 border-b border-border">🍽️ What We Found</h2>
           {result.foods.map((food, i) => (
             <div key={i} className="flex justify-between items-center p-4 border-b border-border last:border-b-0">
               <div>
@@ -122,59 +149,42 @@ export function HomePage() {
         </div>
         {result.notes && (
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-4 rounded-xl text-sm text-yellow-800 dark:text-yellow-200 mb-5 text-left">
-            <strong>Note:</strong> {result.notes}
+            <strong>💡 Pro tip:</strong> {result.notes}
           </div>
         )}
-        <p className="text-xs text-muted-foreground mb-6 text-center">Estimates are approximate and for informational purposes only</p>
-        <button onClick={handleReset} className="w-full py-4 px-6 bg-primary text-primary-foreground border-none rounded-xl text-base font-semibold cursor-pointer">
-          Analyze Another Meal
+        <p className="text-xs text-muted-foreground mb-6 text-center">✨ Estimates are approximate - your mileage may vary!</p>
+        <button onClick={handleReset} className="w-full py-4 px-6 bg-primary text-primary-foreground border-none rounded-xl text-base font-semibold cursor-pointer hover:scale-[1.02] transition-transform">
+          📸 Analyze Another Meal
         </button>
       </div>
     )
   }
 
-  // Loading
+  // Loading - Use FunLoading component
   if (uploadState === 'uploading' || uploadState === 'analyzing') {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center p-8">
-          <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center text-4xl mx-auto mb-6 animate-pulse">
-            🔍
-          </div>
-          <h2 className="text-xl font-bold text-foreground mb-2">
-            {uploadState === 'uploading' ? 'Uploading...' : 'Analyzing with AI...'}
-          </h2>
-          <p className="text-muted-foreground mb-6">
-            {uploadState === 'uploading' ? 'Sending your photo' : 'Identifying foods'}
-          </p>
-          <div className="w-48 h-1.5 bg-secondary rounded-full mx-auto overflow-hidden">
-            <div className="h-full bg-primary transition-all duration-300" style={{ width: `${progress}%` }} />
-          </div>
-          <span className="block mt-3 text-sm text-muted-foreground">{progress}%</span>
-        </div>
-      </div>
+      <FunLoading 
+        type={uploadState === 'uploading' ? 'uploading' : 'analyzing'} 
+        progress={progress} 
+      />
     )
   }
 
-  // Error
-  if (uploadState === 'error') {
+  // Error - Use FriendlyError component
+  if (uploadState === 'error' && error) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center p-8">
-          <div className="w-20 h-20 bg-destructive/10 rounded-full flex items-center justify-center text-4xl mx-auto mb-6">
-            ⚠️
-          </div>
-          <h2 className="text-xl font-bold text-foreground mb-2">Something went wrong</h2>
-          <p className="text-muted-foreground mb-6">{error}</p>
-          <div className="flex gap-3 justify-center">
-            <button onClick={handleAnalyze} className="py-3 px-6 bg-primary text-primary-foreground border-none rounded-xl font-semibold cursor-pointer">
-              Try Again
-            </button>
-            <button onClick={handleReset} className="py-3 px-6 bg-secondary text-foreground border-none rounded-xl font-semibold cursor-pointer">
-              Start Over
-            </button>
-          </div>
-        </div>
+      <div className="max-w-xl mx-auto px-4 py-8">
+        <FriendlyError 
+          error={error}
+          onRetry={() => handleAnalyze()}
+          onSecondaryAction={handleReset}
+          secondaryActionText="🔄 Start Fresh"
+        />
+        {retryCount > 0 && (
+          <p className="text-center text-xs text-muted-foreground mt-4">
+            Auto-retry {retryCount}/{MAX_RETRIES} in progress...
+          </p>
+        )}
       </div>
     )
   }
@@ -208,7 +218,7 @@ export function HomePage() {
           </div>
           <p className="text-sm text-muted-foreground mb-4">{selectedFile?.name}</p>
           <button 
-            onClick={handleAnalyze} 
+            onClick={() => handleAnalyze()} 
             className="w-full py-4 px-8 bg-primary text-primary-foreground border-none rounded-xl text-lg font-semibold cursor-pointer shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all"
           >
             🔍 Analyze Protein Content
@@ -241,18 +251,21 @@ export function HomePage() {
         </div>
       )}
 
-      {error && (
-        <div className="bg-destructive/10 border border-destructive/30 text-destructive p-4 rounded-xl text-sm mb-4">
-          {error}
-        </div>
+      {error && uploadState === 'idle' && (
+        <FriendlyError 
+          error={error} 
+          onRetry={() => setError(null)}
+          compact
+          className="mb-4"
+        />
       )}
 
       <p className="text-sm text-primary bg-primary/10 border border-primary/20 py-2.5 px-5 rounded-full inline-block mb-4">
-        📸 Take a photo of chicken, eggs, fish, or any meal
+        📸 Snap a photo of your meal - we'll count the protein!
       </p>
       
       <p className="text-xs text-muted-foreground mt-6">
-        Estimates are approximate and for informational purposes only
+        🤖 Powered by AI • Results are estimates for fun & guidance
       </p>
 
       <input

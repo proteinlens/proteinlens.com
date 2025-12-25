@@ -33,7 +33,7 @@ export const PricingPage: React.FC = () => {
   const handleSelectPlan = async (priceId: string | null) => {
     if (!priceId) {
       // Free plan - just show a message or redirect to signup
-      alert('You are already on the Free plan!');
+      alert('🎉 You\'re already enjoying the Free plan! Keep tracking those proteins!');
       return;
     }
 
@@ -41,7 +41,7 @@ export const PricingPage: React.FC = () => {
       setCheckoutLoading(true);
       await redirectToCheckout(priceId);
     } catch (err) {
-      setError('Failed to start checkout. Please try again.');
+      setError('Hmm, checkout hit a snag. Let\'s try that again!');
       console.error('Checkout error:', err);
       setCheckoutLoading(false);
     }
@@ -50,7 +50,10 @@ export const PricingPage: React.FC = () => {
   if (loading) {
     return (
       <div className="pricing-page">
-        <div className="pricing-page__loading">Loading pricing...</div>
+        <div className="pricing-page__loading">
+          <span className="text-4xl mb-4 block animate-bounce">💰</span>
+          Finding the best deals for you...
+        </div>
       </div>
     );
   }
@@ -59,8 +62,12 @@ export const PricingPage: React.FC = () => {
     return (
       <div className="pricing-page">
         <div className="pricing-page__error">
-          {error}
-          <button onClick={fetchPlans}>Retry</button>
+          <span className="text-4xl mb-4 block">🤔</span>
+          <p className="font-medium">Oops! Couldn't load our pricing</p>
+          <p className="text-sm text-muted-foreground mb-4">No worries, let's try that again!</p>
+          <button onClick={fetchPlans} className="inline-flex items-center gap-2">
+            🔄 Retry
+          </button>
         </div>
       </div>
     );
@@ -72,8 +79,8 @@ export const PricingPage: React.FC = () => {
   return (
     <div className="pricing-page">
       <header className="pricing-page__header">
-        <h1>Simple, transparent pricing</h1>
-        <p>Track your protein intake with AI-powered meal analysis</p>
+        <h1>💪 Power Up Your Protein Tracking</h1>
+        <p>Simple pricing, powerful features. Pick what works for you!</p>
       </header>
 
       <div className="pricing-page__toggle">

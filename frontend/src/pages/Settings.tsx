@@ -22,28 +22,28 @@ export function Settings() {
         {/* Header */}
         <div>
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
-            Settings
+            ⚙️ Settings
           </h1>
           <p className="text-muted-foreground">
-            Customize your ProteinLens experience
+            Make ProteinLens work just the way you like it!
           </p>
         </div>
 
         {/* Goal Setting Section */}
         <section className="space-y-2">
-          <h2 className="text-lg font-semibold text-foreground">Nutrition</h2>
+          <h2 className="text-lg font-semibold text-foreground">🎯 Nutrition Goals</h2>
           <GoalInput />
         </section>
 
         {/* Appearance Section */}
         <section className="space-y-2">
-          <h2 className="text-lg font-semibold text-foreground">Appearance</h2>
+          <h2 className="text-lg font-semibold text-foreground">🎨 Appearance</h2>
           <ThemeToggle />
         </section>
 
         {/* Account Section */}
         <section className="space-y-2">
-          <h2 className="text-lg font-semibold text-foreground">Account</h2>
+          <h2 className="text-lg font-semibold text-foreground">👤 Account</h2>
           <div className="bg-card border border-border rounded-lg p-6 space-y-4">
             <div>
               <p className="text-sm text-muted-foreground mb-1">Email</p>
@@ -51,11 +51,11 @@ export function Settings() {
             </div>
 
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Subscription</p>
+              <p className="text-sm text-muted-foreground mb-1">Your Plan</p>
               <div className="flex items-center justify-between">
                 <p className="font-medium text-foreground">Free Plan</p>
                 <Button variant="outline" size="sm">
-                  Upgrade
+                  ⭐ Upgrade
                 </Button>
               </div>
             </div>
@@ -67,7 +67,7 @@ export function Settings() {
                 <strong>Version:</strong> 1.0.0-beta
               </p>
               <p className="text-xs text-muted-foreground">
-                Built with React, TypeScript, and Tailwind CSS
+                🤖 Powered by AI • Built with ❤️
               </p>
             </div>
           </div>
@@ -75,10 +75,10 @@ export function Settings() {
 
         {/* Export Section */}
         <section className="space-y-2">
-          <h2 className="text-lg font-semibold text-foreground">Data</h2>
+          <h2 className="text-lg font-semibold text-foreground">💾 Your Data</h2>
           <div className="bg-card border border-border rounded-lg p-6 space-y-4">
             <p className="text-sm text-muted-foreground">
-              Export your meal history as CSV for backup or analysis
+              Download your meal history - it's your data, take it anywhere! 
             </p>
             <Button variant="outline" className="w-full">
               📥 Export Meals (CSV)
@@ -88,22 +88,22 @@ export function Settings() {
 
         {/* Danger Zone */}
         <section className="space-y-2">
-          <h2 className="text-lg font-semibold text-destructive">Danger Zone</h2>
+          <h2 className="text-lg font-semibold text-destructive">⚠️ Danger Zone</h2>
           <div className="bg-destructive/5 border border-destructive/30 rounded-lg p-6 space-y-4">
             <p className="text-sm text-foreground">
-              Permanently delete all your data and meal history
+              This will permanently delete all your data. No take-backs! 😬
             </p>
             <Button
               variant="destructive"
               className="w-full"
               onClick={() => {
-                if (confirm('Are you sure? This cannot be undone.')) {
+                if (confirm('Are you absolutely sure? All your meals and history will be gone forever! 💨')) {
                   // TODO: Implement delete all data
                   console.log('Delete all data');
                 }
               }}
             >
-              🗑️ Delete All Data
+              🗑️ Delete Everything
             </Button>
           </div>
         </section>

@@ -4,6 +4,8 @@ import { useWeeklyTrend } from '@/hooks/useWeeklyTrend'
 import { WeeklyTrendChart } from '@/components/history/WeeklyTrendChart'
 import { MealHistoryList } from '@/components/history/MealHistoryList'
 import { getUserId } from '@/utils/userId'
+import { FriendlyError } from '@/components/ui/FriendlyError'
+import { emptyStates } from '@/utils/friendlyErrors'
 
 export function History() {
   // Use persistent user ID from storage
@@ -53,120 +55,38 @@ export function History() {
 
   if (error) {
     const errorMessage = error instanceof Error ? error.message : 'An error occurred'
-    const isServerError = errorMessage.includes('500') || errorMessage.includes('Server') || errorMessage.includes('server')
-    const isNetworkError = errorMessage.includes('fetch') || errorMessage.includes('network') || errorMessage.includes('Network')
     
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className={`
-          border rounded-2xl p-8 text-center space-y-4
-          ${isNetworkError 
-            ? 'bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200' 
-            : isServerError 
-              ? 'bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200'
-              : 'bg-gradient-to-br from-red-50 to-pink-50 border-red-200'
-          }
-        `}>
-          {/* Icon */}
-          <div className={`
-            w-16 h-16 mx-auto rounded-2xl flex items-center justify-center text-3xl
-            ${isNetworkError 
-              ? 'bg-blue-100' 
-              : isServerError 
-                ? 'bg-amber-100'
-                : 'bg-red-100'
-            }
-          `}>
-            {isNetworkError ? '📡' : isServerError ? '⚙️' : '⚠️'}
-          </div>
-          
-          {/* Title */}
-          <h3 className={`
-            text-xl font-bold
-            ${isNetworkError 
-              ? 'text-blue-800' 
-              : isServerError 
-                ? 'text-amber-800'
-                : 'text-red-800'
-            }
-          `}>
-            {isNetworkError 
-              ? 'Connection Issue' 
-              : isServerError 
-                ? 'Server Temporarily Busy'
-                : 'Failed to Load History'
-            }
-          </h3>
-          
-          {/* Subtitle */}
-          <p className="text-muted-foreground max-w-md mx-auto">
-            {isNetworkError 
-              ? "We couldn't reach our servers. Please check your internet connection."
-              : isServerError 
-                ? "Our servers are experiencing high load. Please wait a moment and try again."
-                : errorMessage
-            }
-          </p>
-          
-          {/* Tips */}
-          <div className={`
-            rounded-xl p-4 text-sm text-left max-w-sm mx-auto
-            ${isNetworkError 
-              ? 'bg-blue-100/50' 
-              : isServerError 
-                ? 'bg-amber-100/50'
-                : 'bg-red-100/50'
-            }
-          `}>
-            <p className="font-medium mb-2">💡 Quick tips:</p>
-            <ul className="space-y-1 text-muted-foreground">
-              {isNetworkError ? (
-                <>
-                  <li>• Check your WiFi or mobile data</li>
-                  <li>• Try refreshing the page</li>
-                  <li>• Disable VPN if enabled</li>
-                </>
-              ) : isServerError ? (
-                <>
-                  <li>• Wait 30 seconds and retry</li>
-                  <li>• Check our status page</li>
-                  <li>• Your data is safe</li>
-                </>
-              ) : (
-                <>
-                  <li>• Try refreshing the page</li>
-                  <li>• Clear browser cache</li>
-                  <li>• Contact support if issue persists</li>
-                </>
-              )}
-            </ul>
-          </div>
-          
-          {/* Retry Button */}
-          <button 
-            onClick={() => refetch()} 
-            className={`
-              inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold
-              transition-all duration-200 hover:scale-105 active:scale-95
-              ${isNetworkError 
-                ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                : isServerError 
-                  ? 'bg-amber-600 hover:bg-amber-700 text-white'
-                  : 'bg-red-600 hover:bg-red-700 text-white'
-              }
-            `}
-          >
-            <span>🔄</span>
-            <span>Try Again</span>
-          </button>
-        </div>
+        <h1 className="text-2xl md:text-3xl font-bold mb-6">Meal History</h1>
+        <FriendlyError 
+          error={errorMessage}
+          onRetry={() => refetch()}
+        />
       </div>
     )
   }
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 pb-24 md:pb-8">
-      <h1 className="text-2xl md:text-3xl font-bold mb-6">Meal History</h1>
+      <h1 className="text-2xl md:text-3xl font-bold mb-6">📊 Meal History</h1>
+
+      {/* Empty State */}
+      {meals.length === 0 && !isLoading && (
+        <div className="text-center py-16 px-4">
+          <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+            <span className="text-5xl">{emptyStates.history.icon}</span>
+          </div>
+          <h2 className="text-xl font-bold text-foreground mb-2">{emptyStates.history.title}</h2>
+          <p className="text-muted-foreground mb-6 max-w-sm mx-auto">{emptyStates.history.subtitle}</p>
+          <a 
+            href="/" 
+            className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-xl font-semibold hover:scale-105 transition-transform"
+          >
+            📸 {emptyStates.history.action}
+          </a>
+        </div>
+      )}
 
       {/* Weekly Trend Chart */}
       {meals.length > 0 && (
@@ -176,11 +96,13 @@ export function History() {
       )}
 
       {/* Meal List */}
-      <MealHistoryList 
-        meals={meals} 
-        onMealClick={handleMealClick}
-        onMealDelete={handleMealDelete}
-      />
+      {meals.length > 0 && (
+        <MealHistoryList 
+          meals={meals} 
+          onMealClick={handleMealClick}
+          onMealDelete={handleMealDelete}
+        />
+      )}
     </div>
   )
 }
