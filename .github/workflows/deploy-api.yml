@@ -43,6 +43,13 @@ jobs:
             backend/node_modules/@prisma
           key: prisma-${{ runner.os }}-${{ hashFiles('backend/prisma/schema.prisma') }}
 
+      - name: Cache Production Dependencies
+        uses: actions/cache@v4
+        id: prod-deps-cache
+        with:
+          path: backend/.deploy-cache
+          key: prod-deps-${{ runner.os }}-${{ hashFiles('backend/package-lock.json') }}
+
       - name: Install dependencies
         run: |
           cd backend
@@ -69,6 +76,8 @@ jobs:
           echo "✅ Tests completed"
 
       - name: Package Function App
+        env:
+          PROD_CACHE_HIT: ${{ steps.prod-deps-cache.outputs.cache-hit }}
         run: |
           cd backend
           # Validate host.json exists
@@ -101,28 +110,21 @@ jobs:
           # Create production package.json
           cat package.json | jq 'del(.devDependencies) | .main = "index.js"' > .deploy/package.json
           
-          # OPTIMIZED: Copy production deps from existing node_modules instead of reinstalling
-          echo "📦 Copying production dependencies..."
-          mkdir -p .deploy/node_modules
+          # Use cached production dependencies if available
+          if [ "$PROD_CACHE_HIT" = "true" ] && [ -d ".deploy-cache/node_modules" ]; then
+            echo "📦 Using cached production dependencies..."
+            cp -r .deploy-cache/node_modules .deploy/node_modules
+          else
+            echo "📦 Installing production dependencies..."
+            cd .deploy
+            npm install --omit=dev --ignore-scripts
+            cd ..
+            # Save to cache for next run
+            rm -rf .deploy-cache && mkdir -p .deploy-cache
+            cp -r .deploy/node_modules .deploy-cache/
+          fi
           
-          # Read production dependencies and copy them
-          PROD_DEPS=$(cat package.json | jq -r '.dependencies | keys[]')
-          for dep in $PROD_DEPS; do
-            if [ -d "node_modules/$dep" ]; then
-              cp -r "node_modules/$dep" ".deploy/node_modules/"
-            fi
-          done
-          
-          # Copy scoped packages that are dependencies of dependencies
-          for dir in node_modules/@*; do
-            if [ -d "$dir" ]; then
-              scope=$(basename "$dir")
-              mkdir -p ".deploy/node_modules/$scope"
-              cp -r "$dir"/* ".deploy/node_modules/$scope/" 2>/dev/null || true
-            fi
-          done
-          
-          # Copy the already-generated Prisma client
+          # Copy the already-generated Prisma client from the build step
           echo "📦 Copying generated Prisma client..."
           cp -r node_modules/.prisma .deploy/node_modules/.prisma
           cp -r node_modules/@prisma .deploy/node_modules/@prisma
