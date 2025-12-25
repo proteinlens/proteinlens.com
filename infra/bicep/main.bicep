@@ -114,7 +114,7 @@ module functionApp 'function-app.bicep' = {
 
 // 4b. Custom domain for Function App (api.proteinlens.com)
 // Prerequisites: DNS CNAME record api.proteinlens.com -> proteinlens-api-prod.azurewebsites.net
-module functionAppCustomDomain 'function-app-custom-domain.bicep' = if (enableCustomDomain && dnsZoneExists) {
+module functionAppCustomDomain 'function-app-custom-domain.bicep' = if (enableCustomDomain) {
   name: 'function-app-custom-domain-deployment'
   params: {
     functionAppName: functionApp.outputs.functionAppName
@@ -145,7 +145,7 @@ module staticWebApp 'static-web-app.bicep' = {
 
 // 5b. Custom domain for Static Web App (www.proteinlens.com)
 // Prerequisites: DNS CNAME record www.proteinlens.com -> <staticwebapp>.azurestaticapps.net
-module staticWebAppCustomDomain 'static-web-app-custom-domain.bicep' = if (enableCustomDomain && dnsZoneExists) {
+module staticWebAppCustomDomain 'static-web-app-custom-domain.bicep' = if (enableCustomDomain) {
   name: 'static-web-app-custom-domain-deployment'
   params: {
     staticWebAppName: staticWebApp.outputs.staticWebAppName
@@ -203,7 +203,7 @@ output functionAppUrl string = functionApp.outputs.functionAppUrl
 output functionAppAzureUrl string = functionApp.outputs.functionAppAzureUrl
 output functionAppManagedIdentityId string = functionApp.outputs.functionAppPrincipalId
 output functionAppPrincipalId string = functionApp.outputs.functionAppPrincipalId
-output functionAppCustomDomainEnabled bool = enableCustomDomain && dnsZoneExists
+output functionAppCustomDomainEnabled bool = enableCustomDomain
 
 // Database
 output postgresServerName string = postgres.outputs.postgresServerName
@@ -219,10 +219,10 @@ output storageAccountId string = storage.outputs.storageAccountId
 
 // Frontend (Static Web App)
 output staticWebAppName string = staticWebApp.outputs.staticWebAppName
-output staticWebAppUrl string = enableCustomDomain && dnsZoneExists ? 'https://${webCustomDomainName}' : staticWebApp.outputs.staticWebAppUrl
+output staticWebAppUrl string = enableCustomDomain ? 'https://${webCustomDomainName}' : staticWebApp.outputs.staticWebAppUrl
 output staticWebAppAzureUrl string = staticWebApp.outputs.staticWebAppUrl
 output staticWebAppDefaultHostname string = staticWebApp.outputs.staticWebAppDefaultHostname
-output staticWebAppCustomDomainEnabled bool = enableCustomDomain && dnsZoneExists
+output staticWebAppCustomDomainEnabled bool = enableCustomDomain
 
 // Front Door (optional)
 output frontDoorEnabled bool = enableFrontDoor
