@@ -56,7 +56,7 @@ Guidelines:
           ],
         },
       ],
-      max_tokens: 1000,
+      max_completion_tokens: 1000, // GPT-5+ uses max_completion_tokens instead of max_tokens
       temperature: 0.3, // Lower temperature for more consistent responses
       response_format: { type: 'json_object' },
     };
