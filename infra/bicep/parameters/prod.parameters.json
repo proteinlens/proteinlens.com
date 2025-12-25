@@ -53,14 +53,11 @@
     "enableCustomDomain": {
       "value": false
     },
-    "aiHubName": {
-      "value": "proteinlens-ai-hub-prod"
-    },
-    "aiProjectName": {
-      "value": "proteinlens-ai-project-prod"
-    },
     "enableAIFoundry": {
-      "value": false
+      "value": true
+    },
+    "openAIAccountName": {
+      "value": "proteinlens-openai-prod"
     }
   }
 }
