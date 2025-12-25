@@ -29,8 +29,8 @@
     "functionAppName": {
       "value": "proteinlens-api-prod"
     },
-    "keyVaultNamePrefix": {
-      "value": "proteinlens-kv"
+    "keyVaultNameOverride": {
+      "value": "proteinlens-kv-fzpkp4yb"
     },
     "postgresServerName": {
       "value": "proteinlens-db-prod-1523"
