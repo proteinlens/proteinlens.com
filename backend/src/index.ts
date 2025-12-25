@@ -19,6 +19,7 @@ runMigrations()
 // Feature 001: Blob Upload + Vision
 import './functions/upload-url';
 import './functions/analyze';
+import './functions/get-meals';
 import './functions/update-meal';
 import './functions/delete-meal';
 import './functions/export';
