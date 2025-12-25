@@ -37,6 +37,34 @@ export interface AnalysisResponse {
 export interface ApiError {
   error: string;
   requestId?: string;
+  message?: string;
+  quota?: {
+    used: number;
+    limit: number;
+    remaining: number;
+    plan: string;
+  };
+  upgrade?: {
+    message: string;
+    url: string;
+  };
+}
+
+/**
+ * Custom error class for API errors with status and quota info
+ */
+export class ApiRequestError extends Error {
+  status: number;
+  quota?: ApiError['quota'];
+  upgrade?: ApiError['upgrade'];
+
+  constructor(message: string, status: number, errorBody?: ApiError) {
+    super(message);
+    this.name = 'ApiRequestError';
+    this.status = status;
+    this.quota = errorBody?.quota;
+    this.upgrade = errorBody?.upgrade;
+  }
 }
 
 /**
@@ -101,6 +129,7 @@ class ApiClient {
   /**
    * Request AI analysis of uploaded meal photo
    * T038: Request meal analysis from backend
+   * Throws ApiRequestError with quota info on 429
    */
   async analyzeMeal(request: AnalyzeRequest): Promise<AnalysisResponse> {
     const response = await fetch(`${API_PATH}/meals/analyze`, {
@@ -112,8 +141,12 @@ class ApiClient {
     });
 
     if (!response.ok) {
-      const error: ApiError = await response.json();
-      throw new Error(error.error || `Analysis request failed: ${response.status}`);
+      const errorBody: ApiError = await response.json();
+      throw new ApiRequestError(
+        errorBody.message || errorBody.error || `Analysis request failed: ${response.status}`,
+        response.status,
+        errorBody
+      );
     }
 
     return response.json();

@@ -14,7 +14,6 @@ export const MealUpload: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
-  const [quotaInfo, setQuotaInfo] = useState<{ used: number; limit: number } | null>(null);
   
   const {
     uploadMeal,
@@ -23,6 +22,8 @@ export const MealUpload: React.FC = () => {
     analysisResult,
     error,
     progress,
+    isQuotaExceeded,
+    quotaInfo,
     reset,
   } = useMealUpload();
 
@@ -64,24 +65,21 @@ export const MealUpload: React.FC = () => {
       return;
     }
 
-    try {
-      await uploadMeal(selectedFile);
-    } catch (err: any) {
-      // Check for 429 quota exceeded response
-      if (err?.status === 429 || err?.message?.includes('429') || err?.message?.includes('Quota exceeded')) {
-        const quota = err?.quota || { used: 5, limit: 5 };
-        setQuotaInfo({ used: quota.used, limit: quota.limit });
-        setShowUpgradePrompt(true);
-      }
-    }
+    await uploadMeal(selectedFile);
   };
+
+  // Show upgrade prompt when quota is exceeded
+  React.useEffect(() => {
+    if (isQuotaExceeded) {
+      setShowUpgradePrompt(true);
+    }
+  }, [isQuotaExceeded]);
 
   // Reset to upload new photo
   const handleReset = () => {
     setSelectedFile(null);
     setPreviewUrl(null);
     setShowUpgradePrompt(false);
-    setQuotaInfo(null);
     reset();
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -119,13 +117,16 @@ export const MealUpload: React.FC = () => {
     }
 
     // Check if error is quota-related (show upgrade prompt instead)
-    if (error.includes('429') || error.includes('Quota exceeded') || error.includes('limit')) {
+    if (isQuotaExceeded) {
       return (
         <div className="error-message error-message--quota">
           <h3>📊 Weekly Scan Limit Reached</h3>
-          <p>You've used all your free scans this week.</p>
+          <p>You've used all {quotaInfo?.limit || 5} free scans this week.</p>
+          <p className="quota-stats">
+            <strong>{quotaInfo?.used || 5}</strong> of <strong>{quotaInfo?.limit || 5}</strong> scans used
+          </p>
           <button onClick={() => setShowUpgradePrompt(true)} className="btn-primary">
-            View Upgrade Options
+            🚀 Upgrade to Pro - Unlimited Scans
           </button>
           <button onClick={handleReset} className="btn-secondary">
             Close

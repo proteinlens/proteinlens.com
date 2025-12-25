@@ -3,7 +3,7 @@
 // T073: File size validation before upload
 
 import { useState } from 'react';
-import { apiClient, AnalysisResponse } from '../services/apiClient';
+import { apiClient, AnalysisResponse, ApiRequestError } from '../services/apiClient';
 import { compressImage, shouldCompress, formatFileSize } from '../utils/imageCompression';
 
 // T073: File validation constants
@@ -11,6 +11,13 @@ const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/heic', 'image/heif'];
 const COMPRESSION_THRESHOLD_MB = 2;
+
+export interface QuotaInfo {
+  used: number;
+  limit: number;
+  remaining: number;
+  plan: string;
+}
 
 export interface UseMealUploadResult {
   uploadMeal: (file: File) => Promise<void>;
@@ -20,6 +27,8 @@ export interface UseMealUploadResult {
   analysisResult: AnalysisResponse | null;
   error: string | null;
   progress: 'idle' | 'compressing' | 'uploading' | 'analyzing' | 'complete' | 'error';
+  isQuotaExceeded: boolean;
+  quotaInfo: QuotaInfo | null;
   reset: () => void;
 }
 
@@ -47,6 +56,8 @@ export function useMealUpload(): UseMealUploadResult {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<'idle' | 'compressing' | 'uploading' | 'analyzing' | 'complete' | 'error'>('idle');
+  const [isQuotaExceeded, setIsQuotaExceeded] = useState(false);
+  const [quotaInfo, setQuotaInfo] = useState<QuotaInfo | null>(null);
 
   const uploadMeal = async (file: File): Promise<void> => {
     try {
@@ -127,7 +138,18 @@ export function useMealUpload(): UseMealUploadResult {
 
     } catch (err) {
       console.error('Upload/analysis failed:', err);
-      setError((err as Error).message || 'An unexpected error occurred');
+      
+      // Check for quota exceeded (429)
+      if (err instanceof ApiRequestError && err.status === 429) {
+        setIsQuotaExceeded(true);
+        if (err.quota) {
+          setQuotaInfo(err.quota);
+        }
+        setError('Quota exceeded');
+      } else {
+        setError((err as Error).message || 'An unexpected error occurred');
+      }
+      
       setIsUploading(false);
       setIsAnalyzing(false);
       setIsCompressing(false);
@@ -142,6 +164,8 @@ export function useMealUpload(): UseMealUploadResult {
     setAnalysisResult(null);
     setError(null);
     setProgress('idle');
+    setIsQuotaExceeded(false);
+    setQuotaInfo(null);
   };
 
   return {
@@ -152,6 +176,8 @@ export function useMealUpload(): UseMealUploadResult {
     analysisResult,
     error,
     progress,
+    isQuotaExceeded,
+    quotaInfo,
     reset,
   };
 }
