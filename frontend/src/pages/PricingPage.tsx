@@ -21,10 +21,13 @@ export const PricingPage: React.FC = () => {
   const fetchPlans = async () => {
     try {
       setLoading(true);
+      setError(null);
       const data = await getPlans();
       setPlansData(data);
     } catch (err) {
-      setError('Failed to load pricing plans. Please try again.');
+      // Pass the actual error message for better categorization
+      const errorMessage = err instanceof Error ? err.message : 'Network error - could not fetch pricing';
+      setError(errorMessage);
       console.error('Error fetching plans:', err);
     } finally {
       setLoading(false);
@@ -42,7 +45,8 @@ export const PricingPage: React.FC = () => {
       setCheckoutLoading(true);
       await redirectToCheckout(priceId);
     } catch (err) {
-      setError('Hmm, checkout hit a snag. Let\'s try that again!');
+      const errorMessage = err instanceof Error ? err.message : 'Network error during checkout';
+      setError(errorMessage);
       console.error('Checkout error:', err);
       setCheckoutLoading(false);
     }
