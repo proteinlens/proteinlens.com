@@ -18,8 +18,70 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  cleanup_artifacts:
+    name: Cleanup Old Artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete old artifacts (keep last 5)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const keepCount = 5;
+            
+            console.log(`🧹 Cleaning up artifacts for ${owner}/${repo}, keeping last ${keepCount}...`);
+            
+            try {
+              // Get all artifacts
+              const artifacts = await github.paginate(
+                github.rest.actions.listArtifactsForRepo,
+                { owner, repo, per_page: 100 }
+              );
+              
+              console.log(`Found ${artifacts.length} total artifacts`);
+              
+              // Group by name
+              const byName = {};
+              for (const artifact of artifacts) {
+                if (!byName[artifact.name]) {
+                  byName[artifact.name] = [];
+                }
+                byName[artifact.name].push(artifact);
+              }
+              
+              // For each group, sort by date and delete old ones
+              let deleted = 0;
+              for (const [name, group] of Object.entries(byName)) {
+                // Sort by created_at descending (newest first)
+                group.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                
+                // Delete all except the newest keepCount
+                const toDelete = group.slice(keepCount);
+                for (const artifact of toDelete) {
+                  try {
+                    await github.rest.actions.deleteArtifact({
+                      owner,
+                      repo,
+                      artifact_id: artifact.id
+                    });
+                    deleted++;
+                    console.log(`✓ Deleted: ${artifact.name} (${artifact.id}) from ${artifact.created_at}`);
+                  } catch (e) {
+                    console.log(`✗ Failed to delete ${artifact.id}: ${e.message}`);
+                  }
+                }
+              }
+              
+              console.log(`\n✅ Cleanup complete: deleted ${deleted} old artifacts`);
+            } catch (error) {
+              console.log(`⚠️ Artifact cleanup failed: ${error.message}`);
+              // Don't fail the workflow if cleanup fails
+            }
+
   secret_scan:
     name: Secret Scanning
+    needs: [cleanup_artifacts]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -31,8 +93,8 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: false
-          GITLEAKS_ENABLE_SUMMARY: false
+          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: true
+          GITLEAKS_ENABLE_SUMMARY: true
 
       - name: Check for hardcoded API keys
         run: |
