@@ -31,72 +31,102 @@ const Navigation: React.FC = () => {
   const userId = 'demo-user';
   const { usage, loading } = useUsage(userId);
   
+  const navItems = [
+    { path: '/', label: 'Scan', icon: '📸' },
+    { path: '/history', label: 'History', icon: '📊' },
+    { path: '/pricing', label: 'Pro', icon: '✨' },
+    { path: '/settings', label: 'Settings', icon: '⚙️' },
+  ];
+  
   return (
-    <nav className="sticky top-0 z-50 backdrop-blur-md bg-background/80 border-b border-border shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
+    <header className="sticky top-0 z-50">
+      {/* Glassmorphism background */}
+      <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/90 to-background/95 backdrop-blur-xl border-b border-primary/10" />
+      
+      <nav className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16 lg:h-18">
+          
+          {/* Logo - Modern & Bold */}
           <Link 
             to="/" 
-            className="flex items-center gap-2 text-xl font-bold text-primary hover:text-accent transition-colors"
+            className="group flex items-center gap-3 hover:scale-105 transition-transform duration-300"
           >
-            <span className="text-2xl">🍽️</span>
-            <span className="hidden sm:inline bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              ProteinLens
-            </span>
+            {/* Animated Icon Container */}
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-xl blur-lg opacity-40 group-hover:opacity-60 transition-opacity" />
+              <div className="relative w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-lg shadow-primary/25">
+                <span className="text-xl">🍽️</span>
+              </div>
+            </div>
+            
+            {/* Brand Name */}
+            <div className="hidden sm:block">
+              <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-foreground via-primary to-accent bg-clip-text text-transparent">
+                ProteinLens
+              </span>
+              <div className="text-[10px] font-medium text-muted-foreground -mt-0.5 tracking-widest uppercase">
+                AI Nutrition
+              </div>
+            </div>
           </Link>
           
-          {/* Center Navigation */}
-          <div className="hidden md:flex items-center gap-1">
-            <Link 
-              to="/" 
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                location.pathname === '/' 
-                  ? 'bg-primary text-primary-foreground shadow-md shadow-primary/30' 
-                  : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
-              }`}
-            >
-              📸 Scan Meal
-            </Link>
-            <Link 
-              to="/history" 
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                location.pathname === '/history' 
-                  ? 'bg-primary text-primary-foreground shadow-md shadow-primary/30' 
-                  : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
-              }`}
-            >
-              📊 History
-            </Link>
-            <Link 
-              to="/pricing" 
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                location.pathname === '/pricing' 
-                  ? 'bg-primary text-primary-foreground shadow-md shadow-primary/30' 
-                  : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
-              }`}
-            >
-              💎 Pricing
-            </Link>
-            <Link 
-              to="/settings" 
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                location.pathname === '/settings' 
-                  ? 'bg-primary text-primary-foreground shadow-md shadow-primary/30' 
-                  : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
-              }`}
-            >
-              ⚙️ Settings
-            </Link>
+          {/* Center Navigation - Pill Style */}
+          <div className="hidden md:flex items-center">
+            <div className="flex items-center gap-1 p-1.5 bg-secondary/50 rounded-2xl border border-primary/10 shadow-inner">
+              {navItems.map((item) => {
+                const isActive = location.pathname === item.path;
+                return (
+                  <Link 
+                    key={item.path}
+                    to={item.path} 
+                    className={`relative px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
+                      isActive 
+                        ? 'text-primary-foreground' 
+                        : 'text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    {/* Active Background */}
+                    {isActive && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-primary to-accent rounded-xl shadow-lg shadow-primary/30" />
+                    )}
+                    
+                    {/* Hover Background */}
+                    {!isActive && (
+                      <div className="absolute inset-0 bg-primary/0 hover:bg-primary/5 rounded-xl transition-colors" />
+                    )}
+                    
+                    {/* Content */}
+                    <span className="relative flex items-center gap-1.5">
+                      <span className={isActive ? 'animate-bounce-subtle' : ''}>{item.icon}</span>
+                      <span>{item.label}</span>
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
           
-          {/* Usage Counter */}
-          <div className="flex items-center">
-            <UsageCounter usage={usage} loading={loading} compact />
+          {/* Right Side - Usage & CTA */}
+          <div className="flex items-center gap-3">
+            {/* Usage Counter - Compact & Modern */}
+            <div className="hidden sm:block">
+              <UsageCounter usage={usage} loading={loading} compact />
+            </div>
+            
+            {/* Upgrade CTA - Only show on non-pricing pages */}
+            {location.pathname !== '/pricing' && (
+              <Link 
+                to="/pricing"
+                className="hidden lg:flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-primary to-accent text-primary-foreground text-sm font-semibold rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:scale-105 transition-all duration-300"
+              >
+                <span>✨</span>
+                <span>Go Pro</span>
+              </Link>
+            )}
           </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+    </header>
   );
 };
 
