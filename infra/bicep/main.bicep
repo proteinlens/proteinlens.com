@@ -165,10 +165,11 @@ module frontDoor 'frontdoor.bicep' = if (enableFrontDoor) {
 }
 
 // 7. Azure OpenAI (GPT-5.1 integration for intelligent meal analysis)
+// Note: GPT-5.1 is only available in Sweden Central, not North Europe
 module openAI 'openai-foundry.bicep' = if (enableAIFoundry) {
   name: 'openai-deployment'
   params: {
-    location: location
+    location: 'swedencentral' // GPT-5.1 requires Sweden Central region
     environmentName: environmentName
     openAIAccountName: openAIAccountName
     modelDeploymentName: 'gpt-5-1'

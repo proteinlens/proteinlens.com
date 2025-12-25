@@ -1,7 +1,8 @@
 // Azure OpenAI (Cognitive Services) for on-demand provisioning
 // Constitution Principles IX (On-Demand Lifecycle), X (Key Vault Supremacy)
 
-param location string = 'northeurope'
+// GPT-5.1 is only available in certain regions - Sweden Central supports it
+param location string = 'swedencentral'
 param environmentName string
 param openAIAccountName string = 'protein-lens-openai-${environmentName}'
 param modelDeploymentName string = 'gpt-5-1'

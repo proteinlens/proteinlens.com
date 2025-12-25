@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.39.26.7824",
-      "templateHash": "15390749105916815849"
+      "templateHash": "15580745336884980934"
     }
   },
   "parameters": {
@@ -1344,7 +1344,7 @@
         "mode": "Incremental",
         "parameters": {
           "location": {
-            "value": "[parameters('location')]"
+            "value": "swedencentral"
           },
           "environmentName": {
             "value": "[parameters('environmentName')]"
@@ -1372,13 +1372,13 @@
             "_generator": {
               "name": "bicep",
               "version": "0.39.26.7824",
-              "templateHash": "6317139259206380302"
+              "templateHash": "15016808918350025033"
             }
           },
           "parameters": {
             "location": {
               "type": "string",
-              "defaultValue": "northeurope"
+              "defaultValue": "swedencentral"
             },
             "environmentName": {
               "type": "string"
