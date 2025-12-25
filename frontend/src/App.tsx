@@ -4,6 +4,7 @@
 // T038: Added UsageCounter to navigation (Feature 002)
 // T071: Added /settings route for billing management
 // Feature 003: React Query + Theme Provider setup
+// Feature 009: Auth routes + AuthProvider
 
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
@@ -15,15 +16,20 @@ import HomePage from './pages/HomePage';
 import { UsageCounter } from './components/UsageCounter';
 import { useUsage } from './hooks/useUsage';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { AuthProvider, useAuth } from './contexts/AuthProvider';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import { BottomNav } from './components/layout/BottomNav';
 import { PageContainer } from './components/layout/PageContainer';
 import { getUserId } from './utils/userId';
 import './App.css';
 import './index.css';
 
-// Lazy load History and Settings pages
+// Lazy load pages
 const History = lazy(() => import('./pages/History').then(m => ({ default: m.History })));
 const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
+const SignIn = lazy(() => import('./pages/SignIn'));
+const SignUp = lazy(() => import('./pages/SignUp'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 
 // Navigation component with usage counter
 const Navigation: React.FC = () => {
@@ -145,30 +151,40 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <BrowserRouter>
-          <div className="app flex flex-col min-h-screen bg-background text-foreground">
-            <Navigation />
-            <PageContainer>
-              <Suspense fallback={
-                <div className="flex items-center justify-center min-h-screen">
-                  <div className="text-center">
-                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                    <p className="text-muted-foreground">Loading...</p>
+        <AuthProvider>
+          <BrowserRouter>
+            <div className="app flex flex-col min-h-screen bg-background text-foreground">
+              <Navigation />
+              <PageContainer>
+                <Suspense fallback={
+                  <div className="flex items-center justify-center min-h-screen">
+                    <div className="text-center">
+                      <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                      <p className="text-muted-foreground">Loading...</p>
+                    </div>
                   </div>
-                </div>
-              }>
-                <Routes>
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/history" element={<History />} />
-                  <Route path="/pricing" element={<PricingPage />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/billing/success" element={<CheckoutSuccessPage />} />
-                </Routes>
-              </Suspense>
-            </PageContainer>
-            <BottomNav />
-          </div>
-        </BrowserRouter>
+                }>
+                  <Routes>
+                    {/* Public routes */}
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/pricing" element={<PricingPage />} />
+                    <Route path="/signin" element={<SignIn />} />
+                    <Route path="/signup" element={<SignUp />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
+
+                    {/* Protected routes */}
+                    <Route element={<ProtectedRoute />}>
+                      <Route path="/history" element={<History />} />
+                      <Route path="/settings" element={<Settings />} />
+                      <Route path="/billing/success" element={<CheckoutSuccessPage />} />
+                    </Route>
+                  </Routes>
+                </Suspense>
+              </PageContainer>
+              <BottomNav />
+            </div>
+          </BrowserRouter>
+        </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

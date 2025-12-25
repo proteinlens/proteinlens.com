@@ -81,6 +81,17 @@ export const API_ENDPOINTS = {
   PORTAL: `${API_BASE_URL}/api/portal`,
   USAGE: `${API_BASE_URL}/api/usage`,
   WEBHOOK: `${API_BASE_URL}/api/webhook`,
+  ME: `${API_BASE_URL}/api/me`,
+};
+
+/**
+ * Auth (MSAL) placeholders – configure via environment at deploy time
+ */
+export const AUTH = {
+  // Example: https://<tenant>.b2clogin.com/<tenant>.onmicrosoft.com/B2C_1_signupsignin
+  authority: import.meta.env.VITE_AUTH_AUTHORITY || '',
+  clientId: import.meta.env.VITE_AUTH_CLIENT_ID || '',
+  redirectUri: import.meta.env.VITE_AUTH_REDIRECT_URI || window.location.origin,
 };
 
 /**

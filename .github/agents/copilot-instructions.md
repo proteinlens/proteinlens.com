@@ -16,6 +16,10 @@ Auto-generated from all feature plans. Last updated: 2025-12-22
 - Backend Node.js 20 (TypeScript), Frontend React + Vite (TS), Bicep 0.30+ + Azure CLI, GitHub Actions, Prisma, Vitest, Tailwind (001-incremental-deploy)
 - PostgreSQL Flexible Server, Azure Storage (Blob) (001-incremental-deploy)
 - Backend: Node.js 20.x (Azure Functions); Frontend: React + Vite + TypeScrip + Azure Functions, Azure Static Web Apps, Azure CLI, GitHub Actions, Prisma, Vites (001-incremental-deploy)
+- TypeScript 5.x; Node.js >= 20 (Azure Functions v4) + Azure Functions, Prisma, Stripe, Application Insights, Zod, React 18 + Vite + Tailwind (001-anon-to-pro-upsell)
+- PostgreSQL (Prisma), Azure Blob Storage for images (blob-first ingestion) (001-anon-to-pro-upsell)
+- TypeScript 5.x; Node.js >= 20 (Azure Functions v4); React 18 + Azure Entra External ID (B2C), MSAL, Azure Functions, Prisma, Zod, Application Insights, React Router (009-user-auth)
+- PostgreSQL (Prisma) for local user mapping and audit logs (009-user-auth)
 
 - TypeScript 5.3+ / Node.js 20 + Azure Functions v4, Prisma 5.8+, Stripe SDK, React 18, Vite 5 (002-saas-billing)
 
@@ -35,9 +39,9 @@ npm test && npm run lint
 TypeScript 5.3+ / Node.js 20: Follow standard conventions
 
 ## Recent Changes
+- 009-user-auth: Added TypeScript 5.x; Node.js >= 20 (Azure Functions v4); React 18 + Azure Entra External ID (B2C), MSAL, Azure Functions, Prisma, Zod, Application Insights, React Router
+- 001-anon-to-pro-upsell: Added TypeScript 5.x; Node.js >= 20 (Azure Functions v4) + Azure Functions, Prisma, Stripe, Application Insights, Zod, React 18 + Vite + Tailwind
 - 001-incremental-deploy: Added Backend: Node.js 20.x (Azure Functions); Frontend: React + Vite + TypeScrip + Azure Functions, Azure Static Web Apps, Azure CLI, GitHub Actions, Prisma, Vites
-- 001-incremental-deploy: Added Backend Node.js 20 (TypeScript), Frontend React + Vite (TS), Bicep 0.30+ + Azure CLI, GitHub Actions, Prisma, Vitest, Tailwind
-- 001-incremental-deploy: Added GitHub Actions YAML; Azure CLI 2.63+; Bicep 0.30+ + `azure/login`, `azure/cli`, `actions/setup-node`, `dorny/paths-filter`
 
 
 <!-- MANUAL ADDITIONS START -->

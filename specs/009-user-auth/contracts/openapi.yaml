@@ -1,0 +1,30 @@
+openapi: 3.0.3
+info:
+  title: ProteinLens Auth API
+  version: 1.0.0
+  description: Minimal endpoints to support authenticated clients; sign-in/up/reset are handled by Entra user flows.
+servers:
+  - url: https://api.proteinlens.com
+paths:
+  /me:
+    get:
+      summary: Get current user profile mapped from token
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: OK
+        '401':
+          description: Unauthorized
+  /healthz:
+    get:
+      summary: Health check
+      security: []
+      responses:
+        '200': { description: OK }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

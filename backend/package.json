@@ -38,6 +38,7 @@
     "@azure/storage-blob": "^12.17.0",
     "@prisma/client": "^5.8.0",
     "applicationinsights": "^3.12.1",
+    "jose": "^5.9.3",
     "stripe": "^20.1.0",
     "zod": "^3.22.4"
   },
