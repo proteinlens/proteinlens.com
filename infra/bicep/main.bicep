@@ -119,6 +119,7 @@ module functionAppCustomDomain 'function-app-custom-domain.bicep' = if (enableCu
   params: {
     functionAppName: functionApp.outputs.functionAppName
     customDomain: apiCustomDomainName
+    location: location
   }
 }
 

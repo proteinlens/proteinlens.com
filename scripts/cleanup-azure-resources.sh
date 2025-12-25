@@ -46,7 +46,7 @@ delete_resources() {
 # ============================================================================
 echo "🔐 Checking Key Vaults..."
 
-# These are the duplicate Key Vaults to delete (keep proteinlens-kv-y4bxfzhg or whichever is current)
+# These are the duplicate Key Vaults to delete (keep proteinlens-kv-fzpkp4yb which is currently in use)
 DUPLICATE_KEY_VAULTS=(
     "proteinlens-kv-2hr544no"
     "proteinlens-kv-2i6p4wca"
@@ -56,7 +56,6 @@ DUPLICATE_KEY_VAULTS=(
     "proteinlens-kv-bamdqoq4"
     "proteinlens-kv-bgjqbwmm"
     "proteinlens-kv-egckswwi"
-    "proteinlens-kv-fzpkp4yb"
     "proteinlens-kv-gi2gvcaf"
     "proteinlens-kv-kpygfr37"
     "proteinlens-kv-mvqqu4lj"
@@ -66,8 +65,9 @@ DUPLICATE_KEY_VAULTS=(
     "proteinlens-kv-tsdl2xx6"
     "proteinlens-kv-ujgzyqx3"
     "proteinlens-kv-xbkznrxy"
+    "proteinlens-kv-y4bxfzhg"
 )
-# Note: Keep proteinlens-kv-y4bxfzhg (the last one, likely currently in use)
+# Note: Keep proteinlens-kv-fzpkp4yb (currently used by Function App)
 
 echo "🗑️  Will delete ${#DUPLICATE_KEY_VAULTS[@]} duplicate Key Vaults"
 echo ""
@@ -164,8 +164,8 @@ echo ""
 echo "✅ Cleanup complete!"
 echo ""
 echo "📋 Remaining resources to verify:"
-echo "   - Key Vault: proteinlens-kv-y4bxfzhg (keep this one)"
-echo "   - Application Insights: proteinlens-api-prod (keep this one)"
+echo "   - Key Vault: proteinlens-kv-fzpkp4yb (keep - currently in use)"
+echo "   - Application Insights: proteinlens-api-prod (keep)"
 echo "   - Function App: proteinlens-api-prod"
 echo "   - Static Web App: proteinlens-web-prod"
 echo "   - PostgreSQL: proteinlens-db-prod-1523"

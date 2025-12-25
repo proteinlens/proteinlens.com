@@ -3,6 +3,7 @@
 
 param functionAppName string
 param customDomain string = 'api.proteinlens.com'
+param location string = 'northeurope'
 
 // Reference existing Function App
 resource functionApp 'Microsoft.Web/sites@2023-01-01' existing = {
@@ -27,7 +28,7 @@ resource customHostnameBinding 'Microsoft.Web/sites/hostNameBindings@2023-01-01'
 // Note: This requires the custom hostname binding to exist first
 resource managedCertificate 'Microsoft.Web/certificates@2023-01-01' = {
   name: '${functionAppName}-${replace(customDomain, '.', '-')}-cert'
-  location: functionApp.location
+  location: location
   properties: {
     serverFarmId: functionApp.properties.serverFarmId
     canonicalName: customDomain

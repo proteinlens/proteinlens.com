@@ -1,7 +1,10 @@
 // Billing API client for subscription and plan management
 // Feature: 002-saas-billing
 
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+// VITE_API_URL is the base URL (e.g., https://api.proteinlens.com or http://localhost:7071)
+// All API routes are under /api/* path
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+const API_BASE = `${API_BASE_URL}/api`;
 
 /**
  * Plan feature limits
