@@ -11,7 +11,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MealUpload } from './components/MealUpload';
 import { PricingPage } from './pages/PricingPage';
 import { CheckoutSuccessPage } from './pages/CheckoutSuccessPage';
-import { Home } from './pages/Home';
+import HomePage from './pages/HomePage';
 import { UsageCounter } from './components/UsageCounter';
 import { useUsage } from './hooks/useUsage';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -146,28 +146,35 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <BrowserRouter>
-          <div className="app flex flex-col min-h-screen bg-background text-foreground">
-            <Navigation />
-            <PageContainer>
-              <Suspense fallback={
-                <div className="flex items-center justify-center min-h-screen">
-                  <div className="text-center">
-                    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                    <p className="text-muted-foreground">Loading...</p>
-                  </div>
-                </div>
-              }>
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/history" element={<History />} />
-                  <Route path="/pricing" element={<PricingPage />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/billing/success" element={<CheckoutSuccessPage />} />
-                </Routes>
-              </Suspense>
-            </PageContainer>
-            <BottomNav />
-          </div>
+          <Routes>
+            {/* HomePage renders without Navigation/PageContainer wrappers */}
+            <Route path="/" element={<HomePage />} />
+            
+            {/* Other routes use the standard layout */}
+            <Route path="/*" element={
+              <div className="app flex flex-col min-h-screen bg-background text-foreground">
+                <Navigation />
+                <PageContainer>
+                  <Suspense fallback={
+                    <div className="flex items-center justify-center min-h-screen">
+                      <div className="text-center">
+                        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                        <p className="text-muted-foreground">Loading...</p>
+                      </div>
+                    </div>
+                  }>
+                    <Routes>
+                      <Route path="/history" element={<History />} />
+                      <Route path="/pricing" element={<PricingPage />} />
+                      <Route path="/settings" element={<Settings />} />
+                      <Route path="/billing/success" element={<CheckoutSuccessPage />} />
+                    </Routes>
+                  </Suspense>
+                </PageContainer>
+                <BottomNav />
+              </div>
+            } />
+          </Routes>
         </BrowserRouter>
       </ThemeProvider>
     </QueryClientProvider>

@@ -26,6 +26,69 @@
   --color-success: rgb(34 197 94);
   --color-warning: rgb(234 179 8);
   --color-info: rgb(59 130 246);
+
+  /* Standard Colors - Emerald */
+  --color-emerald-50: rgb(236 253 245);
+  --color-emerald-100: rgb(209 250 229);
+  --color-emerald-200: rgb(167 243 208);
+  --color-emerald-300: rgb(110 231 183);
+  --color-emerald-400: rgb(52 211 153);
+  --color-emerald-500: rgb(16 185 129);
+  --color-emerald-600: rgb(5 150 105);
+  --color-emerald-700: rgb(4 120 87);
+  --color-emerald-800: rgb(6 95 70);
+  --color-emerald-900: rgb(6 78 59);
+
+  /* Standard Colors - Teal */
+  --color-teal-50: rgb(240 253 250);
+  --color-teal-100: rgb(204 251 241);
+  --color-teal-200: rgb(153 246 228);
+  --color-teal-300: rgb(94 234 212);
+  --color-teal-400: rgb(45 212 191);
+  --color-teal-500: rgb(20 184 166);
+  --color-teal-600: rgb(13 148 136);
+  --color-teal-700: rgb(15 118 110);
+  --color-teal-800: rgb(17 94 89);
+  --color-teal-900: rgb(19 78 74);
+
+  /* Standard Colors - Gray */
+  --color-gray-50: rgb(249 250 251);
+  --color-gray-100: rgb(243 244 246);
+  --color-gray-200: rgb(229 231 235);
+  --color-gray-300: rgb(209 213 219);
+  --color-gray-400: rgb(156 163 175);
+  --color-gray-500: rgb(107 114 128);
+  --color-gray-600: rgb(75 85 99);
+  --color-gray-700: rgb(55 65 81);
+  --color-gray-800: rgb(31 41 55);
+  --color-gray-900: rgb(17 24 39);
+  --color-gray-950: rgb(3 7 18);
+
+  /* Standard Colors - Violet/Purple */
+  --color-violet-50: rgb(245 243 255);
+  --color-violet-100: rgb(237 233 254);
+  --color-violet-200: rgb(221 214 254);
+  --color-violet-500: rgb(139 92 246);
+  --color-violet-600: rgb(124 58 237);
+  --color-violet-700: rgb(109 40 217);
+  --color-purple-100: rgb(243 232 255);
+
+  /* Standard Colors - Red */
+  --color-red-50: rgb(254 242 242);
+  --color-red-100: rgb(254 226 226);
+  --color-red-200: rgb(254 202 202);
+  --color-red-500: rgb(239 68 68);
+  --color-red-600: rgb(220 38 38);
+
+  /* Standard Colors - Amber */
+  --color-amber-50: rgb(255 251 235);
+  --color-amber-100: rgb(254 243 199);
+  --color-amber-200: rgb(253 230 138);
+  --color-amber-800: rgb(146 64 14);
+
+  /* White and Black */
+  --color-white: rgb(255 255 255);
+  --color-black: rgb(0 0 0);
 }
 
 @dark {
