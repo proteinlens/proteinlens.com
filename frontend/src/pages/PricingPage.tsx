@@ -4,6 +4,7 @@
 import React, { useState, useEffect } from 'react';
 import { getPlans, PlansResponse, redirectToCheckout } from '../services/billingApi';
 import { PricingCard } from '../components/PricingCard';
+import { FriendlyError } from '../components/ui/FriendlyError';
 import './PricingPage.css';
 
 export const PricingPage: React.FC = () => {
@@ -51,8 +52,11 @@ export const PricingPage: React.FC = () => {
     return (
       <div className="pricing-page">
         <div className="pricing-page__loading">
-          <span className="text-4xl mb-4 block animate-bounce">💰</span>
-          Finding the best deals for you...
+          <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-4xl animate-bounce">💰</span>
+          </div>
+          <p className="text-lg font-medium text-foreground">Finding the best deals for you...</p>
+          <p className="text-sm text-muted-foreground mt-2">This won't take long! ⚡</p>
         </div>
       </div>
     );
@@ -61,13 +65,14 @@ export const PricingPage: React.FC = () => {
   if (error) {
     return (
       <div className="pricing-page">
-        <div className="pricing-page__error">
-          <span className="text-4xl mb-4 block">🤔</span>
-          <p className="font-medium">Oops! Couldn't load our pricing</p>
-          <p className="text-sm text-muted-foreground mb-4">No worries, let's try that again!</p>
-          <button onClick={fetchPlans} className="inline-flex items-center gap-2">
-            🔄 Retry
-          </button>
+        <div className="max-w-md mx-auto px-4 py-12">
+          <FriendlyError 
+            error={error}
+            onRetry={() => {
+              setError(null);
+              fetchPlans();
+            }}
+          />
         </div>
       </div>
     );
