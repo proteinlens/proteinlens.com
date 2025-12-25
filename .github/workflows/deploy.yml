@@ -18,9 +18,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # ============================================================================
+  # STAGE 1: Pre-flight checks (run in PARALLEL for speed)
+  # ============================================================================
+  
   cleanup_artifacts:
     name: Cleanup Old Artifacts
     runs-on: ubuntu-latest
+    # No dependencies - runs immediately in parallel with other pre-flight jobs
     steps:
       - name: Delete old artifacts (keep last 5)
         uses: actions/github-script@v7
@@ -81,8 +86,8 @@ jobs:
 
   secret_scan:
     name: Secret Scanning
-    needs: [cleanup_artifacts]
     runs-on: ubuntu-latest
+    # No dependencies - runs immediately in parallel with other pre-flight jobs
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -157,8 +162,8 @@ jobs:
 
   dns_gate:
     name: Production DNS Gate
-    needs: [secret_scan]
     runs-on: ubuntu-latest
+    # No dependencies - runs immediately in parallel with other pre-flight jobs
     outputs:
       ok: ${{ steps.gate.outputs.ok || steps.gateprod.outputs.ok }}
     steps:
@@ -201,14 +206,22 @@ jobs:
           echo "ok=true" >> "$GITHUB_OUTPUT"
           echo "✅ Production DNS gate passed"
 
+  # ============================================================================
+  # STAGE 2: Infrastructure (waits for ALL pre-flight checks to pass)
+  # ============================================================================
+
   infra:
     name: Provision Infra
-    needs: [dns_gate]
+    needs: [cleanup_artifacts, secret_scan, dns_gate]  # Wait for all pre-flight checks
     if: needs.dns_gate.outputs.ok == 'true'
     uses: ./.github/workflows/infra.yml
     secrets: inherit
     with:
       environment: prod
+
+  # ============================================================================
+  # STAGE 3: Deploy apps (run in PARALLEL after infra)
+  # ============================================================================
 
   deploy_backend:
     name: Deploy Backend
@@ -230,6 +243,10 @@ jobs:
       resource_group: proteinlens-prod
       staticwebapp_name: ${{ needs.infra.outputs.staticwebapp_name }}
       api_url: ${{ needs.infra.outputs.functionapp_url }}
+
+  # ============================================================================
+  # STAGE 4: Health checks (after deploys complete)
+  # ============================================================================
 
   health_check:
     name: Health Checks
