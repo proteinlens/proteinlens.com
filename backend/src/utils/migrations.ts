@@ -52,7 +52,7 @@ export async function runMigrations(): Promise<MigrationResult> {
 
     // Step 1: Verify database connectivity first
     Logger.info('[MIGRATION] Verifying database connectivity...');
-    execSync('npx prisma migrate status --skip-generate', {
+    execSync('npx prisma migrate status', {
       timeout: 10000,
       stdio: 'pipe',
       env: {
@@ -64,7 +64,7 @@ export async function runMigrations(): Promise<MigrationResult> {
 
     // Step 2: Run pending migrations
     Logger.info('[MIGRATION] Deploying pending migrations...');
-    const output = execSync('npx prisma migrate deploy --skip-generate', {
+    const output = execSync('npx prisma migrate deploy', {
       timeout: 30000,
       stdio: 'pipe',
       encoding: 'utf-8',
