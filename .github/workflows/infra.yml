@@ -206,7 +206,7 @@ jobs:
 
       - name: Seed Key Vault Secrets
         env:
-          DATABASE_ADMIN_PASSWORD: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
+          DATABASE_ADMIN_PASSWORD: ${{ secrets.DATABASE_ADMIN_PASSWORD }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
@@ -357,7 +357,7 @@ jobs:
 
       - name: Sync PostgreSQL Password
         env:
-          DATABASE_ADMIN_PASSWORD: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
+          DATABASE_ADMIN_PASSWORD: ${{ secrets.DATABASE_ADMIN_PASSWORD }}
         run: |
           POSTGRES_SERVER_NAME=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.postgresServerName.value')
           
@@ -368,7 +368,7 @@ jobs:
           
           DB_PASSWORD="${{ env.DATABASE_ADMIN_PASSWORD }}"
           if [ -z "$DB_PASSWORD" ]; then
-            echo "⚠️ POSTGRES_ADMIN_PASSWORD not set, skipping password sync"
+            echo "⚠️ DATABASE_ADMIN_PASSWORD secret not set, skipping password sync"
             exit 0
           fi
           
