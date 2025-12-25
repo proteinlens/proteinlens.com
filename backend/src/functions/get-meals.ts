@@ -15,6 +15,24 @@ interface Food {
   protein: number | { toNumber: () => number };
 }
 
+interface MealWithFoods {
+  id: string;
+  requestId: string;
+  userId: string;
+  blobName: string;
+  blobUrl: string;
+  blobHash: string | null;
+  totalProtein: { toNumber: () => number } | number;
+  confidence: string;
+  notes: string | null;
+  aiModel: string;
+  aiResponseRaw: unknown;
+  userCorrections: unknown;
+  createdAt: Date;
+  updatedAt: Date;
+  foods: Food[];
+}
+
 export async function getMeals(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
   const requestId = uuidv4();
   Logger.info('GET /api/meals - Fetching meal history', { requestId });
@@ -60,7 +78,7 @@ export async function getMeals(request: HttpRequest, context: InvocationContext)
     Logger.info('Fetching meals for user', { requestId, userId, limit });
 
     // Get meals from database
-    const meals = await mealService.getUserMealAnalyses(userId, { limit });
+    const meals = await mealService.getUserMealAnalyses(userId, { limit }) as MealWithFoods[];
 
     Logger.info('Meals retrieved successfully', {
       requestId,
