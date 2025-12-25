@@ -1,46 +1,52 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: rgb(0 0 0);
+  /* Primary Green Theme - Vibrant & Fresh */
+  --color-primary: rgb(34 197 94);
   --color-primary-foreground: rgb(255 255 255);
-  --color-secondary: rgb(245 245 245);
-  --color-secondary-foreground: rgb(23 23 23);
-  --color-muted: rgb(229 229 229);
-  --color-muted-foreground: rgb(115 115 115);
-  --color-accent: rgb(0 0 0);
-  --color-accent-foreground: rgb(255 255 255);
+  --color-secondary: rgb(240 253 244);
+  --color-secondary-foreground: rgb(22 101 52);
+  --color-muted: rgb(220 252 231);
+  --color-muted-foreground: rgb(21 128 61);
+  --color-accent: rgb(74 222 128);
+  --color-accent-foreground: rgb(20 83 45);
   --color-destructive: rgb(239 68 68);
   --color-destructive-foreground: rgb(255 255 255);
-  --color-border: rgb(229 229 229);
-  --color-input: rgb(229 229 229);
-  --color-ring: rgb(0 0 0);
+  --color-border: rgb(187 247 208);
+  --color-input: rgb(220 252 231);
+  --color-ring: rgb(34 197 94);
   --color-background: rgb(255 255 255);
-  --color-foreground: rgb(9 9 9);
+  --color-foreground: rgb(20 83 45);
   --color-card: rgb(255 255 255);
-  --color-card-foreground: rgb(9 9 9);
+  --color-card-foreground: rgb(20 83 45);
   --color-popover: rgb(255 255 255);
-  --color-popover-foreground: rgb(9 9 9);
+  --color-popover-foreground: rgb(20 83 45);
+  
+  /* Success/Warning/Info Colors */
+  --color-success: rgb(34 197 94);
+  --color-warning: rgb(234 179 8);
+  --color-info: rgb(59 130 246);
 }
 
 @dark {
-  --color-primary: rgb(250 250 250);
-  --color-primary-foreground: rgb(23 23 23);
-  --color-secondary: rgb(38 38 38);
-  --color-secondary-foreground: rgb(250 250 250);
-  --color-muted: rgb(38 38 38);
-  --color-muted-foreground: rgb(163 163 163);
-  --color-accent: rgb(250 250 250);
-  --color-accent-foreground: rgb(23 23 23);
+  --color-primary: rgb(74 222 128);
+  --color-primary-foreground: rgb(20 83 45);
+  --color-secondary: rgb(20 83 45);
+  --color-secondary-foreground: rgb(187 247 208);
+  --color-muted: rgb(22 101 52);
+  --color-muted-foreground: rgb(134 239 172);
+  --color-accent: rgb(34 197 94);
+  --color-accent-foreground: rgb(240 253 244);
   --color-destructive: rgb(239 68 68);
   --color-destructive-foreground: rgb(35 35 35);
-  --color-border: rgb(38 38 38);
-  --color-input: rgb(38 38 38);
-  --color-ring: rgb(212 212 212);
-  --color-background: rgb(9 9 9);
-  --color-foreground: rgb(250 250 250);
-  --color-card: rgb(9 9 9);
-  --color-card-foreground: rgb(250 250 250);
-  --color-popover: rgb(9 9 9);
-  --color-popover-foreground: rgb(250 250 250);
+  --color-border: rgb(22 101 52);
+  --color-input: rgb(22 101 52);
+  --color-ring: rgb(74 222 128);
+  --color-background: rgb(5 46 22);
+  --color-foreground: rgb(240 253 244);
+  --color-card: rgb(20 83 45);
+  --color-card-foreground: rgb(240 253 244);
+  --color-popover: rgb(20 83 45);
+  --color-popover-foreground: rgb(240 253 244);
 }
 

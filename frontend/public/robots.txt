@@ -1,0 +1,9 @@
+# ProteinLens robots.txt
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://www.proteinlens.com/sitemap.xml
+
+# Crawl-delay for polite bots
+Crawl-delay: 1

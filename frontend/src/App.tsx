@@ -32,32 +32,69 @@ const Navigation: React.FC = () => {
   const { usage, loading } = useUsage(userId);
   
   return (
-    <nav className="app-nav">
-      <div className="app-nav__logo">
-        <Link to="/">🍽️ ProteinLens</Link>
-      </div>
-      <div className="app-nav__center">
-        <Link 
-          to="/" 
-          className={location.pathname === '/' ? 'active' : ''}
-        >
-          Scan Meal
-        </Link>
-        <Link 
-          to="/pricing" 
-          className={location.pathname === '/pricing' ? 'active' : ''}
-        >
-          Pricing
-        </Link>
-        <Link 
-          to="/settings" 
-          className={location.pathname === '/settings' ? 'active' : ''}
-        >
-          Settings
-        </Link>
-      </div>
-      <div className="app-nav__usage">
-        <UsageCounter usage={usage} loading={loading} compact />
+    <nav className="sticky top-0 z-50 backdrop-blur-md bg-background/80 border-b border-border shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo */}
+          <Link 
+            to="/" 
+            className="flex items-center gap-2 text-xl font-bold text-primary hover:text-accent transition-colors"
+          >
+            <span className="text-2xl">🍽️</span>
+            <span className="hidden sm:inline bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              ProteinLens
+            </span>
+          </Link>
+          
+          {/* Center Navigation */}
+          <div className="hidden md:flex items-center gap-1">
+            <Link 
+              to="/" 
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                location.pathname === '/' 
+                  ? 'bg-primary text-primary-foreground shadow-md shadow-primary/30' 
+                  : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
+              }`}
+            >
+              📸 Scan Meal
+            </Link>
+            <Link 
+              to="/history" 
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                location.pathname === '/history' 
+                  ? 'bg-primary text-primary-foreground shadow-md shadow-primary/30' 
+                  : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
+              }`}
+            >
+              📊 History
+            </Link>
+            <Link 
+              to="/pricing" 
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                location.pathname === '/pricing' 
+                  ? 'bg-primary text-primary-foreground shadow-md shadow-primary/30' 
+                  : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
+              }`}
+            >
+              💎 Pricing
+            </Link>
+            <Link 
+              to="/settings" 
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                location.pathname === '/settings' 
+                  ? 'bg-primary text-primary-foreground shadow-md shadow-primary/30' 
+                  : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
+              }`}
+            >
+              ⚙️ Settings
+            </Link>
+          </div>
+          
+          {/* Usage Counter */}
+          <div className="flex items-center">
+            <UsageCounter usage={usage} loading={loading} compact />
+          </div>
+        </div>
       </div>
     </nav>
   );
