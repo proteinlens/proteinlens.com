@@ -3,10 +3,11 @@ import { useMeals } from '@/hooks/useMeal'
 import { useWeeklyTrend } from '@/hooks/useWeeklyTrend'
 import { WeeklyTrendChart } from '@/components/history/WeeklyTrendChart'
 import { MealHistoryList } from '@/components/history/MealHistoryList'
+import { getUserId } from '@/utils/userId'
 
 export function History() {
-  // TODO: Replace with actual userId from auth context
-  const userId = 'demo-user'
+  // Use persistent user ID from storage
+  const userId = getUserId()
   const { data: meals = [], isLoading, error, refetch } = useMeals(userId)
   const { days, averageProtein } = useWeeklyTrend(meals)
   const [key, setKey] = useState(0)

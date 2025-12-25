@@ -68,10 +68,12 @@ export const MealUpload: React.FC = () => {
     await uploadMeal(selectedFile);
   };
 
-  // Show upgrade prompt when quota is exceeded
+  // Auto-show upgrade prompt when quota is exceeded (immediate)
   React.useEffect(() => {
     if (isQuotaExceeded) {
-      setShowUpgradePrompt(true);
+      // Small delay to ensure smooth transition
+      const timer = setTimeout(() => setShowUpgradePrompt(true), 100);
+      return () => clearTimeout(timer);
     }
   }, [isQuotaExceeded]);
 
@@ -110,38 +112,34 @@ export const MealUpload: React.FC = () => {
     return null;
   };
 
-  // T043: Error handling UI (T039: Check for quota error)
+  // T043: Error handling UI (T039: Quota errors show UpgradePrompt modal)
   const renderError = () => {
-    if (!error) {
+    // Don't show inline error for quota exceeded - UpgradePrompt modal handles it
+    if (!error || isQuotaExceeded) {
       return null;
     }
 
-    // Check if error is quota-related (show upgrade prompt instead)
-    if (isQuotaExceeded) {
-      return (
-        <div className="error-message error-message--quota">
-          <h3>📊 Weekly Scan Limit Reached</h3>
-          <p>You've used all {quotaInfo?.limit || 5} free scans this week.</p>
-          <p className="quota-stats">
-            <strong>{quotaInfo?.used || 5}</strong> of <strong>{quotaInfo?.limit || 5}</strong> scans used
-          </p>
-          <button onClick={() => setShowUpgradePrompt(true)} className="btn-primary">
-            🚀 Upgrade to Pro - Unlimited Scans
-          </button>
-          <button onClick={handleReset} className="btn-secondary">
-            Close
-          </button>
-        </div>
-      );
-    }
+    // Determine if error is retryable
+    const isRetryable = error.includes('network') || 
+                        error.includes('timeout') || 
+                        error.includes('temporarily') ||
+                        error.includes('500') ||
+                        error.includes('503');
 
     return (
       <div className="error-message">
-        <h3>⚠️ Error</h3>
+        <h3>⚠️ Something went wrong</h3>
         <p>{error}</p>
-        <button onClick={handleReset} className="btn-secondary">
-          Try Again
-        </button>
+        <div className="error-actions">
+          {isRetryable && selectedFile && (
+            <button onClick={handleUpload} className="btn-primary">
+              🔄 Try Again
+            </button>
+          )}
+          <button onClick={handleReset} className="btn-secondary">
+            Start Over
+          </button>
+        </div>
       </div>
     );
   };

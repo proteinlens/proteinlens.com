@@ -2,6 +2,8 @@
 // Constitution Principle III: Blob-First Architecture
 // T038: API client with upload and analyze methods
 
+import { getUserId } from '../utils/userId';
+
 export interface UploadUrlRequest {
   fileName: string;
   fileSize: number;
@@ -85,6 +87,16 @@ export interface MealCorrections {
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 const API_PATH = `${API_BASE_URL}/api`;
 
+/**
+ * Get common headers including user ID
+ */
+function getHeaders(): Record<string, string> {
+  return {
+    'Content-Type': 'application/json',
+    'x-user-id': getUserId(),
+  };
+}
+
 class ApiClient {
   /**
    * Request SAS URL for blob upload
@@ -93,9 +105,7 @@ class ApiClient {
   async requestUploadUrl(request: UploadUrlRequest): Promise<UploadUrlResponse> {
     const response = await fetch(`${API_PATH}/upload-url`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getHeaders(),
       body: JSON.stringify(request),
     });
 
@@ -134,9 +144,7 @@ class ApiClient {
   async analyzeMeal(request: AnalyzeRequest): Promise<AnalysisResponse> {
     const response = await fetch(`${API_PATH}/meals/analyze`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getHeaders(),
       body: JSON.stringify(request),
     });
 
@@ -156,12 +164,12 @@ class ApiClient {
    * Get user's meal history
    * T067: Get meal history (User Story 2, Phase 4)
    */
-  async getMealHistory(userId: string, limit = 50): Promise<AnalysisResponse[]> {
-    const response = await fetch(`${API_PATH}/meals?userId=${userId}&limit=${limit}`, {
+  async getMealHistory(userId?: string, limit = 50): Promise<AnalysisResponse[]> {
+    // Use provided userId or get from storage
+    const effectiveUserId = userId || getUserId();
+    const response = await fetch(`${API_PATH}/meals?userId=${effectiveUserId}&limit=${limit}`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getHeaders(),
     });
 
     if (!response.ok) {
@@ -179,9 +187,7 @@ class ApiClient {
   async deleteMeal(mealId: string): Promise<void> {
     const response = await fetch(`${API_PATH}/meals/${mealId}`, {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getHeaders(),
     });
 
     if (!response.ok) {
@@ -197,9 +203,7 @@ class ApiClient {
   async updateMeal(mealId: string, corrections: MealCorrections): Promise<AnalysisResponse> {
     const response = await fetch(`${API_PATH}/meals/${mealId}`, {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getHeaders(),
       body: JSON.stringify({ corrections }),
     });
 

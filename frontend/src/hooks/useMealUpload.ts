@@ -146,8 +146,25 @@ export function useMealUpload(): UseMealUploadResult {
           setQuotaInfo(err.quota);
         }
         setError('Quota exceeded');
+      } else if (err instanceof ApiRequestError) {
+        // Map API error codes to user-friendly messages
+        const message = err.message;
+        if (err.status >= 500) {
+          setError('Our servers are temporarily busy. Please try again in a moment.');
+        } else if (err.status === 400) {
+          setError(message || 'Invalid image. Please try a different photo.');
+        } else if (message.includes('timeout') || message.includes('network')) {
+          setError('Network error. Please check your connection and try again.');
+        } else {
+          setError(message || 'Analysis failed. Please try again.');
+        }
       } else {
-        setError((err as Error).message || 'An unexpected error occurred');
+        const message = (err as Error).message || '';
+        if (message.includes('fetch') || message.includes('network') || message.includes('Failed to fetch')) {
+          setError('Network error. Please check your connection and try again.');
+        } else {
+          setError(message || 'An unexpected error occurred. Please try again.');
+        }
       }
       
       setIsUploading(false);

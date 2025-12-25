@@ -17,6 +17,7 @@ import { useUsage } from './hooks/useUsage';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { BottomNav } from './components/layout/BottomNav';
 import { PageContainer } from './components/layout/PageContainer';
+import { getUserId } from './utils/userId';
 import './App.css';
 import './index.css';
 
@@ -27,8 +28,8 @@ const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.S
 // Navigation component with usage counter
 const Navigation: React.FC = () => {
   const location = useLocation();
-  // TODO: Replace with actual userId from auth context
-  const userId = 'demo-user';
+  // Use persistent user ID from storage
+  const userId = getUserId();
   const { usage, loading } = useUsage(userId);
   
   const navItems = [
