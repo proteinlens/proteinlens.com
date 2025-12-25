@@ -208,11 +208,54 @@ stages:
             displayName: 'Publish frontend artifact'
 
   # ================================
+  # Stage 3: Pre-Deployment Infrastructure Sync
+  # ================================
+  - stage: SyncInfrastructure
+    displayName: 'Sync Infrastructure'
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: SyncDatabaseCredentials
+        displayName: 'Ensure database credentials are synchronized'
+        pool:
+          vmImage: 'windows-latest'
+        steps:
+          - checkout: self
+
+          - task: AzurePowerShell@5
+            displayName: 'Sync PostgreSQL password with Key Vault'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              ScriptType: 'FilePath'
+              ScriptPath: '$(System.DefaultWorkingDirectory)/scripts/sync-db-credentials.ps1'
+              ScriptArguments: |
+                -SubscriptionId "$(AZURE_SUBSCRIPTION_ID)" \
+                -ResourceGroupName "$(RESOURCE_GROUP_NAME)" \
+                -PostgresServerName "$(POSTGRES_SERVER_NAME)" \
+                -KeyVaultName "$(KEY_VAULT_NAME)" \
+                -DatabasePassword "$(DATABASE_PASSWORD)" \
+                -DatabaseAdminUsername "pgadmin" \
+                -DatabaseName "proteinlens" \
+                -FunctionAppName "$(FUNCTION_APP_NAME)" \
+                -Verbose
+              azurePowerShellVersion: 'LatestVersion'
+              errorActionPreference: 'stop'
+            env:
+              AZURE_SUBSCRIPTION_ID: $(AZURE_SUBSCRIPTION_ID)
+              RESOURCE_GROUP_NAME: $(RESOURCE_GROUP_NAME)
+              POSTGRES_SERVER_NAME: $(POSTGRES_SERVER_NAME)
+              KEY_VAULT_NAME: $(KEY_VAULT_NAME)
+              DATABASE_PASSWORD: $(DATABASE_PASSWORD)
+              FUNCTION_APP_NAME: $(FUNCTION_APP_NAME)
+
+  # ================================
   # Stage 3: Deploy to Staging (develop)
   # ================================
   - stage: DeployStaging
     displayName: 'Deploy - Staging'
-    dependsOn: Build
+    dependsOn: 
+      - Build
+      - SyncInfrastructure
     condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'))
     jobs:
       - deployment: BackendStaging
@@ -267,7 +310,9 @@ stages:
   # ================================
   - stage: DeployProduction
     displayName: 'Deploy - Production'
-    dependsOn: Build
+    dependsOn:
+      - Build
+      - SyncInfrastructure
     condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
     jobs:
       - deployment: BackendProduction

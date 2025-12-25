@@ -132,6 +132,28 @@ module kvAccessFunctionApp 'kv-access.bicep' = {
   }
 }
 
+// 4e. Synchronize database credentials (CRITICAL: ensures PostgreSQL password matches Key Vault)
+module dbCredentialsSync 'db-credentials-sync.bicep' = {
+  name: 'db-credentials-sync-deployment'
+  params: {
+    location: location
+    subscriptionId: subscription().subscriptionId
+    resourceGroupName: resourceGroup().name
+    postgresServerName: postgres.outputs.postgresServerName
+    keyVaultName: keyVault.outputs.keyVaultName
+    postgresAdminPassword: postgresAdminPassword
+    postgresAdminUsername: postgresAdminUsername
+    databaseName: 'proteinlens'
+    databasePort: postgres.outputs.postgresPort
+    functionAppName: functionApp.outputs.functionAppName
+  }
+  dependsOn: [
+    postgres
+    functionApp
+    kvAccessFunctionApp
+  ]
+}
+
 // 5. Static Web App (frontend, can run in parallel with backend)
 module staticWebApp 'static-web-app.bicep' = {
   name: 'static-web-app-deployment'
