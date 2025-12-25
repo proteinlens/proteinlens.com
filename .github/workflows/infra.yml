@@ -355,6 +355,35 @@ jobs:
           echo "   - STRIPE_SECRET_KEY"
           echo "   - STRIPE_WEBHOOK_SECRET"
 
+      - name: Sync PostgreSQL Password
+        env:
+          DATABASE_ADMIN_PASSWORD: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
+        run: |
+          POSTGRES_SERVER_NAME=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.postgresServerName.value')
+          
+          if [ -z "$POSTGRES_SERVER_NAME" ] || [ "$POSTGRES_SERVER_NAME" == "null" ]; then
+            echo "⚠️ PostgreSQL server name not found in outputs, skipping password sync"
+            exit 0
+          fi
+          
+          DB_PASSWORD="${{ env.DATABASE_ADMIN_PASSWORD }}"
+          if [ -z "$DB_PASSWORD" ]; then
+            echo "⚠️ POSTGRES_ADMIN_PASSWORD not set, skipping password sync"
+            exit 0
+          fi
+          
+          echo "🔐 Synchronizing PostgreSQL password..."
+          echo "   Server: $POSTGRES_SERVER_NAME"
+          
+          # Update PostgreSQL admin password to match Key Vault secret
+          az postgres flexible-server update \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
+            --name "$POSTGRES_SERVER_NAME" \
+            --admin-password "$DB_PASSWORD" \
+            --output none
+          
+          echo "✅ PostgreSQL password synchronized with Key Vault"
+
       - name: Grant Function App Key Vault Access
         run: |
           FUNCTION_APP_IDENTITY=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.functionAppManagedIdentityId.value')
