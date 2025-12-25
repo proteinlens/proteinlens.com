@@ -34,18 +34,23 @@ jobs:
           cache: 'npm'
           cache-dependency-path: 'backend/package-lock.json'
 
-      - name: Display versions
-        run: |
-          echo "Node: $(node --version)"
-          echo "npm: $(npm --version)"
+      - name: Cache Prisma Client
+        uses: actions/cache@v4
+        id: prisma-cache
+        with:
+          path: |
+            backend/node_modules/.prisma
+            backend/node_modules/@prisma
+          key: prisma-${{ runner.os }}-${{ hashFiles('backend/prisma/schema.prisma') }}
 
       - name: Install dependencies
         run: |
           cd backend
-          npm ci --verbose
+          npm ci
           echo "✅ Dependencies installed"
 
       - name: Generate Prisma Client
+        if: steps.prisma-cache.outputs.cache-hit != 'true'
         run: |
           cd backend
           npm run prisma:generate
@@ -94,43 +99,48 @@ jobs:
           cp -r dist/* .deploy/
           
           # Create production package.json
-          # - main points to index.js (now at root)
-          # - type: module for ESM
-          # - remove devDependencies
           cat package.json | jq 'del(.devDependencies) | .main = "index.js"' > .deploy/package.json
           
-          # Install only production dependencies fresh
-          echo "📦 Installing production dependencies..."
-          cd .deploy
-          npm install --omit=dev --ignore-scripts
+          # OPTIMIZED: Copy production deps from existing node_modules instead of reinstalling
+          echo "📦 Copying production dependencies..."
+          mkdir -p .deploy/node_modules
           
-          # Copy the already-generated Prisma client from the build step
-          # (prisma:generate was run earlier with full devDependencies)
+          # Read production dependencies and copy them
+          PROD_DEPS=$(cat package.json | jq -r '.dependencies | keys[]')
+          for dep in $PROD_DEPS; do
+            if [ -d "node_modules/$dep" ]; then
+              cp -r "node_modules/$dep" ".deploy/node_modules/"
+            fi
+          done
+          
+          # Copy scoped packages that are dependencies of dependencies
+          for dir in node_modules/@*; do
+            if [ -d "$dir" ]; then
+              scope=$(basename "$dir")
+              mkdir -p ".deploy/node_modules/$scope"
+              cp -r "$dir"/* ".deploy/node_modules/$scope/" 2>/dev/null || true
+            fi
+          done
+          
+          # Copy the already-generated Prisma client
           echo "📦 Copying generated Prisma client..."
-          cp -r ../node_modules/.prisma node_modules/.prisma
-          cp -r ../node_modules/@prisma node_modules/@prisma
+          cp -r node_modules/.prisma .deploy/node_modules/.prisma
+          cp -r node_modules/@prisma .deploy/node_modules/@prisma
           
           # Verify Prisma client was copied
-          if [ ! -d "node_modules/.prisma/client" ]; then
+          if [ ! -d ".deploy/node_modules/.prisma/client" ]; then
             echo "❌ Prisma client not found - .prisma/client missing"
             exit 1
           fi
           echo "✅ Prisma client copied"
           
-          # Verify @azure/functions is installed
-          if [ ! -d "node_modules/@azure/functions" ]; then
+          # Verify @azure/functions is present
+          if [ ! -d ".deploy/node_modules/@azure/functions" ]; then
             echo "❌ @azure/functions not found in node_modules"
             exit 1
           fi
           
-          cd ..
           echo "✅ Deployment folder prepared at backend/.deploy"
-          echo "📁 Structure:"
-          find .deploy -maxdepth 2 -type f | head -30
-          echo "📄 package.json:"
-          cat .deploy/package.json | jq '{name, type, main}'
-          echo "📦 Key dependencies:"
-          ls -la .deploy/node_modules/@azure/ || echo "No @azure packages"
 
       - name: Azure Login (OIDC)
         uses: azure/login@v2
@@ -205,9 +215,9 @@ jobs:
           
           echo "✅ Function App settings configured"
           
-          # CRITICAL: Wait for SCM to stabilize after settings change
-          echo "⏳ Waiting 60s for SCM container to stabilize..."
-          sleep 60
+          # Brief wait for settings to propagate
+          echo "⏳ Waiting 15s for settings to propagate..."
+          sleep 15
 
       - name: Create deployment zip
         run: |
@@ -254,8 +264,8 @@ jobs:
           echo "🔄 Restarting Function App to apply settings..."
           az functionapp restart --name "$FA_NAME" --resource-group "$RG"
           
-          echo "⏳ Waiting for Function App to start (60s for RBAC propagation)..."
-          sleep 60
+          echo "⏳ Waiting for Function App to start (30s)..."
+          sleep 30
 
       - name: Verify Functions Deployed
         run: |
