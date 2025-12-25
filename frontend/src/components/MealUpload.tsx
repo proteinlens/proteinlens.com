@@ -112,34 +112,119 @@ export const MealUpload: React.FC = () => {
     return null;
   };
 
-  // T043: Error handling UI (T039: Quota errors show UpgradePrompt modal)
+  // T043: Error handling UI - Beautiful engaging error states
   const renderError = () => {
     // Don't show inline error for quota exceeded - UpgradePrompt modal handles it
     if (!error || isQuotaExceeded) {
       return null;
     }
 
-    // Determine if error is retryable
-    const isRetryable = error.includes('network') || 
-                        error.includes('timeout') || 
-                        error.includes('temporarily') ||
-                        error.includes('500') ||
-                        error.includes('503');
+    // Categorize errors for better UX
+    const isNetworkError = error.includes('Network') || 
+                           error.includes('fetch') || 
+                           error.includes('Failed to fetch') ||
+                           error.includes('connection');
+    
+    const isServerError = error.includes('500') || 
+                          error.includes('503') || 
+                          error.includes('temporarily') ||
+                          error.includes('servers');
+
+    const isImageError = error.includes('image') || 
+                         error.includes('Invalid') ||
+                         error.includes('file');
+
+    // Get error config based on type
+    const getErrorConfig = () => {
+      if (isNetworkError) {
+        return {
+          icon: '📡',
+          title: "Can't reach our servers",
+          subtitle: 'No worries, this happens sometimes!',
+          tips: [
+            '🔌 Check your internet connection',
+            '🔄 The backend server might not be running',
+            '⏱️ Wait a moment and try again',
+          ],
+          retryText: 'Retry Connection',
+          gradient: 'network',
+        };
+      }
+      
+      if (isServerError) {
+        return {
+          icon: '🔧',
+          title: "Our servers are taking a break",
+          subtitle: "We're working on it!",
+          tips: [
+            '☕ Grab a coffee, we\'ll be back shortly',
+            '🛠️ Our team has been notified',
+            '⏰ Usually fixed within minutes',
+          ],
+          retryText: 'Try Again',
+          gradient: 'server',
+        };
+      }
+      
+      if (isImageError) {
+        return {
+          icon: '🖼️',
+          title: "Hmm, that image didn't work",
+          subtitle: 'Let\'s try a different approach',
+          tips: [
+            '📸 Use JPEG, PNG, or HEIC format',
+            '📏 Keep file size under 8MB',
+            '💡 Well-lit photos work best',
+          ],
+          retryText: 'Choose Different Photo',
+          gradient: 'image',
+        };
+      }
+      
+      // Default error
+      return {
+        icon: '😅',
+        title: "Oops! Something unexpected happened",
+        subtitle: "But don't worry, you can try again",
+        tips: [
+          '🔄 Try uploading again',
+          '📸 Use a different photo',
+          '🆘 Contact support if this persists',
+        ],
+        retryText: 'Try Again',
+        gradient: 'default',
+      };
+    };
+
+    const config = getErrorConfig();
 
     return (
-      <div className="error-message">
-        <h3>⚠️ Something went wrong</h3>
-        <p>{error}</p>
-        <div className="error-actions">
-          {isRetryable && selectedFile && (
-            <button onClick={handleUpload} className="btn-primary">
-              🔄 Try Again
+      <div className={`error-card error-card--${config.gradient}`}>
+        <div className="error-card__icon">{config.icon}</div>
+        <h3 className="error-card__title">{config.title}</h3>
+        <p className="error-card__subtitle">{config.subtitle}</p>
+        
+        <div className="error-card__tips">
+          {config.tips.map((tip, i) => (
+            <div key={i} className="error-card__tip">{tip}</div>
+          ))}
+        </div>
+
+        <div className="error-card__actions">
+          {selectedFile && (
+            <button onClick={handleUpload} className="error-card__btn error-card__btn--primary">
+              {config.retryText}
             </button>
           )}
-          <button onClick={handleReset} className="btn-secondary">
-            Start Over
+          <button onClick={handleReset} className="error-card__btn error-card__btn--secondary">
+            Start Fresh
           </button>
         </div>
+
+        <details className="error-card__details">
+          <summary>Technical details</summary>
+          <code>{error}</code>
+        </details>
       </div>
     );
   };

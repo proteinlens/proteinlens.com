@@ -28,6 +28,8 @@
       "https://proteinlens.com",
       "https://happy-stone-003f15b1e.azurestaticapps.net"
     ],
+    "allowedMethods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    "allowedHeaders": ["Content-Type", "Authorization", "x-user-id", "x-request-id"],
     "supportCredentials": true
   },
   "extensions": {
