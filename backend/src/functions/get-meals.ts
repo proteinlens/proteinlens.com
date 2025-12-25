@@ -78,7 +78,7 @@ export async function getMeals(request: HttpRequest, context: InvocationContext)
     Logger.info('Fetching meals for user', { requestId, userId, limit });
 
     // Get meals from database
-    const meals = await mealService.getUserMealAnalyses(userId, { limit }) as MealWithFoods[];
+    const meals = await mealService.getUserMealAnalyses(userId, { limit }) as unknown as MealWithFoods[];
 
     Logger.info('Meals retrieved successfully', {
       requestId,
