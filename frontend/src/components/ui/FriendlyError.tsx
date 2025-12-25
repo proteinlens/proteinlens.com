@@ -1,7 +1,7 @@
 // FriendlyError Component
 // Beautiful, engaging error states that don't scare users
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { getFriendlyError, errorColors, type FriendlyError as FriendlyErrorType } from '@/utils/friendlyErrors'
 
 interface FriendlyErrorProps {
@@ -23,15 +23,13 @@ export function FriendlyError({
 }: FriendlyErrorProps) {
   const config = getFriendlyError(error)
   const colors = errorColors[config.color]
-  const [retryCount, setRetryCount] = useState(0)
   const [isRetrying, setIsRetrying] = useState(false)
 
-  // Auto-retry logic with exponential backoff
+  // Manual retry handler - no auto-retry to avoid loops
   const handleRetry = async () => {
-    if (!onRetry) return
+    if (!onRetry || isRetrying) return
     
     setIsRetrying(true)
-    setRetryCount(prev => prev + 1)
     
     // Small delay to show loading state
     await new Promise(resolve => setTimeout(resolve, 500))
@@ -42,17 +40,6 @@ export function FriendlyError({
       setIsRetrying(false)
     }
   }
-
-  // Auto-retry on mount for transient errors (first 2 attempts)
-  useEffect(() => {
-    const isTransientError = config.color === 'amber' || config.color === 'blue'
-    if (isTransientError && retryCount === 0 && onRetry) {
-      const timeout = setTimeout(() => {
-        handleRetry()
-      }, 2000) // Auto-retry after 2 seconds
-      return () => clearTimeout(timeout)
-    }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (compact) {
     return (
@@ -103,13 +90,6 @@ export function FriendlyError({
           ))}
         </ul>
       </div>
-
-      {/* Retry info */}
-      {retryCount > 0 && (
-        <p className="text-xs text-muted-foreground">
-          Attempt {retryCount + 1} • {retryCount < 3 ? "Let's keep trying!" : "Still working on it..."}
-        </p>
-      )}
       
       {/* Actions */}
       <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
@@ -149,13 +129,6 @@ export function FriendlyError({
           </button>
         )}
       </div>
-
-      {/* Fun footer message based on retry count */}
-      {retryCount >= 3 && (
-        <p className="text-xs text-muted-foreground pt-2 italic">
-          🦾 Persistence pays off! Or try again later - we won't judge.
-        </p>
-      )}
     </div>
   )
 }
