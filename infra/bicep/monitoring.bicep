@@ -19,6 +19,9 @@ param storageThresholdGb int = 50
 @description('Email addresses for cost alerts')
 param alertEmailAddresses array = []
 
+@description('Budget start date (first of month, e.g., 2025-01-01)')
+param budgetStartDate string = '${substring(utcNow(), 0, 7)}-01'
+
 // Resource naming convention
 var prefix = 'proteinlens-${environment}'
 
@@ -49,7 +52,7 @@ resource budget 'Microsoft.Consumption/budgets@2023-05-01' = {
     amount: monthlyBudgetEur
     timeGrain: 'Monthly'
     timePeriod: {
-      startDate: '${substring(utcNow(), 0, 7)}-01' // First of current month
+      startDate: budgetStartDate
     }
     notifications: {
       Actual_GreaterThan_50_Percent: {
