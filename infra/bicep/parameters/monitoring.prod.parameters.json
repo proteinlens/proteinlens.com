@@ -12,7 +12,10 @@
       "value": 100
     },
     "alertEmailAddresses": {
-      "value": []
+      "value": ["admin@proteinlens.com"]
+    },
+    "budgetStartDate": {
+      "value": "2025-01-01"
     }
   }
 }
