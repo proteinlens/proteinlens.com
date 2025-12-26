@@ -22,7 +22,7 @@ export function ProtectedRoute() {
   if (!isAuthenticated) {
     const returnTo = encodeURIComponent(location.pathname + location.search);
     trackProtectedRouteRedirect(location.pathname);
-    return <Navigate to={`/signin?returnTo=${returnTo}`} replace />;
+    return <Navigate to={`/login?returnTo=${returnTo}`} replace />;
   }
 
   return <Outlet />;

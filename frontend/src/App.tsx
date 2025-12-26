@@ -171,9 +171,9 @@ function App() {
                     {/* Public routes */}
                     <Route path="/" element={<HomePage />} />
                     <Route path="/pricing" element={<PricingPage />} />
-                    <Route path="/signin" element={<SignIn />} />
-                    <Route path="/signup" element={<SignUp />} />
-                    <Route path="/signup-new" element={<SignupPage />} />
+                    <Route path="/login" element={<SignIn />} />
+                    <Route path="/signup" element={<SignupPage />} />
+                    <Route path="/signup-legacy" element={<SignUp />} />
                     <Route path="/verify-email" element={<VerifyEmailPage />} />
                     <Route path="/invite/:token" element={<InviteSignupPage />} />
                     <Route path="/reset-password" element={<ResetPassword />} />

@@ -85,7 +85,7 @@ export function SignIn() {
           <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">
               Don't have an account?{' '}
-              <Link to="/signup" className="text-primary font-medium hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded">
+              <Link to="/signup" className="text-primary font-medium hover:underline">
                 Sign up free
               </Link>
             </p>
@@ -94,27 +94,32 @@ export function SignIn() {
           <div className="mt-4 text-center">
             <Link 
               to="/reset-password" 
-              className="text-sm text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded"
+              className="text-sm text-muted-foreground hover:text-foreground hover:underline"
             >
               Forgot password?
             </Link>
           </div>
         </div>
 
-        {/* Features reminder */}
-        <aside className="mt-8 text-center" aria-label="Account benefits">
-          <p className="text-xs text-muted-foreground mb-3">Unlock with an account:</p>
-          <ul className="flex flex-wrap justify-center gap-2" role="list">
-            {['📊 Full History', '☁️ Cloud Sync', '📈 Progress Tracking'].map((feature) => (
-              <li
-                key={feature}
-                className="inline-flex items-center px-3 py-1 bg-secondary/50 text-muted-foreground text-xs rounded-full"
-              >
-                {feature}
-              </li>
-            ))}
-          </ul>
-        </aside>
+        {/* Benefits */}
+        <div className="mt-8 grid grid-cols-2 gap-3" aria-label="Account benefits">
+          <div className="flex items-center gap-2 rounded-lg bg-card p-3 shadow-sm ring-1 ring-border">
+            <span className="text-xl" aria-hidden="true">📸</span>
+            <span className="text-sm font-medium text-foreground">Unlimited meal scans</span>
+          </div>
+          <div className="flex items-center gap-2 rounded-lg bg-card p-3 shadow-sm ring-1 ring-border">
+            <span className="text-xl" aria-hidden="true">📊</span>
+            <span className="text-sm font-medium text-foreground">Full meal history</span>
+          </div>
+          <div className="flex items-center gap-2 rounded-lg bg-card p-3 shadow-sm ring-1 ring-border">
+            <span className="text-xl" aria-hidden="true">☁️</span>
+            <span className="text-sm font-medium text-foreground">Sync across devices</span>
+          </div>
+          <div className="flex items-center gap-2 rounded-lg bg-card p-3 shadow-sm ring-1 ring-border">
+            <span className="text-xl" aria-hidden="true">🎯</span>
+            <span className="text-sm font-medium text-foreground">Track your goals</span>
+          </div>
+        </div>
       </div>
     </main>
   );

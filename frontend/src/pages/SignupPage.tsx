@@ -96,6 +96,26 @@ export const SignupPage: FC = () => {
           </p>
         </div>
 
+        {/* Benefits */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flex items-center gap-2 rounded-lg bg-white p-3 shadow-sm ring-1 ring-gray-900/5">
+            <span className="text-xl" aria-hidden="true">📸</span>
+            <span className="text-sm font-medium text-gray-700">Unlimited meal scans</span>
+          </div>
+          <div className="flex items-center gap-2 rounded-lg bg-white p-3 shadow-sm ring-1 ring-gray-900/5">
+            <span className="text-xl" aria-hidden="true">📊</span>
+            <span className="text-sm font-medium text-gray-700">Full meal history</span>
+          </div>
+          <div className="flex items-center gap-2 rounded-lg bg-white p-3 shadow-sm ring-1 ring-gray-900/5">
+            <span className="text-xl" aria-hidden="true">☁️</span>
+            <span className="text-sm font-medium text-gray-700">Sync across devices</span>
+          </div>
+          <div className="flex items-center gap-2 rounded-lg bg-white p-3 shadow-sm ring-1 ring-gray-900/5">
+            <span className="text-xl" aria-hidden="true">🎯</span>
+            <span className="text-sm font-medium text-gray-700">Track your goals</span>
+          </div>
+        </div>
+
         {/* Signup form */}
         <div
           id="signup-form"
@@ -105,6 +125,26 @@ export const SignupPage: FC = () => {
             onSuccess={handleSignupSuccess}
             onSocialLogin={handleSocialLogin}
           />
+
+          {/* Sign in link */}
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-500">
+              Already have an account?{' '}
+              <a href="/login" className="text-blue-600 font-medium hover:underline">
+                Sign in
+              </a>
+            </p>
+          </div>
+
+          {/* Forgot password */}
+          <div className="mt-4 text-center">
+            <a
+              href="/reset-password"
+              className="text-sm text-gray-500 hover:text-gray-700 hover:underline"
+            >
+              Forgot password?
+            </a>
+          </div>
         </div>
 
         {/* Footer */}
