@@ -120,8 +120,10 @@ resource storageTransactionAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = 
     ]
     evaluationFrequency: 'PT1H'
     windowSize: 'PT1H'
+    targetResourceType: 'Microsoft.Storage/storageAccounts'
+    targetResourceRegion: location
     criteria: {
-      'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
+      'odata.type': 'Microsoft.Azure.Monitor.MultipleResourceMultipleMetricCriteria'
       allOf: [
         {
           name: 'HighTransactions'
@@ -155,8 +157,10 @@ resource functionExecutionAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
     ]
     evaluationFrequency: 'PT1H'
     windowSize: 'PT1H'
+    targetResourceType: 'Microsoft.Web/sites'
+    targetResourceRegion: location
     criteria: {
-      'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
+      'odata.type': 'Microsoft.Azure.Monitor.MultipleResourceMultipleMetricCriteria'
       allOf: [
         {
           name: 'HighExecutionCount'
@@ -190,8 +194,10 @@ resource functionErrorAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
     ]
     evaluationFrequency: 'PT5M'
     windowSize: 'PT15M'
+    targetResourceType: 'Microsoft.Web/sites'
+    targetResourceRegion: location
     criteria: {
-      'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
+      'odata.type': 'Microsoft.Azure.Monitor.MultipleResourceMultipleMetricCriteria'
       allOf: [
         {
           name: 'HighErrorRate'
