@@ -103,6 +103,10 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
           value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/stripe-webhook-secret/)'
         }
         {
+          name: 'HCAPTCHA_SECRET'
+          value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/hcaptcha-secret/)'
+        }
+        {
           name: 'BLOB_STORAGE_CONNECTION'
           value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/blob-storage-connection/)'
         }

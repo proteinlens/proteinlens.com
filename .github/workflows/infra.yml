@@ -210,6 +210,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          HCAPTCHA_SECRET: ${{ secrets.HCAPTCHA_SECRET }}
         run: |
           # Extract Key Vault name from deployment outputs
           KEYVAULT_NAME=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.keyVaultName.value')
@@ -276,6 +277,19 @@ jobs:
             --vault-name "$KEYVAULT_NAME" \
             --name "stripe-webhook-secret" \
             --value "$WEBHOOK_SECRET" \
+            > /dev/null
+          
+          # Set HCAPTCHA_SECRET (use placeholder if not set)
+          HCAPTCHA_KEY="${{ env.HCAPTCHA_SECRET }}"
+          if [ -z "$HCAPTCHA_KEY" ]; then
+            echo "⚠️  HCAPTCHA_SECRET not set, using placeholder"
+            HCAPTCHA_KEY="0x0000000000000000000000000000000000000000"
+          fi
+          
+          az keyvault secret set \
+            --vault-name "$KEYVAULT_NAME" \
+            --name "hcaptcha-secret" \
+            --value "$HCAPTCHA_KEY" \
             > /dev/null
           
           # Set AI_FOUNDRY_ENDPOINT and AI_MODEL_DEPLOYMENT from Azure OpenAI deployment

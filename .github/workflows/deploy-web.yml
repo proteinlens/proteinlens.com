@@ -57,9 +57,14 @@ jobs:
           cd frontend
           # Vite uses .env.production for production builds (npm run build)
           # This takes precedence over .env and shell environment variables
-          echo "VITE_API_URL=${{ inputs.api_url }}" > .env.production
-          echo "✅ Created .env.production with API URL: ${{ inputs.api_url }}"
-          cat .env.production
+          cat > .env.production << EOF
+          VITE_API_URL=${{ inputs.api_url }}
+          VITE_HCAPTCHA_SITE_KEY=${{ secrets.VITE_HCAPTCHA_SITE_KEY }}
+          EOF
+          echo "✅ Created .env.production with API URL and hCaptcha"
+          # Show env vars (masking sensitive values)
+          echo "VITE_API_URL=${{ inputs.api_url }}"
+          echo "VITE_HCAPTCHA_SITE_KEY=***"
 
       - name: Build with Vite
         run: |
