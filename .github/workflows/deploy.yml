@@ -12,7 +12,6 @@ permissions:
 
 env:
   RESOURCE_GROUP: proteinlens-prod
-  API_URL: https://api.proteinlens.com
 
 concurrency:
   group: deploy-${{ github.ref }}
@@ -243,7 +242,8 @@ jobs:
     with:
       resource_group: proteinlens-prod
       staticwebapp_name: ${{ needs.infra.outputs.staticwebapp_name }}
-      api_url: ${{ env.API_URL }}
+      # Note: env context not available in reusable workflow inputs, hardcoded
+      api_url: https://api.proteinlens.com
 
   # ============================================================================
   # STAGE 4: Health checks (after deploys complete)
