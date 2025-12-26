@@ -28,7 +28,7 @@ jobs:
     # No dependencies - runs immediately in parallel with other pre-flight jobs
     steps:
       - name: Delete old artifacts (keep last 5)
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const owner = context.repo.owner;
