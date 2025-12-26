@@ -552,7 +552,7 @@ jobs:
             --name "$DEPLOYMENT_NAME" \
             --resource-group "${{ env.RESOURCE_GROUP }}" \
             --template-file infra/bicep/monitoring.bicep \
-            --parameters "@infra/bicep/parameters/${{ inputs.environment }}.parameters.json"
+            --parameters "@infra/bicep/parameters/monitoring.${{ inputs.environment }}.parameters.json"
           
           echo "✅ Monitoring deployment complete"
 
