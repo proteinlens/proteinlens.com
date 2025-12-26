@@ -284,7 +284,8 @@ resource observabilityActionGroup 'Microsoft.Insights/actionGroups@2023-01-01' =
 }
 
 // T022: API Error Rate Alert (>5% over 5min)
-resource apiErrorRateAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
+// Note: Requires specific function app ID - resource group level not supported for Microsoft.Web/sites
+resource apiErrorRateAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = if (!empty(functionAppId)) {
   name: '${prefix}-api-error-rate-alert'
   location: 'global'
   properties: {
@@ -292,7 +293,7 @@ resource apiErrorRateAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
     severity: 1 // Critical
     enabled: true
     scopes: [
-      resourceGroup().id
+      functionAppId
     ]
     evaluationFrequency: 'PT1M'   // Evaluate every minute
     windowSize: 'PT5M'            // Over 5 minute window
@@ -321,7 +322,8 @@ resource apiErrorRateAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
 }
 
 // T023: API Latency Alert (P95 > 3s)
-resource apiLatencyAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
+// Note: Requires specific function app ID - resource group level not supported for Microsoft.Web/sites
+resource apiLatencyAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = if (!empty(functionAppId)) {
   name: '${prefix}-api-latency-alert'
   location: 'global'
   properties: {
@@ -329,7 +331,7 @@ resource apiLatencyAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
     severity: 2 // Warning
     enabled: true
     scopes: [
-      resourceGroup().id
+      functionAppId
     ]
     evaluationFrequency: 'PT5M'   // Evaluate every 5 minutes
     windowSize: 'PT15M'           // Over 15 minute window
