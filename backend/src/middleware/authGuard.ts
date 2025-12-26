@@ -66,6 +66,12 @@ export async function requireAuth(request: HttpRequest): Promise<AuthResult> {
   try {
     const verified = await validateBearerToken(token);
     const user = await getOrCreateLocalUser(verified);
+    
+    // Check if user is suspended (Feature 012: Admin Dashboard)
+    if (user.suspended) {
+      return createSuspendedError();
+    }
+    
     return { ctx: { user, token } };
   } catch (err) {
     if (err instanceof AuthError) {
@@ -92,6 +98,26 @@ function createAuthError(code: AuthErrorCode, message: string, status: number): 
         error: 'Unauthorized', 
         code,
         message,
+      },
+    },
+  };
+}
+
+/**
+ * Creates a suspended user error response
+ * Feature 012: Admin Dashboard - blocks suspended users from accessing the API
+ */
+function createSuspendedError(): AuthFailure {
+  return {
+    response: {
+      status: 403,
+      headers: { 
+        'Content-Type': 'application/json',
+      },
+      jsonBody: { 
+        error: 'Forbidden', 
+        code: 'USER_SUSPENDED',
+        message: 'Your account has been suspended. Please contact support for assistance.',
       },
     },
   };

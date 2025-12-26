@@ -44,6 +44,7 @@ export interface LocalUserProfile {
   externalId: string;
   email: string | null;
   plan: 'FREE' | 'PRO';
+  suspended: boolean;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -190,6 +191,7 @@ export async function getOrCreateLocalUser(user: VerifiedUser): Promise<LocalUse
       externalId: dbUser.externalId,
       email: dbUser.email,
       plan: dbUser.plan as 'FREE' | 'PRO',
+      suspended: dbUser.suspended ?? false,
     };
   } catch (err) {
     throw new AuthError(
@@ -293,6 +295,7 @@ export async function completeSignupProfile(
       externalId: dbUser.externalId,
       email: dbUser.email,
       plan: dbUser.plan as 'FREE' | 'PRO',
+      suspended: dbUser.suspended ?? false,
       firstName: dbUser.firstName,
       lastName: dbUser.lastName,
       organizationName: dbUser.organizationName,
@@ -332,6 +335,7 @@ export async function getExtendedUserProfile(
     externalId: dbUser.externalId,
     email: dbUser.email,
     plan: dbUser.plan as 'FREE' | 'PRO',
+    suspended: dbUser.suspended ?? false,
     firstName: dbUser.firstName,
     lastName: dbUser.lastName,
     organizationName: dbUser.organizationName,

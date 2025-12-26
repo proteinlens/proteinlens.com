@@ -1,0 +1,113 @@
+name: Deploy Admin Dashboard
+
+on:
+  workflow_call:
+    inputs:
+      resource_group:
+        description: 'Azure Resource Group'
+        required: true
+        type: string
+      staticwebapp_name:
+        description: 'Admin Static Web App Name'
+        required: true
+        type: string
+      api_url:
+        description: 'API base URL for Vite build'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # Combined build and deploy in single job to avoid artifact storage quota issues
+  build_and_deploy:
+    name: Build & Deploy Admin Dashboard
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'admin/package-lock.json'
+
+      - name: Display versions
+        run: |
+          echo "Node: $(node --version)"
+          echo "npm: $(npm --version)"
+          echo "Vite API URL: ${{ inputs.api_url }}"
+
+      - name: Install dependencies
+        run: |
+          cd admin
+          npm ci --verbose
+          echo "✅ Admin dependencies installed"
+
+      - name: Create production environment file
+        run: |
+          cd admin
+          # Vite uses .env.production for production builds
+          cat > .env.production << EOF
+          VITE_API_URL=${{ inputs.api_url }}
+          EOF
+          echo "✅ Created .env.production with API URL"
+          echo "VITE_API_URL=${{ inputs.api_url }}"
+
+      - name: Build with Vite
+        run: |
+          cd admin
+          npm run build
+          echo "✅ Admin dashboard build completed"
+          # Verify the API URL was baked into the build
+          if grep -q "${{ inputs.api_url }}" dist/assets/*.js 2>/dev/null; then
+            echo "✅ API URL successfully baked into build"
+          else
+            echo "⚠️ Warning: API URL may not be in build, checking for /api fallback..."
+          fi
+
+      - name: Validate build artifact
+        run: |
+          if [ ! -f "admin/dist/index.html" ]; then
+            echo "❌ Missing admin/dist/index.html"
+            exit 1
+          fi
+          echo "✅ Admin build artifact validated"
+
+      - name: Azure Login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Fetch Static Web App token
+        id: swa
+        run: |
+          RG="${{ inputs.resource_group }}"
+          SWA_NAME="${{ inputs.staticwebapp_name }}"
+          echo "🔍 Getting token for Admin SWA: $SWA_NAME in RG: $RG"
+          TOKEN=$(az staticwebapp secrets list --name "$SWA_NAME" --resource-group "$RG" --query properties.apiKey -o tsv)
+          if [ -z "$TOKEN" ]; then
+            echo "❌ Failed to retrieve Admin SWA token"
+            exit 1
+          fi
+          echo "::add-mask::$TOKEN"
+          echo "token=$TOKEN" >> "$GITHUB_OUTPUT"
+          echo "✅ Admin SWA token retrieved"
+
+      - name: Deploy to Static Web Apps
+        uses: azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ steps.swa.outputs.token }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: 'upload'
+          app_location: 'admin/dist'
+          skip_app_build: true

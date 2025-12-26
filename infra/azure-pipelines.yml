@@ -207,6 +207,45 @@ stages:
             artifact: FrontendArtifact
             displayName: 'Publish frontend artifact'
 
+      # Feature 012: Admin Dashboard build job
+      - job: AdminDashboard
+        displayName: 'Admin Dashboard - build'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: NodeTool@0
+            displayName: 'Use Node.js $(nodeVersion)'
+            inputs:
+              versionSpec: '$(nodeVersion)'
+
+          - script: npm ci
+            displayName: 'Install admin dependencies'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/admin'
+
+          - script: npm run build
+            displayName: 'Build admin dashboard'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/admin'
+            env:
+              VITE_API_URL: '/api'
+
+          - script: npm run lint
+            displayName: 'Lint admin (non-blocking)'
+            workingDirectory: '$(System.DefaultWorkingDirectory)/admin'
+            continueOnError: true
+
+          - task: ArchiveFiles@2
+            displayName: 'Archive admin artifact'
+            inputs:
+              rootFolderOrFile: '$(System.DefaultWorkingDirectory)/admin/dist'
+              includeRootFolder: false
+              archiveType: 'zip'
+              archiveFile: '$(Build.ArtifactStagingDirectory)/admin.zip'
+              replaceExistingArchive: true
+
+          - publish: $(Build.ArtifactStagingDirectory)/admin.zip
+            artifact: AdminArtifact
+            displayName: 'Publish admin artifact'
+
   # ================================
   # Stage 3: Deploy Infrastructure (Bicep)
   # ================================
@@ -389,11 +428,32 @@ stages:
                     azure_static_web_apps_api_token: $(AZURE_SWA_TOKEN_PRODUCTION)
                     app_location: '/'
 
+      # Feature 012: Admin Dashboard deployment
+      - deployment: AdminProduction
+        displayName: 'Deploy admin dashboard to production'
+        environment: 'production'
+        pool:
+          vmImage: 'ubuntu-latest'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: current
+                  artifact: AdminArtifact
+
+                - task: AzureStaticWebApp@0
+                  displayName: 'Deploy Admin Static Web App (production)'
+                  inputs:
+                    skip_app_build: true
+                    azure_static_web_apps_api_token: $(AZURE_ADMIN_SWA_TOKEN_PRODUCTION)
+                    app_location: '/'
+
       - job: SmokeTest
         displayName: 'Production smoke test'
         dependsOn:
           - BackendProduction
           - FrontendProduction
+          - AdminProduction
         pool:
           vmImage: 'ubuntu-latest'
         steps:
@@ -402,5 +462,6 @@ stages:
               echo "Running smoke tests against production..."
               curl -f https://proteinlens.com/api/health
               curl -f https://proteinlens.com
+              curl -f https://admin.proteinlens.com || echo "Admin smoke test skipped (may not be configured yet)"
               echo "Smoke tests passed!"
             displayName: 'Health check'
