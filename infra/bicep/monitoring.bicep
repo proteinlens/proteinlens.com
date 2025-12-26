@@ -94,7 +94,9 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
     sku: {
       name: 'PerGB2018'
     }
-    retentionInDays: 30
+    retentionInDays: 30              // Interactive/hot retention
+    // Note: Archive retention (90 days) configured via workspace data export or Azure Policy
+    // See: https://learn.microsoft.com/en-us/azure/azure-monitor/logs/data-retention-archive
   }
 }
 
@@ -251,8 +253,272 @@ resource aiUsageAlert 'Microsoft.Insights/scheduledQueryRules@2022-06-15' = {
 }
 
 // =====================================================
+// Feature 011: Observability Alerts
+// =====================================================
+
+// T025: Observability Action Group (reuses existing email list)
+resource observabilityActionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = {
+  name: '${prefix}-observability-ag'
+  location: 'global'
+  properties: {
+    groupShortName: 'ObsAlerts'
+    enabled: true
+    emailReceivers: [for email in alertEmailAddresses: {
+      name: 'Email_${replace(email, '@', '_')}'
+      emailAddress: email
+      useCommonAlertSchema: true
+    }]
+  }
+}
+
+// T022: API Error Rate Alert (>5% over 5min)
+resource apiErrorRateAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
+  name: '${prefix}-api-error-rate-alert'
+  location: 'global'
+  properties: {
+    description: 'Alert when API error rate exceeds 5% over 5 minutes (Feature 011: Observability)'
+    severity: 1 // Critical
+    enabled: true
+    scopes: [
+      resourceGroup().id
+    ]
+    evaluationFrequency: 'PT1M'   // Evaluate every minute
+    windowSize: 'PT5M'            // Over 5 minute window
+    criteria: {
+      'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
+      allOf: [
+        {
+          name: 'APIErrorRate'
+          metricName: 'Http5xx'
+          metricNamespace: 'Microsoft.Web/sites'
+          operator: 'GreaterThan'
+          threshold: 5  // More than 5 errors in 5 minutes
+          timeAggregation: 'Total'
+          criterionType: 'StaticThresholdCriterion'
+        }
+      ]
+    }
+    // T026c: Alert aggregation configuration
+    autoMitigate: true  // Auto-resolve after 15 minutes
+    actions: [
+      {
+        actionGroupId: observabilityActionGroup.id
+      }
+    ]
+  }
+}
+
+// T023: API Latency Alert (P95 > 3s)
+resource apiLatencyAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
+  name: '${prefix}-api-latency-alert'
+  location: 'global'
+  properties: {
+    description: 'Alert when API P95 latency exceeds 3 seconds (Feature 011: Observability)'
+    severity: 2 // Warning
+    enabled: true
+    scopes: [
+      resourceGroup().id
+    ]
+    evaluationFrequency: 'PT5M'   // Evaluate every 5 minutes
+    windowSize: 'PT15M'           // Over 15 minute window
+    criteria: {
+      'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
+      allOf: [
+        {
+          name: 'APILatency'
+          metricName: 'HttpResponseTime'
+          metricNamespace: 'Microsoft.Web/sites'
+          operator: 'GreaterThan'
+          threshold: 3000  // 3000ms = 3 seconds
+          timeAggregation: 'Average'
+          criterionType: 'StaticThresholdCriterion'
+        }
+      ]
+    }
+    autoMitigate: true
+    actions: [
+      {
+        actionGroupId: observabilityActionGroup.id
+      }
+    ]
+  }
+}
+
+// T024: Health Check Failure Alert (2 consecutive failures)
+resource healthCheckAlert 'Microsoft.Insights/scheduledQueryRules@2022-06-15' = {
+  name: '${prefix}-health-check-alert'
+  location: location
+  properties: {
+    displayName: 'Health Check Failure Alert'
+    description: 'Alert when health check fails 2 consecutive times (Feature 011: Observability)'
+    severity: 1 // Critical
+    enabled: true
+    evaluationFrequency: 'PT5M'   // T026c: 5-minute evaluation
+    scopes: [
+      logAnalytics.id
+    ]
+    windowSize: 'PT10M'
+    criteria: {
+      allOf: [
+        {
+          query: '''
+            requests
+            | where name contains "health" and resultCode != "200"
+            | summarize FailedCount = count() by bin(timestamp, 5m)
+            | where FailedCount >= 2
+          '''
+          timeAggregation: 'Count'
+          operator: 'GreaterThan'
+          threshold: 0
+          failingPeriods: {
+            numberOfEvaluationPeriods: 2  // 2 consecutive failures
+            minFailingPeriodsToAlert: 2
+          }
+        }
+      ]
+    }
+    autoMitigate: true  // T026c: 15-minute auto-resolve
+    actions: {
+      actionGroups: [
+        observabilityActionGroup.id
+      ]
+    }
+  }
+}
+
+// Frontend Error Alert (> 50 errors/hour)
+resource frontendErrorAlert 'Microsoft.Insights/scheduledQueryRules@2022-06-15' = {
+  name: '${prefix}-frontend-error-alert'
+  location: location
+  properties: {
+    displayName: 'Frontend Error Alert'
+    description: 'Alert when frontend exceptions exceed 50 per hour (Feature 011: Observability)'
+    severity: 2 // Warning
+    enabled: true
+    evaluationFrequency: 'PT15M'
+    scopes: [
+      logAnalytics.id
+    ]
+    windowSize: 'PT1H'
+    criteria: {
+      allOf: [
+        {
+          query: '''
+            exceptions
+            | where cloud_RoleName == "proteinlens-frontend"
+            | summarize ExceptionCount = count() by bin(timestamp, 1h)
+            | where ExceptionCount > 50
+          '''
+          timeAggregation: 'Count'
+          operator: 'GreaterThan'
+          threshold: 0
+          failingPeriods: {
+            numberOfEvaluationPeriods: 1
+            minFailingPeriodsToAlert: 1
+          }
+        }
+      ]
+    }
+    autoMitigate: true
+    actions: {
+      actionGroups: [
+        observabilityActionGroup.id
+      ]
+    }
+  }
+}
+
+// LCP Degradation Alert (P75 > 2.5s)
+resource lcpAlert 'Microsoft.Insights/scheduledQueryRules@2022-06-15' = {
+  name: '${prefix}-lcp-degradation-alert'
+  location: location
+  properties: {
+    displayName: 'LCP Performance Degradation Alert'
+    description: 'Alert when Largest Contentful Paint P75 exceeds 2.5 seconds (Feature 011: Observability)'
+    severity: 3 // Informational
+    enabled: true
+    evaluationFrequency: 'PT30M'
+    scopes: [
+      logAnalytics.id
+    ]
+    windowSize: 'PT1H'
+    criteria: {
+      allOf: [
+        {
+          query: '''
+            customMetrics
+            | where name == "WebVitals.LCP"
+            | summarize P75_LCP = percentile(value, 75) by bin(timestamp, 1h)
+            | where P75_LCP > 2500
+          '''
+          timeAggregation: 'Count'
+          operator: 'GreaterThan'
+          threshold: 0
+          failingPeriods: {
+            numberOfEvaluationPeriods: 1
+            minFailingPeriodsToAlert: 1
+          }
+        }
+      ]
+    }
+    autoMitigate: true
+    actions: {
+      actionGroups: [
+        observabilityActionGroup.id
+      ]
+    }
+  }
+}
+
+// Database Latency Alert (P95 > 500ms)
+resource databaseLatencyAlert 'Microsoft.Insights/scheduledQueryRules@2022-06-15' = {
+  name: '${prefix}-database-latency-alert'
+  location: location
+  properties: {
+    displayName: 'Database Latency Alert'
+    description: 'Alert when database P95 latency exceeds 500ms (Feature 011: Observability)'
+    severity: 2 // Warning
+    enabled: true
+    evaluationFrequency: 'PT5M'
+    scopes: [
+      logAnalytics.id
+    ]
+    windowSize: 'PT15M'
+    criteria: {
+      allOf: [
+        {
+          query: '''
+            dependencies
+            | where type == "PostgreSQL" or type == "SQL"
+            | summarize P95_Duration = percentile(duration, 95) by bin(timestamp, 15m)
+            | where P95_Duration > 500
+          '''
+          timeAggregation: 'Count'
+          operator: 'GreaterThan'
+          threshold: 0
+          failingPeriods: {
+            numberOfEvaluationPeriods: 1
+            minFailingPeriodsToAlert: 1
+          }
+        }
+      ]
+    }
+    autoMitigate: true
+    actions: {
+      actionGroups: [
+        observabilityActionGroup.id
+      ]
+    }
+  }
+}
+
+// =====================================================
 // Outputs
 // =====================================================
 output actionGroupId string = actionGroup.id
+output observabilityActionGroupId string = observabilityActionGroup.id
 output logAnalyticsWorkspaceId string = logAnalytics.id
 output budgetName string = budget.name
+output apiErrorRateAlertId string = apiErrorRateAlert.id
+output apiLatencyAlertId string = apiLatencyAlert.id
+output healthCheckAlertId string = healthCheckAlert.id
