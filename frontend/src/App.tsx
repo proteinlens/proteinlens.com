@@ -33,6 +33,7 @@ const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const SignupPage = lazy(() => import('./pages/SignupPage'));
 const VerifyEmailPage = lazy(() => import('./pages/VerifyEmailPage'));
 const InviteSignupPage = lazy(() => import('./pages/InviteSignupPage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 // Navigation component with usage counter
 const Navigation: React.FC = () => {
@@ -184,6 +185,9 @@ function App() {
                       <Route path="/settings" element={<Settings />} />
                       <Route path="/billing/success" element={<CheckoutSuccessPage />} />
                     </Route>
+
+                    {/* 404 catch-all */}
+                    <Route path="*" element={<NotFoundPage />} />
                   </Routes>
                 </Suspense>
               </PageContainer>
