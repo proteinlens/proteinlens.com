@@ -9,6 +9,7 @@
   },
   "scripts": {
     "build": "tsc && node scripts/fix-esm-imports.mjs",
+    "dev": "npm run build && func start",
     "postinstall": "prisma generate",
     "watch": "tsc --watch",
     "prestart": "npm run build",

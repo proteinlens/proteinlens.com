@@ -134,6 +134,57 @@ gh secret set STRIPE_WEBHOOK_SECRET --body "whsec_..."
 
 ---
 
+#### HCAPTCHA_SECRET
+
+**Purpose**: Server-side verification of hCaptcha responses for bot protection during signup
+
+**Format**: String (40-character hex string starting with `0x` for production, or test key)
+
+**How to Obtain**:
+1. Go to [hCaptcha Dashboard](https://dashboard.hcaptcha.com)
+2. Login or create account
+3. Add your site (e.g., `proteinlens.com`)
+4. Copy **Secret Key** from site settings
+
+**Set in GitHub**:
+```bash
+gh secret set HCAPTCHA_SECRET --body "0x..."
+```
+
+**Test Keys** (for development):
+- Site Key: `10000000-ffff-ffff-ffff-000000000001`
+- Secret Key: `0x0000000000000000000000000000000000000000`
+
+**Security Notes**:
+- Backend only - never expose in frontend code
+- Use test keys for local development
+- Rotate if compromised
+- Stored in Azure Key Vault, referenced by Function App
+
+---
+
+#### VITE_HCAPTCHA_SITE_KEY
+
+**Purpose**: Client-side hCaptcha widget configuration for signup form
+
+**Format**: String (UUID format, e.g., `10000000-ffff-ffff-ffff-000000000001`)
+
+**How to Obtain**:
+1. Go to [hCaptcha Dashboard](https://dashboard.hcaptcha.com)
+2. Copy **Site Key** from your site settings
+
+**Set in GitHub**:
+```bash
+gh secret set VITE_HCAPTCHA_SITE_KEY --body "your-site-key-uuid"
+```
+
+**Security Notes**:
+- Public key - safe to include in frontend builds
+- Injected into frontend build via `.env.production`
+- Different from HCAPTCHA_SECRET (server-side only)
+
+---
+
 ### Azure Functions & Static Web Apps
 
 #### Removed: Publish Profiles and SWA Tokens

@@ -11,6 +11,7 @@ import type {
   Plan as PlanType, 
   SubscriptionStatus as SubscriptionStatusType, 
   UsageType as UsageTypeType,
+  OrganizationInviteStatus as OrganizationInviteStatusType,
   User as UserType, 
   MealAnalysis as MealAnalysisType 
 } from '@prisma/client';
@@ -20,10 +21,10 @@ const require = createRequire(import.meta.url);
 const prismaModule = require('@prisma/client');
 
 // Extract PrismaClient and enums from the CJS module
-const { PrismaClient, Plan, SubscriptionStatus, UsageType } = prismaModule;
+const { PrismaClient, Plan, SubscriptionStatus, UsageType, OrganizationInviteStatus } = prismaModule;
 
 // Re-export enums as values (these can be used as both types and values)
-export { Plan, SubscriptionStatus, UsageType };
+export { Plan, SubscriptionStatus, UsageType, OrganizationInviteStatus };
 
 // Re-export types for TypeScript type annotations
 export type { 
@@ -31,6 +32,7 @@ export type {
   PlanType as PlanEnum, 
   SubscriptionStatusType as SubscriptionStatusEnum, 
   UsageTypeType as UsageTypeEnum,
+  OrganizationInviteStatusType as OrganizationInviteStatusEnum,
   UserType as User, 
   MealAnalysisType as MealAnalysis 
 };
@@ -39,6 +41,7 @@ export type {
 export type Plan = PlanType;
 export type SubscriptionStatus = SubscriptionStatusType;
 export type UsageType = UsageTypeType;
+export type OrganizationInviteStatus = OrganizationInviteStatusType;
 
 // Singleton instance
 let prismaInstance: PrismaClientType | null = null;

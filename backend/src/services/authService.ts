@@ -200,3 +200,173 @@ export async function getOrCreateLocalUser(user: VerifiedUser): Promise<LocalUse
     );
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Profile completion (Feature 010 - User Signup)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface ProfileCompletionInput {
+  firstName?: string;
+  lastName?: string;
+  organizationName?: string;
+  phone?: string;
+}
+
+export interface ExtendedUserProfile extends LocalUserProfile {
+  firstName: string | null;
+  lastName: string | null;
+  organizationName: string | null;
+  phone: string | null;
+  emailVerified: boolean;
+  profileCompleted: boolean;
+}
+
+/**
+ * Complete a user's profile after signup.
+ * Used for both email/password and social login users.
+ * 
+ * @param user - Verified user from token validation
+ * @param profileData - Profile fields to update
+ * @returns Updated user profile
+ * @throws {AuthError} If database operation fails
+ */
+export async function completeSignupProfile(
+  user: VerifiedUser,
+  profileData: ProfileCompletionInput
+): Promise<ExtendedUserProfile> {
+  try {
+    // First, ensure user exists
+    let dbUser = await prisma.user.findUnique({
+      where: { externalId: user.externalId },
+    });
+
+    if (!dbUser) {
+      // Create new user with profile data
+      dbUser = await prisma.user.create({
+        data: {
+          externalId: user.externalId,
+          email: user.email ?? null,
+          firstName: profileData.firstName ?? null,
+          lastName: profileData.lastName ?? null,
+          organizationName: profileData.organizationName ?? null,
+          phone: profileData.phone ?? null,
+          emailVerified: false, // Will be updated when B2C verification completes
+          profileCompleted: !!(profileData.firstName && profileData.lastName),
+          plan: 'FREE',
+        },
+      });
+    } else {
+      // Update existing user with profile data
+      const updateData: Record<string, unknown> = {};
+      
+      if (profileData.firstName !== undefined) {
+        updateData.firstName = profileData.firstName;
+      }
+      if (profileData.lastName !== undefined) {
+        updateData.lastName = profileData.lastName;
+      }
+      if (profileData.organizationName !== undefined) {
+        updateData.organizationName = profileData.organizationName;
+      }
+      if (profileData.phone !== undefined) {
+        updateData.phone = profileData.phone;
+      }
+      
+      // Keep email in sync from token
+      if (user.email && dbUser.email !== user.email) {
+        updateData.email = user.email;
+      }
+
+      // Calculate profileCompleted status
+      const newFirstName = profileData.firstName ?? dbUser.firstName;
+      const newLastName = profileData.lastName ?? dbUser.lastName;
+      updateData.profileCompleted = !!(newFirstName && newLastName);
+
+      dbUser = await prisma.user.update({
+        where: { id: dbUser.id },
+        data: updateData,
+      });
+    }
+
+    return {
+      id: dbUser.id,
+      externalId: dbUser.externalId,
+      email: dbUser.email,
+      plan: dbUser.plan as 'FREE' | 'PRO',
+      firstName: dbUser.firstName,
+      lastName: dbUser.lastName,
+      organizationName: dbUser.organizationName,
+      phone: dbUser.phone,
+      emailVerified: dbUser.emailVerified,
+      profileCompleted: dbUser.profileCompleted,
+    };
+  } catch (err) {
+    throw new AuthError(
+      'Failed to complete user profile',
+      'USER_CREATE_FAILED',
+      500,
+      err instanceof Error ? err : undefined
+    );
+  }
+}
+
+/**
+ * Get extended user profile with all signup fields.
+ * 
+ * @param externalId - B2C external ID
+ * @returns Extended user profile or null if not found
+ */
+export async function getExtendedUserProfile(
+  externalId: string
+): Promise<ExtendedUserProfile | null> {
+  const dbUser = await prisma.user.findUnique({
+    where: { externalId },
+  });
+
+  if (!dbUser) {
+    return null;
+  }
+
+  return {
+    id: dbUser.id,
+    externalId: dbUser.externalId,
+    email: dbUser.email,
+    plan: dbUser.plan as 'FREE' | 'PRO',
+    firstName: dbUser.firstName,
+    lastName: dbUser.lastName,
+    organizationName: dbUser.organizationName,
+    phone: dbUser.phone,
+    emailVerified: dbUser.emailVerified,
+    profileCompleted: dbUser.profileCompleted,
+  };
+}
+
+/**
+ * Update email verification status from B2C callback.
+ * 
+ * @param externalId - B2C external ID
+ * @param verified - Whether email is verified
+ */
+export async function updateEmailVerificationStatus(
+  externalId: string,
+  verified: boolean
+): Promise<void> {
+  await prisma.user.update({
+    where: { externalId },
+    data: { emailVerified: verified },
+  });
+}
+
+/**
+ * Check if an email already exists in the system.
+ * Used to detect duplicate signups.
+ * 
+ * @param email - Email to check
+ * @returns True if email exists
+ */
+export async function emailExists(email: string): Promise<boolean> {
+  const user = await prisma.user.findFirst({
+    where: { email: email.toLowerCase().trim() },
+  });
+  return user !== null;
+}

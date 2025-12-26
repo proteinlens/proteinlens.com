@@ -13,7 +13,7 @@
   "responseOverrides": {
     "401": {
       "statusCode": 401,
-      "redirect": "/signin"
+      "redirect": "/login"
     },
     "404": {
       "rewrite": "/index.html"

@@ -10,12 +10,16 @@ export interface AuthUser {
   emailVerified?: boolean;
 }
 
+interface LoginOptions {
+  extraQueryParameters?: Record<string, string>;
+}
+
 interface AuthContextValue {
   isAuthenticated: boolean;
   isLoading: boolean;
   user: AuthUser | null;
   getAccessToken: () => Promise<string | null>;
-  login: () => Promise<void>;
+  login: (options?: LoginOptions) => Promise<void>;
   logout: () => Promise<void>;
   resendVerificationEmail: () => Promise<void>;
 }
@@ -110,12 +114,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const login = useCallback(async () => {
+  const login = useCallback(async (options?: LoginOptions) => {
     if (!msal) {
       console.warn('MSAL not initialized');
       return;
     }
-    await msal.loginRedirect?.();
+    const request = options?.extraQueryParameters 
+      ? { extraQueryParameters: options.extraQueryParameters }
+      : undefined;
+    await msal.loginRedirect?.(request);
   }, [msal]);
 
   const logout = useCallback(async () => {
