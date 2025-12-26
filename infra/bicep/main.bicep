@@ -58,6 +58,9 @@ param enableCustomDomain bool = true // Enable custom domains (api.proteinlens.c
 param apiCustomDomainName string = 'api.proteinlens.com'
 param webCustomDomainName string = 'www.proteinlens.com'
 
+// Monitoring (used by monitoring.bicep, accepted here for shared parameters file)
+param alertEmailAddresses array = []
+
 // =============================================================================
 // DEPLOYMENTS
 // =============================================================================
