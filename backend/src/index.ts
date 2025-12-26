@@ -33,9 +33,9 @@ import './functions/portal';
 import './functions/usage';
 import './functions/webhook';
 import './functions/admin-user';
-// deployment trigger: 1766497410
-// trigger 1766497563
-// deploy 1766497752
-// new deploy 1766497932
-// trigger key-based 1766498070
-// login mode 1766498255
+
+// Feature 009: User Auth
+import './functions/organization';
+
+// Feature 010: User Signup
+import './functions/signup';
