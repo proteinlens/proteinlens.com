@@ -208,11 +208,44 @@ stages:
             displayName: 'Publish frontend artifact'
 
   # ================================
-  # Stage 3: Pre-Deployment Infrastructure Sync
+  # Stage 3: Deploy Infrastructure (Bicep)
+  # ================================
+  - stage: DeployInfrastructure
+    displayName: 'Deploy Infrastructure'
+    dependsOn: Build
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - job: DeployMonitoring
+        displayName: 'Deploy monitoring and alerts'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - checkout: self
+
+          - task: AzureCLI@2
+            displayName: 'Deploy monitoring.bicep'
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                set -e
+                echo "Deploying monitoring resources..."
+                az deployment group create \
+                  --resource-group $(RESOURCE_GROUP_NAME) \
+                  --template-file infra/bicep/monitoring.bicep \
+                  --parameters @infra/bicep/parameters/prod.parameters.json \
+                  --name "monitoring-$(Build.BuildNumber)"
+                echo "Monitoring deployment complete"
+
+  # ================================
+  # Stage 4: Pre-Deployment Infrastructure Sync
   # ================================
   - stage: SyncInfrastructure
     displayName: 'Sync Infrastructure'
-    dependsOn: Build
+    dependsOn: 
+      - Build
+      - DeployInfrastructure
     condition: succeeded()
     jobs:
       - job: SyncDatabaseCredentials
@@ -249,7 +282,7 @@ stages:
               FUNCTION_APP_NAME: $(FUNCTION_APP_NAME)
 
   # ================================
-  # Stage 3: Deploy to Staging (develop)
+  # Stage 5: Deploy to Staging (develop)
   # ================================
   - stage: DeployStaging
     displayName: 'Deploy - Staging'
@@ -306,12 +339,13 @@ stages:
                 # If you want "artifact-based" deploy, consider switching to the SWA CLI (see note below).
 
   # ================================
-  # Stage 4: Deploy to Production (main)
+  # Stage 6: Deploy to Production (main)
   # ================================
   - stage: DeployProduction
     displayName: 'Deploy - Production'
     dependsOn:
       - Build
+      - DeployInfrastructure
       - SyncInfrastructure
     condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
     jobs:
