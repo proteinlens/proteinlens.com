@@ -116,8 +116,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(async (options?: LoginOptions) => {
     if (!msal) {
-      console.warn('MSAL not initialized');
-      return;
+      // B2C not configured - throw error so UI can show message
+      throw new Error('Authentication is not configured. Please contact support.');
     }
     const request = options?.extraQueryParameters 
       ? { extraQueryParameters: options.extraQueryParameters }
