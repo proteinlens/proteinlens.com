@@ -242,7 +242,7 @@ jobs:
     with:
       resource_group: proteinlens-prod
       staticwebapp_name: ${{ needs.infra.outputs.staticwebapp_name }}
-      api_url: ${{ needs.infra.outputs.functionapp_url }}
+      api_url: https://api.proteinlens.com
 
   # ============================================================================
   # STAGE 4: Health checks (after deploys complete)
