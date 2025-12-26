@@ -28,6 +28,9 @@ param storageAccountId string = ''
 @description('Function App resource ID for function alerts (optional - if not provided, function alerts are skipped)')
 param functionAppId string = ''
 
+@description('Enable scheduled query alerts (requires Application Insights data to be flowing - set to false for initial deployment)')
+param enableQueryAlerts bool = false
+
 // Resource naming convention
 var prefix = 'proteinlens-${environment}'
 
@@ -223,8 +226,9 @@ resource functionErrorAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = if (!
 
 // =====================================================
 // Custom Scheduled Query Alert for AI Usage
+// Note: Requires Application Insights data to be flowing (customMetrics table)
 // =====================================================
-resource aiUsageAlert 'Microsoft.Insights/scheduledQueryRules@2022-06-15' = {
+resource aiUsageAlert 'Microsoft.Insights/scheduledQueryRules@2022-06-15' = if (enableQueryAlerts) {
   name: '${prefix}-ai-usage-alert'
   location: location
   properties: {
@@ -359,7 +363,8 @@ resource apiLatencyAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = if (!emp
 }
 
 // T024: Health Check Failure Alert (2 consecutive failures)
-resource healthCheckAlert 'Microsoft.Insights/scheduledQueryRules@2022-06-15' = {
+// Note: Requires Application Insights data to be flowing (requests table)
+resource healthCheckAlert 'Microsoft.Insights/scheduledQueryRules@2022-06-15' = if (enableQueryAlerts) {
   name: '${prefix}-health-check-alert'
   location: location
   properties: {
@@ -401,7 +406,8 @@ resource healthCheckAlert 'Microsoft.Insights/scheduledQueryRules@2022-06-15' = 
 }
 
 // Frontend Error Alert (> 50 errors/hour)
-resource frontendErrorAlert 'Microsoft.Insights/scheduledQueryRules@2022-06-15' = {
+// Note: Requires Application Insights data to be flowing (exceptions table)
+resource frontendErrorAlert 'Microsoft.Insights/scheduledQueryRules@2022-06-15' = if (enableQueryAlerts) {
   name: '${prefix}-frontend-error-alert'
   location: location
   properties: {
@@ -443,7 +449,8 @@ resource frontendErrorAlert 'Microsoft.Insights/scheduledQueryRules@2022-06-15' 
 }
 
 // LCP Degradation Alert (P75 > 2.5s)
-resource lcpAlert 'Microsoft.Insights/scheduledQueryRules@2022-06-15' = {
+// Note: Requires Application Insights data to be flowing (customMetrics table)
+resource lcpAlert 'Microsoft.Insights/scheduledQueryRules@2022-06-15' = if (enableQueryAlerts) {
   name: '${prefix}-lcp-degradation-alert'
   location: location
   properties: {
@@ -485,7 +492,8 @@ resource lcpAlert 'Microsoft.Insights/scheduledQueryRules@2022-06-15' = {
 }
 
 // Database Latency Alert (P95 > 500ms)
-resource databaseLatencyAlert 'Microsoft.Insights/scheduledQueryRules@2022-06-15' = {
+// Note: Requires Application Insights data to be flowing (dependencies table)
+resource databaseLatencyAlert 'Microsoft.Insights/scheduledQueryRules@2022-06-15' = if (enableQueryAlerts) {
   name: '${prefix}-database-latency-alert'
   location: location
   properties: {
@@ -533,6 +541,6 @@ output actionGroupId string = actionGroup.id
 output observabilityActionGroupId string = observabilityActionGroup.id
 output logAnalyticsWorkspaceId string = logAnalytics.id
 output budgetName string = budget.name
-output apiErrorRateAlertId string = apiErrorRateAlert.id
-output apiLatencyAlertId string = apiLatencyAlert.id
-output healthCheckAlertId string = healthCheckAlert.id
+output apiErrorRateAlertId string = !empty(functionAppId) ? apiErrorRateAlert.id : ''
+output apiLatencyAlertId string = !empty(functionAppId) ? apiLatencyAlert.id : ''
+output healthCheckAlertId string = enableQueryAlerts ? healthCheckAlert.id : ''
