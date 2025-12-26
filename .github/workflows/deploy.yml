@@ -245,13 +245,24 @@ jobs:
       # Note: env context not available in reusable workflow inputs, hardcoded
       api_url: https://api.proteinlens.com
 
+  deploy_admin:
+    name: Deploy Admin Dashboard
+    needs: [infra, dns_gate]
+    if: always() && needs.infra.result == 'success' && needs.dns_gate.outputs.ok == 'true' && needs.infra.outputs.admin_staticwebapp_name != ''
+    uses: ./.github/workflows/deploy-admin.yml
+    secrets: inherit
+    with:
+      resource_group: proteinlens-prod
+      staticwebapp_name: ${{ needs.infra.outputs.admin_staticwebapp_name }}
+      api_url: https://api.proteinlens.com
+
   # ============================================================================
   # STAGE 4: Health checks (after deploys complete)
   # ============================================================================
 
   health_check:
     name: Health Checks
-    needs: [infra, deploy_backend, deploy_frontend]
+    needs: [infra, deploy_backend, deploy_frontend, deploy_admin]
     if: always() && (needs.deploy_backend.result == 'success' || needs.deploy_frontend.result == 'success')
     runs-on: ubuntu-latest
     steps:
@@ -287,10 +298,26 @@ jobs:
           echo "❌ Frontend check failed after 5 attempts"
           exit 1
 
+      - name: Admin Dashboard check (index.html -> 200)
+        if: needs.infra.outputs.admin_staticwebapp_url != ''
+        run: |
+          URL="${{ needs.infra.outputs.admin_staticwebapp_url }}"
+          echo "🔍 Testing admin dashboard: $URL"
+          for i in $(seq 1 5); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$URL" || true)
+            echo "Attempt $i: HTTP $code"
+            if [ "$code" = "200" ]; then
+              echo "✅ Admin dashboard check passed"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "⚠️ Admin dashboard check failed (may not be deployed yet)"
+
   summary:
     name: Deployment Summary
     runs-on: ubuntu-latest
-    needs: [secret_scan, dns_gate, infra, deploy_backend, deploy_frontend, health_check]
+    needs: [secret_scan, dns_gate, infra, deploy_backend, deploy_frontend, deploy_admin, health_check]
     if: always()
     steps:
       - name: Summarize results
@@ -303,8 +330,10 @@ jobs:
           echo "| Infra | ${{ needs.infra.result }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Backend | ${{ needs.deploy_backend.result }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Frontend | ${{ needs.deploy_frontend.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Admin | ${{ needs.deploy_admin.result }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Health Checks | ${{ needs.health_check.result }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "### Endpoints" >> "$GITHUB_STEP_SUMMARY"
           echo "- API: ${{ needs.infra.outputs.functionapp_url }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- Web: ${{ needs.infra.outputs.staticwebapp_url }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Admin: ${{ needs.infra.outputs.admin_staticwebapp_url }}" >> "$GITHUB_STEP_SUMMARY"

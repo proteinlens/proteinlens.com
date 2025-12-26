@@ -31,12 +31,18 @@ on:
       staticwebapp_name:
         description: 'Static Web App name'
         value: ${{ jobs.deploy.outputs.staticwebapp_name }}
+      admin_staticwebapp_name:
+        description: 'Admin Static Web App name'
+        value: ${{ jobs.deploy.outputs.admin_staticwebapp_name }}
       functionapp_url:
         description: 'Function App URL'
         value: ${{ jobs.deploy.outputs.functionapp_url }}
       staticwebapp_url:
         description: 'Static Web App URL'
         value: ${{ jobs.deploy.outputs.staticwebapp_url }}
+      admin_staticwebapp_url:
+        description: 'Admin Static Web App URL'
+        value: ${{ jobs.deploy.outputs.admin_staticwebapp_url }}
 
 permissions:
   contents: read
@@ -83,8 +89,10 @@ jobs:
       key_vault_name: ${{ steps.extract.outputs.key_vault_name }}
       functionapp_name: ${{ steps.extract.outputs.functionapp_name }}
       staticwebapp_name: ${{ steps.extract.outputs.staticwebapp_name }}
+      admin_staticwebapp_name: ${{ steps.extract.outputs.admin_staticwebapp_name }}
       functionapp_url: ${{ steps.extract.outputs.functionapp_url }}
       staticwebapp_url: ${{ steps.extract.outputs.staticwebapp_url }}
+      admin_staticwebapp_url: ${{ steps.extract.outputs.admin_staticwebapp_url }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -185,8 +193,10 @@ jobs:
           echo "key_vault_name=$(echo "$OUTPUTS" | jq -r '.keyVaultName.value')" >> "$GITHUB_OUTPUT"
           echo "functionapp_name=$(echo "$OUTPUTS" | jq -r '.functionAppName.value')" >> "$GITHUB_OUTPUT"
           echo "staticwebapp_name=$(echo "$OUTPUTS" | jq -r '.staticWebAppName.value')" >> "$GITHUB_OUTPUT"
+          echo "admin_staticwebapp_name=$(echo "$OUTPUTS" | jq -r '.adminStaticWebAppName.value // empty')" >> "$GITHUB_OUTPUT"
           echo "functionapp_url=$(echo "$OUTPUTS" | jq -r '.functionAppUrl.value')" >> "$GITHUB_OUTPUT"
           echo "staticwebapp_url=$(echo "$OUTPUTS" | jq -r '.staticWebAppUrl.value')" >> "$GITHUB_OUTPUT"
+          echo "admin_staticwebapp_url=$(echo "$OUTPUTS" | jq -r '.adminStaticWebAppUrl.value // empty')" >> "$GITHUB_OUTPUT"
 
       - name: Grant Workflow Access to Key Vault
         run: |

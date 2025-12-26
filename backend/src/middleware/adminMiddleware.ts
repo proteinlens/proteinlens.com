@@ -1,14 +1,25 @@
 // Admin middleware for role-based access control
 // Feature: 002-saas-billing, User Story 6
-// T076: Admin role check middleware
+// Feature: 012-admin-dashboard - Enhanced with audit logging
+// T013: Audit log entries for all admin actions
 
 import { HttpRequest, HttpResponseInit } from '@azure/functions';
 import { getPrismaClient } from '../utils/prisma.js';
+import { AdminActionType } from '@prisma/client';
+import { randomUUID } from 'crypto';
 
 const prisma = getPrismaClient();
 
 // Admin email allowlist (in production, this would be in database or Azure AD)
-const ADMIN_EMAILS = process.env.ADMIN_EMAILS?.split(',') || [];
+const ADMIN_EMAILS = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim().toLowerCase()) || [];
+
+export interface AdminContext {
+  adminEmail: string;
+  adminId?: string;
+  requestId: string;
+  ipAddress: string;
+  userAgent?: string;
+}
 
 /**
  * T076: Check if user has admin role
@@ -57,3 +68,56 @@ export function getAdminIdentity(request: HttpRequest): string {
          request.headers.get('x-admin-id') || 
          'unknown-admin';
 }
+
+/**
+ * T013: Extract full admin context for audit logging
+ */
+export function getAdminContext(request: HttpRequest): AdminContext {
+  const requestId = request.headers.get('x-request-id') || randomUUID();
+  
+  // Get IP address from various headers (handle proxies)
+  const ipAddress = 
+    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    request.headers.get('x-real-ip') ||
+    request.headers.get('cf-connecting-ip') ||
+    '0.0.0.0';
+
+  return {
+    adminEmail: request.headers.get('x-admin-email') || 'unknown-admin',
+    adminId: request.headers.get('x-admin-id') || undefined,
+    requestId,
+    ipAddress,
+    userAgent: request.headers.get('user-agent') || undefined,
+  };
+}
+
+/**
+ * T013: Create audit log entry for admin action
+ */
+export async function logAdminAction(
+  context: AdminContext,
+  action: AdminActionType,
+  options?: {
+    targetUserId?: string;
+    targetEmail?: string;
+    details?: Record<string, unknown>;
+    reason?: string;
+  }
+): Promise<string> {
+  const entry = await prisma.adminAuditLog.create({
+    data: {
+      adminEmail: context.adminEmail,
+      adminId: context.adminId,
+      action,
+      targetUserId: options?.targetUserId,
+      targetEmail: options?.targetEmail,
+      details: options?.details as object | undefined,
+      reason: options?.reason,
+      requestId: context.requestId,
+      ipAddress: context.ipAddress,
+      userAgent: context.userAgent,
+    },
+  });
+  return entry.id;
+}
+

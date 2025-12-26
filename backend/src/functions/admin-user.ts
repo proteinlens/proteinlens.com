@@ -121,6 +121,11 @@ async function getAdminUser(
           externalId: user.externalId,
           email: user.email,
           createdAt: user.createdAt,
+          // Feature 012: Add suspension status
+          suspended: user.suspended,
+          suspendedAt: user.suspendedAt,
+          suspendedReason: user.suspendedReason,
+          suspendedBy: user.suspendedBy,
         },
         subscription: {
           plan: planInfo.plan,
