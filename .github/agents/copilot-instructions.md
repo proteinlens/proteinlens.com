@@ -20,6 +20,8 @@ Auto-generated from all feature plans. Last updated: 2025-12-22
 - PostgreSQL (Prisma), Azure Blob Storage for images (blob-first ingestion) (001-anon-to-pro-upsell)
 - TypeScript 5.x; Node.js >= 20 (Azure Functions v4); React 18 + Azure Entra External ID (B2C), MSAL, Azure Functions, Prisma, Zod, Application Insights, React Router (009-user-auth)
 - PostgreSQL (Prisma) for local user mapping and audit logs (009-user-auth)
+- TypeScript 5.x; Node.js >= 20 (Azure Functions v4); React 18 + Azure Entra External ID (B2C), @azure/msal-browser, Azure Functions, Prisma, Zod, React Router, TailwindCSS, shadcn/ui (010-user-signup)
+- PostgreSQL (via Prisma) for user profiles and consent records; B2C for credentials (010-user-signup)
 
 - TypeScript 5.3+ / Node.js 20 + Azure Functions v4, Prisma 5.8+, Stripe SDK, React 18, Vite 5 (002-saas-billing)
 
@@ -39,9 +41,9 @@ npm test && npm run lint
 TypeScript 5.3+ / Node.js 20: Follow standard conventions
 
 ## Recent Changes
+- 010-user-signup: Added TypeScript 5.x; Node.js >= 20 (Azure Functions v4); React 18 + Azure Entra External ID (B2C), @azure/msal-browser, Azure Functions, Prisma, Zod, React Router, TailwindCSS, shadcn/ui
 - 009-user-auth: Added TypeScript 5.x; Node.js >= 20 (Azure Functions v4); React 18 + Azure Entra External ID (B2C), MSAL, Azure Functions, Prisma, Zod, Application Insights, React Router
 - 001-anon-to-pro-upsell: Added TypeScript 5.x; Node.js >= 20 (Azure Functions v4) + Azure Functions, Prisma, Stripe, Application Insights, Zod, React 18 + Vite + Tailwind
-- 001-incremental-deploy: Added Backend: Node.js 20.x (Azure Functions); Frontend: React + Vite + TypeScrip + Azure Functions, Azure Static Web Apps, Azure CLI, GitHub Actions, Prisma, Vites
 
 
 <!-- MANUAL ADDITIONS START -->

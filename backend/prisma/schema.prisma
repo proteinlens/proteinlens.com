@@ -32,7 +32,34 @@ enum UsageType {
 }
 
 // ===========================================
-// User Model (Extended for Billing)
+// Enums for User Signup (Feature 010)
+// ===========================================
+
+enum ConsentType {
+  TERMS_OF_SERVICE
+  PRIVACY_POLICY
+  MARKETING_EMAILS
+}
+
+enum SignupAttemptOutcome {
+  SUCCESS
+  VALIDATION_ERROR
+  DUPLICATE_EMAIL
+  RATE_LIMITED
+  CAPTCHA_FAILED
+  BREACH_PASSWORD
+  NETWORK_ERROR
+}
+
+enum OrganizationInviteStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  CANCELLED
+}
+
+// ===========================================
+// User Model (Extended for Billing + Signup)
 // ===========================================
 
 model User {
@@ -41,6 +68,14 @@ model User {
   // External identity (from auth provider)
   externalId            String              @unique @db.VarChar(255)
   email                 String?             @db.VarChar(320)
+  
+  // Profile fields (Feature 010 - User Signup)
+  firstName             String?             @db.VarChar(50)
+  lastName              String?             @db.VarChar(50)
+  organizationName      String?             @db.VarChar(100)
+  phone                 String?             @db.VarChar(20)
+  emailVerified         Boolean             @default(false)
+  profileCompleted      Boolean             @default(false)
   
   // Stripe billing fields (Feature 002)
   stripeCustomerId      String?             @unique @db.VarChar(255)
@@ -56,10 +91,97 @@ model User {
   // Relations
   usage                 Usage[]
   subscriptionEvents    SubscriptionEvent[]
+  consentRecords        ConsentRecord[]
   
   @@index([externalId])
   @@index([stripeCustomerId])
   @@index([plan])
+  @@index([email])
+}
+
+// ===========================================
+// Consent Record (Feature 010 - User Signup)
+// ===========================================
+
+model ConsentRecord {
+  id              String       @id @default(uuid())
+  userId          String
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  consentType     ConsentType
+  documentVersion String       @db.VarChar(20)  // e.g., "1.0.0", "2025-01-01"
+  ipAddress       String       @db.VarChar(45)  // IPv4 or IPv6
+  userAgent       String?      @db.VarChar(500)
+  
+  grantedAt       DateTime     @default(now())
+  revokedAt       DateTime?    // Null if still valid
+  
+  @@unique([userId, consentType])  // One active consent per type per user
+  @@index([userId])
+  @@index([consentType])
+  @@index([grantedAt])
+}
+
+// ===========================================
+// Signup Attempt Audit Log (Feature 010)
+// ===========================================
+
+model SignupAttempt {
+  id              String                @id @default(uuid())
+  
+  email           String                @db.VarChar(320)  // Attempted email (not linked to User)
+  ipAddress       String                @db.VarChar(45)
+  userAgent       String?               @db.VarChar(500)
+  
+  outcome         SignupAttemptOutcome
+  failureReason   String?               @db.VarChar(200)  // Human-readable reason
+  
+  // Don't store: password, full form data (PII minimization)
+  
+  createdAt       DateTime              @default(now())
+  
+  @@index([email, createdAt])
+  @@index([ipAddress, createdAt])
+  @@index([outcome])
+}
+
+// ===========================================
+// Organization Invite (Feature 010 - User Signup)
+// ===========================================
+
+model OrganizationInvite {
+  id                String                   @id @default(uuid())
+  
+  // Invite token (unique, URL-safe)
+  token             String                   @unique @db.VarChar(64)
+  
+  // Invited email
+  email             String                   @db.VarChar(320)
+  
+  // Organization info
+  organizationId    String                   @db.VarChar(255)
+  organizationName  String                   @db.VarChar(100)
+  
+  // Inviter info
+  invitedBy         String                   @db.VarChar(255)  // User ID who sent invite
+  invitedByName     String?                  @db.VarChar(100)  // Display name for email
+  
+  // Status tracking
+  status            OrganizationInviteStatus @default(PENDING)
+  
+  // Expiration and usage
+  expiresAt         DateTime                 // Default: 7 days from creation
+  usedAt            DateTime?                // When invite was accepted
+  usedByUserId      String?                  @db.VarChar(255)  // User ID who accepted
+  
+  // Metadata
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+  
+  @@index([token])
+  @@index([email])
+  @@index([organizationId])
+  @@index([status, expiresAt])
 }
 
 // ===========================================

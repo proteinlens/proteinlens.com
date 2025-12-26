@@ -30,6 +30,9 @@ const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.S
 const SignIn = lazy(() => import('./pages/SignIn'));
 const SignUp = lazy(() => import('./pages/SignUp'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const SignupPage = lazy(() => import('./pages/SignupPage'));
+const VerifyEmailPage = lazy(() => import('./pages/VerifyEmailPage'));
+const InviteSignupPage = lazy(() => import('./pages/InviteSignupPage'));
 
 // Navigation component with usage counter
 const Navigation: React.FC = () => {
@@ -170,6 +173,9 @@ function App() {
                     <Route path="/pricing" element={<PricingPage />} />
                     <Route path="/signin" element={<SignIn />} />
                     <Route path="/signup" element={<SignUp />} />
+                    <Route path="/signup-new" element={<SignupPage />} />
+                    <Route path="/verify-email" element={<VerifyEmailPage />} />
+                    <Route path="/invite/:token" element={<InviteSignupPage />} />
                     <Route path="/reset-password" element={<ResetPassword />} />
 
                     {/* Protected routes */}
