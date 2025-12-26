@@ -22,6 +22,9 @@ param alertEmailAddresses array = []
 @description('Budget start date (first of month, e.g., 2025-01-01)')
 param budgetStartDate string = '${substring(utcNow(), 0, 7)}-01'
 
+@description('Storage account resource ID for storage alerts (optional - if not provided, storage alert is skipped)')
+param storageAccountId string = ''
+
 // Resource naming convention
 var prefix = 'proteinlens-${environment}'
 
@@ -108,7 +111,8 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
 // =====================================================
 
 // Storage Account Alert - High transaction count
-resource storageTransactionAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
+// Note: Storage account alerts require targeting a specific storage account, not resource group
+resource storageTransactionAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = if (!empty(storageAccountId)) {
   name: '${prefix}-storage-transactions-alert'
   location: 'global'
   properties: {
@@ -116,14 +120,12 @@ resource storageTransactionAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = 
     severity: 2
     enabled: true
     scopes: [
-      resourceGroup().id
+      storageAccountId
     ]
     evaluationFrequency: 'PT1H'
     windowSize: 'PT1H'
-    targetResourceType: 'Microsoft.Storage/storageAccounts'
-    targetResourceRegion: location
     criteria: {
-      'odata.type': 'Microsoft.Azure.Monitor.MultipleResourceMultipleMetricCriteria'
+      'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
       allOf: [
         {
           name: 'HighTransactions'
