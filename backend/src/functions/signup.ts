@@ -1,6 +1,7 @@
 /**
  * Signup API Routes
  * Feature 010 - User Signup Process
+ * Feature 011 - Observability telemetry
  * 
  * Endpoints for user registration, email validation, password validation,
  * and consent management.
@@ -41,6 +42,8 @@ import {
   checkResendRateLimit,
 } from '../services/signupAttemptService.js';
 import { ConsentType, SignupAttemptOutcome } from '@prisma/client';
+import { correlationMiddleware } from '../middleware/correlationMiddleware.js';
+import { trackEvent, trackMetric, trackException, setTraceContext } from '../utils/telemetry.js';
 
 // Helper to get client IP from request
 function getClientIp(request: HttpRequest): string {
@@ -70,6 +73,10 @@ async function createProfile(
   request: HttpRequest, 
   context: InvocationContext
 ): Promise<HttpResponseInit> {
+  // T019: Extract correlation context
+  const { traceContext, addResponseHeaders } = correlationMiddleware(request, context);
+  setTraceContext(traceContext);
+  
   // Requires authentication (B2C token)
   const auth = await requireAuth(request);
   if (isAuthFailure(auth)) {
@@ -136,7 +143,21 @@ async function createProfile(
       profileCompleted: profile.profileCompleted,
     });
 
-    return {
+    // T034: Track successful signup
+    trackEvent('proteinlens.auth.signup_completed', {
+      correlationId: traceContext.correlationId,
+      userId: profile.id,
+      profileCompleted: String(profile.profileCompleted),
+    });
+    
+    // Track signup count metric
+    trackMetric({
+      name: 'proteinlens.auth.signup_count',
+      value: 1,
+      properties: { source: 'profile' },
+    });
+
+    return addResponseHeaders({
       status: 201,
       headers: { 'Content-Type': 'application/json' },
       jsonBody: {
@@ -148,9 +169,20 @@ async function createProfile(
         profileCompleted: profile.profileCompleted,
         emailVerified: profile.emailVerified,
       },
-    };
+    });
   } catch (error) {
     Logger.error('Failed to create profile', error as Error);
+    
+    // T034: Track signup failure
+    trackException(error as Error, {
+      correlationId: traceContext.correlationId,
+      operation: 'createProfile',
+    });
+    
+    trackEvent('proteinlens.auth.signup_failed', {
+      correlationId: traceContext.correlationId,
+      errorType: (error as Error).name,
+    });
     
     await logAttempt({
       email: auth.ctx.user.email || 'unknown',
@@ -160,11 +192,11 @@ async function createProfile(
       failureReason: 'Internal server error',
     });
 
-    return {
+    return addResponseHeaders({
       status: 500,
       headers: { 'Content-Type': 'application/json' },
       jsonBody: { error: 'Failed to create profile' },
-    };
+    });
   }
 }
 

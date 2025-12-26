@@ -23,7 +23,17 @@ KEY_VAULT_NAME: proteinlens-kv-fzpkp4yb
 FUNCTION_APP_NAME: proteinlens-api-prod
 ```
 
-### 3. Secrets (MUST be marked as Secret)
+### 3. Application Insights (Feature 011)
+
+```
+APPLICATIONINSIGHTS_CONNECTION_STRING: InstrumentationKey=xxx;IngestionEndpoint=https://northeurope-0.in.applicationinsights.azure.com/;...
+VITE_APPINSIGHTS_CONNECTION_STRING: (same as above for frontend)
+```
+
+**Note:** The connection string is output by `monitoring.bicep` during infrastructure deployment. 
+You can retrieve it from the Azure Portal → Application Insights → Overview → Connection String.
+
+### 4. Secrets (MUST be marked as Secret)
 
 ```
 POSTGRES_ADMIN_PASSWORD: ProteinLens2025SecureDB

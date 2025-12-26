@@ -5,6 +5,7 @@
 // T071: Added /settings route for billing management
 // Feature 003: React Query + Theme Provider setup
 // Feature 009: Auth routes + AuthProvider
+// Feature 011: Error boundary with telemetry
 
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
@@ -20,6 +21,7 @@ import { AuthProvider, useAuth } from './contexts/AuthProvider';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { BottomNav } from './components/layout/BottomNav';
 import { PageContainer } from './components/layout/PageContainer';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { getUserId } from './utils/userId';
 import './App.css';
 import './index.css';
@@ -153,50 +155,52 @@ function App() {
   });
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <AuthProvider>
-          <BrowserRouter>
-            <div className="app flex flex-col min-h-screen bg-background text-foreground">
-              <Navigation />
-              <PageContainer>
-                <Suspense fallback={
-                  <div className="flex items-center justify-center min-h-screen">
-                    <div className="text-center">
-                      <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                      <p className="text-muted-foreground">Loading...</p>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <AuthProvider>
+            <BrowserRouter>
+              <div className="app flex flex-col min-h-screen bg-background text-foreground">
+                <Navigation />
+                <PageContainer>
+                  <Suspense fallback={
+                    <div className="flex items-center justify-center min-h-screen">
+                      <div className="text-center">
+                        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                        <p className="text-muted-foreground">Loading...</p>
+                      </div>
                     </div>
-                  </div>
-                }>
-                  <Routes>
-                    {/* Public routes */}
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/pricing" element={<PricingPage />} />
-                    <Route path="/login" element={<SignIn />} />
-                    <Route path="/signup" element={<SignupPage />} />
-                    <Route path="/signup-legacy" element={<SignUp />} />
-                    <Route path="/verify-email" element={<VerifyEmailPage />} />
-                    <Route path="/invite/:token" element={<InviteSignupPage />} />
-                    <Route path="/reset-password" element={<ResetPassword />} />
+                  }>
+                    <Routes>
+                      {/* Public routes */}
+                      <Route path="/" element={<HomePage />} />
+                      <Route path="/pricing" element={<PricingPage />} />
+                      <Route path="/login" element={<SignIn />} />
+                      <Route path="/signup" element={<SignupPage />} />
+                      <Route path="/signup-legacy" element={<SignUp />} />
+                      <Route path="/verify-email" element={<VerifyEmailPage />} />
+                      <Route path="/invite/:token" element={<InviteSignupPage />} />
+                      <Route path="/reset-password" element={<ResetPassword />} />
 
-                    {/* Protected routes */}
-                    <Route element={<ProtectedRoute />}>
-                      <Route path="/history" element={<History />} />
-                      <Route path="/settings" element={<Settings />} />
-                      <Route path="/billing/success" element={<CheckoutSuccessPage />} />
-                    </Route>
+                      {/* Protected routes */}
+                      <Route element={<ProtectedRoute />}>
+                        <Route path="/history" element={<History />} />
+                        <Route path="/settings" element={<Settings />} />
+                        <Route path="/billing/success" element={<CheckoutSuccessPage />} />
+                      </Route>
 
-                    {/* 404 catch-all */}
-                    <Route path="*" element={<NotFoundPage />} />
-                  </Routes>
-                </Suspense>
-              </PageContainer>
-              <BottomNav />
-            </div>
-          </BrowserRouter>
-        </AuthProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+                      {/* 404 catch-all */}
+                      <Route path="*" element={<NotFoundPage />} />
+                    </Routes>
+                  </Suspense>
+                </PageContainer>
+                <BottomNav />
+              </div>
+            </BrowserRouter>
+          </AuthProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

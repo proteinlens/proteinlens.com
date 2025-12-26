@@ -1,12 +1,19 @@
 /**
  * T074: Application Insights integration for backend telemetry
  * Provides structured telemetry for monitoring, debugging, and performance analysis
+ * 
+ * Feature 011: Enhanced with PII sanitization and correlation support
  */
 
 import * as appInsights from 'applicationinsights';
+import { sanitize, sanitizeError } from './piiSanitizer.js';
+import type { TraceContext } from '../middleware/correlationMiddleware.js';
 
 // Singleton telemetry client
 let telemetryClient: appInsights.TelemetryClient | null = null;
+
+// Current correlation context (thread-local in async context)
+let currentTraceContext: TraceContext | null = null;
 
 export interface TelemetryConfig {
   connectionString?: string;
@@ -67,6 +74,9 @@ export function initializeTelemetry(config: TelemetryConfig = {}): appInsights.T
         telemetryClient.context.tags[telemetryClient.context.keys.cloudRoleInstance] = 
           config.cloudRoleInstance;
       }
+
+      // Add PII sanitization telemetry processor
+      addSanitizationProcessor(telemetryClient);
     }
 
     console.log('Application Insights telemetry initialized');
@@ -78,6 +88,97 @@ export function initializeTelemetry(config: TelemetryConfig = {}): appInsights.T
 }
 
 /**
+ * Add PII sanitization processor to telemetry client
+ * All telemetry data passes through this before being sent to Application Insights
+ */
+function addSanitizationProcessor(client: appInsights.TelemetryClient): void {
+  client.addTelemetryProcessor((envelope, context) => {
+    // Sanitize custom properties
+    if (envelope.data && typeof envelope.data === 'object') {
+      const data = envelope.data as Record<string, unknown>;
+      
+      // Sanitize baseData properties
+      if (data.baseData && typeof data.baseData === 'object') {
+        const baseData = data.baseData as Record<string, unknown>;
+        
+        if (baseData.properties && typeof baseData.properties === 'object') {
+          baseData.properties = sanitize(baseData.properties as Record<string, unknown>);
+        }
+        
+        // Sanitize exception messages
+        if (baseData.exceptions && Array.isArray(baseData.exceptions)) {
+          baseData.exceptions = baseData.exceptions.map((ex: unknown) => {
+            if (ex && typeof ex === 'object') {
+              const exception = ex as Record<string, unknown>;
+              if (exception.message && typeof exception.message === 'string') {
+                const sanitized = sanitizeError(new Error(exception.message));
+                exception.message = sanitized.message;
+              }
+              if (exception.stack && typeof exception.stack === 'string') {
+                const sanitized = sanitizeError({ 
+                  message: '', 
+                  stack: exception.stack,
+                  name: 'Error'
+                });
+                exception.stack = sanitized.stack;
+              }
+            }
+            return ex;
+          });
+        }
+        
+        // Sanitize trace messages
+        if (baseData.message && typeof baseData.message === 'string') {
+          const sanitized = sanitizeError(new Error(baseData.message));
+          baseData.message = sanitized.message;
+        }
+        
+        // Sanitize request/dependency data (URLs might contain PII in query params)
+        if (baseData.url && typeof baseData.url === 'string') {
+          try {
+            const url = new URL(baseData.url);
+            // Clear potentially sensitive query params
+            const sensitiveParams = ['email', 'token', 'key', 'password', 'apikey', 'secret'];
+            sensitiveParams.forEach(param => {
+              if (url.searchParams.has(param)) {
+                url.searchParams.set(param, '[REDACTED]');
+              }
+            });
+            baseData.url = url.toString();
+          } catch {
+            // URL parsing failed, leave as-is
+          }
+        }
+      }
+    }
+    
+    // Continue processing (return true to send, false to drop)
+    return true;
+  });
+}
+
+/**
+ * Set the current trace context for correlation
+ * Call this at the start of each request
+ */
+export function setTraceContext(context: TraceContext | null): void {
+  currentTraceContext = context;
+  
+  if (telemetryClient && context) {
+    // Set operation context for automatic correlation
+    telemetryClient.context.tags[telemetryClient.context.keys.operationId] = context.traceId;
+    telemetryClient.context.tags[telemetryClient.context.keys.operationParentId] = context.spanId;
+  }
+}
+
+/**
+ * Get the current trace context
+ */
+export function getTraceContext(): TraceContext | null {
+  return currentTraceContext;
+}
+
+/**
  * Get the telemetry client instance
  */
 export function getTelemetryClient(): appInsights.TelemetryClient | null {
@@ -86,6 +187,7 @@ export function getTelemetryClient(): appInsights.TelemetryClient | null {
 
 /**
  * Track a custom event
+ * Properties are automatically sanitized for PII
  */
 export function trackEvent(
   name: string,
@@ -94,28 +196,49 @@ export function trackEvent(
 ): void {
   if (!telemetryClient) return;
 
+  // Sanitize properties before sending
+  const sanitizedProps = properties ? sanitize(properties) as Record<string, string> : undefined;
+
   telemetryClient.trackEvent({
     name,
-    properties,
+    properties: sanitizedProps,
     measurements,
   });
 }
 
 /**
  * Track a custom metric
+ * Properties are automatically sanitized for PII
  */
 export function trackMetric(metric: CustomMetric): void {
   if (!telemetryClient) return;
 
+  // Sanitize properties before sending
+  const sanitizedProps = metric.properties 
+    ? sanitize(metric.properties) as Record<string, string> 
+    : undefined;
+
   telemetryClient.trackMetric({
     name: metric.name,
     value: metric.value,
-    properties: metric.properties,
+    properties: sanitizedProps,
   });
 }
 
 /**
+ * Request context for exception tracking
+ */
+export interface ExceptionRequestContext {
+  url?: string;
+  method?: string;
+  correlationId?: string;
+  statusCode?: number;
+  userAgent?: string;
+}
+
+/**
  * Track an exception
+ * Error messages and properties are automatically sanitized for PII
  */
 export function trackException(
   error: Error,
@@ -124,11 +247,60 @@ export function trackException(
 ): void {
   if (!telemetryClient) return;
 
+  // Sanitize error and properties
+  const sanitizedError = sanitizeError(error);
+  const sanitizedProps = properties ? sanitize(properties) as Record<string, string> : undefined;
+  
+  // Add correlation ID from current context if available
+  const contextProps: Record<string, string> = { ...sanitizedProps };
+  if (currentTraceContext) {
+    contextProps.correlationId = contextProps.correlationId || currentTraceContext.correlationId;
+    contextProps.traceId = currentTraceContext.traceId;
+    contextProps.spanId = currentTraceContext.spanId;
+  }
+  
+  // Create a sanitized error object
+  const cleanError = new Error(sanitizedError.message);
+  cleanError.name = error.name;
+  cleanError.stack = sanitizedError.stack;
+
   telemetryClient.trackException({
-    exception: error,
-    properties,
+    exception: cleanError,
+    properties: contextProps,
     measurements,
   });
+}
+
+/**
+ * Track an exception with full request context
+ * T013: Enhanced exception tracking for observability
+ */
+export function trackExceptionWithContext(
+  error: Error,
+  requestContext: ExceptionRequestContext,
+  properties?: Record<string, string>,
+  measurements?: Record<string, number>
+): void {
+  if (!telemetryClient) return;
+
+  // Build enhanced properties with request context
+  const enhancedProps: Record<string, string> = {
+    ...properties,
+    ...(requestContext.url && { requestUrl: requestContext.url }),
+    ...(requestContext.method && { requestMethod: requestContext.method }),
+    ...(requestContext.correlationId && { correlationId: requestContext.correlationId }),
+    ...(requestContext.statusCode !== undefined && { statusCode: String(requestContext.statusCode) }),
+    ...(requestContext.userAgent && { userAgent: requestContext.userAgent }),
+  };
+  
+  // Add trace context if available
+  if (currentTraceContext) {
+    enhancedProps.traceId = currentTraceContext.traceId;
+    enhancedProps.spanId = currentTraceContext.spanId;
+    enhancedProps.correlationId = enhancedProps.correlationId || currentTraceContext.correlationId;
+  }
+  
+  trackException(error, enhancedProps, measurements);
 }
 
 /**
@@ -150,6 +322,7 @@ export function trackDependency(dependency: DependencyTelemetry): void {
 
 /**
  * Track a trace message
+ * Messages and properties are automatically sanitized for PII
  */
 export function trackTrace(
   message: string,
@@ -167,10 +340,14 @@ export function trackTrace(
     'Critical': 4,
   };
 
+  // Sanitize message and properties
+  const sanitizedMessage = sanitizeError(new Error(message)).message;
+  const sanitizedProps = properties ? sanitize(properties) as Record<string, string> : undefined;
+
   telemetryClient.trackTrace({
-    message,
+    message: sanitizedMessage,
     severity: severityLevel[severity] as any,
-    properties,
+    properties: sanitizedProps,
   });
 }
 

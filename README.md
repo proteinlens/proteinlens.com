@@ -176,6 +176,51 @@ cd frontend && npm run build
 | `GET` | `/api/billing/plans` | Get subscription plans |
 | `POST` | `/api/billing/checkout` | Create Stripe checkout |
 
+## 📊 Observability
+
+ProteinLens includes comprehensive observability powered by Azure Application Insights.
+
+### Features
+
+- **End-to-End Tracing**: W3C Trace Context correlation across frontend → backend → database
+- **Core Web Vitals**: LCP, CLS, INP, FCP, TTFB tracking for frontend performance
+- **Health Monitoring**: Deep health checks with dependency status (database, blob storage, AI)
+- **Automated Alerts**: Error rate, latency, and availability alerts
+- **PII Sanitization**: Automatic redaction of sensitive data in telemetry
+
+### Dashboards
+
+Access monitoring in the Azure Portal:
+
+| Dashboard | Purpose |
+|-----------|---------|
+| **Live Metrics** | Real-time request and dependency tracking |
+| **Application Map** | Visual dependency graph |
+| **Performance** | Request duration and dependency latency |
+| **Failures** | Exception tracking and error analysis |
+| **Metrics** | Custom metrics including Web Vitals |
+
+### Key Metrics
+
+| Metric | Threshold | Alert |
+|--------|-----------|-------|
+| API Error Rate | >5% over 5min | Sev1 (Critical) |
+| API P95 Latency | >3s | Sev2 (Warning) |
+| Health Check | 2 consecutive failures | Sev1 (Critical) |
+| LCP (P75) | >2.5s | Sev3 (Info) |
+| Database P95 | >500ms | Sev2 (Warning) |
+
+### Correlation IDs
+
+All API responses include correlation headers for tracing:
+
+```
+X-Correlation-Id: abc123...
+traceparent: 00-traceId-spanId-01
+```
+
+Use these IDs to search logs in Application Insights for end-to-end request tracing.
+
 ## 🤝 Contributing
 
 1. Fork the repository

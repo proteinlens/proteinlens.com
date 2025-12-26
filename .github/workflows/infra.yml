@@ -517,3 +517,49 @@ jobs:
           echo "❌ Infrastructure deployment failed. Check logs above for details."
           exit 1
 
+  deploy-monitoring:
+    name: Deploy Monitoring & Alerts
+    runs-on: ubuntu-latest
+    needs: deploy
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy Monitoring Resources
+        run: |
+          DEPLOYMENT_NAME="monitoring-${{ github.run_id }}-${{ github.run_attempt }}"
+          echo "📊 Deploying monitoring resources..."
+          echo "   Deployment name: $DEPLOYMENT_NAME"
+          
+          az deployment group create \
+            --name "$DEPLOYMENT_NAME" \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
+            --template-file infra/bicep/monitoring.bicep \
+            --parameters "@infra/bicep/parameters/${{ inputs.environment }}.parameters.json"
+          
+          echo "✅ Monitoring deployment complete"
+
+      - name: Output Monitoring Results
+        run: |
+          echo "## 📊 Monitoring Deployment" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Component | Status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-----------|--------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Action Group | ✅ Deployed |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Budget Alerts | ✅ Deployed |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| API Error Alert | ✅ Deployed |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| API Latency Alert | ✅ Deployed |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Health Check Alert | ✅ Deployed |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Frontend Error Alert | ✅ Deployed |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| LCP Alert | ✅ Deployed |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Database Latency Alert | ✅ Deployed |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "📧 Alert notifications will be sent to configured email addresses." >> "$GITHUB_STEP_SUMMARY"
+
