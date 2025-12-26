@@ -171,44 +171,6 @@ export function useSignupForm(
     [errors, isDuplicateEmail]
   );
 
-  // Handle field blur (mark as touched)
-  const handleBlur = useCallback(async (field: keyof SignupFormState) => {
-    setTouched(prev => new Set(prev).add(field));
-    // Validate on blur
-    validateField(field);
-
-    // Check email availability on blur
-    if (field === 'email' && formState.email && isValidEmailFormat(formState.email)) {
-      // Skip if we already checked this email
-      if (lastCheckedEmail === formState.email) {
-        return;
-      }
-
-      setIsCheckingEmail(true);
-      try {
-        const result = await checkEmailApi(formState.email);
-        setLastCheckedEmail(formState.email);
-        
-        if (!result.available) {
-          setIsDuplicateEmail(true);
-          setDuplicateEmail(formState.email);
-          setErrors(prev => ({ 
-            ...prev, 
-            email: 'This email is already registered' 
-          }));
-        } else {
-          setIsDuplicateEmail(false);
-          setDuplicateEmail(null);
-        }
-      } catch (error) {
-        console.error('Error checking email availability:', error);
-        // Don't block signup on check failure
-      } finally {
-        setIsCheckingEmail(false);
-      }
-    }
-  }, [formState.email, lastCheckedEmail]);
-
   // Validate a single field
   const validateField = useCallback(
     (field: keyof SignupFormState): string | undefined => {
@@ -286,6 +248,44 @@ export function useSignupForm(
     },
     [formState, passwordValidation]
   );
+
+  // Handle field blur (mark as touched)
+  const handleBlur = useCallback(async (field: keyof SignupFormState) => {
+    setTouched(prev => new Set(prev).add(field));
+    // Validate on blur
+    validateField(field);
+
+    // Check email availability on blur
+    if (field === 'email' && formState.email && isValidEmailFormat(formState.email)) {
+      // Skip if we already checked this email
+      if (lastCheckedEmail === formState.email) {
+        return;
+      }
+
+      setIsCheckingEmail(true);
+      try {
+        const result = await checkEmailApi(formState.email);
+        setLastCheckedEmail(formState.email);
+        
+        if (!result.available) {
+          setIsDuplicateEmail(true);
+          setDuplicateEmail(formState.email);
+          setErrors(prev => ({ 
+            ...prev, 
+            email: 'This email is already registered' 
+          }));
+        } else {
+          setIsDuplicateEmail(false);
+          setDuplicateEmail(null);
+        }
+      } catch (error) {
+        console.error('Error checking email availability:', error);
+        // Don't block signup on check failure
+      } finally {
+        setIsCheckingEmail(false);
+      }
+    }
+  }, [formState.email, lastCheckedEmail, validateField]);
 
   // Validate all fields
   const validateAll = useCallback((): boolean => {

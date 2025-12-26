@@ -11,12 +11,12 @@
  * API Base URL for backend calls
  * 
  * Development: http://localhost:7071 (local Functions emulator)
- * Production: https://proteinlens-api-prod.azurewebsites.net (from VITE_API_URL env var)
+ * Production: https://api.proteinlens.com (from VITE_API_URL env var)
  * Staging: https://proteinlens-api-staging.azurewebsites.net (from VITE_API_URL env var)
  */
 export const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
-  (import.meta.env.DEV ? 'http://localhost:7071' : '');
+  (import.meta.env.DEV ? 'http://localhost:7071' : 'https://api.proteinlens.com');
 
 /**
  * Application Environment

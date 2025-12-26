@@ -126,18 +126,8 @@ export const SignupPage: FC = () => {
             onSocialLogin={handleSocialLogin}
           />
 
-          {/* Sign in link */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-500">
-              Already have an account?{' '}
-              <a href="/login" className="text-blue-600 font-medium hover:underline">
-                Sign in
-              </a>
-            </p>
-          </div>
-
           {/* Forgot password */}
-          <div className="mt-4 text-center">
+          <div className="mt-6 text-center">
             <a
               href="/reset-password"
               className="text-sm text-gray-500 hover:text-gray-700 hover:underline"
