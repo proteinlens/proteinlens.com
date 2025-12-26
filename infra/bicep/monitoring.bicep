@@ -25,6 +25,9 @@ param budgetStartDate string = '${substring(utcNow(), 0, 7)}-01'
 @description('Storage account resource ID for storage alerts (optional - if not provided, storage alert is skipped)')
 param storageAccountId string = ''
 
+@description('Function App resource ID for function alerts (optional - if not provided, function alerts are skipped)')
+param functionAppId string = ''
+
 // Resource naming convention
 var prefix = 'proteinlens-${environment}'
 
@@ -147,7 +150,8 @@ resource storageTransactionAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = 
 }
 
 // Function App Alert - High execution count
-resource functionExecutionAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
+// Note: Function app alerts require targeting a specific function app, not resource group
+resource functionExecutionAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = if (!empty(functionAppId)) {
   name: '${prefix}-function-execution-alert'
   location: 'global'
   properties: {
@@ -155,14 +159,12 @@ resource functionExecutionAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
     severity: 2
     enabled: true
     scopes: [
-      resourceGroup().id
+      functionAppId
     ]
     evaluationFrequency: 'PT1H'
     windowSize: 'PT1H'
-    targetResourceType: 'Microsoft.Web/sites'
-    targetResourceRegion: location
     criteria: {
-      'odata.type': 'Microsoft.Azure.Monitor.MultipleResourceMultipleMetricCriteria'
+      'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
       allOf: [
         {
           name: 'HighExecutionCount'
@@ -184,7 +186,8 @@ resource functionExecutionAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
 }
 
 // Function App Alert - Errors
-resource functionErrorAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
+// Note: Function app alerts require targeting a specific function app, not resource group
+resource functionErrorAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = if (!empty(functionAppId)) {
   name: '${prefix}-function-error-alert'
   location: 'global'
   properties: {
@@ -192,14 +195,12 @@ resource functionErrorAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
     severity: 1
     enabled: true
     scopes: [
-      resourceGroup().id
+      functionAppId
     ]
     evaluationFrequency: 'PT5M'
     windowSize: 'PT15M'
-    targetResourceType: 'Microsoft.Web/sites'
-    targetResourceRegion: location
     criteria: {
-      'odata.type': 'Microsoft.Azure.Monitor.MultipleResourceMultipleMetricCriteria'
+      'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
       allOf: [
         {
           name: 'HighErrorRate'
