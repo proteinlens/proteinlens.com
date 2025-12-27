@@ -270,11 +270,21 @@ async function checkEmail(
       },
     };
   } catch (error) {
-    Logger.error('Failed to check email', error as Error);
+    const err = error as Error;
+    Logger.error('Failed to check email', err);
+    
+    // Provide more details in non-production for debugging
+    const errorDetails = process.env.NODE_ENV !== 'production' 
+      ? { message: err.message, stack: err.stack }
+      : undefined;
+    
     return {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
-      jsonBody: { error: 'Failed to check email availability' },
+      jsonBody: { 
+        error: 'Failed to check email availability',
+        ...(errorDetails && { details: errorDetails }),
+      },
     };
   }
 }
