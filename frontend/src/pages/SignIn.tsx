@@ -88,8 +88,15 @@ export function SignIn() {
 
         {/* Error Alert */}
         {error && (
-          <div role="alert" className="mb-4 p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive text-sm flex items-start gap-2">
-            <span aria-hidden="true">⚠️</span>
+          <div 
+            role="alert" 
+            className={`mb-4 p-4 border rounded-xl text-sm flex items-start gap-2 ${
+              isRateLimited 
+                ? 'bg-orange-100 border-orange-200 text-orange-800 dark:bg-orange-900/30 dark:border-orange-800/50 dark:text-orange-200' 
+                : 'bg-destructive/10 border-destructive/20 text-destructive'
+            }`}
+          >
+            <span aria-hidden="true">{isRateLimited ? '🔒' : '⚠️'}</span>
             <div>
               <span>{error}</span>
               {needsVerification && (
@@ -101,6 +108,11 @@ export function SignIn() {
                     Resend verification email
                   </Link>
                 </div>
+              )}
+              {isRateLimited && (
+                <p className="mt-2 text-xs opacity-80">
+                  This is a security measure to protect your account. Please wait and try again.
+                </p>
               )}
             </div>
           </div>

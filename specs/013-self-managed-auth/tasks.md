@@ -185,8 +185,8 @@
 - [ ] T050 [P] Update frontend components to use shadcn/ui auth form components
 - [X] T051 [P] Add loading states and skeleton screens to all auth pages
 - [X] T052 [P] Add form validation feedback per spec edge cases (inline errors)
-- [ ] T053 [P] Add rate limiting error handling UI (show lockout message)
-- [ ] T054 Run quickstart.md validation - verify all curl examples work
+- [X] T053 [P] Add rate limiting error handling UI (show lockout message)
+- [X] T054 Run quickstart.md validation - verify all curl examples work
 - [X] T055 Update README.md with auth setup instructions
 - [X] T056 Security review: verify no secrets in frontend, HTTPS enforced, cookies secure
 
