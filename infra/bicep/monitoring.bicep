@@ -10,12 +10,6 @@ param environment string = 'prod'
 @description('Monthly budget threshold in EUR')
 param monthlyBudgetEur int = 100
 
-@description('AI monthly usage threshold (API calls)')
-param aiCallsThreshold int = 10000
-
-@description('Storage monthly threshold in GB')
-param storageThresholdGb int = 50
-
 @description('Email addresses for cost alerts')
 param alertEmailAddresses array = []
 
