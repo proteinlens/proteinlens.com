@@ -1,0 +1,624 @@
+openapi: 3.0.3
+info:
+  title: ProteinLens Admin API
+  description: |
+    Admin endpoints for ProteinLens platform management.
+    All endpoints require admin authentication via JWT + email allowlist.
+  version: 1.0.0
+  contact:
+    name: ProteinLens Team
+
+servers:
+  - url: https://api.proteinlens.com/api
+    description: Production API
+  - url: http://localhost:7071/api
+    description: Local development
+
+tags:
+  - name: Users
+    description: User management operations
+  - name: Metrics
+    description: Platform analytics and metrics
+  - name: Audit
+    description: Admin audit log
+
+security:
+  - BearerAuth: []
+  - AdminEmail: []
+
+paths:
+  /admin/users:
+    get:
+      operationId: listUsers
+      summary: List all users with pagination and filtering
+      tags: [Users]
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: search
+          in: query
+          description: Search by email or name (partial match)
+          schema:
+            type: string
+        - name: plan
+          in: query
+          schema:
+            type: string
+            enum: [FREE, PRO]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, canceled, past_due, trialing]
+        - name: suspended
+          in: query
+          schema:
+            type: boolean
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [email, plan, createdAt]
+            default: createdAt
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: Paginated list of users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/users/{userId}:
+    get:
+      operationId: getUserDetail
+      summary: Get detailed user information
+      tags: [Users]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User details with subscription and usage info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDetailResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/users/{userId}/plan:
+    put:
+      operationId: overrideUserPlan
+      summary: Override user's subscription plan
+      tags: [Users]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanOverrideRequest'
+      responses:
+        '200':
+          description: Plan updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanOverrideResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/users/{userId}/suspend:
+    post:
+      operationId: suspendUser
+      summary: Suspend user account
+      tags: [Users]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SuspendUserRequest'
+      responses:
+        '200':
+          description: User suspended successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuspendUserResponse'
+        '400':
+          description: User already suspended or is self
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/users/{userId}/reactivate:
+    post:
+      operationId: reactivateUser
+      summary: Reactivate suspended user account
+      tags: [Users]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User reactivated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReactivateUserResponse'
+        '400':
+          description: User not suspended
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/metrics:
+    get:
+      operationId: getMetrics
+      summary: Get platform metrics and analytics
+      tags: [Metrics]
+      responses:
+        '200':
+          description: Platform metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetricsResponse'
+
+  /admin/audit-log:
+    get:
+      operationId: getAuditLog
+      summary: Get admin audit log with filtering
+      tags: [Audit]
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: adminEmail
+          in: query
+          schema:
+            type: string
+        - name: action
+          in: query
+          schema:
+            type: string
+            enum: [VIEW_USER_LIST, VIEW_USER_DETAIL, PLAN_OVERRIDE, SUSPEND_USER, REACTIVATE_USER, EXPORT_USERS, VIEW_AUDIT_LOG]
+        - name: targetUserId
+          in: query
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Paginated audit log entries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLogResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    AdminEmail:
+      type: apiKey
+      in: header
+      name: X-Admin-Email
+
+  schemas:
+    UserSummary:
+      type: object
+      required: [id, externalId, email, plan, createdAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+        externalId:
+          type: string
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+        lastName:
+          type: string
+        plan:
+          type: string
+          enum: [FREE, PRO]
+        subscriptionStatus:
+          type: string
+          enum: [active, canceled, past_due, trialing]
+        suspended:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    UserListResponse:
+      type: object
+      required: [users, pagination]
+      properties:
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserSummary'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    UserDetailResponse:
+      type: object
+      required: [user, subscription, usage, events]
+      properties:
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+            externalId:
+              type: string
+            email:
+              type: string
+            firstName:
+              type: string
+            lastName:
+              type: string
+            organizationName:
+              type: string
+            phone:
+              type: string
+            emailVerified:
+              type: boolean
+            suspended:
+              type: boolean
+            suspendedAt:
+              type: string
+              format: date-time
+            suspendedReason:
+              type: string
+            suspendedBy:
+              type: string
+            createdAt:
+              type: string
+              format: date-time
+        subscription:
+          type: object
+          properties:
+            plan:
+              type: string
+              enum: [FREE, PRO]
+            status:
+              type: string
+            stripeCustomerId:
+              type: string
+            stripeSubscriptionId:
+              type: string
+            currentPeriodEnd:
+              type: string
+              format: date-time
+        usage:
+          type: object
+          properties:
+            scansThisWeek:
+              type: integer
+            scansAllTime:
+              type: integer
+            recentScans:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  type:
+                    type: string
+                  mealId:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+        events:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              eventType:
+                type: string
+              stripeEventId:
+                type: string
+              processedAt:
+                type: string
+                format: date-time
+
+    PlanOverrideRequest:
+      type: object
+      required: [newPlan, reason]
+      properties:
+        newPlan:
+          type: string
+          enum: [FREE, PRO]
+        reason:
+          type: string
+          minLength: 10
+          maxLength: 500
+
+    PlanOverrideResponse:
+      type: object
+      required: [success, user, auditLogId]
+      properties:
+        success:
+          type: boolean
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+            email:
+              type: string
+            previousPlan:
+              type: string
+            newPlan:
+              type: string
+        auditLogId:
+          type: string
+
+    SuspendUserRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          minLength: 10
+          maxLength: 500
+
+    SuspendUserResponse:
+      type: object
+      required: [success, user, auditLogId]
+      properties:
+        success:
+          type: boolean
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+            email:
+              type: string
+            suspended:
+              type: boolean
+            suspendedAt:
+              type: string
+              format: date-time
+        auditLogId:
+          type: string
+
+    ReactivateUserResponse:
+      type: object
+      required: [success, user, auditLogId]
+      properties:
+        success:
+          type: boolean
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+            email:
+              type: string
+            suspended:
+              type: boolean
+        auditLogId:
+          type: string
+
+    MetricsResponse:
+      type: object
+      required: [users, subscriptions, usage]
+      properties:
+        users:
+          type: object
+          properties:
+            total:
+              type: integer
+            activeLastWeek:
+              type: integer
+            newThisWeek:
+              type: integer
+            suspended:
+              type: integer
+        subscriptions:
+          type: object
+          properties:
+            free:
+              type: integer
+            pro:
+              type: integer
+            conversionRate:
+              type: number
+              format: float
+        usage:
+          type: object
+          properties:
+            totalAnalyses:
+              type: integer
+            analysesThisWeek:
+              type: integer
+            averagePerUser:
+              type: number
+              format: float
+        generatedAt:
+          type: string
+          format: date-time
+
+    AuditLogEntry:
+      type: object
+      required: [id, adminEmail, action, requestId, createdAt]
+      properties:
+        id:
+          type: string
+        adminEmail:
+          type: string
+        adminId:
+          type: string
+        action:
+          type: string
+          enum: [VIEW_USER_LIST, VIEW_USER_DETAIL, PLAN_OVERRIDE, SUSPEND_USER, REACTIVATE_USER, EXPORT_USERS, VIEW_AUDIT_LOG]
+        targetUserId:
+          type: string
+        targetEmail:
+          type: string
+        details:
+          type: object
+        reason:
+          type: string
+        requestId:
+          type: string
+          format: uuid
+        ipAddress:
+          type: string
+        userAgent:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    AuditLogResponse:
+      type: object
+      required: [entries, pagination]
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLogEntry'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    Pagination:
+      type: object
+      required: [page, limit, total, totalPages]
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+
+    ErrorResponse:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+
+  responses:
+    Unauthorized:
+      description: Missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: Unauthorized
+            message: Authentication required
+
+    Forbidden:
+      description: Admin access required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: Forbidden
+            message: Admin access required
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: Not Found
+            message: User not found
+
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

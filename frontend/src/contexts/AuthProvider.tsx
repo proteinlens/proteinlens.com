@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AuthUser,
   getValidAccessToken,
@@ -15,6 +15,17 @@ import {
   SignupData,
   AuthError,
 } from '../services/authService';
+import { API_ENDPOINTS, AUTH } from '../config';
+import { isMsalConfigured, loginRequest } from '../auth/msalConfig';
+
+// Minimal MSAL wrapper. Real config supplied via env in config.ts
+export interface AuthUser {
+  id?: string;
+  externalId?: string;
+  email?: string;
+  plan?: 'FREE' | 'PRO';
+  emailVerified?: boolean;
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -47,6 +58,10 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 // ─────────────────────────────────────────────────────────────────────────────
 // Provider
 // ─────────────────────────────────────────────────────────────────────────────
+// Helper to get MSAL instance from window
+function getMsalInstance(): any | null {
+  return (window as any).msalInstance || null;
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -55,6 +70,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [lastActivity, setLastActivity] = useState<number>(Date.now());
   const [sessionStart] = useState<number>(Date.now());
+  
+  // Track if initial auth check has been performed
+  const authCheckRef = useRef(false);
 
   // Track user activity for inactivity timeout
   useEffect(() => {
@@ -84,6 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Get access token with automatic refresh
   const getAccessToken = useCallback(async () => {
+    const msal = getMsalInstance();
     try {
       return await getValidAccessToken();
     } catch {
@@ -147,6 +166,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Logout
   const logout = useCallback(async () => {
+
     try {
       await apiSignout();
     } catch {
@@ -212,6 +232,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setIsAuthenticated(true);
           setIsLoading(false);
           return;
+
         }
       } catch {
         // Refresh failed - might not have a valid session

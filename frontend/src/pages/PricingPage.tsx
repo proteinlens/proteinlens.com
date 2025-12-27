@@ -11,7 +11,7 @@ export const PricingPage: React.FC = () => {
   const [plansData, setPlansData] = useState<PlansResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('annual');
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   useEffect(() => {

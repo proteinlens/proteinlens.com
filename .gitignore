@@ -56,9 +56,9 @@ __blobstorage__/
 __queuestorage__/
 __azurite_db*__.json
 
-# Prisma
-migrations/
-!prisma/migrations/.gitkeep
+# Prisma - migrations should be tracked!
+# migrations/
+# !prisma/migrations/.gitkeep
 
 # TypeScript
 *.tsbuildinfo

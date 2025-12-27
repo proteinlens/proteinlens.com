@@ -1,0 +1,615 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.39.26.7824",
+      "templateHash": "5586920559083629205"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "northeurope",
+      "metadata": {
+        "description": "The location for all resources"
+      }
+    },
+    "environment": {
+      "type": "string",
+      "defaultValue": "prod",
+      "metadata": {
+        "description": "Environment name (dev, staging, prod)"
+      }
+    },
+    "monthlyBudgetEur": {
+      "type": "int",
+      "defaultValue": 100,
+      "metadata": {
+        "description": "Monthly budget threshold in EUR"
+      }
+    },
+    "alertEmailAddresses": {
+      "type": "array",
+      "defaultValue": [],
+      "metadata": {
+        "description": "Email addresses for cost alerts"
+      }
+    },
+    "budgetStartDate": {
+      "type": "string",
+      "defaultValue": "[format('{0}-01', substring(utcNow(), 0, 7))]",
+      "metadata": {
+        "description": "Budget start date (first of month, e.g., 2025-01-01)"
+      }
+    },
+    "storageAccountId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Storage account resource ID for storage alerts (optional - if not provided, storage alert is skipped)"
+      }
+    },
+    "functionAppId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Function App resource ID for function alerts (optional - if not provided, function alerts are skipped)"
+      }
+    },
+    "enableQueryAlerts": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable scheduled query alerts (requires Application Insights data to be flowing - set to false for initial deployment)"
+      }
+    },
+    "enableBudget": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable budget alerts (requires Enterprise Agreement, Web direct or Microsoft Customer Agreement subscription)"
+      }
+    }
+  },
+  "variables": {
+    "prefix": "[format('proteinlens-{0}', parameters('environment'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Insights/actionGroups",
+      "apiVersion": "2023-01-01",
+      "name": "[format('{0}-cost-alerts-ag', variables('prefix'))]",
+      "location": "global",
+      "properties": {
+        "copy": [
+          {
+            "name": "emailReceivers",
+            "count": "[length(parameters('alertEmailAddresses'))]",
+            "input": {
+              "name": "[format('Email_{0}', replace(parameters('alertEmailAddresses')[copyIndex('emailReceivers')], '@', '_'))]",
+              "emailAddress": "[parameters('alertEmailAddresses')[copyIndex('emailReceivers')]]",
+              "useCommonAlertSchema": true
+            }
+          }
+        ],
+        "groupShortName": "CostAlerts",
+        "enabled": true
+      }
+    },
+    {
+      "condition": "[and(parameters('enableBudget'), not(empty(parameters('alertEmailAddresses'))))]",
+      "type": "Microsoft.Consumption/budgets",
+      "apiVersion": "2023-05-01",
+      "name": "[format('{0}-monthly-budget', variables('prefix'))]",
+      "properties": {
+        "category": "Cost",
+        "amount": "[parameters('monthlyBudgetEur')]",
+        "timeGrain": "Monthly",
+        "timePeriod": {
+          "startDate": "[parameters('budgetStartDate')]"
+        },
+        "notifications": {
+          "Actual_GreaterThan_50_Percent": {
+            "enabled": true,
+            "operator": "GreaterThan",
+            "threshold": 50,
+            "contactEmails": "[parameters('alertEmailAddresses')]",
+            "thresholdType": "Actual"
+          },
+          "Actual_GreaterThan_80_Percent": {
+            "enabled": true,
+            "operator": "GreaterThan",
+            "threshold": 80,
+            "contactEmails": "[parameters('alertEmailAddresses')]",
+            "thresholdType": "Actual"
+          },
+          "Actual_GreaterThan_100_Percent": {
+            "enabled": true,
+            "operator": "GreaterThan",
+            "threshold": 100,
+            "contactEmails": "[parameters('alertEmailAddresses')]",
+            "thresholdType": "Actual"
+          },
+          "Forecasted_GreaterThan_100_Percent": {
+            "enabled": true,
+            "operator": "GreaterThan",
+            "threshold": 100,
+            "contactEmails": "[parameters('alertEmailAddresses')]",
+            "thresholdType": "Forecasted"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2022-10-01",
+      "name": "[format('{0}-law', variables('prefix'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "name": "PerGB2018"
+        },
+        "retentionInDays": 30
+      }
+    },
+    {
+      "condition": "[not(empty(parameters('storageAccountId')))]",
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "name": "[format('{0}-storage-transactions-alert', variables('prefix'))]",
+      "location": "global",
+      "properties": {
+        "description": "Alert when storage transactions exceed threshold (indicates high usage)",
+        "severity": 2,
+        "enabled": true,
+        "scopes": [
+          "[parameters('storageAccountId')]"
+        ],
+        "evaluationFrequency": "PT1H",
+        "windowSize": "PT1H",
+        "criteria": {
+          "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria",
+          "allOf": [
+            {
+              "name": "HighTransactions",
+              "metricName": "Transactions",
+              "metricNamespace": "Microsoft.Storage/storageAccounts",
+              "operator": "GreaterThan",
+              "threshold": 10000,
+              "timeAggregation": "Total",
+              "criterionType": "StaticThresholdCriterion"
+            }
+          ]
+        },
+        "actions": [
+          {
+            "actionGroupId": "[resourceId('Microsoft.Insights/actionGroups', format('{0}-cost-alerts-ag', variables('prefix')))]"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/actionGroups', format('{0}-cost-alerts-ag', variables('prefix')))]"
+      ]
+    },
+    {
+      "condition": "[not(empty(parameters('functionAppId')))]",
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "name": "[format('{0}-function-execution-alert', variables('prefix'))]",
+      "location": "global",
+      "properties": {
+        "description": "Alert when function executions exceed threshold",
+        "severity": 2,
+        "enabled": true,
+        "scopes": [
+          "[parameters('functionAppId')]"
+        ],
+        "evaluationFrequency": "PT1H",
+        "windowSize": "PT1H",
+        "criteria": {
+          "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria",
+          "allOf": [
+            {
+              "name": "HighExecutionCount",
+              "metricName": "FunctionExecutionCount",
+              "metricNamespace": "Microsoft.Web/sites",
+              "operator": "GreaterThan",
+              "threshold": 5000,
+              "timeAggregation": "Total",
+              "criterionType": "StaticThresholdCriterion"
+            }
+          ]
+        },
+        "actions": [
+          {
+            "actionGroupId": "[resourceId('Microsoft.Insights/actionGroups', format('{0}-cost-alerts-ag', variables('prefix')))]"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/actionGroups', format('{0}-cost-alerts-ag', variables('prefix')))]"
+      ]
+    },
+    {
+      "condition": "[not(empty(parameters('functionAppId')))]",
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "name": "[format('{0}-function-error-alert', variables('prefix'))]",
+      "location": "global",
+      "properties": {
+        "description": "Alert when function errors exceed threshold",
+        "severity": 1,
+        "enabled": true,
+        "scopes": [
+          "[parameters('functionAppId')]"
+        ],
+        "evaluationFrequency": "PT5M",
+        "windowSize": "PT15M",
+        "criteria": {
+          "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria",
+          "allOf": [
+            {
+              "name": "HighErrorRate",
+              "metricName": "Http5xx",
+              "metricNamespace": "Microsoft.Web/sites",
+              "operator": "GreaterThan",
+              "threshold": 50,
+              "timeAggregation": "Total",
+              "criterionType": "StaticThresholdCriterion"
+            }
+          ]
+        },
+        "actions": [
+          {
+            "actionGroupId": "[resourceId('Microsoft.Insights/actionGroups', format('{0}-cost-alerts-ag', variables('prefix')))]"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/actionGroups', format('{0}-cost-alerts-ag', variables('prefix')))]"
+      ]
+    },
+    {
+      "condition": "[parameters('enableQueryAlerts')]",
+      "type": "Microsoft.Insights/scheduledQueryRules",
+      "apiVersion": "2022-06-15",
+      "name": "[format('{0}-ai-usage-alert', variables('prefix'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "displayName": "AI API Usage Alert",
+        "description": "Alert when AI API calls approach monthly limit",
+        "severity": 2,
+        "enabled": true,
+        "evaluationFrequency": "PT1H",
+        "scopes": [
+          "[resourceId('Microsoft.OperationalInsights/workspaces', format('{0}-law', variables('prefix')))]"
+        ],
+        "windowSize": "P1D",
+        "criteria": {
+          "allOf": [
+            {
+              "query": "            customMetrics\n            | where name == \"AI.TokenUsage.Total\"\n            | summarize TotalTokens = sum(value) by bin(timestamp, 1d)\n            | where TotalTokens > ${aiCallsThreshold * 100}\n          ",
+              "timeAggregation": "Count",
+              "operator": "GreaterThan",
+              "threshold": 0,
+              "failingPeriods": {
+                "numberOfEvaluationPeriods": 1,
+                "minFailingPeriodsToAlert": 1
+              }
+            }
+          ]
+        },
+        "actions": {
+          "actionGroups": [
+            "[resourceId('Microsoft.Insights/actionGroups', format('{0}-cost-alerts-ag', variables('prefix')))]"
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/actionGroups', format('{0}-cost-alerts-ag', variables('prefix')))]",
+        "[resourceId('Microsoft.OperationalInsights/workspaces', format('{0}-law', variables('prefix')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Insights/actionGroups",
+      "apiVersion": "2023-01-01",
+      "name": "[format('{0}-observability-ag', variables('prefix'))]",
+      "location": "global",
+      "properties": {
+        "copy": [
+          {
+            "name": "emailReceivers",
+            "count": "[length(parameters('alertEmailAddresses'))]",
+            "input": {
+              "name": "[format('Email_{0}', replace(parameters('alertEmailAddresses')[copyIndex('emailReceivers')], '@', '_'))]",
+              "emailAddress": "[parameters('alertEmailAddresses')[copyIndex('emailReceivers')]]",
+              "useCommonAlertSchema": true
+            }
+          }
+        ],
+        "groupShortName": "ObsAlerts",
+        "enabled": true
+      }
+    },
+    {
+      "condition": "[not(empty(parameters('functionAppId')))]",
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "name": "[format('{0}-api-error-rate-alert', variables('prefix'))]",
+      "location": "global",
+      "properties": {
+        "description": "Alert when API error rate exceeds 5% over 5 minutes (Feature 011: Observability)",
+        "severity": 1,
+        "enabled": true,
+        "scopes": [
+          "[parameters('functionAppId')]"
+        ],
+        "evaluationFrequency": "PT1M",
+        "windowSize": "PT5M",
+        "criteria": {
+          "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria",
+          "allOf": [
+            {
+              "name": "APIErrorRate",
+              "metricName": "Http5xx",
+              "metricNamespace": "Microsoft.Web/sites",
+              "operator": "GreaterThan",
+              "threshold": 5,
+              "timeAggregation": "Total",
+              "criterionType": "StaticThresholdCriterion"
+            }
+          ]
+        },
+        "autoMitigate": true,
+        "actions": [
+          {
+            "actionGroupId": "[resourceId('Microsoft.Insights/actionGroups', format('{0}-observability-ag', variables('prefix')))]"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/actionGroups', format('{0}-observability-ag', variables('prefix')))]"
+      ]
+    },
+    {
+      "condition": "[not(empty(parameters('functionAppId')))]",
+      "type": "Microsoft.Insights/metricAlerts",
+      "apiVersion": "2018-03-01",
+      "name": "[format('{0}-api-latency-alert', variables('prefix'))]",
+      "location": "global",
+      "properties": {
+        "description": "Alert when API P95 latency exceeds 3 seconds (Feature 011: Observability)",
+        "severity": 2,
+        "enabled": true,
+        "scopes": [
+          "[parameters('functionAppId')]"
+        ],
+        "evaluationFrequency": "PT5M",
+        "windowSize": "PT15M",
+        "criteria": {
+          "odata.type": "Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria",
+          "allOf": [
+            {
+              "name": "APILatency",
+              "metricName": "HttpResponseTime",
+              "metricNamespace": "Microsoft.Web/sites",
+              "operator": "GreaterThan",
+              "threshold": 3000,
+              "timeAggregation": "Average",
+              "criterionType": "StaticThresholdCriterion"
+            }
+          ]
+        },
+        "autoMitigate": true,
+        "actions": [
+          {
+            "actionGroupId": "[resourceId('Microsoft.Insights/actionGroups', format('{0}-observability-ag', variables('prefix')))]"
+          }
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/actionGroups', format('{0}-observability-ag', variables('prefix')))]"
+      ]
+    },
+    {
+      "condition": "[parameters('enableQueryAlerts')]",
+      "type": "Microsoft.Insights/scheduledQueryRules",
+      "apiVersion": "2022-06-15",
+      "name": "[format('{0}-health-check-alert', variables('prefix'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "displayName": "Health Check Failure Alert",
+        "description": "Alert when health check fails 2 consecutive times (Feature 011: Observability)",
+        "severity": 1,
+        "enabled": true,
+        "evaluationFrequency": "PT5M",
+        "scopes": [
+          "[resourceId('Microsoft.OperationalInsights/workspaces', format('{0}-law', variables('prefix')))]"
+        ],
+        "windowSize": "PT10M",
+        "criteria": {
+          "allOf": [
+            {
+              "query": "            requests\n            | where name contains \"health\" and resultCode != \"200\"\n            | summarize FailedCount = count() by bin(timestamp, 5m)\n            | where FailedCount >= 2\n          ",
+              "timeAggregation": "Count",
+              "operator": "GreaterThan",
+              "threshold": 0,
+              "failingPeriods": {
+                "numberOfEvaluationPeriods": 2,
+                "minFailingPeriodsToAlert": 2
+              }
+            }
+          ]
+        },
+        "autoMitigate": true,
+        "actions": {
+          "actionGroups": [
+            "[resourceId('Microsoft.Insights/actionGroups', format('{0}-observability-ag', variables('prefix')))]"
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', format('{0}-law', variables('prefix')))]",
+        "[resourceId('Microsoft.Insights/actionGroups', format('{0}-observability-ag', variables('prefix')))]"
+      ]
+    },
+    {
+      "condition": "[parameters('enableQueryAlerts')]",
+      "type": "Microsoft.Insights/scheduledQueryRules",
+      "apiVersion": "2022-06-15",
+      "name": "[format('{0}-frontend-error-alert', variables('prefix'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "displayName": "Frontend Error Alert",
+        "description": "Alert when frontend exceptions exceed 50 per hour (Feature 011: Observability)",
+        "severity": 2,
+        "enabled": true,
+        "evaluationFrequency": "PT15M",
+        "scopes": [
+          "[resourceId('Microsoft.OperationalInsights/workspaces', format('{0}-law', variables('prefix')))]"
+        ],
+        "windowSize": "PT1H",
+        "criteria": {
+          "allOf": [
+            {
+              "query": "            exceptions\n            | where cloud_RoleName == \"proteinlens-frontend\"\n            | summarize ExceptionCount = count() by bin(timestamp, 1h)\n            | where ExceptionCount > 50\n          ",
+              "timeAggregation": "Count",
+              "operator": "GreaterThan",
+              "threshold": 0,
+              "failingPeriods": {
+                "numberOfEvaluationPeriods": 1,
+                "minFailingPeriodsToAlert": 1
+              }
+            }
+          ]
+        },
+        "autoMitigate": true,
+        "actions": {
+          "actionGroups": [
+            "[resourceId('Microsoft.Insights/actionGroups', format('{0}-observability-ag', variables('prefix')))]"
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', format('{0}-law', variables('prefix')))]",
+        "[resourceId('Microsoft.Insights/actionGroups', format('{0}-observability-ag', variables('prefix')))]"
+      ]
+    },
+    {
+      "condition": "[parameters('enableQueryAlerts')]",
+      "type": "Microsoft.Insights/scheduledQueryRules",
+      "apiVersion": "2022-06-15",
+      "name": "[format('{0}-lcp-degradation-alert', variables('prefix'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "displayName": "LCP Performance Degradation Alert",
+        "description": "Alert when Largest Contentful Paint P75 exceeds 2.5 seconds (Feature 011: Observability)",
+        "severity": 3,
+        "enabled": true,
+        "evaluationFrequency": "PT30M",
+        "scopes": [
+          "[resourceId('Microsoft.OperationalInsights/workspaces', format('{0}-law', variables('prefix')))]"
+        ],
+        "windowSize": "PT1H",
+        "criteria": {
+          "allOf": [
+            {
+              "query": "            customMetrics\n            | where name == \"WebVitals.LCP\"\n            | summarize P75_LCP = percentile(value, 75) by bin(timestamp, 1h)\n            | where P75_LCP > 2500\n          ",
+              "timeAggregation": "Count",
+              "operator": "GreaterThan",
+              "threshold": 0,
+              "failingPeriods": {
+                "numberOfEvaluationPeriods": 1,
+                "minFailingPeriodsToAlert": 1
+              }
+            }
+          ]
+        },
+        "autoMitigate": true,
+        "actions": {
+          "actionGroups": [
+            "[resourceId('Microsoft.Insights/actionGroups', format('{0}-observability-ag', variables('prefix')))]"
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', format('{0}-law', variables('prefix')))]",
+        "[resourceId('Microsoft.Insights/actionGroups', format('{0}-observability-ag', variables('prefix')))]"
+      ]
+    },
+    {
+      "condition": "[parameters('enableQueryAlerts')]",
+      "type": "Microsoft.Insights/scheduledQueryRules",
+      "apiVersion": "2022-06-15",
+      "name": "[format('{0}-database-latency-alert', variables('prefix'))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "displayName": "Database Latency Alert",
+        "description": "Alert when database P95 latency exceeds 500ms (Feature 011: Observability)",
+        "severity": 2,
+        "enabled": true,
+        "evaluationFrequency": "PT5M",
+        "scopes": [
+          "[resourceId('Microsoft.OperationalInsights/workspaces', format('{0}-law', variables('prefix')))]"
+        ],
+        "windowSize": "PT15M",
+        "criteria": {
+          "allOf": [
+            {
+              "query": "            dependencies\n            | where type == \"PostgreSQL\" or type == \"SQL\"\n            | summarize P95_Duration = percentile(duration, 95) by bin(timestamp, 15m)\n            | where P95_Duration > 500\n          ",
+              "timeAggregation": "Count",
+              "operator": "GreaterThan",
+              "threshold": 0,
+              "failingPeriods": {
+                "numberOfEvaluationPeriods": 1,
+                "minFailingPeriodsToAlert": 1
+              }
+            }
+          ]
+        },
+        "autoMitigate": true,
+        "actions": {
+          "actionGroups": [
+            "[resourceId('Microsoft.Insights/actionGroups', format('{0}-observability-ag', variables('prefix')))]"
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', format('{0}-law', variables('prefix')))]",
+        "[resourceId('Microsoft.Insights/actionGroups', format('{0}-observability-ag', variables('prefix')))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "actionGroupId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Insights/actionGroups', format('{0}-cost-alerts-ag', variables('prefix')))]"
+    },
+    "observabilityActionGroupId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Insights/actionGroups', format('{0}-observability-ag', variables('prefix')))]"
+    },
+    "logAnalyticsWorkspaceId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.OperationalInsights/workspaces', format('{0}-law', variables('prefix')))]"
+    },
+    "budgetName": {
+      "type": "string",
+      "value": "[if(and(parameters('enableBudget'), not(empty(parameters('alertEmailAddresses')))), format('{0}-monthly-budget', variables('prefix')), '')]"
+    },
+    "apiErrorRateAlertId": {
+      "type": "string",
+      "value": "[if(not(empty(parameters('functionAppId'))), resourceId('Microsoft.Insights/metricAlerts', format('{0}-api-error-rate-alert', variables('prefix'))), '')]"
+    },
+    "apiLatencyAlertId": {
+      "type": "string",
+      "value": "[if(not(empty(parameters('functionAppId'))), resourceId('Microsoft.Insights/metricAlerts', format('{0}-api-latency-alert', variables('prefix'))), '')]"
+    },
+    "healthCheckAlertId": {
+      "type": "string",
+      "value": "[if(parameters('enableQueryAlerts'), resourceId('Microsoft.Insights/scheduledQueryRules', format('{0}-health-check-alert', variables('prefix'))), '')]"
+    }
+  }
+}

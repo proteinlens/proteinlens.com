@@ -51,6 +51,20 @@ enum SignupAttemptOutcome {
   NETWORK_ERROR
 }
 
+// ===========================================
+// Enums for Admin Dashboard (Feature 012)
+// ===========================================
+
+enum AdminActionType {
+  VIEW_USER_LIST
+  VIEW_USER_DETAIL
+  PLAN_OVERRIDE
+  SUSPEND_USER
+  REACTIVATE_USER
+  EXPORT_USERS
+  VIEW_AUDIT_LOG
+}
+
 enum OrganizationInviteStatus {
   PENDING
   ACCEPTED
@@ -123,6 +137,12 @@ model User {
   // Timestamps
   createdAt             DateTime            @default(now())
   updatedAt             DateTime            @updatedAt
+  
+  // Feature 012: Admin Dashboard - Account Suspension
+  suspended             Boolean             @default(false)
+  suspendedAt           DateTime?
+  suspendedReason       String?             @db.VarChar(500)
+  suspendedBy           String?             @db.VarChar(255)  // Admin email who suspended
   
   // Relations
   usage                 Usage[]
@@ -201,6 +221,7 @@ model PasswordResetToken {
   
   @@index([userId])
   @@index([tokenHash])
+  @@index([suspended])
 }
 
 // ===========================================
@@ -408,4 +429,40 @@ model Food {
   createdAt       DateTime      @default(now())
   
   @@index([mealAnalysisId])
+}
+
+// ===========================================
+// Admin Audit Log (Feature 012 - Admin Dashboard)
+// ===========================================
+// Append-only log of all admin actions
+
+model AdminAuditLog {
+  id            String          @id @default(uuid())
+  
+  // Admin identity
+  adminEmail    String          @db.VarChar(320)
+  adminId       String?         @db.VarChar(255)  // External ID if available
+  
+  // Action details
+  action        AdminActionType
+  targetUserId  String?         @db.VarChar(255)  // User affected (if applicable)
+  targetEmail   String?         @db.VarChar(320)  // Denormalized for search
+  
+  // Action metadata
+  details       Json?           // Action-specific data (e.g., old plan, new plan)
+  reason        String?         @db.VarChar(500)  // Admin-provided reason
+  
+  // Request context
+  requestId     String          @db.Uuid
+  ipAddress     String          @db.VarChar(45)   // IPv4 or IPv6
+  userAgent     String?         @db.VarChar(500)
+  
+  // Timestamp (immutable - no updatedAt by design)
+  createdAt     DateTime        @default(now())
+  
+  // Indexes for efficient querying
+  @@index([adminEmail, createdAt])
+  @@index([targetUserId, createdAt])
+  @@index([action, createdAt])
+  @@index([createdAt])
 }

@@ -1,0 +1,220 @@
+openapi: 3.0.3
+info:
+  title: ProteinLens Health API
+  description: Health check endpoints for monitoring and load balancing
+  version: 1.0.0
+  contact:
+    name: ProteinLens Team
+
+servers:
+  - url: https://api.proteinlens.com
+    description: Production
+  - url: http://localhost:7071
+    description: Local development
+
+paths:
+  /api/health:
+    get:
+      operationId: getHealth
+      summary: Get application health status
+      description: |
+        Returns current health status. Use `?deep=true` for comprehensive
+        dependency checks (database, storage, AI service).
+      tags:
+        - Health
+      parameters:
+        - name: deep
+          in: query
+          description: Perform deep health check of all dependencies
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Health status response
+          headers:
+            X-Correlation-Id:
+              description: Correlation ID for distributed tracing
+              schema:
+                type: string
+                format: uuid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              examples:
+                shallow:
+                  summary: Shallow health check
+                  value:
+                    status: healthy
+                    timestamp: "2025-01-14T10:30:00Z"
+                    version: "1.0.0"
+                deep:
+                  summary: Deep health check
+                  value:
+                    status: healthy
+                    timestamp: "2025-01-14T10:30:00Z"
+                    version: "1.0.0"
+                    uptime: 86400000
+                    checks:
+                      database:
+                        status: pass
+                        latencyMs: 12
+                      blobStorage:
+                        status: pass
+                        latencyMs: 45
+                      aiService:
+                        status: pass
+                        latencyMs: 120
+        '503':
+          description: Service unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: unhealthy
+                timestamp: "2025-01-14T10:30:00Z"
+                version: "1.0.0"
+                uptime: 86400000
+                checks:
+                  database:
+                    status: fail
+                    latencyMs: 5000
+                    message: "Connection timeout"
+                  blobStorage:
+                    status: pass
+                    latencyMs: 45
+                  aiService:
+                    status: warn
+                    latencyMs: 3000
+                    message: "High latency detected"
+
+  /api/health/liveness:
+    get:
+      operationId: getLiveness
+      summary: Kubernetes liveness probe
+      description: |
+        Simple check that the function app is running.
+        Returns 200 if the process is alive.
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [alive]
+                required:
+                  - status
+              example:
+                status: alive
+
+  /api/health/readiness:
+    get:
+      operationId: getReadiness
+      summary: Kubernetes readiness probe
+      description: |
+        Checks if the service is ready to accept traffic.
+        Verifies database connectivity.
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [ready]
+                  database:
+                    type: string
+                    enum: [connected]
+                required:
+                  - status
+                  - database
+              example:
+                status: ready
+                database: connected
+        '503':
+          description: Service not ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [not-ready]
+                  database:
+                    type: string
+                    enum: [disconnected]
+                  error:
+                    type: string
+              example:
+                status: not-ready
+                database: disconnected
+                error: "Connection refused"
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+        - version
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+          description: Overall health status
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp
+        version:
+          type: string
+          description: Application version
+        uptime:
+          type: integer
+          description: Uptime in milliseconds (only for deep check)
+        checks:
+          type: object
+          description: Individual service checks (only for deep check)
+          properties:
+            database:
+              $ref: '#/components/schemas/ServiceCheck'
+            blobStorage:
+              $ref: '#/components/schemas/ServiceCheck'
+            aiService:
+              $ref: '#/components/schemas/ServiceCheck'
+
+    ServiceCheck:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [pass, fail, warn]
+          description: Service check result
+        latencyMs:
+          type: integer
+          description: Latency in milliseconds
+        message:
+          type: string
+          description: Error or warning message (sanitized, no PII)
+
+tags:
+  - name: Health
+    description: Health check operations for monitoring and orchestration

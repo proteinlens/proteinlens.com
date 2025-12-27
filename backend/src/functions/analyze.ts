@@ -4,6 +4,7 @@
 // T034: Analyze meal image and store results
 // T031, T033: Added quota enforcement and usage recording (Feature 002)
 // T077: Cache lookup using SHA-256 hash before calling AI
+// Feature 011: Added telemetry tracking
 
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { v4 as uuidv4 } from 'uuid';
@@ -15,10 +16,24 @@ import { AnalyzeRequestSchema, AIAnalysisResponse } from '../models/schemas.js';
 import { ValidationError, BlobNotFoundError } from '../utils/errors.js';
 import { enforceWeeklyQuota, extractUserId } from '../middleware/quotaMiddleware.js';
 import { recordUsage, UsageType } from '../services/usageService.js';
+import { correlationMiddleware } from '../middleware/correlationMiddleware.js';
+import { trackEvent, trackMetric, trackException, setTraceContext } from '../utils/telemetry.js';
 
 export async function analyzeMeal(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
   const requestId = uuidv4();
+  const startTime = Date.now();
+  
+  // T019: Extract correlation context
+  const { traceContext, addResponseHeaders } = correlationMiddleware(request, context);
+  setTraceContext(traceContext);
+  
   Logger.info('Meal analysis requested', { requestId, url: request.url });
+  
+  // T033: Track analysis started event
+  trackEvent('proteinlens.analysis.started', {
+    correlationId: traceContext.correlationId,
+    requestId,
+  });
 
   try {
     // Parse and validate request body
@@ -123,7 +138,32 @@ export async function analyzeMeal(request: HttpRequest, context: InvocationConte
       Logger.error('Failed to record usage', usageError as Error, { requestId, userId });
     }
 
-    return {
+    const durationMs = Date.now() - startTime;
+    
+    // T033: Track analysis completed event
+    trackEvent('proteinlens.analysis.completed', {
+      correlationId: traceContext.correlationId,
+      requestId,
+      mealAnalysisId,
+      wasCached: String(wasCached),
+      foodCount: String(aiResponse.foods.length),
+      confidence: aiResponse.confidence,
+    }, {
+      durationMs,
+      totalProtein: aiResponse.totalProtein,
+    });
+    
+    // Track analysis count metric
+    trackMetric({
+      name: 'proteinlens.analysis.success_count',
+      value: 1,
+      properties: {
+        wasCached: String(wasCached),
+        userId,
+      },
+    });
+
+    return addResponseHeaders({
       status: 200,
       headers: {
         'Content-Type': 'application/json',
@@ -136,15 +176,41 @@ export async function analyzeMeal(request: HttpRequest, context: InvocationConte
         blobName,
         requestId,
       },
-    };
+    });
 
   } catch (error) {
     Logger.error('Meal analysis failed', error as Error, { requestId });
+    
+    const durationMs = Date.now() - startTime;
+    
+    // T033: Track analysis failed event
+    trackEvent('proteinlens.analysis.failed', {
+      correlationId: traceContext.correlationId,
+      requestId,
+      errorType: (error as Error).name,
+      errorMessage: (error as Error).message.substring(0, 200),
+    }, { durationMs });
+    
+    // Track failure metric
+    trackMetric({
+      name: 'proteinlens.analysis.failure_count',
+      value: 1,
+      properties: {
+        errorType: (error as Error).name,
+      },
+    });
+    
+    // Track exception
+    trackException(error as Error, {
+      correlationId: traceContext.correlationId,
+      requestId,
+      operation: 'analyzeMeal',
+    });
 
     const statusCode = (error as any).statusCode || 500;
     const message = (error as Error).message || 'Internal server error';
 
-    return {
+    return addResponseHeaders({
       status: statusCode,
       headers: {
         'Content-Type': 'application/json',
@@ -154,7 +220,7 @@ export async function analyzeMeal(request: HttpRequest, context: InvocationConte
         error: message,
         requestId,
       },
-    };
+    });
   }
 }
 

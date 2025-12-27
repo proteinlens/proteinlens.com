@@ -6,6 +6,8 @@ param functionAppName string
 param storageAccountName string
 param appServicePlanName string = '${functionAppName}-plan'
 param keyVaultUri string
+@description('Comma-separated list of admin email addresses for admin dashboard access')
+param adminEmails string = ''
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
   name: appServicePlanName
@@ -118,13 +120,20 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
           name: 'MAX_FILE_SIZE_MB'
           value: '8'
         }
+        // Admin Dashboard configuration (Feature 012)
+        {
+          name: 'ADMIN_EMAILS'
+          value: adminEmails
+        }
       ]
       cors: {
         allowedOrigins: [
           'http://localhost:5173'
+          'http://localhost:5174'  // Admin dashboard dev server
           'http://localhost:3000'
           'https://www.proteinlens.com'
           'https://proteinlens.com'
+          'https://admin.proteinlens.com'  // Admin dashboard
           'https://happy-stone-003f15b1e.azurestaticapps.net'
           'https://api.proteinlens.com'
         ]

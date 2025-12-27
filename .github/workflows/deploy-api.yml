@@ -25,17 +25,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
           cache-dependency-path: 'backend/package-lock.json'
 
       - name: Cache Prisma Client
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: prisma-cache
         with:
           path: |
@@ -44,7 +44,7 @@ jobs:
           key: prisma-${{ runner.os }}-${{ hashFiles('backend/prisma/schema.prisma') }}
 
       - name: Cache Production Dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: prod-deps-cache
         with:
           path: backend/.deploy-cache

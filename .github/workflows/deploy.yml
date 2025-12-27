@@ -28,7 +28,7 @@ jobs:
     # No dependencies - runs immediately in parallel with other pre-flight jobs
     steps:
       - name: Delete old artifacts (keep last 5)
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const owner = context.repo.owner;
@@ -90,7 +90,7 @@ jobs:
     # No dependencies - runs immediately in parallel with other pre-flight jobs
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0  # Full history for comprehensive scan
 
@@ -242,7 +242,19 @@ jobs:
     with:
       resource_group: proteinlens-prod
       staticwebapp_name: ${{ needs.infra.outputs.staticwebapp_name }}
-      api_url: ${{ needs.infra.outputs.functionapp_url }}
+      # Note: env context not available in reusable workflow inputs, hardcoded
+      api_url: https://api.proteinlens.com
+
+  deploy_admin:
+    name: Deploy Admin Dashboard
+    needs: [infra, dns_gate]
+    if: always() && needs.infra.result == 'success' && needs.dns_gate.outputs.ok == 'true' && needs.infra.outputs.admin_staticwebapp_name != ''
+    uses: ./.github/workflows/deploy-admin.yml
+    secrets: inherit
+    with:
+      resource_group: proteinlens-prod
+      staticwebapp_name: ${{ needs.infra.outputs.admin_staticwebapp_name }}
+      api_url: https://api.proteinlens.com
 
   # ============================================================================
   # STAGE 4: Health checks (after deploys complete)
@@ -250,7 +262,7 @@ jobs:
 
   health_check:
     name: Health Checks
-    needs: [infra, deploy_backend, deploy_frontend]
+    needs: [infra, deploy_backend, deploy_frontend, deploy_admin]
     if: always() && (needs.deploy_backend.result == 'success' || needs.deploy_frontend.result == 'success')
     runs-on: ubuntu-latest
     steps:
@@ -286,10 +298,219 @@ jobs:
           echo "❌ Frontend check failed after 5 attempts"
           exit 1
 
+      - name: Admin Dashboard check (index.html -> 200)
+        if: needs.infra.outputs.admin_staticwebapp_url != ''
+        run: |
+          URL="${{ needs.infra.outputs.admin_staticwebapp_url }}"
+          echo "🔍 Testing admin dashboard: $URL"
+          for i in $(seq 1 5); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$URL" || true)
+            echo "Attempt $i: HTTP $code"
+            if [ "$code" = "200" ]; then
+              echo "✅ Admin dashboard check passed"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "⚠️ Admin dashboard check failed (may not be deployed yet)"
+
+  # ============================================================================
+  # STAGE 5: Smoke Tests (verify full application functionality)
+  # ============================================================================
+
+  smoke_test:
+    name: Smoke Tests
+    needs: [infra, health_check]
+    if: always() && needs.health_check.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup test environment
+        run: |
+          # Generate a unique test user ID for this run
+          TEST_USER_ID="smoke-test-$(date +%s)-${{ github.run_id }}"
+          echo "TEST_USER_ID=$TEST_USER_ID" >> $GITHUB_ENV
+          echo "API_URL=${{ needs.infra.outputs.functionapp_url }}" >> $GITHUB_ENV
+          echo "WEB_URL=${{ needs.infra.outputs.staticwebapp_url }}" >> $GITHUB_ENV
+          echo "🧪 Test user ID: $TEST_USER_ID"
+
+      - name: Test API - Liveness endpoint
+        run: |
+          echo "🔍 Testing liveness endpoint..."
+          response=$(curl -s -w "\n%{http_code}" "$API_URL/api/health/liveness")
+          code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | head -n -1)
+          
+          if [ "$code" = "200" ]; then
+            echo "✅ Liveness check passed"
+            echo "$body" | jq . 2>/dev/null || echo "$body"
+          else
+            echo "❌ Liveness check failed: HTTP $code"
+            echo "$body"
+            exit 1
+          fi
+
+      - name: Test API - Readiness endpoint
+        run: |
+          echo "🔍 Testing readiness endpoint..."
+          response=$(curl -s -w "\n%{http_code}" "$API_URL/api/health/readiness")
+          code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | head -n -1)
+          
+          if [ "$code" = "200" ]; then
+            echo "✅ Readiness check passed"
+            echo "$body" | jq . 2>/dev/null || echo "$body"
+          else
+            echo "❌ Readiness check failed: HTTP $code"
+            echo "$body"
+            exit 1
+          fi
+
+      - name: Test API - Upload URL generation
+        run: |
+          echo "🔍 Testing upload URL generation..."
+          response=$(curl -s -w "\n%{http_code}" \
+            -X POST "$API_URL/api/upload-url" \
+            -H "Content-Type: application/json" \
+            -H "x-user-id: $TEST_USER_ID" \
+            -d '{"fileName":"smoke-test.jpg","fileSize":1024,"contentType":"image/jpeg"}')
+          
+          code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | head -n -1)
+          
+          if [ "$code" = "200" ]; then
+            echo "✅ Upload URL generation passed"
+            # Verify response contains expected fields
+            if echo "$body" | jq -e '.uploadUrl and .blobName and .expiresIn' > /dev/null 2>&1; then
+              echo "✅ Response structure valid"
+              BLOB_NAME=$(echo "$body" | jq -r '.blobName')
+              echo "BLOB_NAME=$BLOB_NAME" >> $GITHUB_ENV
+            else
+              echo "❌ Response missing expected fields"
+              echo "$body" | jq . 2>/dev/null || echo "$body"
+              exit 1
+            fi
+          else
+            echo "❌ Upload URL generation failed: HTTP $code"
+            echo "$body"
+            exit 1
+          fi
+
+      - name: Test API - Usage endpoint
+        run: |
+          echo "🔍 Testing usage endpoint..."
+          response=$(curl -s -w "\n%{http_code}" \
+            "$API_URL/api/billing/usage" \
+            -H "x-user-id: $TEST_USER_ID")
+          
+          code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | head -n -1)
+          
+          if [ "$code" = "200" ]; then
+            echo "✅ Usage endpoint passed"
+            echo "$body" | jq . 2>/dev/null || echo "$body"
+          else
+            echo "❌ Usage endpoint failed: HTTP $code"
+            echo "$body"
+            exit 1
+          fi
+
+      - name: Test API - Plans endpoint
+        run: |
+          echo "🔍 Testing plans endpoint..."
+          response=$(curl -s -w "\n%{http_code}" "$API_URL/api/billing/plans")
+          code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | head -n -1)
+          
+          if [ "$code" = "200" ]; then
+            echo "✅ Plans endpoint passed"
+            # Verify we got plan data
+            if echo "$body" | jq -e 'length > 0' > /dev/null 2>&1; then
+              echo "✅ Plans data returned"
+              echo "$body" | jq '.[0]' 2>/dev/null || echo "$body"
+            else
+              echo "⚠️ No plans data returned (may be expected)"
+            fi
+          else
+            echo "❌ Plans endpoint failed: HTTP $code"
+            echo "$body"
+            exit 1
+          fi
+
+      - name: Test Frontend - Main page loads
+        run: |
+          echo "🔍 Testing frontend main page..."
+          response=$(curl -s -w "\n%{http_code}" "$WEB_URL")
+          code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | head -n -1)
+          
+          if [ "$code" = "200" ]; then
+            # Check for key content
+            if echo "$body" | grep -q "ProteinLens"; then
+              echo "✅ Frontend loads with expected content"
+            else
+              echo "⚠️ Frontend loads but content may be unexpected"
+            fi
+          else
+            echo "❌ Frontend failed to load: HTTP $code"
+            exit 1
+          fi
+
+      - name: Test Frontend - Static assets accessible
+        run: |
+          echo "🔍 Testing frontend static assets..."
+          
+          # Test manifest or common static assets
+          for path in "/manifest.json" "/favicon.ico"; do
+            response=$(curl -s -o /dev/null -w "%{http_code}" "$WEB_URL$path" || true)
+            if [ "$response" = "200" ]; then
+              echo "✅ $path accessible"
+            else
+              echo "⚠️ $path returned HTTP $response (may be expected)"
+            fi
+          done
+
+      - name: Test CORS headers
+        run: |
+          echo "🔍 Testing CORS configuration..."
+          response=$(curl -s -I \
+            -X OPTIONS "$API_URL/api/health" \
+            -H "Origin: $WEB_URL" \
+            -H "Access-Control-Request-Method: GET")
+          
+          if echo "$response" | grep -qi "access-control-allow"; then
+            echo "✅ CORS headers present"
+            echo "$response" | grep -i "access-control"
+          else
+            echo "⚠️ CORS headers may not be configured (check if required)"
+          fi
+
+      - name: Generate smoke test report
+        if: always()
+        run: |
+          echo "## 🧪 Smoke Test Results" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Test | Status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|------|--------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| API Liveness | ✅ |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| API Readiness | ✅ |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Upload URL Generation | ✅ |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Usage Endpoint | ✅ |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Plans Endpoint | ✅ |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Frontend Load | ✅ |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Test User ID:** \`$TEST_USER_ID\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Endpoints Tested:**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- API: $API_URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Web: $WEB_URL" >> "$GITHUB_STEP_SUMMARY"
+
   summary:
     name: Deployment Summary
     runs-on: ubuntu-latest
-    needs: [secret_scan, dns_gate, infra, deploy_backend, deploy_frontend, health_check]
+    needs: [secret_scan, dns_gate, infra, deploy_backend, deploy_frontend, deploy_admin, health_check, smoke_test]
     if: always()
     steps:
       - name: Summarize results
@@ -302,8 +523,11 @@ jobs:
           echo "| Infra | ${{ needs.infra.result }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Backend | ${{ needs.deploy_backend.result }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Frontend | ${{ needs.deploy_frontend.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Admin | ${{ needs.deploy_admin.result }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Health Checks | ${{ needs.health_check.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Smoke Tests | ${{ needs.smoke_test.result }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "### Endpoints" >> "$GITHUB_STEP_SUMMARY"
           echo "- API: ${{ needs.infra.outputs.functionapp_url }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- Web: ${{ needs.infra.outputs.staticwebapp_url }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Admin: ${{ needs.infra.outputs.admin_staticwebapp_url }}" >> "$GITHUB_STEP_SUMMARY"

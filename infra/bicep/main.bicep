@@ -43,6 +43,7 @@ var kvSuffix string = take(uniqueString(resourceGroup().id), 8)
 var keyVaultName string = length(keyVaultNameOverride) > 0 ? keyVaultNameOverride : toLower(take('${appNamePrefix}-kv-${kvSuffix}', 24))
 param postgresServerName string = '${appNamePrefix}-db-${environmentName}'
 param staticWebAppName string = '${appNamePrefix}-web-${environmentName}'
+param adminStaticWebAppName string = '${appNamePrefix}-admin-${environmentName}'
 param frontDoorName string = '${appNamePrefix}-fd-${environmentName}'
 param openAIAccountName string = '${appNamePrefix}-openai-${environmentName}'
 
@@ -57,6 +58,14 @@ param enableAIFoundry bool = true // Enable AI Foundry for GPT-5.1 integration
 param enableCustomDomain bool = true // Enable custom domains (api.proteinlens.com, www.proteinlens.com)
 param apiCustomDomainName string = 'api.proteinlens.com'
 param webCustomDomainName string = 'www.proteinlens.com'
+param adminCustomDomainName string = 'admin.proteinlens.com'
+
+// Admin Dashboard configuration (Feature 012)
+@description('Comma-separated list of admin email addresses allowed to access admin dashboard')
+param adminEmails string = ''
+
+// Monitoring (used by monitoring.bicep, accepted here for shared parameters file)
+param alertEmailAddresses array = []
 
 // =============================================================================
 // DEPLOYMENTS
@@ -103,6 +112,7 @@ module functionApp 'function-app.bicep' = {
     functionAppName: functionAppName
     storageAccountName: storage.outputs.storageAccountName
     keyVaultUri: keyVault.outputs.keyVaultUri
+    adminEmails: adminEmails
   }
 }
 
@@ -153,6 +163,26 @@ module staticWebAppCustomDomain 'static-web-app-custom-domain.bicep' = if (enabl
   params: {
     staticWebAppName: staticWebApp.outputs.staticWebAppName
     customDomain: webCustomDomainName
+  }
+}
+
+// 5c. Admin Dashboard Static Web App (Feature 012)
+module adminStaticWebApp 'admin-static-web-app.bicep' = {
+  name: 'admin-static-web-app-deployment'
+  params: {
+    location: swaLocation
+    adminStaticWebAppName: adminStaticWebAppName
+    apiUrl: functionApp.outputs.functionAppUrl
+  }
+}
+
+// 5d. Custom domain for Admin Static Web App (admin.proteinlens.com)
+// Prerequisites: DNS CNAME record admin.proteinlens.com -> <adminstaticwebapp>.azurestaticapps.net
+module adminStaticWebAppCustomDomain 'static-web-app-custom-domain.bicep' = if (enableCustomDomain) {
+  name: 'admin-static-web-app-custom-domain-deployment'
+  params: {
+    staticWebAppName: adminStaticWebApp.outputs.adminStaticWebAppName
+    customDomain: adminCustomDomainName
   }
 }
 
@@ -239,6 +269,12 @@ output staticWebAppUrl string = enableCustomDomain ? 'https://${webCustomDomainN
 output staticWebAppAzureUrl string = staticWebApp.outputs.staticWebAppUrl
 output staticWebAppDefaultHostname string = staticWebApp.outputs.staticWebAppDefaultHostname
 output staticWebAppCustomDomainEnabled bool = enableCustomDomain
+
+// Admin Dashboard (Static Web App) - Feature 012
+output adminStaticWebAppName string = adminStaticWebApp.outputs.adminStaticWebAppName
+output adminStaticWebAppUrl string = enableCustomDomain ? 'https://${adminCustomDomainName}' : adminStaticWebApp.outputs.adminStaticWebAppUrl
+output adminStaticWebAppAzureUrl string = adminStaticWebApp.outputs.adminStaticWebAppUrl
+output adminStaticWebAppDefaultHostname string = adminStaticWebApp.outputs.adminStaticWebAppDefaultHostname
 
 // Front Door (optional)
 output frontDoorEnabled bool = enableFrontDoor

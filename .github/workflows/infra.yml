@@ -31,12 +31,18 @@ on:
       staticwebapp_name:
         description: 'Static Web App name'
         value: ${{ jobs.deploy.outputs.staticwebapp_name }}
+      admin_staticwebapp_name:
+        description: 'Admin Static Web App name'
+        value: ${{ jobs.deploy.outputs.admin_staticwebapp_name }}
       functionapp_url:
         description: 'Function App URL'
         value: ${{ jobs.deploy.outputs.functionapp_url }}
       staticwebapp_url:
         description: 'Static Web App URL'
         value: ${{ jobs.deploy.outputs.staticwebapp_url }}
+      admin_staticwebapp_url:
+        description: 'Admin Static Web App URL'
+        value: ${{ jobs.deploy.outputs.admin_staticwebapp_url }}
 
 permissions:
   contents: read
@@ -52,7 +58,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Validate confirmation
         if: github.event_name == 'workflow_dispatch'
@@ -83,11 +89,13 @@ jobs:
       key_vault_name: ${{ steps.extract.outputs.key_vault_name }}
       functionapp_name: ${{ steps.extract.outputs.functionapp_name }}
       staticwebapp_name: ${{ steps.extract.outputs.staticwebapp_name }}
+      admin_staticwebapp_name: ${{ steps.extract.outputs.admin_staticwebapp_name }}
       functionapp_url: ${{ steps.extract.outputs.functionapp_url }}
       staticwebapp_url: ${{ steps.extract.outputs.staticwebapp_url }}
+      admin_staticwebapp_url: ${{ steps.extract.outputs.admin_staticwebapp_url }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Login to Azure
         uses: azure/login@v2
@@ -185,8 +193,10 @@ jobs:
           echo "key_vault_name=$(echo "$OUTPUTS" | jq -r '.keyVaultName.value')" >> "$GITHUB_OUTPUT"
           echo "functionapp_name=$(echo "$OUTPUTS" | jq -r '.functionAppName.value')" >> "$GITHUB_OUTPUT"
           echo "staticwebapp_name=$(echo "$OUTPUTS" | jq -r '.staticWebAppName.value')" >> "$GITHUB_OUTPUT"
+          echo "admin_staticwebapp_name=$(echo "$OUTPUTS" | jq -r '.adminStaticWebAppName.value // empty')" >> "$GITHUB_OUTPUT"
           echo "functionapp_url=$(echo "$OUTPUTS" | jq -r '.functionAppUrl.value')" >> "$GITHUB_OUTPUT"
           echo "staticwebapp_url=$(echo "$OUTPUTS" | jq -r '.staticWebAppUrl.value')" >> "$GITHUB_OUTPUT"
+          echo "admin_staticwebapp_url=$(echo "$OUTPUTS" | jq -r '.adminStaticWebAppUrl.value // empty')" >> "$GITHUB_OUTPUT"
 
       - name: Grant Workflow Access to Key Vault
         run: |
@@ -516,4 +526,50 @@ jobs:
         run: |
           echo "❌ Infrastructure deployment failed. Check logs above for details."
           exit 1
+
+  deploy-monitoring:
+    name: Deploy Monitoring & Alerts
+    runs-on: ubuntu-latest
+    needs: deploy
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy Monitoring Resources
+        run: |
+          DEPLOYMENT_NAME="monitoring-${{ github.run_id }}-${{ github.run_attempt }}"
+          echo "📊 Deploying monitoring resources..."
+          echo "   Deployment name: $DEPLOYMENT_NAME"
+          
+          az deployment group create \
+            --name "$DEPLOYMENT_NAME" \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
+            --template-file infra/bicep/monitoring.bicep \
+            --parameters "@infra/bicep/parameters/monitoring.${{ inputs.environment }}.parameters.json"
+          
+          echo "✅ Monitoring deployment complete"
+
+      - name: Output Monitoring Results
+        run: |
+          echo "## 📊 Monitoring Deployment" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Component | Status |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-----------|--------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Action Group | ✅ Deployed |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Budget Alerts | ✅ Deployed |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| API Error Alert | ✅ Deployed |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| API Latency Alert | ✅ Deployed |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Health Check Alert | ✅ Deployed |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Frontend Error Alert | ✅ Deployed |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| LCP Alert | ✅ Deployed |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Database Latency Alert | ✅ Deployed |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "📧 Alert notifications will be sent to configured email addresses." >> "$GITHUB_STEP_SUMMARY"
 

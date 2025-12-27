@@ -58,6 +58,9 @@
     },
     "openAIAccountName": {
       "value": "proteinlens-openai-prod"
+    },
+    "alertEmailAddresses": {
+      "value": ["info@proteinlens.com"]
     }
   }
 }
