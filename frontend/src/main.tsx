@@ -17,13 +17,21 @@ initWebVitals();
 // Observe long tasks for performance debugging
 observeLongTasks();
 
-// Initialize MSAL for authentication (async but don't block render)
-initializeMsal().catch(err => {
-  console.warn('[Auth] MSAL initialization skipped:', err);
-});
+// Initialize MSAL for authentication before rendering the app
+// This ensures msalInstance is available when AuthProvider renders
+async function startApp() {
+  try {
+    await initializeMsal();
+    console.log('[App] MSAL initialized, rendering app');
+  } catch (err) {
+    console.warn('[App] MSAL initialization failed, proceeding without auth:', err);
+  }
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-)
+  ReactDOM.createRoot(document.getElementById('root')!).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>,
+  );
+}
+
+startApp();

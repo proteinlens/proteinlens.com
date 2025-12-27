@@ -339,15 +339,21 @@ export function useSignupForm(
     setErrors({});
 
     try {
-      // Check if email is available
-      const emailCheck = await checkEmailApi(formState.email);
-      
-      if (!emailCheck.available) {
-        setErrors({ email: 'This email is already registered. Please sign in instead.' });
-        return;
+      // Try to check if email is available (optional - External ID handles duplicates)
+      try {
+        const emailCheck = await checkEmailApi(formState.email);
+        
+        if (!emailCheck.available) {
+          setErrors({ email: 'This email is already registered. Please sign in instead.' });
+          setIsSubmitting(false);
+          return;
+        }
+      } catch (apiError) {
+        // Backend unavailable - skip check, External ID will handle duplicates
+        console.warn('[Signup] Email check skipped (backend unavailable), proceeding to External ID');
       }
 
-      // If all validation passes, we redirect to B2C for signup
+      // If all validation passes, we redirect to External ID for signup
       // The actual redirect is handled by the parent component
       // Clear form storage on success
       sessionStorage.removeItem(FORM_STORAGE_KEY);

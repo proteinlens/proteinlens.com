@@ -126,12 +126,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const request = options?.extraQueryParameters 
       ? { ...loginRequest, extraQueryParameters: options.extraQueryParameters }
       : loginRequest;
-    await msal.loginRedirect(request);
-  }, [msal]);
+    
+    // Use popup if in iframe (VS Code Simple Browser, embedded contexts)
+    // Redirects don't work in iframes
+    const isInIframe = window !== window.top;
+    if (isInIframe) {
+      const result = await msal.loginPopup(request);
+      if (result?.account) {
+        setIsAuthenticated(true);
+        const token = result.idToken || result.accessToken;
+        if (token) {
+          await fetchUserProfile(token);
+        }
+      }
+    } else {
+      await msal.loginRedirect(request);
+    }
+  }, [msal, fetchUserProfile]);
 
   const logout = useCallback(async () => {
     if (msal) {
-      await msal.logoutRedirect?.();
+      // Use popup if in iframe
+      const isInIframe = window !== window.top;
+      if (isInIframe) {
+        await msal.logoutPopup?.();
+      } else {
+        await msal.logoutRedirect?.();
+      }
     }
     setIsAuthenticated(false);
     setUser(null);

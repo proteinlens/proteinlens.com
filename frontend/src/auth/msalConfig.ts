@@ -1,8 +1,11 @@
 /**
  * MSAL Configuration
  * 
- * Configures Azure AD B2C authentication for the frontend
+ * Configures Microsoft Entra External ID authentication for the frontend
  * Set environment variables for production/staging deployments
+ * 
+ * Note: Azure AD B2C is discontinued for new customers as of May 1, 2025.
+ * This configuration uses Microsoft Entra External ID (successor CIAM platform).
  */
 
 import { PublicClientApplication, Configuration, LogLevel } from '@azure/msal-browser';
@@ -18,7 +21,10 @@ const msalConfig: Configuration = {
     authority: AUTH.authority,
     redirectUri: AUTH.redirectUri,
     postLogoutRedirectUri: AUTH.redirectUri,
-    knownAuthorities: AUTH.authority ? [new URL(AUTH.authority).hostname] : [],
+    // Microsoft Entra External ID login domain for ProteinLens tenant
+    // Uses ciamlogin.com domain (not b2clogin.com which is deprecated)
+    // This ensures MSAL trusts the External ID authority even if env var parsing fails
+    knownAuthorities: ['proteinlenscustomers.ciamlogin.com'],
   },
   cache: {
     cacheLocation: 'localStorage',
