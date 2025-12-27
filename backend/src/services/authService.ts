@@ -41,7 +41,7 @@ export interface VerifiedUser {
 
 export interface LocalUserProfile {
   id: string;
-  externalId: string;
+  externalId: string | null;
   email: string | null;
   plan: 'FREE' | 'PRO';
   suspended: boolean;
@@ -174,7 +174,7 @@ export async function getOrCreateLocalUser(user: VerifiedUser): Promise<LocalUse
       dbUser = await prisma.user.create({
         data: {
           externalId: user.externalId,
-          email: user.email ?? null,
+          email: user.email || undefined,
           plan: 'FREE',
         },
       });
@@ -247,7 +247,7 @@ export async function completeSignupProfile(
       dbUser = await prisma.user.create({
         data: {
           externalId: user.externalId,
-          email: user.email ?? null,
+          email: user.email || undefined,
           firstName: profileData.firstName ?? null,
           lastName: profileData.lastName ?? null,
           organizationName: profileData.organizationName ?? null,

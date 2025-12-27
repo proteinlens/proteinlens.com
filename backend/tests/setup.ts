@@ -13,6 +13,15 @@ process.env.STRIPE_SECRET_KEY = 'sk_test_123';
 process.env.STRIPE_WEBHOOK_SECRET = 'whsec_test_123';
 process.env.STRIPE_PRO_PRICE_ID = 'price_test_123';
 
+// Auth-related environment variables
+process.env.JWT_SECRET = 'test-jwt-secret-that-is-at-least-32-characters-long-for-testing';
+process.env.GOOGLE_CLIENT_ID = 'test-google-client-id';
+process.env.GOOGLE_CLIENT_SECRET = 'test-google-client-secret';
+process.env.MICROSOFT_CLIENT_ID = 'test-microsoft-client-id';
+process.env.MICROSOFT_CLIENT_SECRET = 'test-microsoft-client-secret';
+process.env.FRONTEND_URL = 'http://localhost:5173';
+process.env.NODE_ENV = 'test';
+
 // Mock PrismaClient globally using constructor function syntax
 vi.mock('@prisma/client', () => {
   const MockPrismaClient = function(this: any, options?: any) {
@@ -40,6 +49,36 @@ vi.mock('@prisma/client', () => {
       create: vi.fn(),
       findMany: vi.fn(),
     };
+    // Auth-related models
+    this.signupAttempt = {
+      create: vi.fn(),
+      findMany: vi.fn(),
+    };
+    this.refreshToken = {
+      create: vi.fn(),
+      findUnique: vi.fn(),
+      findFirst: vi.fn(),
+      delete: vi.fn(),
+      deleteMany: vi.fn(),
+      update: vi.fn(),
+    };
+    this.emailVerificationToken = {
+      create: vi.fn(),
+      findFirst: vi.fn(),
+      delete: vi.fn(),
+      deleteMany: vi.fn(),
+    };
+    this.passwordResetToken = {
+      create: vi.fn(),
+      findFirst: vi.fn(),
+      delete: vi.fn(),
+      deleteMany: vi.fn(),
+    };
+    this.consentRecord = {
+      create: vi.fn(),
+      createMany: vi.fn(),
+      findMany: vi.fn(),
+    };
     this.$transaction = vi.fn((fn: any) => fn(this));
     this.$on = vi.fn();
   } as any;
@@ -58,6 +97,16 @@ vi.mock('@prisma/client', () => {
     },
     UsageType: {
       MEAL_ANALYSIS: 'MEAL_ANALYSIS',
+    },
+    AuthProvider: {
+      LOCAL: 'LOCAL',
+      GOOGLE: 'GOOGLE',
+      MICROSOFT: 'MICROSOFT',
+    },
+    ConsentType: {
+      TERMS_OF_SERVICE: 'TERMS_OF_SERVICE',
+      PRIVACY_POLICY: 'PRIVACY_POLICY',
+      MARKETING: 'MARKETING',
     },
   };
 });

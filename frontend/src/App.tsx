@@ -5,6 +5,7 @@
 // T071: Added /settings route for billing management
 // Feature 003: React Query + Theme Provider setup
 // Feature 009: Auth routes + AuthProvider
+// T049: Added /settings/sessions route for session management
 // Feature 011: Error boundary with telemetry
 
 import React, { lazy, Suspense } from 'react';
@@ -35,8 +36,10 @@ const SignUp = lazy(() => import('./pages/SignUp'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const SignupPage = lazy(() => import('./pages/SignupPage'));
 const VerifyEmailPage = lazy(() => import('./pages/VerifyEmailPage'));
+const ResendVerificationPage = lazy(() => import('./pages/ResendVerificationPage'));
 const InviteSignupPage = lazy(() => import('./pages/InviteSignupPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+const SessionManagement = lazy(() => import('./pages/SessionManagement'));
 
 // Navigation component with usage counter
 const Navigation: React.FC = () => {
@@ -171,6 +174,27 @@ function App() {
                         <p className="text-muted-foreground">Loading...</p>
                       </div>
                     </div>
+                  </div>
+                }>
+                  <Routes>
+                    {/* Public routes */}
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/pricing" element={<PricingPage />} />
+                    <Route path="/login" element={<SignIn />} />
+                    <Route path="/signup" element={<SignupPage />} />
+                    <Route path="/signup-legacy" element={<SignUp />} />
+                    <Route path="/verify-email" element={<VerifyEmailPage />} />
+                    <Route path="/resend-verification" element={<ResendVerificationPage />} />
+                    <Route path="/invite/:token" element={<InviteSignupPage />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
+
+                    {/* Protected routes */}
+                    <Route element={<ProtectedRoute />}>
+                      <Route path="/history" element={<History />} />
+                      <Route path="/settings" element={<Settings />} />
+                      <Route path="/settings/sessions" element={<SessionManagement />} />
+                      <Route path="/billing/success" element={<CheckoutSuccessPage />} />
+                    </Route>
                   }>
                     <Routes>
                       {/* Public routes */}

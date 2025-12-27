@@ -86,7 +86,7 @@ npm test
 | **Database** | Azure PostgreSQL Flexible Server, Prisma ORM |
 | **Storage** | Azure Blob Storage (meal photos) |
 | **AI** | OpenAI GPT Vision API |
-| **Auth** | (Coming soon) Azure AD B2C |
+| **Auth** | Self-managed JWT auth (email/password) |
 | **Payments** | Stripe (Pro subscriptions) |
 | **Infrastructure** | Azure Bicep, GitHub Actions CI/CD |
 
@@ -132,10 +132,44 @@ VITE_API_URL=http://localhost:7071
   "Values": {
     "AZURE_STORAGE_ACCOUNT_NAME": "your-storage-account",
     "OPENAI_API_KEY": "sk-...",
-    "DATABASE_URL": "postgresql://..."
+    "DATABASE_URL": "postgresql://...",
+    "JWT_SECRET": "at-least-32-characters-secure-random-key",
+    "ACS_EMAIL_CONNECTION_STRING": "endpoint=...",
+    "ACS_EMAIL_SENDER": "DoNotReply@yourdomain.com"
   }
 }
 ```
+
+## 🔐 Authentication
+
+ProteinLens uses self-managed JWT authentication with the following features:
+
+- **Email/Password Sign Up** with email verification
+- **Secure Sign In** with HttpOnly cookie refresh tokens
+- **Password Reset** via email link
+- **Session Management** - view and revoke active sessions
+- **CSRF Protection** via double-submit cookie pattern
+
+### Auth Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/auth/signup` | Register new user |
+| `POST` | `/api/auth/signin` | Sign in, returns JWT tokens |
+| `POST` | `/api/auth/refresh` | Refresh access token |
+| `POST` | `/api/auth/logout` | Sign out, revokes refresh token |
+| `POST` | `/api/auth/verify-email` | Verify email with token |
+| `POST` | `/api/auth/forgot-password` | Request password reset email |
+| `POST` | `/api/auth/reset-password` | Reset password with token |
+| `GET` | `/api/auth/sessions` | List active sessions |
+| `DELETE` | `/api/auth/sessions/:id` | Revoke a session |
+
+### Security Features
+
+- **Password Requirements**: Min 8 chars, max 128, with HIBP breach checking
+- **Token Storage**: Access tokens in memory (XSS protection), refresh tokens in HttpOnly cookies
+- **Rate Limiting**: Progressive lockout on failed auth attempts
+- **Audit Logging**: All auth events logged to AuthEvent table
 
 ## 🚢 Deployment
 
@@ -176,6 +210,8 @@ cd frontend && npm run build
 | `GET` | `/api/billing/plans` | Get subscription plans |
 | `POST` | `/api/billing/checkout` | Create Stripe checkout |
 
+See the [Authentication](#-authentication) section for auth-specific endpoints.
+=======
 ## 📊 Observability
 
 ProteinLens includes comprehensive observability powered by Azure Application Insights.
@@ -220,6 +256,7 @@ traceparent: 00-traceId-spanId-01
 ```
 
 Use these IDs to search logs in Application Insights for end-to-end request tracing.
+
 
 ## 🤝 Contributing
 

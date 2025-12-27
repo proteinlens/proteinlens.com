@@ -73,15 +73,51 @@ enum OrganizationInviteStatus {
 }
 
 // ===========================================
+// Auth Event Type (Feature 013 - Self-managed Auth)
+// ===========================================
+
+enum AuthEventType {
+  SIGNUP_SUCCESS
+  SIGNUP_FAILED
+  SIGNIN_SUCCESS
+  SIGNIN_FAILED
+  SIGNOUT
+  EMAIL_VERIFIED
+  PASSWORD_RESET_REQUESTED
+  PASSWORD_RESET_SUCCESS
+  SESSION_REVOKED
+  PASSWORD_CHANGED
+}
+
+// ===========================================
+// Auth Provider Type (Feature 010 - Self-managed Auth)
+// ===========================================
+
+enum AuthProvider {
+  LOCAL       // Email + password
+  GOOGLE      // Google OAuth
+  MICROSOFT   // Microsoft OAuth
+}
+
+// ===========================================
 // User Model (Extended for Billing + Signup)
 // ===========================================
 
 model User {
   id                    String              @id @default(uuid())
   
-  // External identity (from auth provider)
-  externalId            String              @unique @db.VarChar(255)
-  email                 String?             @db.VarChar(320)
+  // Email as primary identifier (unique for auth, optional for legacy users)
+  email                 String?             @unique @db.VarChar(320)
+  
+  // Password auth (for LOCAL provider)
+  passwordHash          String?             @db.VarChar(255)
+  
+  // OAuth fields (for social providers)
+  authProvider          AuthProvider        @default(LOCAL)
+  oauthProviderId       String?             @db.VarChar(255)  // Provider's user ID
+  
+  // Legacy field for backwards compatibility
+  externalId            String?             @unique @db.VarChar(255)
   
   // Profile fields (Feature 010 - User Signup)
   firstName             String?             @db.VarChar(50)
@@ -112,11 +148,79 @@ model User {
   usage                 Usage[]
   subscriptionEvents    SubscriptionEvent[]
   consentRecords        ConsentRecord[]
+  refreshTokens         RefreshToken[]
+  emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens   PasswordResetToken[]
+  authEvents            AuthEvent[]
   
   @@index([externalId])
   @@index([stripeCustomerId])
   @@index([plan])
   @@index([email])
+  @@index([authProvider, oauthProviderId])
+}
+
+// ===========================================
+// Refresh Token (Feature 010 - Self-managed Auth)
+// ===========================================
+
+model RefreshToken {
+  id              String    @id @default(uuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  tokenHash       String    @unique @db.VarChar(64)  // SHA-256 hash of token
+  deviceInfo      String?   @db.VarChar(255)         // Browser/device identifier
+  ipAddress       String?   @db.VarChar(45)
+  
+  expiresAt       DateTime
+  revokedAt       DateTime?
+  
+  createdAt       DateTime  @default(now())
+  
+  @@index([userId])
+  @@index([tokenHash])
+  @@index([expiresAt])
+}
+
+// ===========================================
+// Email Verification Token (Feature 010)
+// ===========================================
+
+model EmailVerificationToken {
+  id              String    @id @default(uuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  tokenHash       String    @unique @db.VarChar(64)  // SHA-256 hash
+  
+  expiresAt       DateTime  // 24 hours from creation
+  usedAt          DateTime?
+  
+  createdAt       DateTime  @default(now())
+  
+  @@index([userId])
+  @@index([tokenHash])
+}
+
+// ===========================================
+// Password Reset Token (Feature 010)
+// ===========================================
+
+model PasswordResetToken {
+  id              String    @id @default(uuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  tokenHash       String    @unique @db.VarChar(64)
+  
+  expiresAt       DateTime  // 1 hour from creation
+  usedAt          DateTime?
+  
+  createdAt       DateTime  @default(now())
+  
+  @@index([userId])
+  @@index([tokenHash])
   @@index([suspended])
 }
 
@@ -164,6 +268,30 @@ model SignupAttempt {
   @@index([email, createdAt])
   @@index([ipAddress, createdAt])
   @@index([outcome])
+}
+
+// ===========================================
+// Auth Event Audit Log (Feature 013 - Self-managed Auth)
+// ===========================================
+
+model AuthEvent {
+  id              String          @id @default(uuid())
+  
+  userId          String?         // NULL for failed signin with unknown email
+  user            User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  email           String          @db.VarChar(320)
+  eventType       AuthEventType
+  ipAddress       String          @db.VarChar(45)
+  userAgent       String?         @db.VarChar(500)
+  metadata        Json?           // Event-specific data (e.g., failureReason)
+  
+  createdAt       DateTime        @default(now())
+  
+  @@index([userId])
+  @@index([eventType])
+  @@index([createdAt])
+  @@index([email, createdAt])
 }
 
 // ===========================================
