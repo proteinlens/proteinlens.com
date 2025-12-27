@@ -430,10 +430,8 @@ export async function readiness(request: HttpRequest, context: InvocationContext
       operation: 'database-check',
     });
     
-    Logger.error('Readiness check failed', {
+    Logger.error('Readiness check failed', err, {
       correlationId: traceContext.correlationId,
-      error: err.message,
-      stack: err.stack,
     });
     
     return addResponseHeaders({

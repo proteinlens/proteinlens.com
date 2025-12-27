@@ -147,10 +147,10 @@ export async function analyzeMeal(request: HttpRequest, context: InvocationConte
       mealAnalysisId,
       wasCached: String(wasCached),
       foodCount: String(aiResponse.foods.length),
+      confidence: aiResponse.confidence,
     }, {
       durationMs,
       totalProtein: aiResponse.totalProtein,
-      confidence: aiResponse.confidence,
     });
     
     // Track analysis count metric
