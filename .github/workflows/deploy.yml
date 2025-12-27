@@ -402,7 +402,7 @@ jobs:
         run: |
           echo "🔍 Testing usage endpoint..."
           response=$(curl -s -w "\n%{http_code}" \
-            "$API_URL/api/usage?userId=$TEST_USER_ID" \
+            "$API_URL/api/billing/usage" \
             -H "x-user-id: $TEST_USER_ID")
           
           code=$(echo "$response" | tail -n1)
@@ -420,7 +420,7 @@ jobs:
       - name: Test API - Plans endpoint
         run: |
           echo "🔍 Testing plans endpoint..."
-          response=$(curl -s -w "\n%{http_code}" "$API_URL/api/plans")
+          response=$(curl -s -w "\n%{http_code}" "$API_URL/api/billing/plans")
           code=$(echo "$response" | tail -n1)
           body=$(echo "$response" | head -n -1)
           
