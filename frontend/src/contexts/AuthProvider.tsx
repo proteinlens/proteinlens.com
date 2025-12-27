@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { API_ENDPOINTS, AUTH } from '../config';
 import { isMsalConfigured, loginRequest } from '../auth/msalConfig';
 
@@ -31,6 +31,11 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 const SESSION_INACTIVITY_MS = 30 * 60 * 1000;
 const SESSION_ABSOLUTE_MS = 7 * 24 * 60 * 60 * 1000;
 
+// Helper to get MSAL instance from window
+function getMsalInstance(): any | null {
+  return (window as any).msalInstance || null;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,8 +43,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [lastActivity, setLastActivity] = useState<number>(Date.now());
   const [sessionStart] = useState<number>(Date.now());
   
-  // Lazy MSAL instance (optional). We do not import msal if not installed yet.
-  const msal = (window as any).msalInstance as any | undefined;
+  // Track if initial auth check has been performed
+  const authCheckRef = useRef(false);
 
   // Track user activity for inactivity timeout
   useEffect(() => {
@@ -65,6 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [isAuthenticated, lastActivity, sessionStart]);
 
   const getAccessToken = useCallback(async () => {
+    const msal = getMsalInstance();
     try {
       if (msal) {
         const accounts = msal.getAllAccounts?.() || [];
@@ -89,7 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       return null;
     }
-  }, [msal]);
+  }, []);
 
   const fetchUserProfile = useCallback(async (token: string) => {
     try {
@@ -116,6 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = useCallback(async (options?: LoginOptions) => {
+    const msal = getMsalInstance();
     if (!msal) {
       // Check if config is missing vs MSAL failed to initialize
       if (!isMsalConfigured()) {
@@ -127,29 +134,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       ? { ...loginRequest, extraQueryParameters: options.extraQueryParameters }
       : loginRequest;
     await msal.loginRedirect(request);
-  }, [msal]);
+  }, []);
 
   const logout = useCallback(async () => {
+    const msal = getMsalInstance();
     if (msal) {
       await msal.logoutRedirect?.();
     }
     setIsAuthenticated(false);
     setUser(null);
-  }, [msal]);
+  }, []);
 
   const resendVerificationEmail = useCallback(async () => {
+    const msal = getMsalInstance();
     // B2C handles email verification during signup
     // For resend, redirect to the verification policy
     if (msal && AUTH.authority) {
       // This would redirect to a B2C policy for email verification
       console.log('[Auth] Resend verification email requested');
     }
-  }, [msal]);
+  }, []);
 
+  // Initial auth check - runs only once on mount
   useEffect(() => {
-    // Check auth state on mount and handle redirect callback
-    (async () => {
+    // Prevent multiple auth checks
+    if (authCheckRef.current) return;
+    authCheckRef.current = true;
+    
+    const checkAuth = async () => {
       setIsLoading(true);
+      
+      // If MSAL is not configured, skip auth check entirely
+      if (!isMsalConfigured()) {
+        console.log('[Auth] MSAL not configured, skipping auth check');
+        setIsLoading(false);
+        return;
+      }
+      
+      // Wait a short time for MSAL to initialize (it's async in main.tsx)
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const msal = getMsalInstance();
       
       // Handle redirect callback if present
       if (msal) {
@@ -167,8 +192,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await fetchUserProfile(token);
       }
       setIsLoading(false);
-    })();
-  }, [getAccessToken, fetchUserProfile, msal]);
+    };
+    
+    checkAuth();
+  }, []); // Empty dependency array - run only once on mount
 
   const value = useMemo<AuthContextValue>(
     () => ({ isAuthenticated, isLoading, user, getAccessToken, login, logout, resendVerificationEmail }),

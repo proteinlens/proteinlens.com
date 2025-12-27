@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthProvider';
 import { trackProtectedRouteRedirect } from '../utils/telemetry';
+import { isMsalConfigured } from '../auth/msalConfig';
 
 export function ProtectedRoute() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -17,6 +18,13 @@ export function ProtectedRoute() {
         </div>
       </div>
     );
+  }
+
+  // If MSAL is not configured, allow access to protected routes without auth
+  // This prevents infinite loops when auth isn't set up
+  if (!isMsalConfigured()) {
+    console.log('[ProtectedRoute] MSAL not configured, allowing access');
+    return <Outlet />;
   }
 
   if (!isAuthenticated) {
