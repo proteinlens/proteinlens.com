@@ -6,7 +6,7 @@
  * Replaces the basic SignUp page with full validation and UX improvements.
  */
 
-import { FC, useCallback, useEffect } from 'react';
+import { FC, useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SignupForm } from '../components/auth/SignupForm';
 import { useAuth } from '../contexts/AuthProvider';
@@ -17,6 +17,7 @@ import { useAuth } from '../contexts/AuthProvider';
 export const SignupPage: FC = () => {
   const navigate = useNavigate();
   const { login, isAuthenticated, isLoading } = useAuth();
+  const [authError, setAuthError] = useState<string | null>(null);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -26,23 +27,37 @@ export const SignupPage: FC = () => {
   }, [isAuthenticated, navigate]);
 
   // Handle successful form validation (before B2C redirect)
-  const handleSignupSuccess = useCallback(() => {
+  const handleSignupSuccess = useCallback(async () => {
     // Form validation passed - trigger B2C signup flow
     // The actual redirect happens via MSAL
-    login();
+    try {
+      setAuthError(null);
+      await login();
+    } catch (error) {
+      console.error('[Signup] Auth error:', error);
+      const message = error instanceof Error ? error.message : 'Authentication failed. Please try again.';
+      setAuthError(message);
+    }
   }, [login]);
 
   // Handle social login
   const handleSocialLogin = useCallback(
-    (provider: 'google' | 'microsoft') => {
+    async (provider: 'google' | 'microsoft') => {
       // B2C handles social provider federation
       // We use the same login() but with extraQueryParameters
       // to hint the provider preference
-      login({
-        extraQueryParameters: {
-          domain_hint: provider === 'google' ? 'google.com' : 'live.com',
-        },
-      });
+      try {
+        setAuthError(null);
+        await login({
+          extraQueryParameters: {
+            domain_hint: provider === 'google' ? 'google.com' : 'live.com',
+          },
+        });
+      } catch (error) {
+        console.error('[Signup] Social login error:', error);
+        const message = error instanceof Error ? error.message : 'Authentication failed. Please try again.';
+        setAuthError(message);
+      }
     },
     [login]
   );
@@ -115,6 +130,24 @@ export const SignupPage: FC = () => {
             <span className="text-sm font-medium text-gray-700">Track your goals</span>
           </div>
         </div>
+
+        {/* Auth error message */}
+        {authError && (
+          <div className="rounded-lg bg-amber-50 border border-amber-200 p-4" role="alert">
+            <div className="flex">
+              <svg className="h-5 w-5 text-amber-400 mr-3 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+              </svg>
+              <div>
+                <h3 className="text-sm font-medium text-amber-800">Authentication Setup Required</h3>
+                <p className="mt-1 text-sm text-amber-700">{authError}</p>
+                <p className="mt-2 text-sm text-amber-600">
+                  Please contact support or try again later while we complete the setup.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Signup form */}
         <div
