@@ -182,7 +182,7 @@
 
 **Purpose**: Quality improvements across all user stories
 
-- [ ] T050 [P] Update frontend components to use shadcn/ui auth form components
+- [ ] T050 [P] [DEFERRED] Update frontend components to use shadcn/ui auth form components (requires shadcn/ui setup)
 - [X] T051 [P] Add loading states and skeleton screens to all auth pages
 - [X] T052 [P] Add form validation feedback per spec edge cases (inline errors)
 - [X] T053 [P] Add rate limiting error handling UI (show lockout message)
