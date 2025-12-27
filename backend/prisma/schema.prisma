@@ -59,6 +59,23 @@ enum OrganizationInviteStatus {
 }
 
 // ===========================================
+// Auth Event Type (Feature 013 - Self-managed Auth)
+// ===========================================
+
+enum AuthEventType {
+  SIGNUP_SUCCESS
+  SIGNUP_FAILED
+  SIGNIN_SUCCESS
+  SIGNIN_FAILED
+  SIGNOUT
+  EMAIL_VERIFIED
+  PASSWORD_RESET_REQUESTED
+  PASSWORD_RESET_SUCCESS
+  SESSION_REVOKED
+  PASSWORD_CHANGED
+}
+
+// ===========================================
 // Auth Provider Type (Feature 010 - Self-managed Auth)
 // ===========================================
 
@@ -114,6 +131,7 @@ model User {
   refreshTokens         RefreshToken[]
   emailVerificationTokens EmailVerificationToken[]
   passwordResetTokens   PasswordResetToken[]
+  authEvents            AuthEvent[]
   
   @@index([externalId])
   @@index([stripeCustomerId])
@@ -229,6 +247,30 @@ model SignupAttempt {
   @@index([email, createdAt])
   @@index([ipAddress, createdAt])
   @@index([outcome])
+}
+
+// ===========================================
+// Auth Event Audit Log (Feature 013 - Self-managed Auth)
+// ===========================================
+
+model AuthEvent {
+  id              String          @id @default(uuid())
+  
+  userId          String?         // NULL for failed signin with unknown email
+  user            User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  email           String          @db.VarChar(320)
+  eventType       AuthEventType
+  ipAddress       String          @db.VarChar(45)
+  userAgent       String?         @db.VarChar(500)
+  metadata        Json?           // Event-specific data (e.g., failureReason)
+  
+  createdAt       DateTime        @default(now())
+  
+  @@index([userId])
+  @@index([eventType])
+  @@index([createdAt])
+  @@index([email, createdAt])
 }
 
 // ===========================================

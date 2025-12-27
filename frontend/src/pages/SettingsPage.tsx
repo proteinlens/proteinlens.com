@@ -3,9 +3,12 @@
 // T071: Settings page with billing section
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useUsage } from '../hooks/useUsage';
+import { useAuth } from '../contexts/AuthProvider';
 import { redirectToPortal, getUsage, UsageStats } from '../services/billingApi';
 import { ProBadge } from '../components/ProBadge';
+import { trackLogout } from '../utils/telemetry';
 import './SettingsPage.css';
 
 interface SubscriptionInfo {
@@ -16,10 +19,13 @@ interface SubscriptionInfo {
 }
 
 export const SettingsPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { user, isAuthenticated, logout } = useAuth();
   // TODO: Replace with actual userId from auth context
-  const userId = 'demo-user';
+  const userId = user?.id || 'demo-user';
   const { usage, loading: usageLoading, refresh: refreshUsage } = useUsage(userId);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const isPro = usage?.plan === 'PRO';
@@ -35,6 +41,19 @@ export const SettingsPage: React.FC = () => {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to open billing portal');
       setPortalLoading(false);
+    }
+  };
+
+  // T042: Handle Sign Out click (Feature 013-self-managed-auth, US6)
+  const handleLogout = async () => {
+    setLogoutLoading(true);
+    try {
+      trackLogout();
+      await logout();
+      navigate('/signin');
+    } catch (err) {
+      setError('Failed to sign out. Please try again.');
+      setLogoutLoading(false);
     }
   };
 
@@ -208,15 +227,76 @@ export const SettingsPage: React.FC = () => {
           </div>
         </section>
 
-        {/* Account Section (placeholder) */}
+        {/* Account Section (T042: Sign Out button) */}
         <section className="settings-section">
           <h2 className="settings-section__title">
             <span className="settings-section__icon">👤</span>
             Account
           </h2>
-          <p className="settings-section__placeholder">
-            Account settings will be available when authentication is implemented.
-          </p>
+          
+          {isAuthenticated && user ? (
+            <div className="settings-account">
+              <div className="settings-account__info">
+                <div className="settings-account__detail">
+                  <span className="settings-account__label">Email</span>
+                  <span className="settings-account__value">{user.email}</span>
+                </div>
+                {(user.firstName || user.lastName) && (
+                  <div className="settings-account__detail">
+                    <span className="settings-account__label">Name</span>
+                    <span className="settings-account__value">
+                      {[user.firstName, user.lastName].filter(Boolean).join(' ')}
+                    </span>
+                  </div>
+                )}
+                <div className="settings-account__detail">
+                  <span className="settings-account__label">Email Verified</span>
+                  <span className="settings-account__value">
+                    {user.emailVerified ? '✅ Verified' : '⚠️ Not verified'}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="settings-account__actions">
+                <button
+                  className="settings-account__button settings-account__button--sessions"
+                  onClick={() => navigate('/settings/sessions')}
+                >
+                  <span className="settings-account__button-icon">📱</span>
+                  Manage Sessions
+                </button>
+                <button
+                  className="settings-account__button settings-account__button--logout"
+                  onClick={handleLogout}
+                  disabled={logoutLoading}
+                >
+                  {logoutLoading ? (
+                    <>
+                      <span className="settings-account__spinner">⏳</span>
+                      Signing out...
+                    </>
+                  ) : (
+                    <>
+                      <span className="settings-account__button-icon">🚪</span>
+                      Sign Out
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="settings-account">
+              <p className="settings-section__placeholder">
+                You are not signed in.
+              </p>
+              <div className="settings-account__actions">
+                <a href="/signin" className="settings-account__button settings-account__button--signin">
+                  <span className="settings-account__button-icon">🔑</span>
+                  Sign In
+                </a>
+              </div>
+            </div>
+          )}
         </section>
       </div>
     </div>

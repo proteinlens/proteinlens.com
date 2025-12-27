@@ -7,6 +7,7 @@ import {
   signout as apiSignout,
   signup as apiSignup,
   resendVerificationEmail,
+  refreshTokens,
   clearTokens,
   getStoredAccessToken,
   storeTokens,
@@ -173,7 +174,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setError(null);
   }, []);
 
-  // Check auth state on mount and handle OAuth callback
+  // Check auth state on mount and handle OAuth callback (T031: automatic token refresh on page load)
   useEffect(() => {
     (async () => {
       setIsLoading(true);
@@ -197,7 +198,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         window.history.replaceState({}, '', returnUrl);
       }
       
-      // Check if we have a stored token
+      // T031: Automatic token refresh on page load
+      // Try to refresh using HttpOnly cookie first (modern approach)
+      // This handles the case where access token is expired but refresh token cookie exists
+      try {
+        // Attempt refresh - if HttpOnly cookie exists, we'll get new tokens
+        await refreshTokens();
+        
+        // If refresh succeeded, fetch user profile
+        const profile = await fetchUserProfile();
+        if (profile) {
+          setUser(profile);
+          setIsAuthenticated(true);
+          setIsLoading(false);
+          return;
+        }
+      } catch {
+        // Refresh failed - might not have a valid session
+        // Continue to check stored tokens for backward compatibility
+      }
+      
+      // Fallback: Check if we have a stored token (backward compatibility)
       const hasToken = !!getStoredAccessToken();
       
       if (hasToken) {

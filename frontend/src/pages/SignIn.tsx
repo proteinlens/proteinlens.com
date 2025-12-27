@@ -3,7 +3,7 @@ import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthProvider';
 import { trackLoginAttempt, trackLoginSuccess } from '../utils/telemetry';
 import { API_ENDPOINTS } from '../config';
-import { AuthError } from '../services/authService';
+import { AuthError, RateLimitError } from '../services/authService';
 
 export function SignIn() {
   const { login, isAuthenticated, isLoading } = useAuth();
@@ -18,6 +18,7 @@ export function SignIn() {
   const [error, setError] = React.useState<string | null>(oauthError ? getOAuthErrorMessage(oauthError) : null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [needsVerification, setNeedsVerification] = React.useState(false);
+  const [isRateLimited, setIsRateLimited] = React.useState(false);
 
   // If already signed in, redirect
   React.useEffect(() => {
@@ -31,13 +32,17 @@ export function SignIn() {
     e.preventDefault();
     setError(null);
     setNeedsVerification(false);
+    setIsRateLimited(false);
     setIsSubmitting(true);
     trackLoginAttempt();
     
     try {
       await login({ email, password });
     } catch (err) {
-      if (err instanceof AuthError) {
+      if (err instanceof RateLimitError) {
+        setIsRateLimited(true);
+        setError(err.message);
+      } else if (err instanceof AuthError) {
         if (err.code === 'EMAIL_NOT_VERIFIED') {
           setNeedsVerification(true);
         }

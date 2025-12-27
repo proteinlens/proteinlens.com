@@ -21,8 +21,21 @@ import {
   getRefreshTokenExpiry,
   TokenError,
 } from '../utils/jwt.js';
+import { getEmailService } from '../utils/email.js';
+import { AuthEventService } from '../utils/authEvents.js';
+import {
+  setRefreshTokenCookie,
+  clearRefreshTokenCookie,
+  setCsrfTokenCookie,
+  clearCsrfTokenCookie,
+  generateCsrfToken,
+  getRefreshTokenFromCookie,
+  validateCsrfToken,
+} from '../utils/cookies.js';
 
 const prisma = getPrismaClient();
+const emailService = getEmailService();
+const authEvents = new AuthEventService(prisma);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Validation Schemas
@@ -252,9 +265,19 @@ async function signup(request: HttpRequest, context: InvocationContext): Promise
 
     await logSignupAttempt(email, 'SUCCESS', ipAddress, userAgent);
 
-    // TODO: Send verification email with verificationToken
-    // For now, log it (in production, use email service)
-    context.log(`[Auth] Verification token for ${email}: ${verificationToken}`);
+    // Send verification email (FR-005)
+    const emailResult = await emailService.sendVerificationEmail({
+      email,
+      token: verificationToken,
+      expiresInHours: 24,
+    });
+
+    if (!emailResult.success) {
+      context.warn(`[Auth] Failed to send verification email to ${email}: ${emailResult.error}`);
+    }
+
+    // Log auth event (FR-031)
+    await authEvents.logSignupSuccess(user.id, email, { ipAddress, userAgent: userAgent || undefined });
 
     return {
       status: 201,
@@ -302,6 +325,8 @@ async function signin(request: HttpRequest, context: InvocationContext): Promise
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user || !user.passwordHash) {
+      // Log failed signin attempt (FR-031)
+      await authEvents.logSigninFailed(email, 'User not found', { ipAddress, userAgent: userAgent || undefined });
       // Don't reveal if email exists for security
       return {
         status: 401,
@@ -312,6 +337,8 @@ async function signin(request: HttpRequest, context: InvocationContext): Promise
     // Verify password
     const isValidPassword = await verifyPassword(password, user.passwordHash);
     if (!isValidPassword) {
+      // Log failed signin attempt (FR-031)
+      await authEvents.logSigninFailed(email, 'Invalid password', { ipAddress, userAgent: userAgent || undefined }, user.id);
       return {
         status: 401,
         jsonBody: { error: 'Invalid email or password' },
@@ -320,6 +347,8 @@ async function signin(request: HttpRequest, context: InvocationContext): Promise
 
     // Check if email is verified
     if (!user.emailVerified) {
+      // Log failed signin attempt (FR-031)
+      await authEvents.logSigninFailed(email, 'Email not verified', { ipAddress, userAgent: userAgent || undefined }, user.id);
       return {
         status: 403,
         jsonBody: {
@@ -347,12 +376,26 @@ async function signin(request: HttpRequest, context: InvocationContext): Promise
       },
     });
 
+    // Log successful signin (FR-031)
+    await authEvents.logSigninSuccess(user.id, email, { ipAddress, userAgent: userAgent || undefined });
+
+    // Generate CSRF token for double-submit cookie pattern
+    const csrfToken = generateCsrfToken();
+
     return {
       status: 200,
+      // Set refresh token as HttpOnly cookie (T024) and CSRF token cookie (T025)
+      cookies: [
+        setRefreshTokenCookie(tokens.refreshToken, tokens.refreshExpiresAt),
+        setCsrfTokenCookie(csrfToken),
+      ],
       jsonBody: {
         accessToken: tokens.accessToken,
+        // Include refresh token in body for backward compatibility
+        // Frontend should transition to using HttpOnly cookie
         refreshToken: tokens.refreshToken,
         expiresIn: tokens.expiresIn,
+        csrfToken, // Include for client to use in future requests
         user: {
           id: user.id,
           email: user.email,
@@ -378,17 +421,33 @@ async function signin(request: HttpRequest, context: InvocationContext): Promise
 
 async function refresh(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
   try {
-    const body = await request.json();
-    const result = refreshSchema.safeParse(body);
+    // Try to get refresh token from HttpOnly cookie first, then body (backward compat)
+    let refreshToken = getRefreshTokenFromCookie(request);
+    let usingCookie = !!refreshToken;
 
-    if (!result.success) {
+    if (!refreshToken) {
+      // Fall back to body for backward compatibility
+      const body = await request.json().catch(() => ({}));
+      const result = refreshSchema.safeParse(body);
+      if (result.success) {
+        refreshToken = result.data.refreshToken;
+      }
+    }
+
+    if (!refreshToken) {
       return {
         status: 400,
         jsonBody: { error: 'Refresh token is required' },
       };
     }
 
-    const { refreshToken } = result.data;
+    // Validate CSRF token if using cookie-based refresh (T025)
+    if (usingCookie && !validateCsrfToken(request)) {
+      return {
+        status: 403,
+        jsonBody: { error: 'Invalid or missing CSRF token', code: 'CSRF_INVALID' },
+      };
+    }
 
     // Verify the refresh token JWT
     let payload;
@@ -398,6 +457,8 @@ async function refresh(request: HttpRequest, context: InvocationContext): Promis
       if (error instanceof TokenError) {
         return {
           status: 401,
+          // Clear the invalid cookie
+          cookies: usingCookie ? [clearRefreshTokenCookie(), clearCsrfTokenCookie()] : undefined,
           jsonBody: { error: error.message, code: error.code },
         };
       }
@@ -414,6 +475,7 @@ async function refresh(request: HttpRequest, context: InvocationContext): Promis
     if (!storedToken || storedToken.revokedAt) {
       return {
         status: 401,
+        cookies: usingCookie ? [clearRefreshTokenCookie(), clearCsrfTokenCookie()] : undefined,
         jsonBody: { error: 'Invalid or revoked refresh token' },
       };
     }
@@ -441,12 +503,22 @@ async function refresh(request: HttpRequest, context: InvocationContext): Promis
       }),
     ]);
 
+    // Generate new CSRF token
+    const csrfToken = generateCsrfToken();
+
     return {
       status: 200,
+      // Set new cookies for rotated tokens
+      cookies: [
+        setRefreshTokenCookie(tokens.refreshToken, tokens.refreshExpiresAt),
+        setCsrfTokenCookie(csrfToken),
+      ],
       jsonBody: {
         accessToken: tokens.accessToken,
+        // Include refresh token in body for backward compatibility
         refreshToken: tokens.refreshToken,
         expiresIn: tokens.expiresIn,
+        csrfToken,
       },
     };
   } catch (error) {
@@ -463,27 +535,61 @@ async function refresh(request: HttpRequest, context: InvocationContext): Promis
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function logout(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
+  const ipAddress = getClientIp(request);
+  const userAgent = getUserAgent(request);
+
   try {
-    const body = await request.json();
-    const { refreshToken } = body as { refreshToken?: string };
+    // Try to get refresh token from cookie first, then body (backward compat)
+    let refreshToken: string | null = getRefreshTokenFromCookie(request);
+    
+    if (!refreshToken) {
+      const body = await request.json().catch(() => ({}));
+      refreshToken = (body as { refreshToken?: string }).refreshToken ?? null;
+    }
 
     if (refreshToken) {
       // Revoke the specific refresh token
       const tokenHash = hashRefreshToken(refreshToken);
+      
+      // Get user info before revoking for logging
+      const tokenRecord = await prisma.refreshToken.findUnique({
+        where: { tokenHash },
+        include: { user: { select: { id: true, email: true } } },
+      });
+
       await prisma.refreshToken.updateMany({
         where: { tokenHash, revokedAt: null },
         data: { revokedAt: new Date() },
       });
+
+      // Log auth event (FR-031)
+      if (tokenRecord?.user) {
+        await authEvents.logSignout(
+          tokenRecord.user.id,
+          tokenRecord.user.email!,
+          { ipAddress, userAgent: userAgent || undefined }
+        );
+      }
     }
 
+    // Clear cookies (T040) - always clear even if no token found
     return {
       status: 200,
+      cookies: [
+        clearRefreshTokenCookie(),
+        clearCsrfTokenCookie(),
+      ],
       jsonBody: { message: 'Logged out successfully' },
     };
   } catch (error) {
     context.error('[Auth] Logout error:', error);
+    // Still try to clear cookies on error
     return {
       status: 500,
+      cookies: [
+        clearRefreshTokenCookie(),
+        clearCsrfTokenCookie(),
+      ],
       jsonBody: { error: 'An unexpected error occurred' },
     };
   }
@@ -494,6 +600,9 @@ async function logout(request: HttpRequest, context: InvocationContext): Promise
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function verifyEmail(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
+  const ipAddress = getClientIp(request);
+  const userAgent = getUserAgent(request);
+
   try {
     const body = await request.json();
     const result = verifyEmailSchema.safeParse(body);
@@ -549,6 +658,13 @@ async function verifyEmail(request: HttpRequest, context: InvocationContext): Pr
         data: { usedAt: new Date() },
       }),
     ]);
+
+    // Log auth event (FR-031)
+    await authEvents.logEmailVerified(
+      verificationToken.userId,
+      verificationToken.user.email!,
+      { ipAddress, userAgent: userAgent || undefined }
+    );
 
     return {
       status: 200,
@@ -629,8 +745,16 @@ async function resendVerification(request: HttpRequest, context: InvocationConte
       },
     });
 
-    // TODO: Send email with verificationToken
-    context.log(`[Auth] New verification token for ${email}: ${verificationToken}`);
+    // Send verification email (FR-007)
+    const emailResult = await emailService.sendVerificationEmail({
+      email,
+      token: verificationToken,
+      expiresInHours: 24,
+    });
+
+    if (!emailResult.success) {
+      context.warn(`[Auth] Failed to resend verification email to ${email}: ${emailResult.error}`);
+    }
 
     return {
       status: 200,
@@ -706,8 +830,19 @@ async function forgotPassword(request: HttpRequest, context: InvocationContext):
       },
     });
 
-    // TODO: Send email with resetToken
-    context.log(`[Auth] Password reset token for ${email}: ${resetToken}`);
+    // Send password reset email (FR-015)
+    const emailResult = await emailService.sendPasswordResetEmail({
+      email,
+      token: resetToken,
+      expiresInHours: 1,
+    });
+
+    if (!emailResult.success) {
+      context.warn(`[Auth] Failed to send password reset email to ${email}: ${emailResult.error}`);
+    }
+
+    // Log auth event (FR-031)
+    await authEvents.logPasswordResetRequested(email, { ipAddress, userAgent: userAgent || undefined }, user.id);
 
     return {
       status: 200,
@@ -730,6 +865,9 @@ async function forgotPassword(request: HttpRequest, context: InvocationContext):
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function resetPassword(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
+  const ipAddress = getClientIp(request);
+  const userAgent = getUserAgent(request);
+
   try {
     const body = await request.json();
     const result = resetPasswordSchema.safeParse(body);
@@ -823,6 +961,20 @@ async function resetPassword(request: HttpRequest, context: InvocationContext): 
       }),
     ]);
 
+    // Send password changed notification email (FR-018)
+    await emailService.sendPasswordChangedEmail({
+      email: resetToken.user.email!,
+      ipAddress,
+      userAgent: userAgent || undefined,
+    });
+
+    // Log auth event (FR-031)
+    await authEvents.logPasswordResetSuccess(
+      resetToken.userId,
+      resetToken.user.email!,
+      { ipAddress, userAgent: userAgent || undefined }
+    );
+
     return {
       status: 200,
       jsonBody: { message: 'Password reset successfully. You can now sign in with your new password.' },
@@ -902,6 +1054,177 @@ async function validatePasswordEndpoint(request: HttpRequest, context: Invocatio
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// GET /api/auth/sessions (T044 - Phase 7: Session Management)
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function listSessions(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
+  try {
+    // Verify access token
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return {
+        status: 401,
+        jsonBody: { error: 'Access token required' },
+      };
+    }
+
+    const token = authHeader.substring(7);
+    let payload;
+    try {
+      payload = await verifyToken(token, 'access');
+    } catch (error) {
+      if (error instanceof TokenError) {
+        return {
+          status: 401,
+          jsonBody: { error: error.message, code: error.code },
+        };
+      }
+      throw error;
+    }
+
+    // Get current refresh token hash to mark current session
+    const currentRefreshToken = getRefreshTokenFromCookie(request);
+    const currentTokenHash = currentRefreshToken ? hashRefreshToken(currentRefreshToken) : null;
+
+    // Get all active sessions for this user
+    const sessions = await prisma.refreshToken.findMany({
+      where: {
+        userId: payload.userId,
+        revokedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        deviceInfo: true,
+        ipAddress: true,
+        createdAt: true,
+        tokenHash: true,
+      },
+    });
+
+    // Format sessions for response (excluding sensitive tokenHash)
+    const formattedSessions = sessions.map(session => ({
+      id: session.id,
+      deviceInfo: session.deviceInfo,
+      ipAddress: session.ipAddress,
+      createdAt: session.createdAt.toISOString(),
+      isCurrent: currentTokenHash === session.tokenHash,
+    }));
+
+    return {
+      status: 200,
+      jsonBody: { sessions: formattedSessions },
+    };
+  } catch (error) {
+    context.error('[Auth] List sessions error:', error);
+    return {
+      status: 500,
+      jsonBody: { error: 'An unexpected error occurred' },
+    };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DELETE /api/auth/sessions/:id (T045 - Phase 7: Session Management)
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function revokeSession(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
+  const ipAddress = getClientIp(request);
+  const userAgent = getUserAgent(request);
+
+  try {
+    // Verify access token
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return {
+        status: 401,
+        jsonBody: { error: 'Access token required' },
+      };
+    }
+
+    const token = authHeader.substring(7);
+    let payload;
+    try {
+      payload = await verifyToken(token, 'access');
+    } catch (error) {
+      if (error instanceof TokenError) {
+        return {
+          status: 401,
+          jsonBody: { error: error.message, code: error.code },
+        };
+      }
+      throw error;
+    }
+
+    // Get session ID from URL
+    const url = new URL(request.url);
+    const sessionId = url.pathname.split('/').pop();
+    
+    if (!sessionId) {
+      return {
+        status: 400,
+        jsonBody: { error: 'Session ID is required' },
+      };
+    }
+
+    // Find the session
+    const session = await prisma.refreshToken.findUnique({
+      where: { id: sessionId },
+      include: { user: { select: { id: true, email: true } } },
+    });
+
+    // Check if session exists and belongs to user
+    if (!session) {
+      return {
+        status: 404,
+        jsonBody: { error: 'Session not found' },
+      };
+    }
+
+    if (session.userId !== payload.userId) {
+      return {
+        status: 403,
+        jsonBody: { error: 'Cannot revoke another user\'s session' },
+      };
+    }
+
+    // Check if already revoked
+    if (session.revokedAt) {
+      return {
+        status: 200,
+        jsonBody: { message: 'Session already revoked' },
+      };
+    }
+
+    // Revoke the session
+    await prisma.refreshToken.update({
+      where: { id: sessionId },
+      data: { revokedAt: new Date() },
+    });
+
+    // Log auth event (T046: SESSION_REVOKED)
+    await authEvents.logSessionRevoked(
+      payload.userId,
+      payload.email,
+      { ipAddress, userAgent: userAgent || undefined },
+      sessionId
+    );
+
+    return {
+      status: 200,
+      jsonBody: { message: 'Session revoked successfully' },
+    };
+  } catch (error) {
+    context.error('[Auth] Revoke session error:', error);
+    return {
+      status: 500,
+      jsonBody: { error: 'An unexpected error occurred' },
+    };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Register Azure Functions
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -973,4 +1296,19 @@ app.http('auth-validate-password', {
   authLevel: 'anonymous',
   route: 'auth/validate-password',
   handler: validatePasswordEndpoint,
+});
+
+// Session Management (Phase 7: T044, T045)
+app.http('auth-sessions-list', {
+  methods: ['GET'],
+  authLevel: 'anonymous',
+  route: 'auth/sessions',
+  handler: listSessions,
+});
+
+app.http('auth-sessions-revoke', {
+  methods: ['DELETE'],
+  authLevel: 'anonymous',
+  route: 'auth/sessions/{sessionId}',
+  handler: revokeSession,
 });

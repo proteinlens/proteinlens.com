@@ -22,6 +22,8 @@ Auto-generated from all feature plans. Last updated: 2025-12-22
 - PostgreSQL (Prisma) for local user mapping and audit logs (009-user-auth)
 - TypeScript 5.x; Node.js >= 20 (Azure Functions v4); React 18 + Azure Entra External ID (B2C), @azure/msal-browser, Azure Functions, Prisma, Zod, React Router, TailwindCSS, shadcn/ui (010-user-signup)
 - PostgreSQL (via Prisma) for user profiles and consent records; B2C for credentials (010-user-signup)
+- TypeScript 5.x (Node.js 20.x runtime) + Azure Functions v4, Prisma ORM, jose (JWT), bcrypt, zod (validation), @azure/communication-email (013-self-managed-auth)
+- PostgreSQL (Azure Database for PostgreSQL Flexible Server), existing Prisma schema (013-self-managed-auth)
 
 - TypeScript 5.3+ / Node.js 20 + Azure Functions v4, Prisma 5.8+, Stripe SDK, React 18, Vite 5 (002-saas-billing)
 
@@ -41,9 +43,9 @@ npm test && npm run lint
 TypeScript 5.3+ / Node.js 20: Follow standard conventions
 
 ## Recent Changes
+- 013-self-managed-auth: Added TypeScript 5.x (Node.js 20.x runtime) + Azure Functions v4, Prisma ORM, jose (JWT), bcrypt, zod (validation), @azure/communication-email
 - 010-user-signup: Added TypeScript 5.x; Node.js >= 20 (Azure Functions v4); React 18 + Azure Entra External ID (B2C), @azure/msal-browser, Azure Functions, Prisma, Zod, React Router, TailwindCSS, shadcn/ui
 - 009-user-auth: Added TypeScript 5.x; Node.js >= 20 (Azure Functions v4); React 18 + Azure Entra External ID (B2C), MSAL, Azure Functions, Prisma, Zod, Application Insights, React Router
-- 001-anon-to-pro-upsell: Added TypeScript 5.x; Node.js >= 20 (Azure Functions v4) + Azure Functions, Prisma, Stripe, Application Insights, Zod, React 18 + Vite + Tailwind
 
 
 <!-- MANUAL ADDITIONS START -->

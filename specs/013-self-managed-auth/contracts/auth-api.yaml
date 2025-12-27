@@ -1,0 +1,603 @@
+openapi: 3.0.3
+info:
+  title: ProteinLens Authentication API
+  description: Self-managed authentication endpoints for user signup, signin, and session management
+  version: 1.0.0
+  contact:
+    name: ProteinLens Team
+servers:
+  - url: /api/auth
+    description: Authentication endpoints
+
+tags:
+  - name: Authentication
+    description: Signup, signin, and signout operations
+  - name: Email Verification
+    description: Email verification flow
+  - name: Password Reset
+    description: Password reset flow
+  - name: Sessions
+    description: Session management
+
+paths:
+  /signup:
+    post:
+      tags: [Authentication]
+      summary: Create new user account
+      description: |
+        Creates a new user account with email and password.
+        Sends verification email upon successful creation.
+        Returns access token and sets refresh token cookie.
+      operationId: signup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupRequest'
+      responses:
+        '201':
+          description: Account created successfully
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: refresh_token=...; HttpOnly; Secure; SameSite=Strict; Path=/api/auth; Max-Age=604800
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '409':
+          description: Email already registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /signin:
+    post:
+      tags: [Authentication]
+      summary: Sign in with email and password
+      description: |
+        Authenticates user and returns tokens.
+        Sets refresh token as HttpOnly cookie.
+        Returns 403 if email not verified.
+      operationId: signin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SigninRequest'
+      responses:
+        '200':
+          description: Successfully authenticated
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Email not verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailNotVerifiedError'
+        '429':
+          description: Account locked (too many failed attempts)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /signout:
+    post:
+      tags: [Authentication]
+      summary: Sign out and invalidate session
+      description: |
+        Invalidates current refresh token.
+        Clears refresh token cookie.
+      operationId: signout
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successfully signed out
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: refresh_token=; HttpOnly; Secure; SameSite=Strict; Path=/api/auth; Max-Age=0
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Signed out successfully
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /refresh:
+    post:
+      tags: [Authentication]
+      summary: Refresh access token
+      description: |
+        Uses refresh token from HttpOnly cookie to issue new access token.
+        Optionally rotates refresh token.
+      operationId: refresh
+      responses:
+        '200':
+          description: New access token issued
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshResponse'
+        '401':
+          description: Invalid or expired refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /verify-email:
+    post:
+      tags: [Email Verification]
+      summary: Verify email with token
+      description: |
+        Verifies user's email address using token from verification email.
+        Token is single-use and expires after 24 hours.
+      operationId: verifyEmail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyEmailRequest'
+      responses:
+        '200':
+          description: Email verified successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Email verified successfully
+        '400':
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /resend-verification:
+    post:
+      tags: [Email Verification]
+      summary: Resend verification email
+      description: |
+        Resends verification email to user.
+        Rate limited to 3 per hour.
+      operationId: resendVerification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResendVerificationRequest'
+      responses:
+        '200':
+          description: Verification email sent (always returns success to prevent enumeration)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: If an account exists with this email, a verification link has been sent
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /forgot-password:
+    post:
+      tags: [Password Reset]
+      summary: Request password reset
+      description: |
+        Sends password reset email if account exists.
+        Always returns success to prevent email enumeration.
+        Token expires in 1 hour.
+      operationId: forgotPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequest'
+      responses:
+        '200':
+          description: Reset email sent (if account exists)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: If an account exists with this email, a password reset link has been sent
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /reset-password:
+    post:
+      tags: [Password Reset]
+      summary: Reset password with token
+      description: |
+        Resets password using token from reset email.
+        Invalidates all existing sessions.
+        Token is single-use and expires after 1 hour.
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+      responses:
+        '200':
+          description: Password reset successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Password reset successfully. Please sign in with your new password.
+        '400':
+          description: Invalid or expired token, or password doesn't meet requirements
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sessions:
+    get:
+      tags: [Sessions]
+      summary: List active sessions
+      description: Returns all active sessions for the authenticated user
+      operationId: listSessions
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of active sessions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionListResponse'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /sessions/{sessionId}:
+    delete:
+      tags: [Sessions]
+      summary: Revoke a session
+      description: |
+        Revokes a specific session by ID.
+        User can revoke any of their own sessions.
+      operationId: revokeSession
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Session revoked successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Session revoked successfully
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /me:
+    get:
+      tags: [Authentication]
+      summary: Get current user
+      description: Returns profile of authenticated user
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Access token from signin/signup response
+
+  schemas:
+    SignupRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 320
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 128
+          description: |
+            Must contain at least:
+            - 8 characters
+            - 1 uppercase letter
+            - 1 lowercase letter
+            - 1 number
+            - 1 special character
+          example: MyP@ssw0rd!
+        firstName:
+          type: string
+          maxLength: 50
+          example: John
+        lastName:
+          type: string
+          maxLength: 50
+          example: Doe
+
+    SigninRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          example: MyP@ssw0rd!
+
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: JWT access token (15 minute expiry)
+        expiresIn:
+          type: integer
+          description: Access token expiry in seconds
+          example: 900
+        user:
+          $ref: '#/components/schemas/UserProfile'
+
+    RefreshResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: New JWT access token
+        expiresIn:
+          type: integer
+          example: 900
+
+    VerifyEmailRequest:
+      type: object
+      required:
+        - token
+      properties:
+        token:
+          type: string
+          description: Verification token from email link
+
+    ResendVerificationRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+
+    ForgotPasswordRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+
+    ResetPasswordRequest:
+      type: object
+      required:
+        - token
+        - password
+      properties:
+        token:
+          type: string
+          description: Reset token from email link
+        password:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 128
+          description: New password (same requirements as signup)
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        firstName:
+          type: string
+          nullable: true
+        lastName:
+          type: string
+          nullable: true
+        emailVerified:
+          type: boolean
+        authProvider:
+          type: string
+          enum: [LOCAL, GOOGLE, MICROSOFT]
+        createdAt:
+          type: string
+          format: date-time
+
+    SessionListResponse:
+      type: object
+      properties:
+        sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Session'
+
+    Session:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        deviceInfo:
+          type: string
+          nullable: true
+          example: "Chrome 120 on macOS"
+        ipAddress:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        isCurrent:
+          type: boolean
+          description: Whether this is the session making the request
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+
+    ValidationError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          example: Validation failed
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+
+    EmailNotVerifiedError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: EMAIL_NOT_VERIFIED
+        message:
+          type: string
+          example: Please verify your email before signing in
+        canResend:
+          type: boolean
+          example: true

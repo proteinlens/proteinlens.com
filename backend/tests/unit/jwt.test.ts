@@ -13,11 +13,13 @@ import {
   hashRefreshToken,
   getRefreshTokenExpiry,
   resetSecretKey,
+  hasPreviousKey,
   TokenError,
 } from '../../src/utils/jwt';
 
 // Test JWT secret (minimum 32 characters required)
 const TEST_JWT_SECRET = 'test-jwt-secret-that-is-at-least-32-characters-long-for-testing';
+const TEST_JWT_SECRET_PREVIOUS = 'previous-jwt-secret-at-least-32-characters-long-testing';
 
 describe('JWT Utilities', () => {
   beforeEach(() => {
@@ -209,6 +211,137 @@ describe('JWT Utilities', () => {
       resetSecretKey();
 
       await expect(verifyToken(token, 'access')).rejects.toThrow(TokenError);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Dual-Key Rotation Tests (Constitution XI: Zero-Downtime Key Rotation)
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  describe('Dual-Key Rotation', () => {
+    afterEach(() => {
+      delete process.env.JWT_SECRET_PREVIOUS;
+    });
+
+    describe('hasPreviousKey', () => {
+      it('should return false when JWT_SECRET_PREVIOUS is not set', () => {
+        delete process.env.JWT_SECRET_PREVIOUS;
+        resetSecretKey();
+        expect(hasPreviousKey()).toBe(false);
+      });
+
+      it('should return false when JWT_SECRET_PREVIOUS is too short', () => {
+        process.env.JWT_SECRET_PREVIOUS = 'short';
+        resetSecretKey();
+        expect(hasPreviousKey()).toBe(false);
+      });
+
+      it('should return true when JWT_SECRET_PREVIOUS is valid', () => {
+        process.env.JWT_SECRET_PREVIOUS = TEST_JWT_SECRET_PREVIOUS;
+        resetSecretKey();
+        expect(hasPreviousKey()).toBe(true);
+      });
+    });
+
+    describe('verifyToken with key rotation', () => {
+      it('should verify token signed with current key', async () => {
+        process.env.JWT_SECRET = TEST_JWT_SECRET;
+        process.env.JWT_SECRET_PREVIOUS = TEST_JWT_SECRET_PREVIOUS;
+        resetSecretKey();
+
+        const user = { userId: 'user-123', email: 'test@example.com' };
+        const token = await generateAccessToken(user);
+
+        const payload = await verifyToken(token, 'access');
+        expect(payload.userId).toBe('user-123');
+      });
+
+      it('should verify token signed with previous key (rotation scenario)', async () => {
+        // Step 1: Generate token with "old" key
+        process.env.JWT_SECRET = TEST_JWT_SECRET_PREVIOUS;
+        delete process.env.JWT_SECRET_PREVIOUS;
+        resetSecretKey();
+
+        const user = { userId: 'user-456', email: 'rotated@example.com' };
+        const tokenSignedWithOldKey = await generateAccessToken(user);
+
+        // Step 2: Rotate keys - old key becomes previous, new key becomes current
+        process.env.JWT_SECRET = TEST_JWT_SECRET;
+        process.env.JWT_SECRET_PREVIOUS = TEST_JWT_SECRET_PREVIOUS;
+        resetSecretKey();
+
+        // Step 3: Token signed with old key should still verify via fallback
+        const payload = await verifyToken(tokenSignedWithOldKey, 'access');
+        expect(payload.userId).toBe('user-456');
+        expect(payload.email).toBe('rotated@example.com');
+      });
+
+      it('should fail if token signed with unknown key', async () => {
+        const unknownSecret = 'unknown-secret-key-that-is-at-least-32-chars-long!!';
+        
+        // Generate token with unknown key
+        process.env.JWT_SECRET = unknownSecret;
+        delete process.env.JWT_SECRET_PREVIOUS;
+        resetSecretKey();
+
+        const user = { userId: 'user-789', email: 'unknown@example.com' };
+        const tokenSignedWithUnknownKey = await generateAccessToken(user);
+
+        // Set up current and previous keys (neither matches unknown)
+        process.env.JWT_SECRET = TEST_JWT_SECRET;
+        process.env.JWT_SECRET_PREVIOUS = TEST_JWT_SECRET_PREVIOUS;
+        resetSecretKey();
+
+        await expect(verifyToken(tokenSignedWithUnknownKey, 'access')).rejects.toThrow(TokenError);
+      });
+
+      it('should not fallback on WRONG_TYPE error', async () => {
+        process.env.JWT_SECRET = TEST_JWT_SECRET;
+        process.env.JWT_SECRET_PREVIOUS = TEST_JWT_SECRET_PREVIOUS;
+        resetSecretKey();
+
+        const user = { userId: 'user-123', email: 'test@example.com' };
+        const refreshToken = await generateRefreshToken(user);
+
+        // Try to verify refresh token as access token - should fail without fallback
+        await expect(verifyToken(refreshToken, 'access')).rejects.toThrow('Expected access token but got refresh');
+      });
+
+      it('should verify refresh tokens with previous key', async () => {
+        // Generate refresh token with old key
+        process.env.JWT_SECRET = TEST_JWT_SECRET_PREVIOUS;
+        delete process.env.JWT_SECRET_PREVIOUS;
+        resetSecretKey();
+
+        const user = { userId: 'refresh-user', email: 'refresh@example.com' };
+        const refreshToken = await generateRefreshToken(user);
+
+        // Rotate keys
+        process.env.JWT_SECRET = TEST_JWT_SECRET;
+        process.env.JWT_SECRET_PREVIOUS = TEST_JWT_SECRET_PREVIOUS;
+        resetSecretKey();
+
+        // Should still verify
+        const payload = await verifyToken(refreshToken, 'refresh');
+        expect(payload.userId).toBe('refresh-user');
+        expect(payload.type).toBe('refresh');
+      });
+
+      it('new tokens should be signed with current key only', async () => {
+        process.env.JWT_SECRET = TEST_JWT_SECRET;
+        process.env.JWT_SECRET_PREVIOUS = TEST_JWT_SECRET_PREVIOUS;
+        resetSecretKey();
+
+        const user = { userId: 'new-user', email: 'new@example.com' };
+        const token = await generateAccessToken(user);
+
+        // Remove previous key - token should still verify (signed with current)
+        delete process.env.JWT_SECRET_PREVIOUS;
+        resetSecretKey();
+
+        const payload = await verifyToken(token, 'access');
+        expect(payload.userId).toBe('new-user');
+      });
     });
   });
 

@@ -257,6 +257,103 @@
   margin-left: auto;
 }
 
+/* Account Section (T042: Sign Out) */
+.settings-account {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.settings-account__info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.settings-account__detail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.settings-account__detail:last-child {
+  border-bottom: none;
+}
+
+.settings-account__label {
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.settings-account__value {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.settings-account__actions {
+  display: flex;
+  gap: 1rem;
+  padding-top: 0.5rem;
+}
+
+.settings-account__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  border: none;
+}
+
+.settings-account__button--logout {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.settings-account__button--logout:hover:not(:disabled) {
+  background: #fecaca;
+}
+
+.settings-account__button--logout:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.settings-account__button--sessions {
+  background: #e0e7ff;
+  color: #4338ca;
+}
+
+.settings-account__button--sessions:hover {
+  background: #c7d2fe;
+}
+
+.settings-account__button--signin {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.settings-account__button--signin:hover {
+  background: #bfdbfe;
+}
+
+.settings-account__button-icon {
+  font-size: 1.1rem;
+}
+
+.settings-account__spinner {
+  animation: spin 1s linear infinite;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .settings-page {

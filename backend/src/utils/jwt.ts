@@ -52,13 +52,15 @@ export class TokenError extends Error {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Secret Key Management
+// Secret Key Management (Dual-Key Rotation Support)
+// Constitution XI: Zero-Downtime Key Rotation
 // ─────────────────────────────────────────────────────────────────────────────
 
 let secretKey: Uint8Array | null = null;
+let previousSecretKey: Uint8Array | null = null;
 
 /**
- * Get the JWT secret key from environment
+ * Get the current JWT secret key from environment
  * @throws {TokenError} If JWT_SECRET is not configured
  */
 function getSecretKey(): Uint8Array {
@@ -85,10 +87,32 @@ function getSecretKey(): Uint8Array {
 }
 
 /**
+ * Get the previous JWT secret key for verification fallback
+ * @returns Previous secret key or null if not configured
+ */
+function getPreviousSecretKey(): Uint8Array | null {
+  if (previousSecretKey === null) {
+    const secret = process.env.JWT_SECRET_PREVIOUS;
+    if (secret && secret.length >= 32) {
+      previousSecretKey = new TextEncoder().encode(secret);
+    }
+  }
+  return previousSecretKey;
+}
+
+/**
+ * Check if a previous secret key is configured
+ */
+export function hasPreviousKey(): boolean {
+  return !!process.env.JWT_SECRET_PREVIOUS && process.env.JWT_SECRET_PREVIOUS.length >= 32;
+}
+
+/**
  * Reset secret key cache (for testing)
  */
 export function resetSecretKey(): void {
   secretKey = null;
+  previousSecretKey = null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -162,11 +186,16 @@ export async function generateTokenPair(user: UserTokenData): Promise<TokenPair>
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Verify and decode a JWT token
+ * Verify and decode a JWT token with dual-key rotation support
+ * 
+ * Constitution XI: Zero-Downtime Key Rotation
+ * - First tries current key (JWT_SECRET)
+ * - Falls back to previous key (JWT_SECRET_PREVIOUS) if configured
+ * 
  * @param token - JWT token to verify
  * @param expectedType - Expected token type ('access' or 'refresh')
  * @returns Decoded token payload
- * @throws {TokenError} If validation fails
+ * @throws {TokenError} If validation fails with both keys
  */
 export async function verifyToken(
   token: string,
@@ -174,6 +203,31 @@ export async function verifyToken(
 ): Promise<TokenPayload> {
   const key = getSecretKey();
   
+  try {
+    // Try verification with current key first
+    return await verifyTokenWithKey(token, key, expectedType);
+  } catch (error) {
+    // If current key fails, try previous key (dual-key rotation)
+    const previousKey = getPreviousSecretKey();
+    if (previousKey && !(error instanceof TokenError && error.code === 'WRONG_TYPE')) {
+      try {
+        return await verifyTokenWithKey(token, previousKey, expectedType);
+      } catch {
+        // Previous key also failed, throw original error
+      }
+    }
+    throw error;
+  }
+}
+
+/**
+ * Internal: Verify token with a specific key
+ */
+async function verifyTokenWithKey(
+  token: string,
+  key: Uint8Array,
+  expectedType: 'access' | 'refresh'
+): Promise<TokenPayload> {
   try {
     const { payload } = await jwtVerify(token, key, {
       issuer: 'proteinlens',
