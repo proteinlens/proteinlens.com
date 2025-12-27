@@ -31,6 +31,9 @@ param functionAppId string = ''
 @description('Enable scheduled query alerts (requires Application Insights data to be flowing - set to false for initial deployment)')
 param enableQueryAlerts bool = false
 
+@description('Enable budget alerts (requires Enterprise Agreement, Web direct or Microsoft Customer Agreement subscription)')
+param enableBudget bool = false
+
 // Resource naming convention
 var prefix = 'proteinlens-${environment}'
 
@@ -53,9 +56,9 @@ resource actionGroup 'Microsoft.Insights/actionGroups@2023-01-01' = {
 
 // =====================================================
 // Budget Alert
-// Note: Budget requires at least one email address for notifications
+// Note: Budget requires EA, Web direct or MCA subscription type and at least one email address
 // =====================================================
-resource budget 'Microsoft.Consumption/budgets@2023-05-01' = if (!empty(alertEmailAddresses)) {
+resource budget 'Microsoft.Consumption/budgets@2023-05-01' = if (enableBudget && !empty(alertEmailAddresses)) {
   name: '${prefix}-monthly-budget'
   properties: {
     category: 'Cost'
@@ -541,7 +544,7 @@ resource databaseLatencyAlert 'Microsoft.Insights/scheduledQueryRules@2022-06-15
 output actionGroupId string = actionGroup.id
 output observabilityActionGroupId string = observabilityActionGroup.id
 output logAnalyticsWorkspaceId string = logAnalytics.id
-output budgetName string = !empty(alertEmailAddresses) ? budget.name : ''
+output budgetName string = (enableBudget && !empty(alertEmailAddresses)) ? budget.name : ''
 output apiErrorRateAlertId string = !empty(functionAppId) ? apiErrorRateAlert.id : ''
 output apiLatencyAlertId string = !empty(functionAppId) ? apiLatencyAlert.id : ''
 output healthCheckAlertId string = enableQueryAlerts ? healthCheckAlert.id : ''
