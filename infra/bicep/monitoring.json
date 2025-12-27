@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.39.26.7824",
-      "templateHash": "1955352661721878010"
+      "templateHash": "5586920559083629205"
     }
   },
   "parameters": {
@@ -30,20 +30,6 @@
         "description": "Monthly budget threshold in EUR"
       }
     },
-    "aiCallsThreshold": {
-      "type": "int",
-      "defaultValue": 10000,
-      "metadata": {
-        "description": "AI monthly usage threshold (API calls)"
-      }
-    },
-    "storageThresholdGb": {
-      "type": "int",
-      "defaultValue": 50,
-      "metadata": {
-        "description": "Storage monthly threshold in GB"
-      }
-    },
     "alertEmailAddresses": {
       "type": "array",
       "defaultValue": [],
@@ -56,6 +42,34 @@
       "defaultValue": "[format('{0}-01', substring(utcNow(), 0, 7))]",
       "metadata": {
         "description": "Budget start date (first of month, e.g., 2025-01-01)"
+      }
+    },
+    "storageAccountId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Storage account resource ID for storage alerts (optional - if not provided, storage alert is skipped)"
+      }
+    },
+    "functionAppId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Function App resource ID for function alerts (optional - if not provided, function alerts are skipped)"
+      }
+    },
+    "enableQueryAlerts": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable scheduled query alerts (requires Application Insights data to be flowing - set to false for initial deployment)"
+      }
+    },
+    "enableBudget": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable budget alerts (requires Enterprise Agreement, Web direct or Microsoft Customer Agreement subscription)"
       }
     }
   },
@@ -85,6 +99,7 @@
       }
     },
     {
+      "condition": "[and(parameters('enableBudget'), not(empty(parameters('alertEmailAddresses'))))]",
       "type": "Microsoft.Consumption/budgets",
       "apiVersion": "2023-05-01",
       "name": "[format('{0}-monthly-budget', variables('prefix'))]",
@@ -140,6 +155,7 @@
       }
     },
     {
+      "condition": "[not(empty(parameters('storageAccountId')))]",
       "type": "Microsoft.Insights/metricAlerts",
       "apiVersion": "2018-03-01",
       "name": "[format('{0}-storage-transactions-alert', variables('prefix'))]",
@@ -149,7 +165,7 @@
         "severity": 2,
         "enabled": true,
         "scopes": [
-          "[resourceGroup().id]"
+          "[parameters('storageAccountId')]"
         ],
         "evaluationFrequency": "PT1H",
         "windowSize": "PT1H",
@@ -178,6 +194,7 @@
       ]
     },
     {
+      "condition": "[not(empty(parameters('functionAppId')))]",
       "type": "Microsoft.Insights/metricAlerts",
       "apiVersion": "2018-03-01",
       "name": "[format('{0}-function-execution-alert', variables('prefix'))]",
@@ -187,7 +204,7 @@
         "severity": 2,
         "enabled": true,
         "scopes": [
-          "[resourceGroup().id]"
+          "[parameters('functionAppId')]"
         ],
         "evaluationFrequency": "PT1H",
         "windowSize": "PT1H",
@@ -216,6 +233,7 @@
       ]
     },
     {
+      "condition": "[not(empty(parameters('functionAppId')))]",
       "type": "Microsoft.Insights/metricAlerts",
       "apiVersion": "2018-03-01",
       "name": "[format('{0}-function-error-alert', variables('prefix'))]",
@@ -225,7 +243,7 @@
         "severity": 1,
         "enabled": true,
         "scopes": [
-          "[resourceGroup().id]"
+          "[parameters('functionAppId')]"
         ],
         "evaluationFrequency": "PT5M",
         "windowSize": "PT15M",
@@ -254,6 +272,7 @@
       ]
     },
     {
+      "condition": "[parameters('enableQueryAlerts')]",
       "type": "Microsoft.Insights/scheduledQueryRules",
       "apiVersion": "2022-06-15",
       "name": "[format('{0}-ai-usage-alert', variables('prefix'))]",
@@ -315,6 +334,7 @@
       }
     },
     {
+      "condition": "[not(empty(parameters('functionAppId')))]",
       "type": "Microsoft.Insights/metricAlerts",
       "apiVersion": "2018-03-01",
       "name": "[format('{0}-api-error-rate-alert', variables('prefix'))]",
@@ -324,7 +344,7 @@
         "severity": 1,
         "enabled": true,
         "scopes": [
-          "[resourceGroup().id]"
+          "[parameters('functionAppId')]"
         ],
         "evaluationFrequency": "PT1M",
         "windowSize": "PT5M",
@@ -354,6 +374,7 @@
       ]
     },
     {
+      "condition": "[not(empty(parameters('functionAppId')))]",
       "type": "Microsoft.Insights/metricAlerts",
       "apiVersion": "2018-03-01",
       "name": "[format('{0}-api-latency-alert', variables('prefix'))]",
@@ -363,7 +384,7 @@
         "severity": 2,
         "enabled": true,
         "scopes": [
-          "[resourceGroup().id]"
+          "[parameters('functionAppId')]"
         ],
         "evaluationFrequency": "PT5M",
         "windowSize": "PT15M",
@@ -393,6 +414,7 @@
       ]
     },
     {
+      "condition": "[parameters('enableQueryAlerts')]",
       "type": "Microsoft.Insights/scheduledQueryRules",
       "apiVersion": "2022-06-15",
       "name": "[format('{0}-health-check-alert', variables('prefix'))]",
@@ -434,6 +456,7 @@
       ]
     },
     {
+      "condition": "[parameters('enableQueryAlerts')]",
       "type": "Microsoft.Insights/scheduledQueryRules",
       "apiVersion": "2022-06-15",
       "name": "[format('{0}-frontend-error-alert', variables('prefix'))]",
@@ -475,6 +498,7 @@
       ]
     },
     {
+      "condition": "[parameters('enableQueryAlerts')]",
       "type": "Microsoft.Insights/scheduledQueryRules",
       "apiVersion": "2022-06-15",
       "name": "[format('{0}-lcp-degradation-alert', variables('prefix'))]",
@@ -516,6 +540,7 @@
       ]
     },
     {
+      "condition": "[parameters('enableQueryAlerts')]",
       "type": "Microsoft.Insights/scheduledQueryRules",
       "apiVersion": "2022-06-15",
       "name": "[format('{0}-database-latency-alert', variables('prefix'))]",
@@ -572,19 +597,19 @@
     },
     "budgetName": {
       "type": "string",
-      "value": "[format('{0}-monthly-budget', variables('prefix'))]"
+      "value": "[if(and(parameters('enableBudget'), not(empty(parameters('alertEmailAddresses')))), format('{0}-monthly-budget', variables('prefix')), '')]"
     },
     "apiErrorRateAlertId": {
       "type": "string",
-      "value": "[resourceId('Microsoft.Insights/metricAlerts', format('{0}-api-error-rate-alert', variables('prefix')))]"
+      "value": "[if(not(empty(parameters('functionAppId'))), resourceId('Microsoft.Insights/metricAlerts', format('{0}-api-error-rate-alert', variables('prefix'))), '')]"
     },
     "apiLatencyAlertId": {
       "type": "string",
-      "value": "[resourceId('Microsoft.Insights/metricAlerts', format('{0}-api-latency-alert', variables('prefix')))]"
+      "value": "[if(not(empty(parameters('functionAppId'))), resourceId('Microsoft.Insights/metricAlerts', format('{0}-api-latency-alert', variables('prefix'))), '')]"
     },
     "healthCheckAlertId": {
       "type": "string",
-      "value": "[resourceId('Microsoft.Insights/scheduledQueryRules', format('{0}-health-check-alert', variables('prefix')))]"
+      "value": "[if(parameters('enableQueryAlerts'), resourceId('Microsoft.Insights/scheduledQueryRules', format('{0}-health-check-alert', variables('prefix'))), '')]"
     }
   }
 }
