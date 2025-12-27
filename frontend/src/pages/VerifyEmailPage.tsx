@@ -9,6 +9,7 @@
 import { FC, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthProvider';
+import { verifyEmail as verifyEmailApi } from '../services/authService';
 
 type VerificationStatus = 'verifying' | 'success' | 'already-verified' | 'error';
 
@@ -22,20 +23,14 @@ export const VerifyEmailPage: FC = () => {
   const [status, setStatus] = useState<VerificationStatus>('verifying');
   const [error, setError] = useState<string | null>(null);
 
-  // Check verification status on mount
+  // Verify the token on mount
   useEffect(() => {
-    // B2C handles the actual verification; this page is the callback
-    const verificationResult = searchParams.get('result');
+    const token = searchParams.get('token');
     const errorCode = searchParams.get('error');
 
     if (errorCode) {
       setStatus('error');
       setError(getErrorMessage(errorCode));
-      return;
-    }
-
-    if (verificationResult === 'success') {
-      setStatus('success');
       return;
     }
 
@@ -45,8 +40,21 @@ export const VerifyEmailPage: FC = () => {
       return;
     }
 
-    // Default to success (B2C would have shown error already)
-    setStatus('success');
+    // If we have a token, verify it
+    if (token) {
+      verifyEmailApi(token)
+        .then(() => {
+          setStatus('success');
+        })
+        .catch((err) => {
+          setStatus('error');
+          setError(err.message || 'Verification failed. Please try again.');
+        });
+    } else {
+      // No token, show error
+      setStatus('error');
+      setError('Verification link is invalid. Please request a new one.');
+    }
   }, [searchParams, isAuthenticated, user]);
 
   // Helper to get human-readable error messages

@@ -1,44 +1,59 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { API_ENDPOINTS, AUTH } from '../config';
+import {
+  AuthUser,
+  getValidAccessToken,
+  fetchUserProfile,
+  signin as apiSignin,
+  signout as apiSignout,
+  signup as apiSignup,
+  resendVerificationEmail,
+  clearTokens,
+  getStoredAccessToken,
+  storeTokens,
+  SigninData,
+  SignupData,
+  AuthError,
+} from '../services/authService';
 
-// Minimal MSAL wrapper. Real config supplied via env in config.ts
-export interface AuthUser {
-  id?: string;
-  externalId?: string;
-  email?: string;
-  plan?: 'FREE' | 'PRO';
-  emailVerified?: boolean;
-}
-
-interface LoginOptions {
-  extraQueryParameters?: Record<string, string>;
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────────────────────
 
 interface AuthContextValue {
   isAuthenticated: boolean;
   isLoading: boolean;
   user: AuthUser | null;
+  error: string | null;
   getAccessToken: () => Promise<string | null>;
-  login: (options?: LoginOptions) => Promise<void>;
+  login: (credentials: SigninData) => Promise<void>;
+  signup: (data: SignupData) => Promise<{ message: string; userId: string; email: string }>;
   logout: () => Promise<void>;
-  resendVerificationEmail: () => Promise<void>;
+  resendVerificationEmail: (email: string) => Promise<void>;
+  clearError: () => void;
+  refreshUser: () => Promise<void>;
 }
-
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 // Session policy constants (30m inactivity, 7d absolute)
 const SESSION_INACTIVITY_MS = 30 * 60 * 1000;
 const SESSION_ABSOLUTE_MS = 7 * 24 * 60 * 60 * 1000;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Context
+// ─────────────────────────────────────────────────────────────────────────────
+
+const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Provider
+// ─────────────────────────────────────────────────────────────────────────────
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [lastActivity, setLastActivity] = useState<number>(Date.now());
   const [sessionStart] = useState<number>(Date.now());
-  
-  // Lazy MSAL instance (optional). We do not import msal if not installed yet.
-  const msal = (window as any).msalInstance as any | undefined;
 
   // Track user activity for inactivity timeout
   useEffect(() => {
@@ -51,128 +66,177 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Check session expiration
   useEffect(() => {
     if (!isAuthenticated) return;
+    
     const interval = setInterval(() => {
       const now = Date.now();
       const inactivityExpired = now - lastActivity > SESSION_INACTIVITY_MS;
       const absoluteExpired = now - sessionStart > SESSION_ABSOLUTE_MS;
+      
       if (inactivityExpired || absoluteExpired) {
         console.log('[Auth] Session expired', { inactivityExpired, absoluteExpired });
         logout();
       }
     }, 60_000); // Check every minute
+    
     return () => clearInterval(interval);
   }, [isAuthenticated, lastActivity, sessionStart]);
 
+  // Get access token with automatic refresh
   const getAccessToken = useCallback(async () => {
     try {
-      if (msal) {
-        const accounts = msal.getAllAccounts?.() || [];
-        if (accounts.length === 0) return null;
-        const result = await msal.acquireTokenSilent?.({
-          account: accounts[0],
-          scopes: ['openid', 'profile', 'email'],
-        });
-        return result?.accessToken || result?.idToken || null;
-      }
-      return null;
-    } catch (e) {
-      // Token refresh failed - attempt interactive
-      try {
-        if (msal) {
-          await msal.acquireTokenRedirect?.({
-            scopes: ['openid', 'profile', 'email'],
-          });
-        }
-      } catch {
-        // Redirect will happen, return null for now
-      }
-      return null;
-    }
-  }, [msal]);
-
-  const fetchUserProfile = useCallback(async (token: string) => {
-    try {
-      const res = await fetch(API_ENDPOINTS.ME, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setUser({ 
-          id: data.id, 
-          externalId: data.externalId, 
-          email: data.email, 
-          plan: data.plan,
-          emailVerified: data.emailVerified ?? true, // Default to true if not provided
-        });
-      } else if (res.status === 401) {
-        // Token invalid, clear auth state
-        setIsAuthenticated(false);
-        setUser(null);
-      }
+      return await getValidAccessToken();
     } catch {
-      // ignore – user remains null
+      setIsAuthenticated(false);
+      setUser(null);
+      return null;
     }
   }, []);
 
-  const login = useCallback(async (options?: LoginOptions) => {
-    if (!msal) {
-      console.warn('MSAL not initialized');
-      return;
+  // Refresh user profile
+  const refreshUser = useCallback(async () => {
+    const profile = await fetchUserProfile();
+    if (profile) {
+      setUser(profile);
+      setIsAuthenticated(true);
+    } else {
+      setUser(null);
+      setIsAuthenticated(false);
     }
-    const request = options?.extraQueryParameters 
-      ? { extraQueryParameters: options.extraQueryParameters }
-      : undefined;
-    await msal.loginRedirect?.(request);
-  }, [msal]);
+  }, []);
 
+  // Login with email/password
+  const login = useCallback(async (credentials: SigninData) => {
+    setError(null);
+    setIsLoading(true);
+    
+    try {
+      const result = await apiSignin(credentials);
+      setUser(result.user);
+      setIsAuthenticated(true);
+    } catch (err) {
+      if (err instanceof AuthError) {
+        setError(err.message);
+        throw err;
+      }
+      setError('An unexpected error occurred');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Sign up
+  const signup = useCallback(async (data: SignupData) => {
+    setError(null);
+    setIsLoading(true);
+    
+    try {
+      return await apiSignup(data);
+    } catch (err) {
+      if (err instanceof AuthError) {
+        setError(err.message);
+        throw err;
+      }
+      setError('An unexpected error occurred');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Logout
   const logout = useCallback(async () => {
-    if (msal) {
-      await msal.logoutRedirect?.();
+    try {
+      await apiSignout();
+    } catch {
+      // Ignore errors on logout
+    } finally {
+      setIsAuthenticated(false);
+      setUser(null);
     }
-    setIsAuthenticated(false);
-    setUser(null);
-  }, [msal]);
+  }, []);
 
-  const resendVerificationEmail = useCallback(async () => {
-    // B2C handles email verification during signup
-    // For resend, redirect to the verification policy
-    if (msal && AUTH.authority) {
-      // This would redirect to a B2C policy for email verification
-      console.log('[Auth] Resend verification email requested');
+  // Resend verification
+  const handleResendVerification = useCallback(async (email: string) => {
+    try {
+      await resendVerificationEmail(email);
+    } catch (err) {
+      if (err instanceof AuthError) {
+        setError(err.message);
+      }
+      throw err;
     }
-  }, [msal]);
+  }, []);
 
+  // Clear error
+  const clearError = useCallback(() => {
+    setError(null);
+  }, []);
+
+  // Check auth state on mount and handle OAuth callback
   useEffect(() => {
-    // Check auth state on mount and handle redirect callback
     (async () => {
       setIsLoading(true);
       
-      // Handle redirect callback if present
-      if (msal) {
-        try {
-          await msal.handleRedirectPromise?.();
-        } catch (e) {
-          console.error('[Auth] Redirect handling failed', e);
+      // Check for OAuth callback parameters
+      const params = new URLSearchParams(window.location.search);
+      const accessToken = params.get('accessToken');
+      const refreshToken = params.get('refreshToken');
+      const expiresIn = params.get('expiresIn');
+      
+      if (accessToken && refreshToken && expiresIn) {
+        // Store tokens from OAuth callback
+        storeTokens({
+          accessToken,
+          refreshToken,
+          expiresIn: parseInt(expiresIn, 10),
+        });
+        
+        // Clean URL
+        const returnUrl = params.get('returnUrl') || '/dashboard';
+        window.history.replaceState({}, '', returnUrl);
+      }
+      
+      // Check if we have a stored token
+      const hasToken = !!getStoredAccessToken();
+      
+      if (hasToken) {
+        const profile = await fetchUserProfile();
+        if (profile) {
+          setUser(profile);
+          setIsAuthenticated(true);
+        } else {
+          clearTokens();
         }
       }
       
-      const token = await getAccessToken();
-      const authed = !!token;
-      setIsAuthenticated(authed);
-      if (authed && token) {
-        await fetchUserProfile(token);
-      }
       setIsLoading(false);
     })();
-  }, [getAccessToken, fetchUserProfile, msal]);
+  }, []);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ isAuthenticated, isLoading, user, getAccessToken, login, logout, resendVerificationEmail }),
-    [isAuthenticated, isLoading, user, getAccessToken, login, logout, resendVerificationEmail]
+    () => ({
+      isAuthenticated,
+      isLoading,
+      user,
+      error,
+      getAccessToken,
+      login,
+      signup,
+      logout,
+      resendVerificationEmail: handleResendVerification,
+      clearError,
+      refreshUser,
+    }),
+    [isAuthenticated, isLoading, user, error, getAccessToken, login, signup, logout, handleResendVerification, clearError, refreshUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Hook
+// ─────────────────────────────────────────────────────────────────────────────
 
 export function useAuth() {
   const ctx = useContext(AuthContext);

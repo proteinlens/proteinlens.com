@@ -82,6 +82,21 @@ export const API_ENDPOINTS = {
   USAGE: `${API_BASE_URL}/api/usage`,
   WEBHOOK: `${API_BASE_URL}/api/webhook`,
   ME: `${API_BASE_URL}/api/me`,
+
+  // Auth endpoints (self-managed auth)
+  AUTH_SIGNUP: `${API_BASE_URL}/api/auth/signup`,
+  AUTH_SIGNIN: `${API_BASE_URL}/api/auth/signin`,
+  AUTH_REFRESH: `${API_BASE_URL}/api/auth/refresh`,
+  AUTH_LOGOUT: `${API_BASE_URL}/api/auth/logout`,
+  AUTH_VERIFY_EMAIL: `${API_BASE_URL}/api/auth/verify-email`,
+  AUTH_RESEND_VERIFICATION: `${API_BASE_URL}/api/auth/resend-verification`,
+  AUTH_FORGOT_PASSWORD: `${API_BASE_URL}/api/auth/forgot-password`,
+  AUTH_RESET_PASSWORD: `${API_BASE_URL}/api/auth/reset-password`,
+  AUTH_CHECK_EMAIL: `${API_BASE_URL}/api/auth/check-email`,
+  AUTH_VALIDATE_PASSWORD: `${API_BASE_URL}/api/auth/validate-password`,
+  AUTH_PROVIDERS: `${API_BASE_URL}/api/auth/providers`,
+  AUTH_LOGIN_GOOGLE: `${API_BASE_URL}/api/auth/login/google`,
+  AUTH_LOGIN_MICROSOFT: `${API_BASE_URL}/api/auth/login/microsoft`,
 };
 
 /**

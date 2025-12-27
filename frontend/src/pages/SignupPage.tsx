@@ -3,20 +3,23 @@
  * Feature 010 - User Signup Process
  * 
  * Main signup page with comprehensive form, social login, and consent.
- * Replaces the basic SignUp page with full validation and UX improvements.
+ * Uses self-managed PostgreSQL auth (not B2C).
  */
 
-import { FC, useCallback, useEffect } from 'react';
+import { FC, useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SignupForm } from '../components/auth/SignupForm';
 import { useAuth } from '../contexts/AuthProvider';
+import { API_ENDPOINTS } from '../config';
 
 /**
  * Full-featured signup page.
  */
 export const SignupPage: FC = () => {
   const navigate = useNavigate();
-  const { login, isAuthenticated, isLoading } = useAuth();
+  const { signup, isAuthenticated, isLoading } = useAuth();
+  const [signupSuccess, setSignupSuccess] = useState(false);
+  const [signupEmail, setSignupEmail] = useState('');
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -25,26 +28,26 @@ export const SignupPage: FC = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  // Handle successful form validation (before B2C redirect)
+  // Handle successful signup (redirect to verification page)
   const handleSignupSuccess = useCallback(() => {
-    // Form validation passed - trigger B2C signup flow
-    // The actual redirect happens via MSAL
-    login();
-  }, [login]);
+    setSignupSuccess(true);
+    navigate('/verify-email', { 
+      state: { email: signupEmail },
+      replace: true 
+    });
+  }, [navigate, signupEmail]);
 
-  // Handle social login
+  // Handle social login via OAuth redirect
   const handleSocialLogin = useCallback(
     (provider: 'google' | 'microsoft') => {
-      // B2C handles social provider federation
-      // We use the same login() but with extraQueryParameters
-      // to hint the provider preference
-      login({
-        extraQueryParameters: {
-          domain_hint: provider === 'google' ? 'google.com' : 'live.com',
-        },
-      });
+      const returnUrl = encodeURIComponent('/dashboard');
+      if (provider === 'google') {
+        window.location.href = `${API_ENDPOINTS.AUTH_LOGIN_GOOGLE}?returnUrl=${returnUrl}`;
+      } else {
+        window.location.href = `${API_ENDPOINTS.AUTH_LOGIN_MICROSOFT}?returnUrl=${returnUrl}`;
+      }
     },
-    [login]
+    []
   );
 
   // Show loading state
@@ -58,6 +61,30 @@ export const SignupPage: FC = () => {
         <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600" />
         <span className="sr-only">Loading...</span>
       </div>
+    );
+  }
+
+  // Show success message if signup completed
+  if (signupSuccess) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">
+        <div className="w-full max-w-md text-center">
+          <div className="mx-auto inline-flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+            <span className="text-3xl">✉️</span>
+          </div>
+          <h1 className="mt-6 text-2xl font-bold text-gray-900">Check your email</h1>
+          <p className="mt-2 text-gray-600">
+            We've sent a verification link to <strong>{signupEmail}</strong>.
+            Please check your inbox and click the link to activate your account.
+          </p>
+          <p className="mt-4 text-sm text-gray-500">
+            Didn't receive the email? Check your spam folder or{' '}
+            <a href="/resend-verification" className="text-blue-600 hover:underline">
+              resend verification email
+            </a>
+          </p>
+        </div>
+      </main>
     );
   }
 

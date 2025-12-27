@@ -8,11 +8,12 @@
  * - Complete profile
  * - Manage consent
  * - Resend verification
+ * 
+ * Note: Main signup/signin are now in authService.ts
  */
 
-import { API_BASE_URL } from '../config';
-
-const API_BASE = API_BASE_URL ? `${API_BASE_URL}/api` : '/api';
+import { API_ENDPOINTS } from '../config';
+import { getValidAccessToken } from './authService';
 
 export interface CheckEmailResponse {
   available: boolean;
@@ -20,17 +21,18 @@ export interface CheckEmailResponse {
 }
 
 export interface PasswordValidationResponse {
-  strength: {
+  isValid: boolean;
+  errors: string[];
+  strength: 'weak' | 'medium' | 'strong';
+  requirements: {
     minLength: boolean;
+    maxLength: boolean;
     hasUppercase: boolean;
     hasLowercase: boolean;
     hasNumber: boolean;
-    hasSpecial: boolean;
-    notBreached: boolean;
+    hasSpecialChar: boolean;
   };
-  level: 'weak' | 'medium' | 'strong';
-  breached: boolean;
-  valid: boolean;
+  isBreached: boolean;
 }
 
 export interface ProfileData {
@@ -69,48 +71,6 @@ export interface ResendVerificationResponse {
   attemptsRemaining: number;
 }
 
-// Helper to get auth token
-async function getAuthToken(): Promise<string | null> {
-  // This will be provided by MSAL context
-  // For now, return null and let the API handle unauthenticated requests
-  return null;
-}
-
-// Generic fetch wrapper with error handling
-async function apiRequest<T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> {
-  const url = `${API_BASE}${endpoint}`;
-  
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...((options.headers as Record<string, string>) || {}),
-  };
-
-  // Add auth token if available
-  const token = await getAuthToken();
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new SignupApiError(
-      errorData.error || 'An error occurred',
-      response.status,
-      errorData
-    );
-  }
-
-  return response.json();
-}
-
 export class SignupApiError extends Error {
   constructor(
     message: string,
@@ -123,16 +83,51 @@ export class SignupApiError extends Error {
 }
 
 /**
+ * Helper to make authenticated API requests
+ */
+async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const token = await getValidAccessToken();
+  
+  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || '/api'}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...options.headers,
+    },
+  });
+  
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new SignupApiError(
+      errorData.error || 'Request failed',
+      response.status,
+      errorData
+    );
+  }
+  
+  return response.json();
+}
+
+/**
  * Check if an email address is available for registration.
  * 
  * @param email - Email address to check
  * @returns Whether the email is available
  */
 export async function checkEmail(email: string): Promise<CheckEmailResponse> {
-  return apiRequest<CheckEmailResponse>('/signup/check-email', {
-    method: 'POST',
-    body: JSON.stringify({ email }),
-  });
+  const response = await fetch(`${API_ENDPOINTS.AUTH_CHECK_EMAIL}?email=${encodeURIComponent(email)}`);
+  
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new SignupApiError(
+      errorData.error || 'Failed to check email',
+      response.status,
+      errorData
+    );
+  }
+  
+  return response.json();
 }
 
 /**
@@ -144,10 +139,22 @@ export async function checkEmail(email: string): Promise<CheckEmailResponse> {
 export async function validatePassword(
   password: string
 ): Promise<PasswordValidationResponse> {
-  return apiRequest<PasswordValidationResponse>('/signup/validate-password', {
+  const response = await fetch(API_ENDPOINTS.AUTH_VALIDATE_PASSWORD, {
     method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ password }),
   });
+  
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new SignupApiError(
+      errorData.error || 'Failed to validate password',
+      response.status,
+      errorData
+    );
+  }
+  
+  return response.json();
 }
 
 /**

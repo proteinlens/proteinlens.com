@@ -33,6 +33,11 @@ import './functions/portal';
 import './functions/usage';
 import './functions/webhook';
 import './functions/admin-user';
+
+// Feature 010: User Signup & Self-Managed Auth
+import './functions/signup';
+import './functions/auth';
+import './functions/oauth';
 // deployment trigger: 1766497410
 // trigger 1766497563
 // deploy 1766497752

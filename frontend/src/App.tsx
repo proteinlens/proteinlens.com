@@ -32,6 +32,7 @@ const SignUp = lazy(() => import('./pages/SignUp'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const SignupPage = lazy(() => import('./pages/SignupPage'));
 const VerifyEmailPage = lazy(() => import('./pages/VerifyEmailPage'));
+const ResendVerificationPage = lazy(() => import('./pages/ResendVerificationPage'));
 const InviteSignupPage = lazy(() => import('./pages/InviteSignupPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
@@ -176,6 +177,7 @@ function App() {
                     <Route path="/signup" element={<SignupPage />} />
                     <Route path="/signup-legacy" element={<SignUp />} />
                     <Route path="/verify-email" element={<VerifyEmailPage />} />
+                    <Route path="/resend-verification" element={<ResendVerificationPage />} />
                     <Route path="/invite/:token" element={<InviteSignupPage />} />
                     <Route path="/reset-password" element={<ResetPassword />} />
 

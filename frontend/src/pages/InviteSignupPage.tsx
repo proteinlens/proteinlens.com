@@ -81,29 +81,37 @@ export const InviteSignupPage: FC = () => {
     }
   }, [isAuthenticated, inviteDetails, navigate, token]);
 
-  // Handle successful form validation (before B2C redirect)
+  // Handle successful form validation (before redirect to signup)
   const handleSignupSuccess = useCallback(() => {
-    // Store invite token in session storage to process after B2C redirect
+    // Store invite token in session storage to process after signup
     if (token) {
       sessionStorage.setItem('pending-invite-token', token);
     }
-    login();
-  }, [login, token]);
+    // Redirect to signup page with invite info
+    const params = new URLSearchParams();
+    if (inviteDetails?.email) {
+      params.set('email', inviteDetails.email);
+    }
+    if (inviteDetails?.organizationName) {
+      params.set('org', inviteDetails.organizationName);
+    }
+    params.set('invite', token || '');
+    navigate(`/signup?${params.toString()}`);
+  }, [navigate, token, inviteDetails]);
 
-  // Handle social login
+  // Handle social login - redirect to OAuth with stored invite token
   const handleSocialLogin = useCallback(
     (provider: 'google' | 'microsoft') => {
       // Store invite token in session storage
       if (token) {
         sessionStorage.setItem('pending-invite-token', token);
       }
-      login({
-        extraQueryParameters: {
-          domain_hint: provider === 'google' ? 'google.com' : 'live.com',
-        },
-      });
+      // Redirect to OAuth endpoint
+      const returnUrl = encodeURIComponent(`/invite/${token}/complete`);
+      const apiBase = import.meta.env.VITE_API_BASE_URL || '/api';
+      window.location.href = `${apiBase}/api/auth/login/${provider}?returnUrl=${returnUrl}`;
     },
-    [login, token]
+    [token]
   );
 
   // Show loading state

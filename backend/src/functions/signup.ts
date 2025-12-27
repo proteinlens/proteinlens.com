@@ -107,7 +107,7 @@ async function createProfile(
     // Complete user profile
     const profile = await completeSignupProfile(
       { 
-        externalId: auth.ctx.user.externalId, 
+        externalId: auth.ctx.user.externalId ?? '', 
         email: auth.ctx.user.email || '',
       },
       { firstName, lastName, organizationName, phone }
