@@ -20,6 +20,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider, useAuth } from './contexts/AuthProvider';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { BottomNav } from './components/layout/BottomNav';
+import { Footer } from './components/layout/Footer';
 import { PageContainer } from './components/layout/PageContainer';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { getUserId } from './utils/userId';
@@ -194,6 +195,7 @@ function App() {
                     </Routes>
                   </Suspense>
                 </PageContainer>
+                <Footer />
                 <BottomNav />
               </div>
             </BrowserRouter>
