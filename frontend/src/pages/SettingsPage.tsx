@@ -6,7 +6,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUsage } from '../hooks/useUsage';
 import { useAuth } from '../contexts/AuthProvider';
-import { redirectToPortal, getUsage, UsageStats } from '../services/billingApi';
+import { redirectToPortal } from '../services/billingApi';
 import { ProBadge } from '../components/ProBadge';
 import { trackLogout } from '../utils/telemetry';
 import './SettingsPage.css';
@@ -21,8 +21,7 @@ interface SubscriptionInfo {
 export const SettingsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
-  // TODO: Replace with actual userId from auth context
-  const userId = user?.id || 'demo-user';
+  const userId = isAuthenticated ? user?.id ?? null : null;
   const { usage, loading: usageLoading, refresh: refreshUsage } = useUsage(userId);
   const [portalLoading, setPortalLoading] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
