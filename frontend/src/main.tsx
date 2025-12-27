@@ -4,6 +4,7 @@ import App from './App'
 import './index.css'
 import { initializeTelemetry } from './utils/telemetry'
 import { initWebVitals, observeLongTasks } from './utils/webVitals'
+import { initializeMsal } from './auth/msalConfig'
 
 // Initialize Application Insights before React renders (T017)
 // This ensures all telemetry is captured from the start
@@ -15,6 +16,11 @@ initWebVitals();
 
 // Observe long tasks for performance debugging
 observeLongTasks();
+
+// Initialize MSAL for authentication (async but don't block render)
+initializeMsal().catch(err => {
+  console.warn('[Auth] MSAL initialization skipped:', err);
+});
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

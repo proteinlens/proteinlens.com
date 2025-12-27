@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { API_ENDPOINTS, AUTH } from '../config';
+import { isMsalConfigured, loginRequest } from '../auth/msalConfig';
 
 // Minimal MSAL wrapper. Real config supplied via env in config.ts
 export interface AuthUser {
@@ -116,13 +117,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(async (options?: LoginOptions) => {
     if (!msal) {
-      // B2C not configured - throw error so UI can show message
-      throw new Error('Authentication is not configured. Please contact support.');
+      // Check if config is missing vs MSAL failed to initialize
+      if (!isMsalConfigured()) {
+        throw new Error('Authentication requires Azure B2C configuration. Please set VITE_AUTH_CLIENT_ID and VITE_AUTH_AUTHORITY environment variables.');
+      }
+      throw new Error('Authentication service is starting. Please try again in a moment.');
     }
     const request = options?.extraQueryParameters 
-      ? { extraQueryParameters: options.extraQueryParameters }
-      : undefined;
-    await msal.loginRedirect?.(request);
+      ? { ...loginRequest, extraQueryParameters: options.extraQueryParameters }
+      : loginRequest;
+    await msal.loginRedirect(request);
   }, [msal]);
 
   const logout = useCallback(async () => {
