@@ -313,7 +313,13 @@ jobs:
     steps:
       - name: API health check (/api/health -> 200)
         run: |
-          URL="${{ needs.infra.outputs.functionapp_url }}/api/health"
+          # Use infra output if available, otherwise fallback to default production URL
+          INFRA_URL="${{ needs.infra.outputs.functionapp_url }}"
+          if [ -z "$INFRA_URL" ] || [ "$INFRA_URL" = "null" ]; then
+            URL="https://proteinlens-api-prod.azurewebsites.net/api/health"
+          else
+            URL="$INFRA_URL/api/health"
+          fi
           echo "🔍 Testing API health: $URL"
           for i in $(seq 1 5); do
             code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$URL" || true)
@@ -329,7 +335,13 @@ jobs:
 
       - name: Frontend check (index.html -> 200)
         run: |
-          URL="${{ needs.infra.outputs.staticwebapp_url }}"
+          # Use infra output if available, otherwise fallback to default production URL
+          INFRA_URL="${{ needs.infra.outputs.staticwebapp_url }}"
+          if [ -z "$INFRA_URL" ] || [ "$INFRA_URL" = "null" ]; then
+            URL="https://www.proteinlens.com"
+          else
+            URL="$INFRA_URL"
+          fi
           echo "🔍 Testing frontend: $URL"
           for i in $(seq 1 5); do
             code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$URL" || true)
