@@ -1,0 +1,36 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "AzureWebJobsStorage": "",
+    "DATABASE_URL": "postgresql://adminuser:ProteinLens2025Secure@protein-lens-db.postgres.database.azure.com:5432/proteinlens?sslmode=require",
+    "AZURE_STORAGE_ACCOUNT_NAME": "proteinlensimages",
+    "BLOB_CONTAINER_NAME": "uploads",
+    "AI_FOUNDRY_ENDPOINT": "https://protein-lens.cognitiveservices.azure.com",
+    "AI_MODEL_DEPLOYMENT": "gpt-5-1",
+    "AI_API_KEY": "7hDg9LZirQVTMfBrhONqL2DmVCh4neAqbvSjp7cji0e1V9btSFEwJQQJ99BLACYeBjFXJ3w3AAAAACOGS1Ak",
+    "STRIPE_SECRET_KEY": "sk_test_REPLACE_WITH_YOUR_KEY",
+    "STRIPE_WEBHOOK_SECRET": "whsec_REPLACE_WITH_YOUR_SECRET",
+    "STRIPE_PRICE_MONTHLY": "price_REPLACE_WITH_MONTHLY_PRICE_ID",
+    "STRIPE_PRICE_ANNUAL": "price_REPLACE_WITH_ANNUAL_PRICE_ID",
+    "APP_URL": "http://localhost:5173",
+    
+    "JWT_SECRET": "dev-jwt-secret-change-in-production-min-32-chars",
+    "JWT_SECRET_PREVIOUS": "",
+    "JWT_ISSUER": "https://proteinlens.com",
+    "JWT_AUDIENCE": "proteinlens-api",
+    "FRONTEND_URL": "http://localhost:5173",
+    "API_BASE_URL": "http://localhost:7071",
+    
+    "GOOGLE_CLIENT_ID": "",
+    "GOOGLE_CLIENT_SECRET": "",
+    "MICROSOFT_CLIENT_ID": "",
+    "MICROSOFT_CLIENT_SECRET": "",
+    
+    "ACS_EMAIL_CONNECTION_STRING": "",
+    "ACS_EMAIL_SENDER": "DoNotReply@proteinlens.com",
+    "EMAIL_SERVICE": "acs",
+    "TOS_VERSION": "1.0.0",
+    "PRIVACY_VERSION": "1.0.0"
+  }
+}

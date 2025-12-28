@@ -290,10 +290,21 @@ async function signup(request: HttpRequest, context: InvocationContext): Promise
       },
     };
   } catch (error) {
-    context.error('[Auth] Signup error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    context.error('[Auth] Signup error:', errorMessage, errorStack);
+    
+    // Include more details in response for debugging (can be removed in production)
     return {
       status: 500,
-      jsonBody: { error: 'An unexpected error occurred during signup' },
+      jsonBody: { 
+        error: 'An unexpected error occurred during signup',
+        // Debug info - remove in production
+        debug: process.env.NODE_ENV !== 'production' ? {
+          message: errorMessage,
+          type: error?.constructor?.name,
+        } : undefined,
+      },
     };
   }
 }

@@ -1,58 +1,431 @@
 #!/bin/bash
+# ═══════════════════════════════════════════════════════════════════════════════
+# ProteinLens Database & Function App Troubleshooting Script
+# ═══════════════════════════════════════════════════════════════════════════════
+# Usage: ./fix-db-credentials.sh [command]
+# Commands:
+#   reset     - Reset database password and sync credentials (default)
+#   diagnose  - Run diagnostics without changing anything
+#   test      - Test database and API connectivity
+#   logs      - Show recent Function App errors
+#   signup    - Test the signup flow
+#   tables    - Show database tables and row counts
+# ═══════════════════════════════════════════════════════════════════════════════
+
 set -e
 
-#Add firewall rule for current IP
-MY_IP=$(curl -s ifconfig.me) && echo "My IP: $MY_IP"
-az postgres flexible-server firewall-rule create --resource-group proteinlens-prod --name proteinlens-db-prod-1523 --rule-name MyIP --start-ip-address $MY_IP --end-ip-address $MY_IP --only-show-errors
+# Configuration
+RG="proteinlens-prod"
+DB_SERVER="proteinlens-db-prod-1523"
+DB_NAME="proteinlens"
+DB_USER="pgadmin"
+FUNC_APP="proteinlens-api-prod"
+KV_NAME="proteinlens-kv-fzpkp4yb"
+API_URL="https://proteinlens-api-prod.azurewebsites.net"
 
-# Generate strong password
-NEW_PASSWORD=$(openssl rand -base64 32 | tr -dc 'A-Za-z0-9!@#$%^&*' | head -c 24)
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
 
-echo "🔐 Updating PostgreSQL admin password..."
-az postgres flexible-server update \
-  --resource-group proteinlens-prod \
-  --name proteinlens-db-prod-1523 \
-  --admin-password "$NEW_PASSWORD" \
-  --output none
+# ─────────────────────────────────────────────────────────────────────────────
+# Helper Functions
+# ─────────────────────────────────────────────────────────────────────────────
 
-echo "✅ PostgreSQL password updated"
+print_header() {
+  echo ""
+  echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
+  echo -e "${CYAN}  $1${NC}"
+  echo -e "${CYAN}═══════════════════════════════════════════════════════════════${NC}"
+}
 
-# Build DATABASE_URL connection string
-DB_URL="postgresql://pgadmin:${NEW_PASSWORD}@proteinlens-db-prod-1523.postgres.database.azure.com:5432/proteinlens?sslmode=require"
+print_step() {
+  echo -e "${BLUE}▶ $1${NC}"
+}
 
-echo "🔑 Updating Key Vault secret: database-url..."
-az keyvault secret set \
-  --vault-name proteinlens-kv-fzpkp4yb \
-  --name database-url \
-  --value "$DB_URL" \
-  --output none
+print_success() {
+  echo -e "${GREEN}✅ $1${NC}"
+}
 
-DB_VAULT=$(az keyvault secret show --vault-name proteinlens-kv-fzpkp4yb --name database-url --query id -o tsv)
-az functionapp show --name proteinlens-api-prod --resource-group proteinlens-prod --query "state" -o tsv
-echo "✅ Key Vault secret updated"
+print_warning() {
+  echo -e "${YELLOW}⚠️  $1${NC}"
+}
 
-echo "🔄 Updating Function App settings to refresh secret..."
-az functionapp config appsettings set --name proteinlens-api-prod --resource-group proteinlens-prod --settings "SECRET_REFRESH=$(date +%s)" --only-show-errors -o none
-az functionapp config appsettings set --name proteinlens-api-prod --resource-group proteinlens-prod --settings "DATABASE_URL=@Microsoft.KeyVault(SecretUri=$DB_VAULT)" --only-show-errors -o none
+print_error() {
+  echo -e "${RED}❌ $1${NC}"
+}
 
-echo "🔄 Restarting Function App..."
-az functionapp stop --name proteinlens-api-prod --resource-group proteinlens-prod --only-show-errors 
-sleep 5
-az functionapp start --name proteinlens-api-prod --resource-group proteinlens-prod --only-show-errors
-echo "✅ Function App restarted"
-echo ""
-echo "🎉 Database credentials synchronized!"
-echo "Waiting 15s for Function App to reload..."
-sleep 15
+get_db_url() {
+  az keyvault secret show --vault-name "$KV_NAME" --name database-url --query value -o tsv 2>/dev/null
+}
 
-echo "🧪 Testing auth endpoint..."
-HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://api.proteinlens.com/api/auth/check-email?email=test@example.com")
+get_db_password() {
+  local db_url=$(get_db_url)
+  echo "$db_url" | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p'
+}
 
-# Test database connection
-echo $NEW_PASSWORD | psql -h proteinlens-db-prod-1523.postgres.database.azure.com -U pgadmin -d proteinlens -c "SELECT 1;"
+run_sql() {
+  local query="$1"
+  local db_url=$(get_db_url)
+  local password=$(get_db_password)
+  PGPASSWORD="$password" psql -h "$DB_SERVER.postgres.database.azure.com" -U "$DB_USER" -d "$DB_NAME" -c "$query" 2>&1
+}
 
-if [ "$HTTP_CODE" = "200" ]; then
-  echo "✅ Auth endpoint is working! (HTTP $HTTP_CODE)"
-else
-  echo "⚠️  Auth endpoint returned HTTP $HTTP_CODE"
-fi
+# ─────────────────────────────────────────────────────────────────────────────
+# Diagnose Command
+# ─────────────────────────────────────────────────────────────────────────────
+
+cmd_diagnose() {
+  print_header "Running Diagnostics"
+
+  # Check Azure CLI auth
+  print_step "Checking Azure CLI authentication..."
+  local account=$(az account show --query name -o tsv 2>/dev/null)
+  if [ -n "$account" ]; then
+    print_success "Logged in as: $account"
+  else
+    print_error "Not logged in to Azure CLI"
+    return 1
+  fi
+
+  # Check Function App status
+  print_step "Checking Function App status..."
+  local func_state=$(az functionapp show -n "$FUNC_APP" -g "$RG" --query state -o tsv 2>/dev/null)
+  if [ "$func_state" = "Running" ]; then
+    print_success "Function App is running"
+  else
+    print_error "Function App state: $func_state"
+  fi
+
+  # Check Key Vault secrets
+  print_step "Checking Key Vault secrets..."
+  local db_secret=$(az keyvault secret show --vault-name "$KV_NAME" --name database-url --query "attributes.enabled" -o tsv 2>/dev/null)
+  local acs_secret=$(az keyvault secret show --vault-name "$KV_NAME" --name acs-email-connection --query "attributes.enabled" -o tsv 2>/dev/null)
+  
+  if [ "$db_secret" = "true" ]; then
+    print_success "database-url secret exists and is enabled"
+  else
+    print_error "database-url secret not found or disabled"
+  fi
+  
+  if [ "$acs_secret" = "true" ]; then
+    print_success "acs-email-connection secret exists and is enabled"
+  else
+    print_warning "acs-email-connection secret not found or disabled"
+  fi
+
+  # Check Function App identity access
+  print_step "Checking Function App Key Vault access..."
+  local principal_id=$(az functionapp identity show -n "$FUNC_APP" -g "$RG" --query principalId -o tsv 2>/dev/null)
+  local kv_access=$(az keyvault show --name "$KV_NAME" --query "properties.accessPolicies[?objectId=='$principal_id'].permissions.secrets" -o json 2>/dev/null)
+  
+  if echo "$kv_access" | grep -q "get"; then
+    print_success "Function App has Key Vault access"
+  else
+    print_error "Function App cannot access Key Vault secrets"
+  fi
+
+  # Check database server status
+  print_step "Checking PostgreSQL server..."
+  local db_state=$(az postgres flexible-server show -g "$RG" -n "$DB_SERVER" --query state -o tsv 2>/dev/null)
+  if [ "$db_state" = "Ready" ]; then
+    print_success "PostgreSQL server is ready"
+  else
+    print_error "PostgreSQL server state: $db_state"
+  fi
+
+  # Check critical app settings
+  print_step "Checking Function App settings..."
+  local settings=$(az functionapp config appsettings list -n "$FUNC_APP" -g "$RG" 2>/dev/null)
+  
+  for setting in "DATABASE_URL" "ACS_EMAIL_CONNECTION_STRING" "FRONTEND_URL" "EMAIL_SERVICE"; do
+    if echo "$settings" | jq -e ".[] | select(.name==\"$setting\")" > /dev/null 2>&1; then
+      local value=$(echo "$settings" | jq -r ".[] | select(.name==\"$setting\") | .value")
+      if [[ "$value" == @Microsoft.KeyVault* ]]; then
+        print_success "$setting is configured (Key Vault reference)"
+      else
+        print_success "$setting is configured"
+      fi
+    else
+      print_warning "$setting is not set"
+    fi
+  done
+
+  # Check Application Insights
+  print_step "Checking Application Insights..."
+  if echo "$settings" | jq -e '.[] | select(.name=="APPLICATIONINSIGHTS_CONNECTION_STRING")' > /dev/null 2>&1; then
+    print_success "Application Insights is configured"
+  else
+    print_warning "Application Insights is not configured"
+  fi
+
+  echo ""
+  print_success "Diagnostics complete"
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Test Command
+# ─────────────────────────────────────────────────────────────────────────────
+
+cmd_test() {
+  print_header "Testing Connectivity"
+
+  # Test API health endpoint
+  print_step "Testing API health endpoint..."
+  local health=$(curl -s "$API_URL/api/health/readiness" 2>/dev/null)
+  local status=$(echo "$health" | jq -r '.status' 2>/dev/null)
+  
+  if [ "$status" = "ready" ]; then
+    print_success "API health check passed: $status"
+  else
+    print_error "API health check failed"
+    echo "$health" | jq . 2>/dev/null || echo "$health"
+  fi
+
+  # Test database connection
+  print_step "Testing database connection..."
+  local db_test=$(run_sql "SELECT 1 as test;" 2>&1)
+  if echo "$db_test" | grep -q "1 row"; then
+    print_success "Database connection successful"
+  else
+    print_error "Database connection failed"
+    echo "$db_test"
+  fi
+
+  # Test auth endpoint
+  print_step "Testing auth check-email endpoint..."
+  local auth_response=$(curl -s "$API_URL/api/auth/check-email?email=test@example.com" 2>/dev/null)
+  local http_code=$(curl -s -o /dev/null -w "%{http_code}" "$API_URL/api/auth/check-email?email=test@example.com" 2>/dev/null)
+  
+  if [ "$http_code" = "200" ]; then
+    print_success "Auth endpoint returned HTTP $http_code"
+    echo "$auth_response" | jq . 2>/dev/null || echo "$auth_response"
+  else
+    print_warning "Auth endpoint returned HTTP $http_code"
+    echo "$auth_response" | jq . 2>/dev/null || echo "$auth_response"
+  fi
+
+  echo ""
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Signup Test Command
+# ─────────────────────────────────────────────────────────────────────────────
+
+cmd_signup() {
+  print_header "Testing Signup Flow"
+
+  local unique_id=$(date +%s)
+  local test_email="test-$unique_id@example.com"
+  local test_password="Xk9#mR4\$pL7@qW2!zY5vN"
+
+  print_step "Testing signup with email: $test_email"
+  
+  local response=$(curl -s -X POST "$API_URL/api/auth/signup" \
+    -H "Content-Type: application/json" \
+    -d "{
+      \"email\": \"$test_email\",
+      \"password\": \"$test_password\",
+      \"firstName\": \"Test\",
+      \"lastName\": \"User\",
+      \"organizationName\": \"Test Org\",
+      \"acceptedTerms\": true,
+      \"acceptedPrivacy\": true
+    }" 2>/dev/null)
+
+  echo ""
+  echo "Response:"
+  echo "$response" | jq . 2>/dev/null || echo "$response"
+
+  # Check signup attempts in database
+  print_step "Checking recent signup attempts in database..."
+  local attempts=$(run_sql "SELECT email, outcome, \"failureReason\", \"createdAt\" FROM \"SignupAttempt\" ORDER BY \"createdAt\" DESC LIMIT 5;" 2>&1)
+  echo "$attempts"
+
+  # Check if user was created
+  print_step "Checking if user was created..."
+  local user=$(run_sql "SELECT id, email, \"emailVerified\", \"createdAt\" FROM \"User\" WHERE email LIKE 'test-%@example.com' ORDER BY \"createdAt\" DESC LIMIT 3;" 2>&1)
+  echo "$user"
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Tables Command
+# ─────────────────────────────────────────────────────────────────────────────
+
+cmd_tables() {
+  print_header "Database Tables Overview"
+
+  print_step "Getting table row counts..."
+  
+  local tables="User EmailVerificationToken PasswordResetToken SignupAttempt ConsentRecord AuthEvent RefreshToken"
+  
+  for table in $tables; do
+    local count=$(run_sql "SELECT COUNT(*) FROM \"$table\";" 2>&1 | grep -E "^\s*[0-9]+" | tr -d ' ')
+    printf "  %-25s %s rows\n" "$table" "$count"
+  done
+
+  echo ""
+  print_step "Recent users..."
+  run_sql "SELECT id, email, \"emailVerified\", \"authProvider\", \"createdAt\" FROM \"User\" ORDER BY \"createdAt\" DESC LIMIT 5;"
+
+  echo ""
+  print_step "Recent signup attempts..."
+  run_sql "SELECT email, outcome, \"failureReason\", \"createdAt\" FROM \"SignupAttempt\" ORDER BY \"createdAt\" DESC LIMIT 5;"
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Logs Command
+# ─────────────────────────────────────────────────────────────────────────────
+
+cmd_logs() {
+  print_header "Function App Logs"
+
+  print_step "Getting recent exceptions from Application Insights..."
+  
+  # Get App Insights resource
+  local app_insights=$(az resource list -g "$RG" --resource-type "Microsoft.Insights/components" --query "[0].name" -o tsv 2>/dev/null)
+  
+  if [ -z "$app_insights" ]; then
+    print_warning "No Application Insights found in resource group"
+    return
+  fi
+
+  print_step "Using Application Insights: $app_insights"
+  
+  # Query for recent exceptions
+  local workspace_id=$(az monitor app-insights component show -g "$RG" --app "$app_insights" --query "workspaceResourceId" -o tsv 2>/dev/null)
+  
+  if [ -n "$workspace_id" ]; then
+    print_step "Querying Log Analytics workspace..."
+    az monitor log-analytics query -w "$workspace_id" \
+      --analytics-query "AppExceptions | where TimeGenerated > ago(1h) | project TimeGenerated, ExceptionType, OuterMessage, InnermostMessage | order by TimeGenerated desc | take 10" \
+      --timespan "PT1H" \
+      -o table 2>/dev/null || print_warning "No recent exceptions found"
+  else
+    print_warning "Could not get Log Analytics workspace"
+  fi
+
+  # Also try to get function invocation failures
+  print_step "Checking recent function invocations..."
+  az monitor log-analytics query -w "$workspace_id" \
+    --analytics-query "FunctionAppLogs | where TimeGenerated > ago(1h) | where Level == 'Error' or Level == 'Warning' | project TimeGenerated, Level, Message | order by TimeGenerated desc | take 10" \
+    --timespan "PT1H" \
+    -o table 2>/dev/null || print_warning "No recent function logs found"
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Reset Command (Original Functionality)
+# ─────────────────────────────────────────────────────────────────────────────
+
+cmd_reset() {
+  print_header "Resetting Database Credentials"
+
+  # Add firewall rule for current IP
+  print_step "Adding firewall rule for current IP..."
+  MY_IP=$(curl -s ifconfig.me)
+  echo "  Your IP: $MY_IP"
+  az postgres flexible-server firewall-rule create \
+    --resource-group "$RG" \
+    --name "$DB_SERVER" \
+    --rule-name "DevIP-$(date +%Y%m%d)" \
+    --start-ip-address "$MY_IP" \
+    --end-ip-address "$MY_IP" \
+    --only-show-errors 2>/dev/null || true
+  print_success "Firewall rule added"
+
+  # Generate strong password
+  NEW_PASSWORD=$(openssl rand -base64 32 | tr -dc 'A-Za-z0-9!@#$%^&*' | head -c 24)
+
+  print_step "Updating PostgreSQL admin password..."
+  az postgres flexible-server update \
+    --resource-group "$RG" \
+    --name "$DB_SERVER" \
+    --admin-password "$NEW_PASSWORD" \
+    --output none
+  print_success "PostgreSQL password updated"
+
+  # Build DATABASE_URL connection string
+  DB_URL="postgresql://${DB_USER}:${NEW_PASSWORD}@${DB_SERVER}.postgres.database.azure.com:5432/${DB_NAME}?sslmode=require"
+
+  print_step "Updating Key Vault secret: database-url..."
+  az keyvault secret set \
+    --vault-name "$KV_NAME" \
+    --name database-url \
+    --value "$DB_URL" \
+    --output none
+  print_success "Key Vault secret updated"
+
+  # Get the new secret URI with version
+  DB_VAULT=$(az keyvault secret show --vault-name "$KV_NAME" --name database-url --query id -o tsv)
+
+  print_step "Updating Function App settings..."
+  az functionapp config appsettings set \
+    --name "$FUNC_APP" \
+    --resource-group "$RG" \
+    --settings "SECRET_REFRESH=$(date +%s)" \
+    --only-show-errors -o none
+
+  az functionapp config appsettings set \
+    --name "$FUNC_APP" \
+    --resource-group "$RG" \
+    --settings "DATABASE_URL=@Microsoft.KeyVault(SecretUri=$DB_VAULT)" \
+    --only-show-errors -o none
+  print_success "Function App settings updated"
+
+  print_step "Restarting Function App..."
+  az functionapp stop --name "$FUNC_APP" --resource-group "$RG" --only-show-errors
+  sleep 5
+  az functionapp start --name "$FUNC_APP" --resource-group "$RG" --only-show-errors
+  print_success "Function App restarted"
+
+  echo ""
+  print_success "Database credentials synchronized!"
+  echo ""
+  echo "Waiting 15s for Function App to reload..."
+  sleep 15
+
+  # Run tests
+  cmd_test
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Main
+# ─────────────────────────────────────────────────────────────────────────────
+
+COMMAND="${1:-reset}"
+
+case "$COMMAND" in
+  reset)
+    cmd_reset
+    ;;
+  diagnose)
+    cmd_diagnose
+    ;;
+  test)
+    cmd_test
+    ;;
+  logs)
+    cmd_logs
+    ;;
+  signup)
+    cmd_signup
+    ;;
+  tables)
+    cmd_tables
+    ;;
+  *)
+    echo "Usage: $0 [command]"
+    echo ""
+    echo "Commands:"
+    echo "  reset     - Reset database password and sync credentials (default)"
+    echo "  diagnose  - Run diagnostics without changing anything"
+    echo "  test      - Test database and API connectivity"
+    echo "  logs      - Show recent Function App errors"
+    echo "  signup    - Test the signup flow"
+    echo "  tables    - Show database tables and row counts"
+    exit 1
+    ;;
+esac
