@@ -139,9 +139,12 @@ export const PricingPage: React.FC = () => {
           </p>
           <button
             className="cta-card__button"
-            onClick={() => proPlan && handleSelectPlan(
-              billingPeriod === 'monthly' ? proPlan.priceMonthlyFormatted : proPlan.priceAnnualFormatted
-            )}
+            onClick={() => {
+              const priceId = billingPeriod === 'monthly' 
+                ? import.meta.env.VITE_STRIPE_PRICE_MONTHLY 
+                : import.meta.env.VITE_STRIPE_PRICE_ANNUAL;
+              if (priceId) handleSelectPlan(priceId);
+            }}
             disabled={checkoutLoading}
           >
             {checkoutLoading ? '🔄 Processing...' : '✨ Upgrade to Pro'}

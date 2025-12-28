@@ -1,9 +1,11 @@
 import React, { useCallback, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import imageCompression from 'browser-image-compression'
 import { apiClient } from '@/services/apiClient'
 import { FriendlyError } from '@/components/ui/FriendlyError'
 import { FunLoading } from '@/components/ui/FunLoading'
 import { getRandomMessage, successMessages } from '@/utils/friendlyErrors'
+import { useAuth } from '@/contexts/AuthProvider'
 
 interface FoodItem {
   name: string
@@ -26,6 +28,8 @@ const MAX_RETRIES = 3
 
 export function HomePage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const navigate = useNavigate()
+  const { isAuthenticated } = useAuth()
   const [isDragActive, setIsDragActive] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -153,7 +157,28 @@ export function HomePage() {
           </div>
         )}
         <p className="text-xs text-muted-foreground mb-6 text-center">✨ Estimates are approximate - your mileage may vary!</p>
-        <button onClick={handleReset} className="w-full py-4 px-6 bg-primary text-primary-foreground border-none rounded-xl text-base font-semibold cursor-pointer hover:scale-[1.02] transition-transform">
+        
+        {/* Save to Profile button for non-authenticated users */}
+        {!isAuthenticated && (
+          <button 
+            onClick={() => navigate('/login?returnTo=/history')} 
+            className="w-full py-4 px-6 bg-gradient-to-r from-primary to-accent text-primary-foreground border-none rounded-xl text-base font-semibold cursor-pointer shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02] transition-all mb-3"
+          >
+            💾 Save to My Profile
+          </button>
+        )}
+        
+        {/* View History button for authenticated users */}
+        {isAuthenticated && (
+          <button 
+            onClick={() => navigate('/history')} 
+            className="w-full py-4 px-6 bg-gradient-to-r from-primary to-accent text-primary-foreground border-none rounded-xl text-base font-semibold cursor-pointer shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02] transition-all mb-3"
+          >
+            📊 View in History
+          </button>
+        )}
+        
+        <button onClick={handleReset} className="w-full py-4 px-6 bg-secondary text-secondary-foreground border border-border rounded-xl text-base font-semibold cursor-pointer hover:bg-secondary/80 transition-colors">
           📸 Analyze Another Meal
         </button>
       </div>

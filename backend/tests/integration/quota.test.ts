@@ -3,43 +3,65 @@
 // Tests: analyze increments usage, blocks at limit
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { PrismaClient, Plan, UsageType } from '@prisma/client';
 
-// Mock Prisma client for testing
-const mockPrisma = {
-  user: {
-    findUnique: vi.fn(),
-    create: vi.fn(),
-    update: vi.fn(),
-  },
-  usage: {
-    count: vi.fn(),
-    create: vi.fn(),
-    findMany: vi.fn(),
-  },
-};
+// Use vi.hoisted to create mocks that are available during vi.mock hoisting
+const { mockUserFindUnique, mockUserCreate, mockUsageCount, mockUsageCreate, mockUsageFindMany } = vi.hoisted(() => {
+  return {
+    mockUserFindUnique: vi.fn(),
+    mockUserCreate: vi.fn(),
+    mockUsageCount: vi.fn(),
+    mockUsageCreate: vi.fn(),
+    mockUsageFindMany: vi.fn(),
+  };
+});
 
-vi.mock('@prisma/client', () => ({
-  PrismaClient: vi.fn(() => mockPrisma),
-  Plan: {
-    FREE: 'FREE',
-    PRO: 'PRO',
-  },
-  SubscriptionStatus: {
-    active: 'active',
-    canceled: 'canceled',
-    past_due: 'past_due',
-    trialing: 'trialing',
-  },
-  UsageType: {
-    MEAL_ANALYSIS: 'MEAL_ANALYSIS',
-  },
+// Mock the prisma utils module - uses hoisted mock functions
+vi.mock('../../src/utils/prisma.js', () => {
+  return {
+    getPrismaClient: () => ({
+      user: {
+        findUnique: mockUserFindUnique,
+        create: mockUserCreate,
+      },
+      usage: {
+        count: mockUsageCount,
+        create: mockUsageCreate,
+        findMany: mockUsageFindMany,
+      },
+    }),
+    Plan: {
+      FREE: 'FREE',
+      PRO: 'PRO',
+    },
+    SubscriptionStatus: {
+      active: 'active',
+      canceled: 'canceled',
+      past_due: 'past_due',
+      trialing: 'trialing',
+    },
+    UsageType: {
+      MEAL_ANALYSIS: 'MEAL_ANALYSIS',
+    },
+  };
+});
+
+// Mock subscription service
+vi.mock('../../src/services/subscriptionService.js', () => ({
+  getUserPlan: vi.fn(),
+  shouldHaveProAccess: vi.fn(),
 }));
 
+// Now import the modules after mocks are set up
 import { canPerformScan, recordUsage, getUsageCount } from '../../src/services/usageService';
 import { enforceWeeklyQuota } from '../../src/middleware/quotaMiddleware';
+import { getUserPlan, shouldHaveProAccess } from '../../src/services/subscriptionService';
 
-const FREE_SCANS_LIMIT = 5;
+// Import enums from our mock for use in tests
+const Plan = { FREE: 'FREE', PRO: 'PRO' } as const;
+const UsageType = { MEAL_ANALYSIS: 'MEAL_ANALYSIS' } as const;
+
+// Use the actual constant from billing - 1000 for POC extended quota
+const FREE_SCANS_LIMIT = 1000;
 
 describe('Quota Integration Tests', () => {
   const testUserId = 'test-user-123';
@@ -48,8 +70,15 @@ describe('Quota Integration Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     
+    // Reset mock implementations
+    mockUserFindUnique.mockReset();
+    mockUserCreate.mockReset();
+    mockUsageCount.mockReset();
+    mockUsageCreate.mockReset();
+    mockUsageFindMany.mockReset();
+    
     // Default mock: user exists with FREE plan
-    mockPrisma.user.findUnique.mockResolvedValue({
+    mockUserFindUnique.mockResolvedValue({
       id: internalUserId,
       externalId: testUserId,
       plan: Plan.FREE,
@@ -58,6 +87,16 @@ describe('Quota Integration Tests', () => {
       stripeCustomerId: null,
       stripeSubscriptionId: null,
     });
+    
+    // Default subscription service mock for FREE users
+    vi.mocked(getUserPlan).mockResolvedValue({
+      plan: Plan.FREE as any,
+      subscriptionStatus: null,
+      currentPeriodEnd: null,
+      stripeCustomerId: null,
+      stripeSubscriptionId: null,
+    });
+    vi.mocked(shouldHaveProAccess).mockReturnValue(false);
   });
 
   afterEach(() => {
@@ -66,33 +105,33 @@ describe('Quota Integration Tests', () => {
 
   describe('Free Tier Quota Enforcement', () => {
     it('should allow scan when usage is below limit', async () => {
-      // Setup: User has used 3 of 5 scans
-      mockPrisma.usage.count.mockResolvedValue(3);
+      // Setup: User has used 3 of 1000 scans
+      mockUsageCount.mockResolvedValue(3);
 
       const result = await canPerformScan(testUserId);
 
       expect(result.canScan).toBe(true);
       expect(result.scansUsed).toBe(3);
-      expect(result.scansRemaining).toBe(2);
+      expect(result.scansRemaining).toBe(997); // 1000 - 3
       expect(result.scansLimit).toBe(FREE_SCANS_LIMIT);
       expect(result.plan).toBe(Plan.FREE);
     });
 
     it('should block scan when usage reaches limit', async () => {
-      // Setup: User has used all 5 scans
-      mockPrisma.usage.count.mockResolvedValue(5);
+      // Setup: User has used all 1000 scans
+      mockUsageCount.mockResolvedValue(1000);
 
       const result = await canPerformScan(testUserId);
 
       expect(result.canScan).toBe(false);
-      expect(result.scansUsed).toBe(5);
+      expect(result.scansUsed).toBe(1000);
       expect(result.scansRemaining).toBe(0);
       expect(result.reason).toContain('Upgrade to Pro');
     });
 
     it('should block scan when usage exceeds limit', async () => {
       // Setup: Edge case - usage somehow exceeded limit
-      mockPrisma.usage.count.mockResolvedValue(7);
+      mockUsageCount.mockResolvedValue(1005);
 
       const result = await canPerformScan(testUserId);
 
@@ -103,7 +142,7 @@ describe('Quota Integration Tests', () => {
 
   describe('enforceWeeklyQuota middleware', () => {
     it('should return null (allow) when under quota', async () => {
-      mockPrisma.usage.count.mockResolvedValue(2);
+      mockUsageCount.mockResolvedValue(2);
 
       const result = await enforceWeeklyQuota(testUserId);
 
@@ -111,7 +150,7 @@ describe('Quota Integration Tests', () => {
     });
 
     it('should return 429 response when quota exceeded', async () => {
-      mockPrisma.usage.count.mockResolvedValue(5);
+      mockUsageCount.mockResolvedValue(1000);
 
       const result = await enforceWeeklyQuota(testUserId);
 
@@ -128,11 +167,11 @@ describe('Quota Integration Tests', () => {
   describe('Usage Recording', () => {
     it('should increment usage count after successful analysis', async () => {
       const mealId = 'meal-analysis-789';
-      mockPrisma.usage.create.mockResolvedValue({});
+      mockUsageCreate.mockResolvedValue({});
 
-      await recordUsage(testUserId, UsageType.MEAL_ANALYSIS, mealId);
+      await recordUsage(testUserId, UsageType.MEAL_ANALYSIS as any, mealId);
 
-      expect(mockPrisma.usage.create).toHaveBeenCalledWith({
+      expect(mockUsageCreate).toHaveBeenCalledWith({
         data: {
           userId: internalUserId,
           type: UsageType.MEAL_ANALYSIS,
@@ -143,34 +182,38 @@ describe('Quota Integration Tests', () => {
 
     it('should create user if not exists when recording usage', async () => {
       // User doesn't exist
-      mockPrisma.user.findUnique.mockResolvedValue(null);
-      mockPrisma.user.create.mockResolvedValue({
+      mockUserFindUnique.mockResolvedValue(null);
+      mockUserCreate.mockResolvedValue({
         id: 'new-internal-id',
         externalId: 'new-user',
         plan: Plan.FREE,
       });
-      mockPrisma.usage.create.mockResolvedValue({});
+      mockUsageCreate.mockResolvedValue({});
 
-      await recordUsage('new-user', UsageType.MEAL_ANALYSIS);
+      await recordUsage('new-user', UsageType.MEAL_ANALYSIS as any);
 
-      expect(mockPrisma.user.create).toHaveBeenCalled();
-      expect(mockPrisma.usage.create).toHaveBeenCalled();
+      expect(mockUserCreate).toHaveBeenCalled();
+      expect(mockUsageCreate).toHaveBeenCalled();
     });
   });
 
   describe('Pro User Unlimited Access', () => {
     it('should allow unlimited scans for Pro users', async () => {
       // Setup: Pro user with active subscription
-      mockPrisma.user.findUnique.mockResolvedValue({
-        id: internalUserId,
-        externalId: testUserId,
-        plan: Plan.PRO,
-        subscriptionStatus: 'active',
+      vi.mocked(getUserPlan).mockResolvedValue({
+        plan: Plan.PRO as any,
+        subscriptionStatus: 'active' as any,
         currentPeriodEnd: new Date('2025-12-31'),
         stripeCustomerId: 'cus_123',
         stripeSubscriptionId: 'sub_123',
       });
-      mockPrisma.usage.count.mockResolvedValue(100); // High usage
+      vi.mocked(shouldHaveProAccess).mockReturnValue(true);
+      
+      mockUserFindUnique.mockResolvedValue({
+        id: internalUserId,
+        externalId: testUserId,
+      });
+      mockUsageCount.mockResolvedValue(100); // High usage
 
       const result = await canPerformScan(testUserId);
 
@@ -181,16 +224,20 @@ describe('Quota Integration Tests', () => {
     });
 
     it('should allow Pro user with 0 current usage', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({
-        id: internalUserId,
-        externalId: testUserId,
-        plan: Plan.PRO,
-        subscriptionStatus: 'active',
+      vi.mocked(getUserPlan).mockResolvedValue({
+        plan: Plan.PRO as any,
+        subscriptionStatus: 'active' as any,
         currentPeriodEnd: new Date('2025-12-31'),
         stripeCustomerId: 'cus_123',
         stripeSubscriptionId: 'sub_123',
       });
-      mockPrisma.usage.count.mockResolvedValue(0);
+      vi.mocked(shouldHaveProAccess).mockReturnValue(true);
+      
+      mockUserFindUnique.mockResolvedValue({
+        id: internalUserId,
+        externalId: testUserId,
+      });
+      mockUsageCount.mockResolvedValue(0);
 
       const result = await canPerformScan(testUserId);
 
@@ -201,12 +248,12 @@ describe('Quota Integration Tests', () => {
 
   describe('Rolling Window Calculation', () => {
     it('should only count scans within 7-day rolling window', async () => {
-      mockPrisma.usage.count.mockResolvedValue(2);
+      mockUsageCount.mockResolvedValue(2);
 
       await getUsageCount(testUserId);
 
       // Verify the query includes date filter
-      expect(mockPrisma.usage.count).toHaveBeenCalledWith(
+      expect(mockUsageCount).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             createdAt: expect.objectContaining({
@@ -217,7 +264,7 @@ describe('Quota Integration Tests', () => {
       );
 
       // Verify the date is approximately 7 days ago
-      const call = mockPrisma.usage.count.mock.calls[0][0];
+      const call = mockUsageCount.mock.calls[0][0];
       const windowStart = call.where.createdAt.gte;
       const now = new Date();
       const daysDiff = Math.round((now.getTime() - windowStart.getTime()) / (1000 * 60 * 60 * 24));
@@ -228,7 +275,7 @@ describe('Quota Integration Tests', () => {
 
   describe('New User Handling', () => {
     it('should return 0 usage for non-existent user', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockUserFindUnique.mockResolvedValue(null);
 
       const count = await getUsageCount('non-existent-user');
 
@@ -236,11 +283,7 @@ describe('Quota Integration Tests', () => {
     });
 
     it('should allow new user to scan (starts with 0 usage)', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
-      mockPrisma.usage.count.mockResolvedValue(0);
-
-      // For canPerformScan, we need the full user mock
-      mockPrisma.user.findUnique.mockResolvedValue({
+      mockUserFindUnique.mockResolvedValue({
         id: 'new-internal',
         externalId: 'new-user',
         plan: Plan.FREE,
@@ -249,12 +292,13 @@ describe('Quota Integration Tests', () => {
         stripeCustomerId: null,
         stripeSubscriptionId: null,
       });
+      mockUsageCount.mockResolvedValue(0);
 
       const result = await canPerformScan('new-user');
 
       expect(result.canScan).toBe(true);
       expect(result.scansUsed).toBe(0);
-      expect(result.scansRemaining).toBe(5);
+      expect(result.scansRemaining).toBe(1000); // 1000 - 0
     });
   });
 });

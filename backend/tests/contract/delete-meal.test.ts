@@ -5,22 +5,47 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { HttpRequest, InvocationContext } from '@azure/functions';
 
-// Mock services
-vi.mock('@prisma/client', () => ({
-  PrismaClient: vi.fn(() => ({
+// Use vi.hoisted to create mocks available during vi.mock hoisting
+const { 
+  mockMealAnalysisFindUnique, 
+  mockMealAnalysisDelete, 
+  mockFoodDeleteMany,
+  mockBlobServiceDeleteBlob,
+  mockTransaction,
+  mockPrismaInstance
+} = vi.hoisted(() => {
+  const mocks = {
+    mockMealAnalysisFindUnique: vi.fn(),
+    mockMealAnalysisDelete: vi.fn(),
+    mockFoodDeleteMany: vi.fn(),
+    mockBlobServiceDeleteBlob: vi.fn(),
+    mockTransaction: vi.fn(),
+    mockPrismaInstance: null as any,
+  };
+  
+  mocks.mockPrismaInstance = {
     mealAnalysis: {
-      findUnique: vi.fn(),
-      delete: vi.fn(),
+      findUnique: mocks.mockMealAnalysisFindUnique,
+      delete: mocks.mockMealAnalysisDelete,
     },
     food: {
-      deleteMany: vi.fn(),
+      deleteMany: mocks.mockFoodDeleteMany,
     },
-  })),
+    $transaction: mocks.mockTransaction,
+  };
+  
+  return mocks;
+});
+
+// Mock the prisma utility module that functions actually use
+vi.mock('../../src/utils/prisma.js', () => ({
+  getPrismaClient: () => mockPrismaInstance,
+  Plan: { FREE: 'FREE', PRO: 'PRO' },
 }));
 
 vi.mock('../../src/services/blobService', () => ({
   blobService: {
-    deleteBlob: vi.fn().mockResolvedValue(undefined),
+    deleteBlob: mockBlobServiceDeleteBlob,
   },
 }));
 
@@ -34,11 +59,17 @@ describe('DELETE /api/meals/:id', () => {
       error: vi.fn(),
       warn: vi.fn(),
     } as unknown as InvocationContext;
+    
+    // Default mock behaviors
+    mockBlobServiceDeleteBlob.mockResolvedValue(undefined);
+    // Transaction mock - execute the callback passed to it
+    mockTransaction.mockImplementation(async (callback: any) => {
+      return callback(mockPrismaInstance);
+    });
   });
 
   it('should return 204 No Content on successful deletion', async () => {
     const { deleteMeal } = await import('../../src/functions/delete-meal');
-    const { PrismaClient } = await import('@prisma/client');
 
     const mockMeal = {
       id: 'meal-123',
@@ -46,10 +77,9 @@ describe('DELETE /api/meals/:id', () => {
       blobName: 'meals/user-123/photo.jpg',
     };
 
-    const prisma = new PrismaClient();
-    (prisma.mealAnalysis.findUnique as any).mockResolvedValue(mockMeal);
-    (prisma.mealAnalysis.delete as any).mockResolvedValue(mockMeal);
-    (prisma.food.deleteMany as any).mockResolvedValue({ count: 2 });
+    mockMealAnalysisFindUnique.mockResolvedValue(mockMeal);
+    mockMealAnalysisDelete.mockResolvedValue(mockMeal);
+    mockFoodDeleteMany.mockResolvedValue({ count: 2 });
 
     const request = {
       params: { id: 'meal-123' },
@@ -63,10 +93,8 @@ describe('DELETE /api/meals/:id', () => {
 
   it('should return 404 when meal not found', async () => {
     const { deleteMeal } = await import('../../src/functions/delete-meal');
-    const { PrismaClient } = await import('@prisma/client');
 
-    const prisma = new PrismaClient();
-    (prisma.mealAnalysis.findUnique as any).mockResolvedValue(null);
+    mockMealAnalysisFindUnique.mockResolvedValue(null);
 
     const request = {
       params: { id: 'nonexistent-meal' },
@@ -81,10 +109,8 @@ describe('DELETE /api/meals/:id', () => {
 
   it('should return 403 when user does not own the meal', async () => {
     const { deleteMeal } = await import('../../src/functions/delete-meal');
-    const { PrismaClient } = await import('@prisma/client');
 
-    const prisma = new PrismaClient();
-    (prisma.mealAnalysis.findUnique as any).mockResolvedValue({
+    mockMealAnalysisFindUnique.mockResolvedValue({
       id: 'meal-123',
       userId: 'other-user', // Different user
       blobName: 'meals/other-user/photo.jpg',

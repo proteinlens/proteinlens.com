@@ -5,14 +5,32 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { HttpRequest, InvocationContext } from '@azure/functions';
 
-// Mock Prisma before importing the function
-vi.mock('@prisma/client', () => ({
-  PrismaClient: vi.fn(() => ({
+// Use vi.hoisted to create mocks available during vi.mock hoisting
+const { 
+  mockMealAnalysisFindUnique, 
+  mockMealAnalysisUpdate, 
+  mockPrismaInstance
+} = vi.hoisted(() => {
+  const mocks = {
+    mockMealAnalysisFindUnique: vi.fn(),
+    mockMealAnalysisUpdate: vi.fn(),
+    mockPrismaInstance: null as any,
+  };
+  
+  mocks.mockPrismaInstance = {
     mealAnalysis: {
-      findUnique: vi.fn(),
-      update: vi.fn(),
+      findUnique: mocks.mockMealAnalysisFindUnique,
+      update: mocks.mockMealAnalysisUpdate,
     },
-  })),
+  };
+  
+  return mocks;
+});
+
+// Mock the prisma utility module that functions actually use
+vi.mock('../../src/utils/prisma.js', () => ({
+  getPrismaClient: () => mockPrismaInstance,
+  Plan: { FREE: 'FREE', PRO: 'PRO' },
 }));
 
 describe('PATCH /api/meals/:id', () => {
@@ -29,7 +47,6 @@ describe('PATCH /api/meals/:id', () => {
 
   it('should return 200 with updated meal on valid correction', async () => {
     const { updateMeal } = await import('../../src/functions/update-meal');
-    const { PrismaClient } = await import('@prisma/client');
 
     const mockMeal = {
       id: 'meal-123',
@@ -41,9 +58,8 @@ describe('PATCH /api/meals/:id', () => {
       ],
     };
 
-    const prisma = new PrismaClient();
-    (prisma.mealAnalysis.findUnique as any).mockResolvedValue(mockMeal);
-    (prisma.mealAnalysis.update as any).mockResolvedValue({
+    mockMealAnalysisFindUnique.mockResolvedValue(mockMeal);
+    mockMealAnalysisUpdate.mockResolvedValue({
       ...mockMeal,
       userCorrections: { foods: [{ name: 'Grilled Chicken', protein: 40 }] },
       totalProtein: 40,
@@ -67,10 +83,8 @@ describe('PATCH /api/meals/:id', () => {
 
   it('should return 404 when meal not found', async () => {
     const { updateMeal } = await import('../../src/functions/update-meal');
-    const { PrismaClient } = await import('@prisma/client');
 
-    const prisma = new PrismaClient();
-    (prisma.mealAnalysis.findUnique as any).mockResolvedValue(null);
+    mockMealAnalysisFindUnique.mockResolvedValue(null);
 
     const request = {
       params: { id: 'nonexistent-meal' },
@@ -107,10 +121,8 @@ describe('PATCH /api/meals/:id', () => {
 
   it('should return 403 when user does not own the meal', async () => {
     const { updateMeal } = await import('../../src/functions/update-meal');
-    const { PrismaClient } = await import('@prisma/client');
 
-    const prisma = new PrismaClient();
-    (prisma.mealAnalysis.findUnique as any).mockResolvedValue({
+    mockMealAnalysisFindUnique.mockResolvedValue({
       id: 'meal-123',
       userId: 'other-user', // Different user
     });

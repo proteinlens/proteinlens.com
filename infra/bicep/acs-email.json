@@ -1,0 +1,143 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.39.26.7824",
+      "templateHash": "3542202387526177501"
+    }
+  },
+  "parameters": {
+    "baseName": {
+      "type": "string",
+      "metadata": {
+        "description": "Base name for resources"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "global",
+      "metadata": {
+        "description": "Location for the Communication Service"
+      }
+    },
+    "dataLocation": {
+      "type": "string",
+      "defaultValue": "Europe",
+      "allowedValues": [
+        "UnitedStates",
+        "Europe",
+        "Asia",
+        "Australia",
+        "Brazil",
+        "Canada",
+        "France",
+        "Germany",
+        "India",
+        "Japan",
+        "Korea",
+        "Norway",
+        "Switzerland",
+        "UAE",
+        "UK"
+      ],
+      "metadata": {
+        "description": "Data location for email service"
+      }
+    },
+    "tags": {
+      "type": "object",
+      "defaultValue": {},
+      "metadata": {
+        "description": "Tags for resources"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Communication/emailServices",
+      "apiVersion": "2023-06-01-preview",
+      "name": "[format('{0}-email', parameters('baseName'))]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "dataLocation": "[parameters('dataLocation')]"
+      }
+    },
+    {
+      "type": "Microsoft.Communication/emailServices/domains",
+      "apiVersion": "2023-06-01-preview",
+      "name": "[format('{0}/{1}', format('{0}-email', parameters('baseName')), 'AzureManagedDomain')]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "domainManagement": "AzureManagedDomain",
+        "userEngagementTracking": "Disabled"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Communication/emailServices', format('{0}-email', parameters('baseName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Communication/communicationServices",
+      "apiVersion": "2023-06-01-preview",
+      "name": "[format('{0}-acs', parameters('baseName'))]",
+      "location": "[parameters('location')]",
+      "tags": "[parameters('tags')]",
+      "properties": {
+        "dataLocation": "[parameters('dataLocation')]",
+        "linkedDomains": [
+          "[resourceId('Microsoft.Communication/emailServices/domains', format('{0}-email', parameters('baseName')), 'AzureManagedDomain')]"
+        ]
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Communication/emailServices/domains', format('{0}-email', parameters('baseName')), 'AzureManagedDomain')]"
+      ]
+    }
+  ],
+  "outputs": {
+    "communicationServiceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Communication Service name"
+      },
+      "value": "[format('{0}-acs', parameters('baseName'))]"
+    },
+    "emailServiceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Email Service name"
+      },
+      "value": "[format('{0}-email', parameters('baseName'))]"
+    },
+    "emailDomainName": {
+      "type": "string",
+      "metadata": {
+        "description": "Email domain name"
+      },
+      "value": "AzureManagedDomain"
+    },
+    "endpoint": {
+      "type": "string",
+      "metadata": {
+        "description": "Communication Service endpoint"
+      },
+      "value": "[reference(resourceId('Microsoft.Communication/communicationServices', format('{0}-acs', parameters('baseName'))), '2023-06-01-preview').hostName]"
+    },
+    "senderAddress": {
+      "type": "string",
+      "metadata": {
+        "description": "Email sender address (Azure-managed domain)"
+      },
+      "value": "[format('DoNotReply@{0}', reference(resourceId('Microsoft.Communication/emailServices/domains', format('{0}-email', parameters('baseName')), 'AzureManagedDomain'), '2023-06-01-preview').mailFromSenderDomain)]"
+    },
+    "communicationServiceId": {
+      "type": "string",
+      "metadata": {
+        "description": "Communication Service resource ID"
+      },
+      "value": "[resourceId('Microsoft.Communication/communicationServices', format('{0}-acs', parameters('baseName')))]"
+    }
+  }
+}

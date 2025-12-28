@@ -136,6 +136,12 @@ jobs:
         with:
           fetch-depth: 0  # Full history for comprehensive scan
 
+      - name: Gitleaks Secret Scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
       - name: Check for hardcoded API keys
         run: |
           echo "Scanning for common secret patterns..."
@@ -316,7 +322,7 @@ jobs:
           # Use infra output if available, otherwise fallback to default production URL
           INFRA_URL="${{ needs.infra.outputs.functionapp_url }}"
           if [ -z "$INFRA_URL" ] || [ "$INFRA_URL" = "null" ]; then
-            URL="https://proteinlens-api-prod.azurewebsites.net/api/health"
+            URL="https://api.proteinlens.com/api/health"
           else
             URL="$INFRA_URL/api/health"
           fi

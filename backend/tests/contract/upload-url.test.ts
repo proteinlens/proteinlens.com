@@ -1,10 +1,11 @@
 // Contract Test: POST /api/upload-url
 // Verifies API contract returns valid SAS URL structure
 // T024: Contract test for upload-url endpoint
+// NOTE: These tests require a running Azure Functions server on port 7071
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 
-describe('POST /api/upload-url - Contract Test', () => {
+describe.skipIf(!process.env.RUN_E2E_TESTS)('POST /api/upload-url - Contract Test', () => {
   const FUNCTION_URL = process.env.FUNCTION_URL || 'http://localhost:7071/api/upload-url';
 
   it('should return 200 with valid SAS URL structure for JPEG', async () => {

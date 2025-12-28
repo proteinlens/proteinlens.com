@@ -1,6 +1,7 @@
 // Integration Test: Full meal upload and analysis flow
 // Tests end-to-end workflow: request SAS URL → upload blob → analyze → verify results
 // T026: Integration test for complete user story 1 flow
+// NOTE: These tests require a running Azure Functions server on port 7071
 
 import { describe, it, expect, beforeAll } from 'vitest';
 import * as fs from 'fs';
@@ -10,7 +11,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-describe('Meal Upload and Analysis - Integration Test', () => {
+describe.skipIf(!process.env.RUN_E2E_TESTS)('Meal Upload and Analysis - Integration Test', () => {
   const UPLOAD_URL_ENDPOINT = process.env.FUNCTION_URL || 'http://localhost:7071/api/upload-url';
   const ANALYZE_ENDPOINT = process.env.FUNCTION_URL || 'http://localhost:7071/api/meals/analyze';
   

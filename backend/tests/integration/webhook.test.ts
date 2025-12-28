@@ -3,34 +3,42 @@
 // Tests: mock Stripe events, verify DB updates
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { Plan, SubscriptionStatus } from '@prisma/client';
-import Stripe from 'stripe';
 
-// Mock Prisma client
-const mockPrisma = {
-  user: {
-    findUnique: vi.fn(),
-    update: vi.fn(),
-  },
-  subscriptionEvent: {
-    findUnique: vi.fn(),
-    create: vi.fn(),
-  },
-};
+// Use vi.hoisted to create mocks that are available during vi.mock hoisting
+const { mockUserFindUnique, mockUserUpdate, mockSubscriptionEventFindUnique, mockSubscriptionEventCreate } = vi.hoisted(() => {
+  return {
+    mockUserFindUnique: vi.fn(),
+    mockUserUpdate: vi.fn(),
+    mockSubscriptionEventFindUnique: vi.fn(),
+    mockSubscriptionEventCreate: vi.fn(),
+  };
+});
 
-vi.mock('@prisma/client', () => ({
-  PrismaClient: vi.fn(() => mockPrisma),
-  Plan: {
-    FREE: 'FREE',
-    PRO: 'PRO',
-  },
-  SubscriptionStatus: {
-    active: 'active',
-    canceled: 'canceled',
-    past_due: 'past_due',
-    trialing: 'trialing',
-  },
-}));
+// Mock the prisma utils module - uses hoisted mock functions
+vi.mock('../../src/utils/prisma.js', () => {
+  return {
+    getPrismaClient: () => ({
+      user: {
+        findUnique: mockUserFindUnique,
+        update: mockUserUpdate,
+      },
+      subscriptionEvent: {
+        findUnique: mockSubscriptionEventFindUnique,
+        create: mockSubscriptionEventCreate,
+      },
+    }),
+    Plan: {
+      FREE: 'FREE',
+      PRO: 'PRO',
+    },
+    SubscriptionStatus: {
+      active: 'active',
+      canceled: 'canceled',
+      past_due: 'past_due',
+      trialing: 'trialing',
+    },
+  };
+});
 
 // Mock Stripe
 vi.mock('stripe', () => ({
@@ -48,6 +56,10 @@ import {
   logSubscriptionEvent,
 } from '../../src/services/subscriptionService';
 
+// Import enums for use in tests
+const Plan = { FREE: 'FREE', PRO: 'PRO' } as const;
+const SubscriptionStatus = { active: 'active', canceled: 'canceled', past_due: 'past_due', trialing: 'trialing' } as const;
+
 describe('Webhook Integration Tests', () => {
   const testCustomerId = 'cus_test123';
   const testSubscriptionId = 'sub_test456';
@@ -55,9 +67,15 @@ describe('Webhook Integration Tests', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    
+    // Reset mock implementations
+    mockUserFindUnique.mockReset();
+    mockUserUpdate.mockReset();
+    mockSubscriptionEventFindUnique.mockReset();
+    mockSubscriptionEventCreate.mockReset();
 
     // Default mock: user exists
-    mockPrisma.user.findUnique.mockResolvedValue({
+    mockUserFindUnique.mockResolvedValue({
       id: testUserId,
       externalId: 'external-123',
       stripeCustomerId: testCustomerId,
@@ -67,13 +85,13 @@ describe('Webhook Integration Tests', () => {
       currentPeriodEnd: new Date('2025-12-31'),
     });
 
-    mockPrisma.user.update.mockResolvedValue({
+    mockUserUpdate.mockResolvedValue({
       id: testUserId,
       plan: Plan.PRO,
     });
 
-    mockPrisma.subscriptionEvent.findUnique.mockResolvedValue(null);
-    mockPrisma.subscriptionEvent.create.mockResolvedValue({});
+    mockSubscriptionEventFindUnique.mockResolvedValue(null);
+    mockSubscriptionEventCreate.mockResolvedValue({});
   });
 
   afterEach(() => {
@@ -91,7 +109,7 @@ describe('Webhook Integration Tests', () => {
         futureDate
       );
 
-      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+      expect(mockUserUpdate).toHaveBeenCalledWith({
         where: { id: testUserId },
         data: expect.objectContaining({
           stripeSubscriptionId: testSubscriptionId,
@@ -113,7 +131,7 @@ describe('Webhook Integration Tests', () => {
         newPeriodEnd
       );
 
-      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+      expect(mockUserUpdate).toHaveBeenCalledWith({
         where: { id: testUserId },
         data: expect.objectContaining({
           currentPeriodEnd: newPeriodEnd,
@@ -130,7 +148,7 @@ describe('Webhook Integration Tests', () => {
         new Date('2025-12-31')
       );
 
-      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+      expect(mockUserUpdate).toHaveBeenCalledWith({
         where: { id: testUserId },
         data: expect.objectContaining({
           subscriptionStatus: SubscriptionStatus.canceled,
@@ -141,7 +159,7 @@ describe('Webhook Integration Tests', () => {
 
   describe('customer.subscription.deleted handling', () => {
     it('should downgrade user to Free', async () => {
-      mockPrisma.user.update.mockResolvedValue({
+      mockUserUpdate.mockResolvedValue({
         id: testUserId,
         plan: Plan.FREE,
         subscriptionStatus: null,
@@ -149,7 +167,7 @@ describe('Webhook Integration Tests', () => {
 
       await downgradeToFree(testCustomerId);
 
-      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+      expect(mockUserUpdate).toHaveBeenCalledWith({
         where: { id: testUserId },
         data: {
           plan: Plan.FREE,
@@ -161,12 +179,12 @@ describe('Webhook Integration Tests', () => {
     });
 
     it('should handle non-existent user gracefully', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockUserFindUnique.mockResolvedValue(null);
 
       const result = await downgradeToFree('non-existent-customer');
 
       expect(result).toBeNull();
-      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+      expect(mockUserUpdate).not.toHaveBeenCalled();
     });
   });
 
@@ -179,7 +197,7 @@ describe('Webhook Integration Tests', () => {
         new Date('2025-12-31')
       );
 
-      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+      expect(mockUserUpdate).toHaveBeenCalledWith({
         where: { id: testUserId },
         data: expect.objectContaining({
           subscriptionStatus: SubscriptionStatus.past_due,
@@ -190,7 +208,7 @@ describe('Webhook Integration Tests', () => {
 
   describe('Event logging (idempotency)', () => {
     it('should create event record for new events', async () => {
-      mockPrisma.subscriptionEvent.findUnique.mockResolvedValue(null);
+      mockSubscriptionEventFindUnique.mockResolvedValue(null);
 
       await logSubscriptionEvent(
         testUserId,
@@ -199,7 +217,7 @@ describe('Webhook Integration Tests', () => {
         { customer: testCustomerId }
       );
 
-      expect(mockPrisma.subscriptionEvent.create).toHaveBeenCalledWith({
+      expect(mockSubscriptionEventCreate).toHaveBeenCalledWith({
         data: expect.objectContaining({
           userId: testUserId,
           eventType: 'checkout.session.completed',
@@ -209,7 +227,7 @@ describe('Webhook Integration Tests', () => {
     });
 
     it('should skip duplicate events', async () => {
-      mockPrisma.subscriptionEvent.findUnique.mockResolvedValue({
+      mockSubscriptionEventFindUnique.mockResolvedValue({
         id: 'existing-event',
         stripeEventId: 'evt_duplicate_456',
       });
@@ -221,7 +239,7 @@ describe('Webhook Integration Tests', () => {
         { customer: testCustomerId }
       );
 
-      expect(mockPrisma.subscriptionEvent.create).not.toHaveBeenCalled();
+      expect(mockSubscriptionEventCreate).not.toHaveBeenCalled();
     });
   });
 
@@ -235,7 +253,7 @@ describe('Webhook Integration Tests', () => {
       );
 
       // Should map to canceled
-      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+      expect(mockUserUpdate).toHaveBeenCalledWith({
         where: { id: testUserId },
         data: expect.objectContaining({
           subscriptionStatus: SubscriptionStatus.canceled,
@@ -251,7 +269,7 @@ describe('Webhook Integration Tests', () => {
         new Date('2025-12-31')
       );
 
-      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+      expect(mockUserUpdate).toHaveBeenCalledWith({
         where: { id: testUserId },
         data: expect.objectContaining({
           subscriptionStatus: SubscriptionStatus.trialing,

@@ -198,6 +198,34 @@ jobs:
           echo "staticwebapp_url=$(echo "$OUTPUTS" | jq -r '.staticWebAppUrl.value')" >> "$GITHUB_OUTPUT"
           echo "admin_staticwebapp_url=$(echo "$OUTPUTS" | jq -r '.adminStaticWebAppUrl.value // empty')" >> "$GITHUB_OUTPUT"
 
+      - name: Deploy ACS Email Service
+        id: acs
+        run: |
+          DEPLOYMENT_NAME="acs-email-${{ github.run_id }}"
+          echo "📧 Deploying Azure Communication Services Email..."
+          
+          az deployment group create \
+            --name "$DEPLOYMENT_NAME" \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
+            --template-file infra/bicep/acs-email.bicep \
+            --parameters baseName="proteinlens" dataLocation="Europe"
+          
+          # Get deployment outputs
+          ACS_OUTPUT=$(az deployment group show \
+            --name "$DEPLOYMENT_NAME" \
+            --resource-group "${{ env.RESOURCE_GROUP }}" \
+            --query properties.outputs \
+            --output json)
+          
+          echo "acs_output=$(echo "$ACS_OUTPUT" | jq -c .)" >> "$GITHUB_OUTPUT"
+          
+          ACS_NAME=$(echo "$ACS_OUTPUT" | jq -r '.communicationServiceName.value')
+          SENDER=$(echo "$ACS_OUTPUT" | jq -r '.senderAddress.value')
+          
+          echo "✅ ACS Email Service deployed"
+          echo "   Communication Service: $ACS_NAME"
+          echo "   Sender Address: $SENDER"
+
       - name: Grant Workflow Access to Key Vault
         run: |
           KEYVAULT_NAME=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.keyVaultName.value')
@@ -371,6 +399,39 @@ jobs:
             --value "$STORAGE_CONN" \
             > /dev/null
           
+          # Get ACS Email connection string and store in Key Vault
+          ACS_OUTPUT='${{ steps.acs.outputs.acs_output }}'
+          if [ -n "$ACS_OUTPUT" ] && [ "$ACS_OUTPUT" != "null" ]; then
+            ACS_NAME=$(echo "$ACS_OUTPUT" | jq -r '.communicationServiceName.value')
+            ACS_SENDER=$(echo "$ACS_OUTPUT" | jq -r '.senderAddress.value')
+            
+            if [ -n "$ACS_NAME" ] && [ "$ACS_NAME" != "null" ]; then
+              echo "📧 Configuring ACS Email connection..."
+              
+              # Get ACS connection string
+              ACS_CONN=$(az communication list-key \
+                --name "$ACS_NAME" \
+                --resource-group "${{ env.RESOURCE_GROUP }}" \
+                --query "primaryConnectionString" -o tsv)
+              
+              # Store ACS connection string in Key Vault
+              az keyvault secret set \
+                --vault-name "$KEYVAULT_NAME" \
+                --name "acs-email-connection" \
+                --value "$ACS_CONN" \
+                > /dev/null
+              
+              # Store sender address in Key Vault
+              az keyvault secret set \
+                --vault-name "$KEYVAULT_NAME" \
+                --name "acs-email-sender" \
+                --value "$ACS_SENDER" \
+                > /dev/null
+              
+              echo "✅ ACS Email secrets stored in Key Vault"
+            fi
+          fi
+          
           echo "✅ Key Vault secrets seeded successfully"
           echo ""
           echo "📝 Note: Update these secrets in GitHub repository settings:"
@@ -478,6 +539,8 @@ jobs:
       - name: Configure Function App for ESM
         run: |
           FUNCTION_APP_NAME=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.functionAppName.value')
+          KEYVAULT_NAME=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.keyVaultName.value')
+          STATIC_WEB_APP_URL=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.staticWebAppUrl.value')
           
           echo "⚙️  Configuring Function App for Azure Functions v4 ESM..."
           
@@ -491,6 +554,46 @@ jobs:
             --output none
           
           echo "✅ Function App ESM configuration complete"
+
+      - name: Configure Function App Email Settings
+        run: |
+          FUNCTION_APP_NAME=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.functionAppName.value')
+          KEYVAULT_NAME=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.keyVaultName.value')
+          STATIC_WEB_APP_URL=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.staticWebAppUrl.value')
+          
+          # Get ACS outputs
+          ACS_OUTPUT='${{ steps.acs.outputs.acs_output }}'
+          if [ -n "$ACS_OUTPUT" ] && [ "$ACS_OUTPUT" != "null" ]; then
+            ACS_SENDER=$(echo "$ACS_OUTPUT" | jq -r '.senderAddress.value')
+            
+            if [ -n "$ACS_SENDER" ] && [ "$ACS_SENDER" != "null" ]; then
+              echo "📧 Configuring Function App email settings..."
+              
+              # Configure Function App with ACS email settings using Key Vault references
+              az functionapp config appsettings set \
+                --name "$FUNCTION_APP_NAME" \
+                --resource-group "${{ env.RESOURCE_GROUP }}" \
+                --settings \
+                  "ACS_EMAIL_CONNECTION_STRING=@Microsoft.KeyVault(VaultName=${KEYVAULT_NAME};SecretName=acs-email-connection)" \
+                  "ACS_EMAIL_SENDER=${ACS_SENDER}" \
+                  "FRONTEND_URL=https://${STATIC_WEB_APP_URL}" \
+                  "EMAIL_SERVICE=acs" \
+                --output none
+              
+              echo "✅ Function App email settings configured"
+              echo "   Sender: $ACS_SENDER"
+              echo "   Frontend URL: https://${STATIC_WEB_APP_URL}"
+            fi
+          else
+            echo "⚠️ ACS not deployed, configuring email in console mode"
+            az functionapp config appsettings set \
+              --name "$FUNCTION_APP_NAME" \
+              --resource-group "${{ env.RESOURCE_GROUP }}" \
+              --settings \
+                "EMAIL_SERVICE=console" \
+                "FRONTEND_URL=https://${STATIC_WEB_APP_URL}" \
+              --output none
+          fi
 
       # Note: Frontend workflow will fetch SWA token at runtime; no repo secret is set here.
 
@@ -515,6 +618,13 @@ jobs:
             echo "| Storage Account | $(echo "$OUTPUTS" | jq -r '.storageAccountName.value // "N/A"') |" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "⚠️ Deployment outputs not available" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          
+          # Add ACS info to summary
+          ACS_OUTPUT='${{ steps.acs.outputs.acs_output }}'
+          if [ -n "$ACS_OUTPUT" ] && [ "$ACS_OUTPUT" != "null" ]; then
+            echo "| ACS Email Service | $(echo "$ACS_OUTPUT" | jq -r '.emailServiceName.value // "N/A"') |" >> "$GITHUB_STEP_SUMMARY"
+            echo "| Email Sender | $(echo "$ACS_OUTPUT" | jq -r '.senderAddress.value // "N/A"') |" >> "$GITHUB_STEP_SUMMARY"
           fi
           
           echo "" >> "$GITHUB_STEP_SUMMARY"

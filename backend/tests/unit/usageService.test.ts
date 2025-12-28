@@ -58,7 +58,8 @@ import { getUserPlan, shouldHaveProAccess } from '../../src/services/subscriptio
 const Plan = { FREE: 'FREE', PRO: 'PRO' } as const;
 const SubscriptionStatus = { active: 'active', canceled: 'canceled', past_due: 'past_due', trialing: 'trialing' } as const;
 
-const FREE_SCANS_PER_WEEK = 5;
+// Use the actual constant from billing - 1000 for POC extended quota
+const FREE_SCANS_PER_WEEK = 1000;
 
 describe('UsageService', () => {
   beforeEach(() => {
@@ -109,7 +110,7 @@ describe('UsageService', () => {
       });
       vi.mocked(shouldHaveProAccess).mockReturnValue(false);
 
-      // Mock getUsageCount to return 3 (below limit)
+      // Mock getUsageCount to return 3 (below limit of 1000)
       mockUserFindUnique.mockResolvedValue({ id: 'internal-123' });
       mockUsageCount.mockResolvedValue(3);
 
@@ -119,7 +120,7 @@ describe('UsageService', () => {
       // Assert
       expect(result.canScan).toBe(true);
       expect(result.scansUsed).toBe(3);
-      expect(result.scansRemaining).toBe(2); // 5 - 3 = 2
+      expect(result.scansRemaining).toBe(997); // 1000 - 3 = 997
       expect(result.scansLimit).toBe(FREE_SCANS_PER_WEEK);
       expect(result.plan).toBe(Plan.FREE);
     });
@@ -135,16 +136,16 @@ describe('UsageService', () => {
       });
       vi.mocked(shouldHaveProAccess).mockReturnValue(false);
 
-      // Mock getUsageCount to return 5 (at limit)
+      // Mock getUsageCount to return 1000 (at limit)
       mockUserFindUnique.mockResolvedValue({ id: 'internal-123' });
-      mockUsageCount.mockResolvedValue(5);
+      mockUsageCount.mockResolvedValue(1000);
 
       // Execute
       const result = await usageService.canPerformScan('user-123');
 
       // Assert
       expect(result.canScan).toBe(false);
-      expect(result.scansUsed).toBe(5);
+      expect(result.scansUsed).toBe(1000);
       expect(result.scansRemaining).toBe(0);
       expect(result.reason).toContain('Upgrade to Pro');
     });
@@ -160,9 +161,9 @@ describe('UsageService', () => {
       });
       vi.mocked(shouldHaveProAccess).mockReturnValue(false);
 
-      // Mock getUsageCount to return 7 (over limit - edge case)
+      // Mock getUsageCount to return 1005 (over limit - edge case)
       mockUserFindUnique.mockResolvedValue({ id: 'internal-123' });
-      mockUsageCount.mockResolvedValue(7);
+      mockUsageCount.mockResolvedValue(1005);
 
       // Execute
       const result = await usageService.canPerformScan('user-123');
