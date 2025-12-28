@@ -2,11 +2,23 @@
 // Feature: 002-saas-billing
 
 import { getAuthHeaders, getValidAccessToken } from './authService';
+import { getUserId } from '../utils/userId';
 
 // VITE_API_URL is the base URL (e.g., https://api.proteinlens.com or http://localhost:7071)
 // All API routes are under /api/* path
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 const API_BASE = `${API_BASE_URL}/api`;
+
+/**
+ * Get headers for billing API calls
+ * Includes auth headers (CSRF token) and user ID header
+ */
+function getBillingHeaders(): Record<string, string> {
+  return {
+    ...getAuthHeaders(),
+    'x-user-id': getUserId(),
+  };
+}
 
 /**
  * Plan feature limits
@@ -95,7 +107,7 @@ export async function getPlans(): Promise<PlansResponse> {
  */
 export async function getUsage(): Promise<UsageStats> {
   const response = await fetch(`${API_BASE}/billing/usage`, {
-    headers: getAuthHeaders(),
+    headers: getBillingHeaders(),
     credentials: 'include',
   });
   
@@ -113,7 +125,7 @@ export async function getUsage(): Promise<UsageStats> {
 export async function createCheckout(priceId: string): Promise<CheckoutResponse> {
   const response = await fetch(`${API_BASE}/billing/checkout`, {
     method: 'POST',
-    headers: getAuthHeaders(),
+    headers: getBillingHeaders(),
     credentials: 'include',
     body: JSON.stringify({ priceId }),
   });
@@ -131,7 +143,7 @@ export async function createCheckout(priceId: string): Promise<CheckoutResponse>
 export async function createPortalSession(): Promise<PortalResponse> {
   const response = await fetch(`${API_BASE}/billing/portal`, {
     method: 'POST',
-    headers: getAuthHeaders(),
+    headers: getBillingHeaders(),
     credentials: 'include',
   });
   
