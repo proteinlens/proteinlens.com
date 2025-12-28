@@ -93,6 +93,7 @@ export async function listUsers(
   return {
     users: users.map(u => ({
       ...u,
+      externalId: u.externalId ?? '',
       createdAt: u.createdAt.toISOString(),
     })),
     pagination: {
@@ -138,13 +139,13 @@ export async function getUserDetail(
 
   // Log admin action
   await logAdminAction(adminContext, 'VIEW_USER_DETAIL', {
-    targetUserId: user.externalId,
+    targetUserId: user.externalId ?? undefined,
     targetEmail: user.email || undefined,
   });
 
   return {
     id: user.id,
-    externalId: user.externalId,
+    externalId: user.externalId ?? '',
     email: user.email,
     firstName: user.firstName,
     lastName: user.lastName,
@@ -205,7 +206,7 @@ export async function overrideUserPlan(
 
   // Log admin action
   const auditLogId = await logAdminAction(adminContext, 'PLAN_OVERRIDE', {
-    targetUserId: user.externalId,
+    targetUserId: user.externalId ?? undefined,
     targetEmail: user.email || undefined,
     details: { previousPlan, newPlan: data.plan },
     reason: data.reason,
@@ -272,7 +273,7 @@ export async function suspendUser(
 
   // Log admin action
   const auditLogId = await logAdminAction(adminContext, 'SUSPEND_USER', {
-    targetUserId: user.externalId,
+    targetUserId: user.externalId ?? undefined,
     targetEmail: user.email || undefined,
     reason: data.reason,
   });
@@ -325,7 +326,7 @@ export async function reactivateUser(
 
   // Log admin action
   const auditLogId = await logAdminAction(adminContext, 'REACTIVATE_USER', {
-    targetUserId: user.externalId,
+    targetUserId: user.externalId ?? undefined,
     targetEmail: user.email || undefined,
   });
 
