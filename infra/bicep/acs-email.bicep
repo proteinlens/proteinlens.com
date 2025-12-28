@@ -32,7 +32,7 @@ param dataLocation string = 'europe'
 param tags object = {}
 
 // Email Service (create first, or update if exists)
-resource emailService 'Microsoft.Communication/emailServices@2023-06-01-preview' = {
+resource emailService 'Microsoft.Communication/emailServices@2023-04-01' = {
   name: '${baseName}-email'
   location: location
   tags: tags
@@ -42,19 +42,19 @@ resource emailService 'Microsoft.Communication/emailServices@2023-06-01-preview'
 }
 
 // Azure-managed domain (free tier with *.azurecomm.net)
-resource emailDomain 'Microsoft.Communication/emailServices/domains@2023-06-01-preview' = {
+resource emailDomain 'Microsoft.Communication/emailServices/domains@2023-04-01' = {
   parent: emailService
   name: 'AzureManagedDomain'
   location: location
   tags: tags
   properties: {
-    domainManagement: 'AzureManagedDomain'
+    domainManagement: 'AzureManaged'
     userEngagementTracking: 'Disabled'
   }
 }
 
 // Communication Service (with linked email domain)
-resource communicationService 'Microsoft.Communication/communicationServices@2023-06-01-preview' = {
+resource communicationService 'Microsoft.Communication/communicationServices@2023-04-01' = {
   name: '${baseName}-acs'
   location: location
   tags: tags

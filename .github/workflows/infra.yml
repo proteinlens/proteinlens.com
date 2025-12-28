@@ -208,7 +208,7 @@ jobs:
             --name "$DEPLOYMENT_NAME" \
             --resource-group "${{ env.RESOURCE_GROUP }}" \
             --template-file infra/bicep/acs-email.bicep \
-            --parameters baseName="proteinlens" dataLocation="europe"
+            --parameters baseName="proteinlens" dataLocation="unitedstates"
           
           # Get deployment outputs
           ACS_OUTPUT=$(az deployment group show \
