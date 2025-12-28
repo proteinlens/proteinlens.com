@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useGoal } from '@/hooks/useGoal';
 import React from 'react';
@@ -16,14 +16,16 @@ describe('useGoal', () => {
   const wrapper = ({ children }: { children: React.ReactNode }) =>
     React.createElement(QueryClientProvider, { client: queryClient }, children);
 
-  it('should initialize with default goal', () => {
+  it('should initialize with default goal', async () => {
     const { result } = renderHook(() => useGoal(), { wrapper });
     
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
     expect(result.current.goal).toBe(120);
-    expect(result.current.isLoading).toBe(false);
   });
 
-  it('should load goal from localStorage', () => {
+  it('should load goal from localStorage', async () => {
     // Set a goal in localStorage
     localStorage.setItem('proteinlens_daily_goal', JSON.stringify({
       goalGrams: 150,
@@ -32,11 +34,18 @@ describe('useGoal', () => {
 
     const { result } = renderHook(() => useGoal(), { wrapper });
     
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
     expect(result.current.goal).toBe(150);
   });
 
-  it('should persist goal to localStorage when set', () => {
+  it('should persist goal to localStorage when set', async () => {
     const { result } = renderHook(() => useGoal(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
 
     act(() => {
       result.current.setGoal(180);
@@ -50,9 +59,13 @@ describe('useGoal', () => {
     expect(parsed.goalGrams).toBe(180);
   });
 
-  it('should validate goal range (0-500)', () => {
+  it('should validate goal range (0-500)', async () => {
     const { result } = renderHook(() => useGoal(), { wrapper });
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
 
     act(() => {
       result.current.setGoal(-10);
@@ -64,9 +77,13 @@ describe('useGoal', () => {
     consoleSpy.mockRestore();
   });
 
-  it('should reject goals over 500g', () => {
+  it('should reject goals over 500g', async () => {
     const { result } = renderHook(() => useGoal(), { wrapper });
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
 
     act(() => {
       result.current.setGoal(600);
@@ -78,8 +95,12 @@ describe('useGoal', () => {
     consoleSpy.mockRestore();
   });
 
-  it('should accept valid goals (0-500)', () => {
+  it('should accept valid goals (0-500)', async () => {
     const { result } = renderHook(() => useGoal(), { wrapper });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
 
     const validGoals = [0, 50, 100, 150, 250, 500];
     validGoals.forEach((goal) => {
@@ -90,9 +111,13 @@ describe('useGoal', () => {
     });
   });
 
-  it('should update lastUpdated timestamp', () => {
+  it('should update lastUpdated timestamp', async () => {
     const { result } = renderHook(() => useGoal(), { wrapper });
     const before = new Date().getTime();
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
 
     act(() => {
       result.current.setGoal(200);

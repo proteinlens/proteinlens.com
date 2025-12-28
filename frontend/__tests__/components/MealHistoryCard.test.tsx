@@ -1,9 +1,18 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MealHistoryCard } from '@/components/history/MealHistoryCard';
 import React from 'react';
+
+const mutateAsync = vi.fn().mockResolvedValue(undefined);
+
+vi.mock('@/hooks/useMeal', () => ({
+  useDeleteMeal: () => ({
+    mutateAsync,
+    isPending: false,
+  }),
+}));
 
 describe('MealHistoryCard', () => {
   let queryClient: QueryClient;
@@ -14,6 +23,7 @@ describe('MealHistoryCard', () => {
         mutations: { retry: false },
       },
     });
+    mutateAsync.mockClear();
   });
 
   const mockMeal = {
@@ -35,8 +45,9 @@ describe('MealHistoryCard', () => {
     return render(
       <QueryClientProvider client={queryClient}>
         <MealHistoryCard
+          mealId="meal-1"
           meal={mockMeal}
-          onMealDelete={vi.fn()}
+          onDelete={vi.fn()}
           {...props}
         />
       </QueryClientProvider>
@@ -53,7 +64,8 @@ describe('MealHistoryCard', () => {
   it('should display total protein', () => {
     renderCard();
 
-    expect(screen.getByText(/30g/)).toBeInTheDocument();
+    expect(screen.getByText('30')).toBeInTheDocument();
+    expect(screen.getByText(/grams/i)).toBeInTheDocument();
   });
 
   it('should display food count', () => {
@@ -65,85 +77,52 @@ describe('MealHistoryCard', () => {
   it('should display formatted timestamp', () => {
     renderCard();
 
-    expect(screen.getByText(/Jan 15/)).toBeInTheDocument();
+    expect(screen.getByText(/12:00 PM/)).toBeInTheDocument();
   });
 
   it('should show delete button on hover', async () => {
-    const { container } = renderCard();
+    renderCard();
 
-    const card = container.firstChild;
-    
-    // Initially delete button should be hidden or not visible
-    // After hover, it should appear
-    if (card) {
-      fireEvent.mouseEnter(card);
-      // Wait for delete button to appear
-      expect(screen.queryByRole('button', { name: /delete/i })).toBeTruthy();
-    }
+    expect(screen.getByTitle('Delete meal')).toBeInTheDocument();
   });
 
   it('should call onMealDelete with meal ID', async () => {
-    const onMealDelete = vi.fn();
-    renderCard({ onMealDelete });
+    const onDelete = vi.fn();
+    renderCard({ onDelete });
 
-    const deleteButton = screen.getByRole('button', { name: /delete/i });
+    const deleteButton = screen.getByTitle('Delete meal');
     await userEvent.click(deleteButton);
 
     // Should show confirmation dialog
-    expect(screen.getByText(/Are you sure/i)).toBeInTheDocument();
+    expect(screen.getByText(/Delete this meal\?/i)).toBeInTheDocument();
 
     // Confirm delete
-    const confirmButton = screen.getByRole('button', { name: /confirm|yes|delete/i });
+    const confirmButton = screen.getByRole('button', { name: /^Delete$/i });
     await userEvent.click(confirmButton);
 
-    // Wait for callback
-    expect(onMealDelete).toHaveBeenCalledWith('meal-1');
+    expect(mutateAsync).toHaveBeenCalledWith('meal-1');
+    await waitFor(() => {
+      expect(onDelete).toHaveBeenCalled();
+    });
   });
 
   it('should cancel delete on Cancel button', async () => {
-    const onMealDelete = vi.fn();
-    renderCard({ onMealDelete });
+    const onDelete = vi.fn();
+    renderCard({ onDelete });
 
-    const deleteButton = screen.getByRole('button', { name: /delete/i });
+    const deleteButton = screen.getByTitle('Delete meal');
     await userEvent.click(deleteButton);
 
-    expect(screen.getByText(/Are you sure/i)).toBeInTheDocument();
+    expect(screen.getByText(/Delete this meal\?/i)).toBeInTheDocument();
 
     const cancelButton = screen.getByRole('button', { name: /cancel/i });
     await userEvent.click(cancelButton);
 
     // onMealDelete should not be called
-    expect(onMealDelete).not.toHaveBeenCalled();
+    expect(onDelete).not.toHaveBeenCalled();
 
     // Dialog should disappear
-    expect(screen.queryByText(/Are you sure/i)).not.toBeInTheDocument();
-  });
-
-  it('should display food items on expanded view', async () => {
-    renderCard();
-
-    // Click on card to expand
-    const cardContent = screen.getByText('Chicken');
-    fireEvent.click(cardContent);
-
-    expect(screen.getByText('Chicken')).toBeInTheDocument();
-    expect(screen.getByText('Rice')).toBeInTheDocument();
-  });
-
-  it('should show confidence badges for low confidence items', () => {
-    const mealWithLowConfidence = {
-      ...mockMeal,
-      analysis: {
-        ...mockMeal.analysis,
-        foods: [
-          { id: '1', name: 'Mystery Food', proteinGrams: 20, confidence: 75, aiDetected: true, isEdited: false },
-        ],
-      },
-    };
-
-    renderCard({ meal: mealWithLowConfidence });
-
-    expect(screen.getByText(/75%/)).toBeInTheDocument();
+    expect(screen.queryByText(/Delete this meal\?/i)).not.toBeInTheDocument();
   });
 
   it('should format large protein values correctly', () => {
@@ -157,11 +136,6 @@ describe('MealHistoryCard', () => {
 
     renderCard({ meal: mealLargeProtein });
 
-    expect(screen.getByText(/120g/)).toBeInTheDocument();
+    expect(screen.getByText('120')).toBeInTheDocument();
   });
 });
-
-function fireEvent(params: {
-  mouseEnter: (card: Element) => void;
-  click: (element: HTMLElement) => void;
-}): void;

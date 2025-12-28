@@ -167,35 +167,16 @@ function App() {
               <div className="app flex flex-col min-h-screen bg-background text-foreground">
                 <Navigation />
                 <PageContainer>
-                  <Suspense fallback={
-                    <div className="flex items-center justify-center min-h-screen">
-                      <div className="text-center">
-                        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                        <p className="text-muted-foreground">Loading...</p>
+                  <Suspense
+                    fallback={
+                      <div className="flex items-center justify-center min-h-screen">
+                        <div className="text-center">
+                          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                          <p className="text-muted-foreground">Loading...</p>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                }>
-                  <Routes>
-                    {/* Public routes */}
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/pricing" element={<PricingPage />} />
-                    <Route path="/login" element={<SignIn />} />
-                    <Route path="/signup" element={<SignupPage />} />
-                    <Route path="/signup-legacy" element={<SignUp />} />
-                    <Route path="/verify-email" element={<VerifyEmailPage />} />
-                    <Route path="/resend-verification" element={<ResendVerificationPage />} />
-                    <Route path="/invite/:token" element={<InviteSignupPage />} />
-                    <Route path="/reset-password" element={<ResetPassword />} />
-
-                    {/* Protected routes */}
-                    <Route element={<ProtectedRoute />}>
-                      <Route path="/history" element={<History />} />
-                      <Route path="/settings" element={<Settings />} />
-                      <Route path="/settings/sessions" element={<SessionManagement />} />
-                      <Route path="/billing/success" element={<CheckoutSuccessPage />} />
-                    </Route>
-                  }>
+                    }
+                  >
                     <Routes>
                       {/* Public routes */}
                       <Route path="/" element={<HomePage />} />
@@ -204,6 +185,7 @@ function App() {
                       <Route path="/signup" element={<SignupPage />} />
                       <Route path="/signup-legacy" element={<SignUp />} />
                       <Route path="/verify-email" element={<VerifyEmailPage />} />
+                      <Route path="/resend-verification" element={<ResendVerificationPage />} />
                       <Route path="/invite/:token" element={<InviteSignupPage />} />
                       <Route path="/reset-password" element={<ResetPassword />} />
 
@@ -211,6 +193,7 @@ function App() {
                       <Route element={<ProtectedRoute />}>
                         <Route path="/history" element={<History />} />
                         <Route path="/settings" element={<Settings />} />
+                        <Route path="/settings/sessions" element={<SessionManagement />} />
                         <Route path="/billing/success" element={<CheckoutSuccessPage />} />
                       </Route>
 

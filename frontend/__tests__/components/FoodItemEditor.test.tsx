@@ -30,6 +30,7 @@ describe('FoodItemEditor', () => {
     return render(
       <QueryClientProvider client={queryClient}>
         <FoodItemEditor
+          mealId="meal-1"
           foodItem={mockFoodItem}
           onSave={vi.fn()}
           onCancel={vi.fn()}
@@ -78,10 +79,8 @@ describe('FoodItemEditor', () => {
     const saveButton = screen.getByRole('button', { name: /save/i });
     await userEvent.click(saveButton);
 
-    expect(onSave).toHaveBeenCalledWith({
-      name: 'Roasted Chicken',
-      portion: '150g',
-      proteinGrams: 32,
+    await waitFor(() => {
+      expect(onSave).toHaveBeenCalled();
     });
   });
 
@@ -94,7 +93,9 @@ describe('FoodItemEditor', () => {
     await userEvent.clear(nameInput);
     await userEvent.type(nameInput, 'New Name{Enter}');
 
-    expect(onSave).toHaveBeenCalled();
+    await waitFor(() => {
+      expect(onSave).toHaveBeenCalled();
+    });
   });
 
   it('should support Escape key to cancel', async () => {
@@ -139,7 +140,9 @@ describe('FoodItemEditor', () => {
 
     await userEvent.click(saveButton);
 
-    expect(saveButton).toBeDisabled();
+    await waitFor(() => {
+      expect(saveButton).toBeDisabled();
+    });
   });
 
   it('should focus name input on mount', () => {

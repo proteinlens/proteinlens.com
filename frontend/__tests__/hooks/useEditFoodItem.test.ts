@@ -82,10 +82,14 @@ describe('useEditFoodItem', () => {
       );
     });
 
-    // Mutation should be pending
-    expect(result.current.isPending).toBe(true);
+    await waitFor(() => {
+      expect(result.current.isPending).toBe(true);
+    });
 
     await waitFor(() => resolveTimeout);
+    await waitFor(() => {
+      expect(result.current.isPending).toBe(false);
+    });
   });
 
   it('should handle errors correctly', async () => {

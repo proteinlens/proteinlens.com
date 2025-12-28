@@ -18,15 +18,6 @@ import {
 import { API_ENDPOINTS, AUTH } from '../config';
 import { isMsalConfigured, loginRequest } from '../auth/msalConfig';
 
-// Minimal MSAL wrapper. Real config supplied via env in config.ts
-export interface AuthUser {
-  id?: string;
-  externalId?: string;
-  email?: string;
-  plan?: 'FREE' | 'PRO';
-  emailVerified?: boolean;
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────

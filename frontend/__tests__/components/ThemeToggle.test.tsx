@@ -1,17 +1,26 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ThemeToggle } from '@/components/settings/ThemeToggle';
+import { ThemeProvider } from '@/contexts/ThemeContext';
+import React from 'react';
 
 describe('ThemeToggle', () => {
   beforeEach(() => {
     // Reset theme
     document.documentElement.classList.remove('dark');
-    localStorage.removeItem('proteinlens_theme');
+    localStorage.removeItem('theme');
   });
 
+  const renderWithProvider = () =>
+    render(
+      <ThemeProvider>
+        <ThemeToggle />
+      </ThemeProvider>
+    );
+
   it('should render three theme options', () => {
-    render(<ThemeToggle />);
+    renderWithProvider();
 
     expect(screen.getByRole('button', { name: /light/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /dark/i })).toBeInTheDocument();
@@ -19,77 +28,86 @@ describe('ThemeToggle', () => {
   });
 
   it('should select Light theme', async () => {
-    render(<ThemeToggle />);
+    renderWithProvider();
 
     const lightButton = screen.getByRole('button', { name: /light/i });
     await userEvent.click(lightButton);
 
-    expect(lightButton).toHaveClass('bg-white', 'dark:bg-slate-900');
-    expect(document.documentElement.classList.contains('dark')).toBe(false);
+    await waitFor(() => {
+      expect(document.documentElement.classList.contains('dark')).toBe(false);
+    });
+    expect(lightButton).toHaveClass('border-primary');
+    expect(localStorage.getItem('theme')).toBe('light');
   });
 
   it('should select Dark theme', async () => {
-    render(<ThemeToggle />);
+    renderWithProvider();
 
     const darkButton = screen.getByRole('button', { name: /dark/i });
     await userEvent.click(darkButton);
 
-    expect(darkButton).toHaveClass('bg-slate-900', 'dark:bg-slate-900');
-    expect(document.documentElement.classList.contains('dark')).toBe(true);
+    await waitFor(() => {
+      expect(document.documentElement.classList.contains('dark')).toBe(true);
+    });
+    expect(darkButton).toHaveClass('border-primary');
+    expect(localStorage.getItem('theme')).toBe('dark');
   });
 
   it('should select System theme', async () => {
-    render(<ThemeToggle />);
+    renderWithProvider();
 
     const systemButton = screen.getByRole('button', { name: /system/i });
     await userEvent.click(systemButton);
 
-    const stored = localStorage.getItem('proteinlens_theme');
-    expect(stored).toBe('system');
+    expect(localStorage.getItem('theme')).toBe('system');
   });
 
   it('should persist theme to localStorage', async () => {
-    render(<ThemeToggle />);
+    renderWithProvider();
 
     const darkButton = screen.getByRole('button', { name: /dark/i });
     await userEvent.click(darkButton);
 
-    expect(localStorage.getItem('proteinlens_theme')).toBe('dark');
+    expect(localStorage.getItem('theme')).toBe('dark');
   });
 
   it('should load saved theme on mount', () => {
-    localStorage.setItem('proteinlens_theme', 'dark');
-    document.documentElement.classList.add('dark');
+    localStorage.setItem('theme', 'dark');
 
-    render(<ThemeToggle />);
+    renderWithProvider();
 
-    expect(screen.getByRole('button', { name: /dark/i })).toHaveClass('bg-slate-900');
+    expect(screen.getByRole('button', { name: /dark/i })).toHaveClass('border-primary');
   });
 
   it('should show checkmark for active theme', async () => {
-    render(<ThemeToggle />);
+    renderWithProvider();
 
     const lightButton = screen.getByRole('button', { name: /light/i });
     await userEvent.click(lightButton);
 
-    // Check for visual indicator (could be checkmark, highlight, etc)
-    expect(lightButton).toHaveAttribute('aria-pressed', 'true');
+    expect(lightButton).toHaveTextContent('✓');
   });
 
   it('should toggle between themes', async () => {
-    render(<ThemeToggle />);
+    renderWithProvider();
 
     const lightButton = screen.getByRole('button', { name: /light/i });
     const darkButton = screen.getByRole('button', { name: /dark/i });
 
     await userEvent.click(lightButton);
-    expect(document.documentElement.classList.contains('dark')).toBe(false);
+    await waitFor(() => {
+      expect(document.documentElement.classList.contains('dark')).toBe(false);
+    });
 
     await userEvent.click(darkButton);
-    expect(document.documentElement.classList.contains('dark')).toBe(true);
+    await waitFor(() => {
+      expect(document.documentElement.classList.contains('dark')).toBe(true);
+    });
 
     await userEvent.click(lightButton);
-    expect(document.documentElement.classList.contains('dark')).toBe(false);
+    await waitFor(() => {
+      expect(document.documentElement.classList.contains('dark')).toBe(false);
+    });
   });
 
   it('should respect system preferences when set to system', () => {
@@ -108,7 +126,7 @@ describe('ThemeToggle', () => {
       })),
     });
 
-    render(<ThemeToggle />);
+    renderWithProvider();
 
     const systemButton = screen.getByRole('button', { name: /system/i });
     expect(systemButton).toBeInTheDocument();
