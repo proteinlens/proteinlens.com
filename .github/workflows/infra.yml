@@ -559,7 +559,14 @@ jobs:
         run: |
           FUNCTION_APP_NAME=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.functionAppName.value')
           KEYVAULT_NAME=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.keyVaultName.value')
-          STATIC_WEB_APP_URL=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.staticWebAppUrl.value')
+          
+          # Use custom domain for production, otherwise use SWA URL
+          if [ "${{ inputs.environment }}" = "prod" ]; then
+            FRONTEND_URL="https://www.proteinlens.com"
+          else
+            STATIC_WEB_APP_URL=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.staticWebAppUrl.value')
+            FRONTEND_URL="https://${STATIC_WEB_APP_URL}"
+          fi
           
           # Get ACS outputs
           ACS_OUTPUT='${{ steps.acs.outputs.acs_output }}'
@@ -576,13 +583,13 @@ jobs:
                 --settings \
                   "ACS_EMAIL_CONNECTION_STRING=@Microsoft.KeyVault(VaultName=${KEYVAULT_NAME};SecretName=acs-email-connection)" \
                   "ACS_EMAIL_SENDER=${ACS_SENDER}" \
-                  "FRONTEND_URL=https://${STATIC_WEB_APP_URL}" \
+                  "FRONTEND_URL=${FRONTEND_URL}" \
                   "EMAIL_SERVICE=acs" \
                 --output none
               
               echo "✅ Function App email settings configured"
               echo "   Sender: $ACS_SENDER"
-              echo "   Frontend URL: https://${STATIC_WEB_APP_URL}"
+              echo "   Frontend URL: ${FRONTEND_URL}"
             fi
           else
             echo "⚠️ ACS not deployed, configuring email in console mode"
@@ -591,7 +598,7 @@ jobs:
               --resource-group "${{ env.RESOURCE_GROUP }}" \
               --settings \
                 "EMAIL_SERVICE=console" \
-                "FRONTEND_URL=https://${STATIC_WEB_APP_URL}" \
+                "FRONTEND_URL=${FRONTEND_URL}" \
               --output none
           fi
 
