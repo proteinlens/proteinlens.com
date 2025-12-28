@@ -51,6 +51,11 @@ let prismaInstance: PrismaClientType | null = null;
  */
 export function getPrismaClient(): PrismaClientType {
   if (!prismaInstance) {
+    // Validate DATABASE_URL is set
+    if (!process.env.DATABASE_URL) {
+      throw new Error('DATABASE_URL environment variable is not set');
+    }
+    
     prismaInstance = new PrismaClient({
       log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
     });

@@ -1003,7 +1003,9 @@ async function checkEmail(request: HttpRequest, context: InvocationContext): Pro
       };
     }
 
+    context.log('[Auth] Checking email availability:', email);
     const user = await prisma.user.findUnique({ where: { email } });
+    context.log('[Auth] Email check result:', { email, available: !user });
 
     return {
       status: 200,
@@ -1011,6 +1013,14 @@ async function checkEmail(request: HttpRequest, context: InvocationContext): Pro
     };
   } catch (error) {
     context.error('[Auth] Check email error:', error);
+    // Log more details about the error
+    if (error instanceof Error) {
+      context.error('[Auth] Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+      });
+    }
     return {
       status: 500,
       jsonBody: { error: 'An unexpected error occurred' },
