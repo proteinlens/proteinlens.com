@@ -1,0 +1,58 @@
+# Gitleaks configuration
+# https://github.com/gitleaks/gitleaks#configuration
+
+title = "ProteinLens Gitleaks Config"
+
+[extend]
+# Use default gitleaks rules as base
+useDefault = true
+
+# Allowlist - paths and patterns to ignore
+[allowlist]
+description = "Allowlist for false positives"
+
+# Ignore test files with mock/example tokens
+paths = [
+  '''backend/tests/.*\.test\.ts$''',
+  '''backend/tests/.*\.spec\.ts$''',
+  '''\.har$''',
+  '''screenshorts/.*''',
+]
+
+# Ignore specific patterns that are false positives
+regexes = [
+  # Example Bearer tokens in documentation
+  '''Bearer\s+<your-token>''',
+  '''Bearer\s+\$\{.*\}''',
+  # Test JWT tokens (these are intentionally invalid/example tokens)
+  '''eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+''',
+]
+
+# Specific commits to ignore (historical false positives)
+commits = [
+  "10ec47b9156dc574e82b8d227400624418ce6251",
+  "18f6f0b1f30c1257dcd620f00985c864650ba54f",
+  "f415177b8e147028772466b942f1add52055c2cf",
+  "9bcca346136ec53820e753e6a167116245622e39",
+  "54518034919529a9fb162bbf79783b1d61e73bc3",
+  "b7006c64c5dc93520cbb7ca2b80e312e9e3b5b47",
+  "33a1fea779b756284db7dd4fea8ed18ca065c247",
+  "262017caa7b6600f22987c8166cef157fd3beb64",
+]
+
+# Rules to modify or disable
+[[rules]]
+id = "curl-auth-header"
+description = "Curl auth header - disabled for documentation examples"
+regex = '''(?i)curl.*-H\s*["\']?Authorization:\s*Bearer\s+[A-Za-z0-9_-]+'''
+allowlist = { paths = ['''specs/.*\.md$''', '''docs/.*\.md$''', '''.*README.*\.md$'''] }
+
+[[rules]]
+id = "generic-api-key"
+description = "Generic API key - with allowlist for test files"
+allowlist = { paths = [
+  '''backend/tests/.*''',
+  '''scripts/cleanup.*\.sh$''',
+  '''specs/.*\.md$''',
+  '''screenshorts/.*\.har$''',
+] }
