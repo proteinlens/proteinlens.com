@@ -213,17 +213,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Try to refresh using HttpOnly cookie first (modern approach)
       // This handles the case where access token is expired but refresh token cookie exists
       try {
-        // Attempt refresh - if HttpOnly cookie exists, we'll get new tokens
-        await refreshTokens();
-        
-        // If refresh succeeded, fetch user profile
-        const profile = await fetchUserProfile();
-        if (profile) {
-          setUser(profile);
-          setIsAuthenticated(true);
-          setIsLoading(false);
-          return;
-
+        // Only attempt refresh if we have a stored token
+        // (anonymous users won't have tokens and that's ok)
+        const storedToken = getStoredAccessToken();
+        if (storedToken) {
+          // Attempt refresh - if HttpOnly cookie exists, we'll get new tokens
+          await refreshTokens();
+          
+          // If refresh succeeded, fetch user profile
+          const profile = await fetchUserProfile();
+          if (profile) {
+            setUser(profile);
+            setIsAuthenticated(true);
+            setIsLoading(false);
+            return;
+          }
         }
       } catch {
         // Refresh failed - might not have a valid session

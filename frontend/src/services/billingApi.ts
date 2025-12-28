@@ -1,6 +1,8 @@
 // Billing API client for subscription and plan management
 // Feature: 002-saas-billing
 
+import { getAuthHeaders, getValidAccessToken } from './authService';
+
 // VITE_API_URL is the base URL (e.g., https://api.proteinlens.com or http://localhost:7071)
 // All API routes are under /api/* path
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
@@ -93,10 +95,8 @@ export async function getPlans(): Promise<PlansResponse> {
  */
 export async function getUsage(): Promise<UsageStats> {
   const response = await fetch(`${API_BASE}/billing/usage`, {
-    headers: {
-      // TODO: Add auth header when auth is implemented
-      'Content-Type': 'application/json',
-    },
+    headers: getAuthHeaders(),
+    credentials: 'include',
   });
   
   if (!response.ok) {
@@ -113,10 +113,8 @@ export async function getUsage(): Promise<UsageStats> {
 export async function createCheckout(priceId: string): Promise<CheckoutResponse> {
   const response = await fetch(`${API_BASE}/billing/checkout`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      // TODO: Add auth header when auth is implemented
-    },
+    headers: getAuthHeaders(),
+    credentials: 'include',
     body: JSON.stringify({ priceId }),
   });
   
@@ -133,10 +131,8 @@ export async function createCheckout(priceId: string): Promise<CheckoutResponse>
 export async function createPortalSession(): Promise<PortalResponse> {
   const response = await fetch(`${API_BASE}/billing/portal`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      // TODO: Add auth header when auth is implemented
-    },
+    headers: getAuthHeaders(),
+    credentials: 'include',
   });
   
   if (!response.ok) {

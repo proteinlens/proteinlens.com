@@ -313,12 +313,19 @@ export async function refreshTokens(): Promise<TokenPair> {
         storeTokens(legacyResult);
         return legacyResult;
       }
+      
+      // No stored token either - this is an anonymous user, not an error
+      throw new AuthError(
+        'No refresh token available (anonymous user)',
+        'NO_TOKEN',
+        400,
+      );
     }
     
     throw new AuthError(
       errorData.error || 'Failed to refresh tokens',
       errorData.code || 'REFRESH_FAILED',
-      response.status
+      response.status,
     );
   }
   
