@@ -63,11 +63,23 @@ jobs:
           npm run prisma:generate
           echo "✅ Prisma client generated"
 
+      - name: Cache TypeScript Build
+        uses: actions/cache@v5
+        id: ts-build-cache
+        with:
+          path: backend/dist
+          key: ts-build-${{ runner.os }}-${{ hashFiles('backend/src/**/*.ts', 'backend/tsconfig.json') }}
+
       - name: Build TypeScript
+        if: steps.ts-build-cache.outputs.cache-hit != 'true'
         run: |
           cd backend
           npm run build
           echo "✅ TypeScript build completed"
+      
+      - name: Skip TypeScript build (cached)
+        if: steps.ts-build-cache.outputs.cache-hit == 'true'
+        run: echo "✅ Using cached TypeScript build"
 
       - name: Run unit tests
         run: |

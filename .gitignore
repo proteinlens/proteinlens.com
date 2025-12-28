@@ -48,6 +48,11 @@ Thumbs.db
 
 # Temporary files
 *.tmp
+
+# Deployment artifacts
+*.zip
+.deploy/
+.deploy-cache/
 .cache/
 
 # Azure Functions

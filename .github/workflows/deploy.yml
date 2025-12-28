@@ -3,6 +3,12 @@ name: Deploy
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'specs/**'
+      - '.gitignore'
+      - 'LICENSE'
   workflow_dispatch:
 
 permissions:
@@ -19,13 +25,48 @@ concurrency:
 
 jobs:
   # ============================================================================
+  # Detect Changes (determine what to deploy)
+  # ============================================================================
+  
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      admin: ${{ steps.filter.outputs.admin }}
+      infra: ${{ steps.filter.outputs.infra }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      
+      - name: Check for changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+              - '.github/workflows/deploy-api.yml'
+            frontend:
+              - 'frontend/**'
+              - '.github/workflows/deploy-web.yml'
+            admin:
+              - 'admin/**'
+              - '.github/workflows/deploy-admin.yml'
+            infra:
+              - 'infra/**'
+              - '.github/workflows/infra.yml'
+              - '.github/workflows/deploy.yml'
+
+  # ============================================================================
   # STAGE 1: Pre-flight checks (run in PARALLEL for speed)
   # ============================================================================
   
   cleanup_artifacts:
     name: Cleanup Old Artifacts
     runs-on: ubuntu-latest
-    # No dependencies - runs immediately in parallel with other pre-flight jobs
+    if: github.event_name == 'workflow_dispatch'
     steps:
       - name: Delete old artifacts (keep last 5)
         uses: actions/github-script@v8
@@ -87,7 +128,8 @@ jobs:
   secret_scan:
     name: Secret Scanning
     runs-on: ubuntu-latest
-    # No dependencies - runs immediately in parallel with other pre-flight jobs
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.admin == 'true' || needs.changes.outputs.infra == 'true'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -212,8 +254,8 @@ jobs:
 
   infra:
     name: Provision Infra
-    needs: [cleanup_artifacts, secret_scan, dns_gate]  # Wait for all pre-flight checks
-    if: needs.dns_gate.outputs.ok == 'true'
+    needs: [changes, secret_scan, dns_gate]
+    if: needs.dns_gate.outputs.ok == 'true' && needs.changes.outputs.infra == 'true'
     uses: ./.github/workflows/infra.yml
     secrets: inherit
     with:
@@ -225,35 +267,47 @@ jobs:
 
   deploy_backend:
     name: Deploy Backend
-    needs: [infra, dns_gate]
-    if: always() && needs.infra.result == 'success' && needs.dns_gate.outputs.ok == 'true'
+    needs: [changes, infra, dns_gate]
+    if: |
+      always() &&
+      needs.changes.outputs.backend == 'true' &&
+      (needs.infra.result == 'success' || needs.infra.result == 'skipped') &&
+      needs.dns_gate.outputs.ok == 'true'
     uses: ./.github/workflows/deploy-api.yml
     secrets: inherit
     with:
       resource_group: proteinlens-prod
-      functionapp_name: ${{ needs.infra.outputs.functionapp_name }}
+      functionapp_name: ${{ needs.infra.outputs.functionapp_name || 'proteinlens-api-prod' }}
 
   deploy_frontend:
     name: Deploy Frontend
-    needs: [infra, dns_gate]
-    if: always() && needs.infra.result == 'success' && needs.dns_gate.outputs.ok == 'true'
+    needs: [changes, infra, dns_gate]
+    if: |
+      always() &&
+      needs.changes.outputs.frontend == 'true' &&
+      (needs.infra.result == 'success' || needs.infra.result == 'skipped') &&
+      needs.dns_gate.outputs.ok == 'true'
     uses: ./.github/workflows/deploy-web.yml
     secrets: inherit
     with:
       resource_group: proteinlens-prod
-      staticwebapp_name: ${{ needs.infra.outputs.staticwebapp_name }}
-      # Note: env context not available in reusable workflow inputs, hardcoded
+      staticwebapp_name: ${{ needs.infra.outputs.staticwebapp_name || 'proteinlens-web-prod' }}
       api_url: https://api.proteinlens.com
 
   deploy_admin:
     name: Deploy Admin Dashboard
-    needs: [infra, dns_gate]
-    if: always() && needs.infra.result == 'success' && needs.dns_gate.outputs.ok == 'true' && needs.infra.outputs.admin_staticwebapp_name != ''
+    needs: [changes, infra, dns_gate]
+    if: |
+      always() &&
+      needs.changes.outputs.admin == 'true' &&
+      (needs.infra.result == 'success' || needs.infra.result == 'skipped') &&
+      needs.dns_gate.outputs.ok == 'true' &&
+      (needs.infra.outputs.admin_staticwebapp_name != '' || true)
     uses: ./.github/workflows/deploy-admin.yml
     secrets: inherit
     with:
       resource_group: proteinlens-prod
-      staticwebapp_name: ${{ needs.infra.outputs.admin_staticwebapp_name }}
+      staticwebapp_name: ${{ needs.infra.outputs.admin_staticwebapp_name || 'proteinlens-admin-prod' }}
       api_url: https://api.proteinlens.com
 
   # ============================================================================

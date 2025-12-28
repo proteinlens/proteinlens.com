@@ -52,6 +52,13 @@ jobs:
           npm ci --verbose
           echo "✅ Dependencies installed"
 
+      - name: Cache Vite Build
+        uses: actions/cache@v5
+        id: vite-build-cache
+        with:
+          path: frontend/dist
+          key: vite-build-${{ runner.os }}-${{ hashFiles('frontend/src/**/*', 'frontend/index.html', 'frontend/vite.config.ts', 'frontend/.env.production') }}-${{ inputs.api_url }}
+
       - name: Create production environment file
         run: |
           cd frontend
@@ -67,6 +74,7 @@ jobs:
           echo "VITE_HCAPTCHA_SITE_KEY=***"
 
       - name: Build with Vite
+        if: steps.vite-build-cache.outputs.cache-hit != 'true'
         run: |
           cd frontend
           npm run build
@@ -77,6 +85,10 @@ jobs:
           else
             echo "⚠️ Warning: API URL may not be in build, checking for /api fallback..."
           fi
+
+      - name: Skip Vite build (cached)
+        if: steps.vite-build-cache.outputs.cache-hit == 'true'
+        run: echo "✅ Using cached Vite build"
 
       - name: Validate build artifact
         run: |

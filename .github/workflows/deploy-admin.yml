@@ -51,6 +51,13 @@ jobs:
           npm ci --verbose
           echo "✅ Admin dependencies installed"
 
+      - name: Cache Vite Build
+        uses: actions/cache@v5
+        id: vite-build-cache
+        with:
+          path: admin/dist
+          key: admin-vite-build-${{ runner.os }}-${{ hashFiles('admin/src/**/*', 'admin/index.html', 'admin/vite.config.ts', 'admin/.env.production') }}-${{ inputs.api_url }}
+
       - name: Create production environment file
         run: |
           cd admin
@@ -62,6 +69,7 @@ jobs:
           echo "VITE_API_URL=${{ inputs.api_url }}"
 
       - name: Build with Vite
+        if: steps.vite-build-cache.outputs.cache-hit != 'true'
         run: |
           cd admin
           npm run build
@@ -72,6 +80,10 @@ jobs:
           else
             echo "⚠️ Warning: API URL may not be in build, checking for /api fallback..."
           fi
+
+      - name: Skip Vite build (cached)
+        if: steps.vite-build-cache.outputs.cache-hit == 'true'
+        run: echo "✅ Using cached Vite build"
 
       - name: Validate build artifact
         run: |
