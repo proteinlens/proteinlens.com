@@ -66,7 +66,6 @@ jobs:
   cleanup_artifacts:
     name: Cleanup Old Artifacts
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'
     steps:
       - name: Delete old artifacts (keep last 5)
         uses: actions/github-script@v8

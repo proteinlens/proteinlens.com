@@ -5,28 +5,28 @@
 @description('Base name for resources')
 param baseName string
 
-@description('Location for the Communication Service')
+@description('Location for Communication Services (must be global)')
 param location string = 'global'
 
 @description('Data location for email service')
 @allowed([
-  'UnitedStates'
-  'Europe'
-  'Asia'
-  'Australia'
-  'Brazil'
-  'Canada'
-  'France'
-  'Germany'
-  'India'
-  'Japan'
-  'Korea'
-  'Norway'
-  'Switzerland'
-  'UAE'
-  'UK'
+  'unitedstates'
+  'europe'
+  'asia'
+  'australia'
+  'brazil'
+  'canada'
+  'france'
+  'germany'
+  'india'
+  'japan'
+  'korea'
+  'norway'
+  'switzerland'
+  'uae'
+  'uk'
 ])
-param dataLocation string = 'Europe'
+param dataLocation string = 'europe'
 
 @description('Tags for resources')
 param tags object = {}
