@@ -23,6 +23,11 @@ coverage/
 .env.test.local
 .env.production.local
 
+# Local settings backups (contain secrets)
+local.settings.json
+local.settings.json.bak
+*.local.settings.json
+
 # Logs
 logs
 *.log
