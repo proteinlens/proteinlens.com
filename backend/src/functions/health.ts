@@ -449,21 +449,21 @@ export async function readiness(request: HttpRequest, context: InvocationContext
 
 // Register health endpoints
 app.http('health', {
-  methods: ['GET'],
+  methods: ['GET', 'HEAD'],
   authLevel: 'anonymous',
   route: 'health',
   handler: health,
 });
 
 app.http('liveness', {
-  methods: ['GET'],
+  methods: ['GET', 'HEAD'],
   authLevel: 'anonymous',
   route: 'health/liveness',
   handler: liveness,
 });
 
 app.http('readiness', {
-  methods: ['GET'],
+  methods: ['GET', 'HEAD'],
   authLevel: 'anonymous',
   route: 'health/readiness',
   handler: readiness,
