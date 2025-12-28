@@ -129,6 +129,26 @@ export const PricingPage: React.FC = () => {
         )}
       </div>
 
+      {/* Upgrade CTA Section */}
+      <div className="pricing-page__cta">
+        <div className="cta-card">
+          <div className="cta-card__icon">🚀</div>
+          <h2 className="cta-card__title">Ready to Upgrade?</h2>
+          <p className="cta-card__description">
+            Join thousands of fitness enthusiasts who use ProteinLens Pro to track their nutrition goals effortlessly.
+          </p>
+          <button
+            className="cta-card__button"
+            onClick={() => proPlan && handleSelectPlan(
+              billingPeriod === 'monthly' ? proPlan.priceMonthlyFormatted : proPlan.priceAnnualFormatted
+            )}
+            disabled={checkoutLoading}
+          >
+            {checkoutLoading ? '🔄 Processing...' : '✨ Upgrade to Pro'}
+          </button>
+        </div>
+      </div>
+
       {plansData?.featureComparison && (
         <div className="pricing-page__comparison">
           <h2>Feature Comparison</h2>

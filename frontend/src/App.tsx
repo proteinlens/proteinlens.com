@@ -40,6 +40,8 @@ const ResendVerificationPage = lazy(() => import('./pages/ResendVerificationPage
 const InviteSignupPage = lazy(() => import('./pages/InviteSignupPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const SessionManagement = lazy(() => import('./pages/SessionManagement'));
+const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
+const TermsPage = lazy(() => import('./pages/TermsPage'));
 
 // Navigation component with usage counter
 const Navigation: React.FC = () => {
@@ -181,6 +183,8 @@ function App() {
                       {/* Public routes */}
                       <Route path="/" element={<HomePage />} />
                       <Route path="/pricing" element={<PricingPage />} />
+                      <Route path="/privacy" element={<PrivacyPage />} />
+                      <Route path="/terms" element={<TermsPage />} />
                       <Route path="/login" element={<SignIn />} />
                       <Route path="/signup" element={<SignupPage />} />
                       <Route path="/signup-legacy" element={<SignUp />} />
