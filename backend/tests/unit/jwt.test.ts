@@ -387,7 +387,7 @@ describe('JWT Utilities', () => {
 
   describe('hashRefreshToken', () => {
     it('should hash refresh token with SHA-256', () => {
-      const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.test.signature';
+      const token = 'test.jwt.token';
 
       const hash = hashRefreshToken(token);
 

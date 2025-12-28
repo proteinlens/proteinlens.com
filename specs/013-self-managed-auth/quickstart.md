@@ -125,13 +125,13 @@ curl -X POST http://localhost:7071/api/auth/refresh \
 ### List Sessions
 ```bash
 curl http://localhost:7071/api/auth/sessions \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
+  -H "Authorization: Bearer $ACCESS_TOKEN"
 ```
 
 ### Sign Out
 ```bash
 curl -X POST http://localhost:7071/api/auth/signout \
-  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
   -b cookies.txt
 ```
 
