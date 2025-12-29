@@ -50,9 +50,7 @@ export function initializeTelemetry(config: TelemetryConfig = {}): appInsights.T
   }
 
   try {
-    // Import and setup applicationinsights
-    const appInsights = require('applicationinsights');
-    
+    // Setup applicationinsights (already imported at top)
     appInsights.setup(connectionString)
       .setAutoCollectRequests(true)
       .setAutoCollectPerformance(true)

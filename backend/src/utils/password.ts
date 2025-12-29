@@ -4,7 +4,7 @@
  */
 
 import bcrypt from 'bcrypt';
-import { createHash } from 'crypto';
+import { createHash, randomBytes } from 'crypto';
 
 // Work factor for bcrypt - higher = more secure but slower
 // 12 is recommended for production (takes ~250ms on modern hardware)
@@ -156,8 +156,7 @@ export async function checkPasswordBreached(password: string): Promise<boolean> 
  * @returns Hex-encoded random token
  */
 export function generateSecureToken(length: number = 32): string {
-  const crypto = require('crypto');
-  return crypto.randomBytes(length).toString('hex');
+  return randomBytes(length).toString('hex');
 }
 
 /**
