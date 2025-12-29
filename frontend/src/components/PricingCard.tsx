@@ -26,11 +26,11 @@ export const PricingCard: React.FC<PricingCardProps> = ({
     ? plan.priceMonthlyFormatted 
     : plan.priceAnnualFormatted;
 
-  // For Free plan, no price ID needed
+  // Get price ID from plan data (returned by API)
   const priceId = isPro 
     ? (billingPeriod === 'monthly' 
-        ? import.meta.env.VITE_STRIPE_PRICE_MONTHLY 
-        : import.meta.env.VITE_STRIPE_PRICE_ANNUAL)
+        ? plan.stripePriceIdMonthly 
+        : plan.stripePriceIdAnnual)
     : null;
 
   const handleClick = () => {

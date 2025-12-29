@@ -23,6 +23,9 @@ async function getPlans(
       priceMonthly: plan.priceMonthly,
       priceAnnual: plan.priceAnnual,
       features: plan.features,
+      // Include Stripe price IDs for checkout
+      stripePriceIdMonthly: plan.stripePriceIdMonthly,
+      stripePriceIdAnnual: plan.stripePriceIdAnnual,
       // Include formatted prices for display
       priceMonthlyFormatted: plan.priceMonthly ? `€${plan.priceMonthly.toFixed(2)}/mo` : 'Free',
       priceAnnualFormatted: plan.priceAnnual ? `€${plan.priceAnnual.toFixed(2)}/yr` : null,

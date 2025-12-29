@@ -2,12 +2,14 @@
 // Feature: 002-saas-billing, User Story 1
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getPlans, PlansResponse, redirectToCheckout } from '../services/billingApi';
 import { PricingCard } from '../components/PricingCard';
 import { FriendlyError } from '../components/ui/FriendlyError';
 import './PricingPage.css';
 
 export const PricingPage: React.FC = () => {
+  const navigate = useNavigate();
   const [plansData, setPlansData] = useState<PlansResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,8 +38,14 @@ export const PricingPage: React.FC = () => {
 
   const handleSelectPlan = async (priceId: string | null) => {
     if (!priceId) {
-      // Free plan - just show a message or redirect to signup
-      alert('🎉 You\'re already enjoying the Free plan! Keep tracking those proteins!');
+      // Free plan - redirect to signup/home to start using
+      navigate('/');
+      return;
+    }
+
+    // Check if Stripe price ID is configured
+    if (!priceId || priceId === 'null') {
+      alert('⚠️ Stripe checkout is not configured yet. Coming soon!');
       return;
     }
 
@@ -140,12 +148,17 @@ export const PricingPage: React.FC = () => {
           <button
             className="cta-card__button"
             onClick={() => {
+              // Get price ID from plan data (returned by API)
               const priceId = billingPeriod === 'monthly' 
-                ? import.meta.env.VITE_STRIPE_PRICE_MONTHLY 
-                : import.meta.env.VITE_STRIPE_PRICE_ANNUAL;
-              if (priceId) handleSelectPlan(priceId);
+                ? proPlan?.stripePriceIdMonthly 
+                : proPlan?.stripePriceIdAnnual;
+              if (priceId) {
+                handleSelectPlan(priceId);
+              } else {
+                alert('⚠️ Stripe checkout is not configured yet. Coming soon!');
+              }
             }}
-            disabled={checkoutLoading}
+            disabled={checkoutLoading || !proPlan}
           >
             {checkoutLoading ? '🔄 Processing...' : '✨ Upgrade to Pro'}
           </button>

@@ -40,6 +40,8 @@ export interface PlanInfo {
   priceMonthlyFormatted: string;
   priceAnnualFormatted: string | null;
   annualSavings: number | null; // Percentage
+  stripePriceIdMonthly: string | null;
+  stripePriceIdAnnual: string | null;
   features: PlanFeatures;
 }
 
