@@ -72,8 +72,8 @@ jobs:
           fi
           echo "✅ Deployment confirmed"
 
-      - name: Cache Bicep modules
-        uses: actions/cache@v5
+      - name: Restore Bicep cache
+        uses: actions/cache/restore@v5
         id: bicep-cache
         with:
           path: |
@@ -103,6 +103,15 @@ jobs:
           fi
           echo "✅ Bicep syntax validation passed"
 
+      - name: Save Bicep cache
+        uses: actions/cache/save@v5
+        if: steps.bicep-cache.outputs.cache-hit != 'true'
+        with:
+          path: |
+            ~/.bicep
+            ~/.azure/bin/bicep
+          key: bicep-${{ runner.os }}-${{ hashFiles('infra/bicep/**/*.bicep') }}
+
   deploy:
     name: Deploy Infrastructure
     runs-on: ubuntu-latest
@@ -119,8 +128,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Cache Bicep modules
-        uses: actions/cache@v5
+      - name: Restore Bicep cache
+        uses: actions/cache/restore@v5
         id: bicep-cache
         with:
           path: |
