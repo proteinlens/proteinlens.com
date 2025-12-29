@@ -145,6 +145,11 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
           name: 'FRONTEND_URL'
           value: 'https://www.proteinlens.com'
         }
+        // Slack notifications for auth events (Feature 014)
+        {
+          name: 'SLACK_WEBHOOK_URL'
+          value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/slack-webhook-url/)'
+        }
       ]
       cors: {
         allowedOrigins: [

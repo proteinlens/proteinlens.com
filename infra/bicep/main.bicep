@@ -110,7 +110,7 @@ module acsEmail 'acs-email.bicep' = {
   params: {
     baseName: appNamePrefix
     location: 'global' // ACS requires global location
-    dataLocation: 'europe' // Store data in Europe for GDPR
+    dataLocation: 'unitedstates' // Match existing resource (created with unitedstates)
   }
 }
 

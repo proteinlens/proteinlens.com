@@ -12,6 +12,7 @@
  */
 
 import { EmailClient, EmailMessage, KnownEmailSendStatus } from '@azure/communication-email';
+import { slackNotifier } from './slack.js';
 
 // ===========================================
 // Types
@@ -196,7 +197,14 @@ If you didn't create an account, you can safely ignore this email.
 ProteinLens - AI-Powered Meal Analysis
 `;
 
-    return this.send({ to: data.email, subject, html, plainText });
+    const result = await this.send({ to: data.email, subject, html, plainText });
+    
+    // Feature 014: Send Slack notification on successful verification email send
+    if (result.success) {
+      slackNotifier.notify({ eventType: 'SIGNUP', email: data.email });
+    }
+    
+    return result;
   }
 
   /**
@@ -249,7 +257,14 @@ If you didn't request a password reset, please ignore this email or contact supp
 ProteinLens - AI-Powered Meal Analysis
 `;
 
-    return this.send({ to: data.email, subject, html, plainText });
+    const result = await this.send({ to: data.email, subject, html, plainText });
+    
+    // Feature 014: Send Slack notification on successful password reset email send
+    if (result.success) {
+      slackNotifier.notify({ eventType: 'PASSWORD_RESET', email: data.email });
+    }
+    
+    return result;
   }
 
   /**

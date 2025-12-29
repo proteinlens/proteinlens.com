@@ -28,6 +28,8 @@ Auto-generated from all feature plans. Last updated: 2025-12-22
 - Azure Log Analytics Workspace (30-day retention), Application Insights (011-observability)
 - TypeScript 5.x (Node 20+ for backend, React 18 for frontend) (012-admin-dashboard)
 - PostgreSQL (via Prisma), Azure Blob Storage (existing) (012-admin-dashboard)
+- TypeScript 5.x (Node.js 20+) + Native `fetch` API (no new dependencies required) (014-slack-auth-notifications)
+- N/A (stateless notifications) (014-slack-auth-notifications)
 
 - TypeScript 5.3+ / Node.js 20 + Azure Functions v4, Prisma 5.8+, Stripe SDK, React 18, Vite 5 (002-saas-billing)
 
@@ -47,11 +49,8 @@ npm test && npm run lint
 TypeScript 5.3+ / Node.js 20: Follow standard conventions
 
 ## Recent Changes
+- 014-slack-auth-notifications: Added TypeScript 5.x (Node.js 20+) + Native `fetch` API (no new dependencies required)
 - 013-self-managed-auth: Added TypeScript 5.x (Node.js 20.x runtime) + Azure Functions v4, Prisma ORM, jose (JWT), bcrypt, zod (validation), @azure/communication-email
-- 010-user-signup: Added TypeScript 5.x; Node.js >= 20 (Azure Functions v4); React 18 + Azure Entra External ID (B2C), @azure/msal-browser, Azure Functions, Prisma, Zod, React Router, TailwindCSS, shadcn/ui
-- 009-user-auth: Added TypeScript 5.x; Node.js >= 20 (Azure Functions v4); React 18 + Azure Entra External ID (B2C), MSAL, Azure Functions, Prisma, Zod, Application Insights, React Router
-- 012-admin-dashboard: Added TypeScript 5.x (Node 20+ for backend, React 18 for frontend)
-- 011-observability: Added TypeScript 5.3, Node.js 20 LTS
 - 010-user-signup: Added TypeScript 5.x; Node.js >= 20 (Azure Functions v4); React 18 + Azure Entra External ID (B2C), @azure/msal-browser, Azure Functions, Prisma, Zod, React Router, TailwindCSS, shadcn/ui
 
 
