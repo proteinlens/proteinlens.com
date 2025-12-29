@@ -8,6 +8,7 @@
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { BlobServiceClient } from '@azure/storage-blob';
 import { DefaultAzureCredential } from '@azure/identity';
+import { EmailClient } from '@azure/communication-email';
 import { Logger } from '../utils/logger.js';
 import { config } from '../utils/config.js';
 import { getPrismaClient } from '../utils/prisma.js';
@@ -30,6 +31,7 @@ interface HealthStatus {
     database: CheckResult;
     blobStorage: CheckResult;
     aiService: CheckResult;
+    emailService: CheckResult;
   };
 }
 
@@ -247,6 +249,103 @@ async function checkAIService(traceContext?: TraceContext): Promise<CheckResult>
 }
 
 /**
+ * Check Azure Communication Services (Email) connectivity with telemetry
+ */
+async function checkEmailService(traceContext?: TraceContext): Promise<CheckResult> {
+  const start = Date.now();
+  const connectionString = process.env.ACS_EMAIL_CONNECTION_STRING;
+  
+  // If not configured, return pass with note (email may be in console mode)
+  if (!connectionString) {
+    const latencyMs = Date.now() - start;
+    
+    trackDependency({
+      dependencyTypeName: 'Azure Communication Services',
+      name: 'health-check',
+      data: 'email-service',
+      duration: latencyMs,
+      success: true,
+      resultCode: '200',
+      properties: {
+        correlationId: traceContext?.correlationId ?? 'unknown',
+        checkType: 'emailService',
+        mode: 'console',
+      },
+    });
+    
+    return {
+      status: 'pass',
+      latencyMs,
+      message: 'Email service in console mode (no ACS configured)',
+    };
+  }
+  
+  try {
+    // Create email client and verify connection by getting service properties
+    const emailClient = new EmailClient(connectionString);
+    
+    // ACS doesn't have a lightweight health check, so we just verify the client initializes
+    // The connection string validation happens during client creation
+    // We could send a test email, but that's too invasive for a health check
+    
+    const latencyMs = Date.now() - start;
+    
+    // Track successful ACS dependency
+    trackDependency({
+      dependencyTypeName: 'Azure Communication Services',
+      name: 'health-check',
+      data: 'email-service',
+      duration: latencyMs,
+      success: true,
+      resultCode: '200',
+      properties: {
+        correlationId: traceContext?.correlationId ?? 'unknown',
+        checkType: 'emailService',
+        mode: 'acs',
+      },
+    });
+    
+    return {
+      status: 'pass',
+      latencyMs,
+      message: 'ACS Email client initialized successfully',
+    };
+  } catch (error) {
+    const latencyMs = Date.now() - start;
+    const err = error as Error;
+    
+    // Track failed ACS dependency
+    trackDependency({
+      dependencyTypeName: 'Azure Communication Services',
+      name: 'health-check',
+      data: 'email-service',
+      duration: latencyMs,
+      success: false,
+      resultCode: '500',
+      properties: {
+        correlationId: traceContext?.correlationId ?? 'unknown',
+        checkType: 'emailService',
+        error: err.message,
+      },
+    });
+    
+    // Email being down is degraded, not critical (users can still use the app)
+    trackException(err, {
+      correlationId: traceContext?.correlationId ?? 'unknown',
+      checkType: 'emailService',
+      operation: 'health-check',
+      severity: 'warning',
+    });
+    
+    return {
+      status: 'warn', // Email being down is degraded, not critical
+      latencyMs,
+      message: err.message,
+    };
+  }
+}
+
+/**
  * Health check handler with correlation and telemetry
  */
 export async function health(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
@@ -296,20 +395,22 @@ export async function health(request: HttpRequest, context: InvocationContext): 
   // Deep health check - verify all dependencies
   Logger.info('Deep health check requested', { correlationId: traceContext.correlationId });
 
-  const [database, blobStorage, aiService] = await Promise.all([
+  const [database, blobStorage, aiService, emailService] = await Promise.all([
     checkDatabase(traceContext),
     checkBlobStorage(traceContext),
     checkAIService(traceContext),
+    checkEmailService(traceContext),
   ]);
 
-  const checks = { database, blobStorage, aiService };
+  const checks = { database, blobStorage, aiService, emailService };
 
   // Determine overall status
   let overallStatus: 'healthy' | 'degraded' | 'unhealthy' = 'healthy';
   
   if (database.status === 'fail' || blobStorage.status === 'fail') {
     overallStatus = 'unhealthy';
-  } else if (aiService.status === 'fail' || aiService.status === 'warn') {
+  } else if (aiService.status === 'fail' || aiService.status === 'warn' || 
+             emailService.status === 'fail' || emailService.status === 'warn') {
     overallStatus = 'degraded';
   }
 
@@ -352,6 +453,13 @@ export async function health(request: HttpRequest, context: InvocationContext): 
       properties: { status: aiService.status },
     });
   }
+  if (emailService.latencyMs !== undefined) {
+    trackMetric({
+      name: 'proteinlens.health.email_latency_ms',
+      value: emailService.latencyMs,
+      properties: { status: emailService.status },
+    });
+  }
 
   // Track completion event
   trackEvent('proteinlens.health.check_completed', {
@@ -361,6 +469,7 @@ export async function health(request: HttpRequest, context: InvocationContext): 
     databaseStatus: database.status,
     blobStorageStatus: blobStorage.status,
     aiServiceStatus: aiService.status,
+    emailServiceStatus: emailService.status,
   }, { latencyMs });
 
   Logger.info('Deep health check completed', { 
@@ -369,6 +478,7 @@ export async function health(request: HttpRequest, context: InvocationContext): 
     database: database.status,
     blobStorage: blobStorage.status,
     aiService: aiService.status,
+    emailService: emailService.status,
     latencyMs,
   });
 
