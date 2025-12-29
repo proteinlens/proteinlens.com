@@ -53,7 +53,7 @@ export function initializeTelemetry(config: TelemetryConfig = {}): appInsights.T
     // Setup applicationinsights (already imported at top)
     appInsights.setup(connectionString)
       .setAutoCollectRequests(true)
-      .setAutoCollectPerformance(true)
+      .setAutoCollectPerformance(true, true)
       .setAutoCollectExceptions(true)
       .setAutoCollectDependencies(true)
       .setAutoCollectConsole(true, true)
