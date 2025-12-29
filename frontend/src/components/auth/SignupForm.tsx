@@ -16,8 +16,8 @@ import { DuplicateEmailMessage } from './DuplicateEmailMessage';
 import { useSignupForm, type SignupFormState } from '../../hooks/useSignupForm';
 
 interface SignupFormProps {
-  /** Called when signup is successful */
-  onSuccess?: () => void;
+  /** Called when signup is successful, receives email */
+  onSuccess?: (email: string) => void;
   /** Called when social login is initiated */
   onSocialLogin: (provider: 'google' | 'microsoft') => void;
   /** Additional class names */

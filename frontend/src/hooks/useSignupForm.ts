@@ -11,6 +11,7 @@ import { useDebounce } from './useDebounce';
 import { usePasswordValidation, type PasswordValidationResult } from './usePasswordValidation';
 import { detectEmailTypo, isValidEmailFormat } from '../utils/emailTypoDetector';
 import { checkEmail as checkEmailApi } from '../services/signupService';
+import { signup as signupApi, AuthError } from '../services/authService';
 
 export interface SignupFormState {
   email: string;
@@ -39,8 +40,8 @@ export interface SignupFormErrors {
 }
 
 export interface UseSignupFormOptions {
-  /** Called when signup is successful */
-  onSuccess?: () => void;
+  /** Called when signup is successful, receives email for verification message */
+  onSuccess?: (email: string) => void;
   /** Initial form values */
   initialValues?: Partial<SignupFormState>;
 }
@@ -347,17 +348,34 @@ export function useSignupForm(
         return;
       }
 
-      // If all validation passes, we redirect to B2C for signup
-      // The actual redirect is handled by the parent component
+      // Actually call the signup API
+      await signupApi({
+        email: formState.email,
+        password: formState.password,
+        firstName: formState.firstName,
+        lastName: formState.lastName,
+        organizationName: formState.organizationName || undefined,
+        acceptedTerms: formState.acceptedTerms,
+        acceptedPrivacy: formState.acceptedPrivacy,
+      });
+
       // Clear form storage on success
       sessionStorage.removeItem(FORM_STORAGE_KEY);
       
-      onSuccess?.();
+      onSuccess?.(formState.email);
     } catch (error) {
       console.error('Signup error:', error);
-      setErrors({
-        general: 'An error occurred during signup. Please try again.',
-      });
+      if (error instanceof AuthError) {
+        if (error.code === 'EMAIL_EXISTS') {
+          setErrors({ email: 'This email is already registered. Please sign in instead.' });
+        } else {
+          setErrors({ general: error.message });
+        }
+      } else {
+        setErrors({
+          general: 'An error occurred during signup. Please try again.',
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }

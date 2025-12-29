@@ -28,14 +28,12 @@ export const SignupPage: FC = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  // Handle successful signup (redirect to verification page)
-  const handleSignupSuccess = useCallback(() => {
+  // Handle successful signup (show verification message - don't redirect)
+  const handleSignupSuccess = useCallback((email: string) => {
+    setSignupEmail(email);
     setSignupSuccess(true);
-    navigate('/verify-email', { 
-      state: { email: signupEmail },
-      replace: true 
-    });
-  }, [navigate, signupEmail]);
+    // Don't navigate - show the success message on this page
+  }, []);
 
   // Handle social login via OAuth redirect
   const handleSocialLogin = useCallback(
