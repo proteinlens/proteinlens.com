@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useMeals } from '@/hooks/useMeal'
 import { useWeeklyTrend } from '@/hooks/useWeeklyTrend'
 import { WeeklyTrendChart } from '@/components/history/WeeklyTrendChart'
@@ -8,8 +8,15 @@ import { FriendlyError } from '@/components/ui/FriendlyError'
 import { emptyStates } from '@/utils/friendlyErrors'
 
 export function History() {
-  // Use persistent user ID from storage
-  const userId = getUserId()
+  // Use persistent user ID from storage - safely handle localStorage errors
+  const userId = useMemo(() => {
+    try {
+      return getUserId()
+    } catch (e) {
+      console.error('Failed to get user ID:', e)
+      return 'anonymous'
+    }
+  }, [])
   const { data: meals = [], isLoading, error, refetch } = useMeals(userId)
   const { days, averageProtein } = useWeeklyTrend(meals)
   const [key, setKey] = useState(0)
