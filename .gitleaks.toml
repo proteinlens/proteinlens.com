@@ -7,8 +7,8 @@ title = "ProteinLens Gitleaks Config"
 # Use default gitleaks rules as base
 useDefault = true
 
-# Allowlist - paths and patterns to ignore
-[allowlist]
+# Global allowlist - paths and patterns to ignore
+[[allowlists]]
 description = "Allowlist for false positives"
 
 # Ignore test files with mock/example tokens
@@ -45,23 +45,28 @@ commits = [
 id = "curl-auth-header"
 description = "Curl auth header - disabled for documentation examples"
 regex = '''(?i)curl.*-H\s*["\']?Authorization:\s*Bearer\s+[A-Za-z0-9_-]+'''
-allowlist = { paths = ['''specs/.*\.md$''', '''docs/.*\.md$''', '''.*README.*\.md$'''] }
+
+  [[rules.allowlists]]
+  paths = ['''specs/.*\.md$''', '''docs/.*\.md$''', '''.*README.*\.md$''']
 
 [[rules]]
 id = "generic-api-key"
 description = "Generic API key - with allowlist for test files"
-allowlist = { paths = [
-  '''backend/tests/.*''',
-  '''scripts/cleanup.*\.sh$''',
-  '''specs/.*\.md$''',
-  '''screenshorts/.*\.har$''',
-] }
+
+  [[rules.allowlists]]
+  paths = [
+    '''backend/tests/.*''',
+    '''scripts/cleanup.*\.sh$''',
+    '''specs/.*\.md$''',
+    '''screenshorts/.*\.har$''',
+  ]
 
 # Allow example Slack webhook URLs in documentation and example files
 [[rules]]
 id = "slack-webhook-url"
 description = "Slack webhook URL - allow examples in docs and .env.example"
-allowlist = { 
+
+  [[rules.allowlists]]
   paths = [
     '''\.env\.example$''',
     '''specs/.*\.md$''',
@@ -69,9 +74,7 @@ allowlist = {
     '''.*README.*\.md$''',
     '''quickstart\.md$''',
     '''research\.md$''',
-  ],
+  ]
   regexes = [
-    # Example/placeholder webhook URLs (T00000000/B00000000/XXX pattern)
     '''https://hooks\.slack\.com/services/T[0-9]+/B[0-9]+/X+''',
   ]
-}
