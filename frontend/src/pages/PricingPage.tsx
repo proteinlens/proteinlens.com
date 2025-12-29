@@ -1,20 +1,49 @@
 // Pricing Page
 // Feature: 002-saas-billing, User Story 1
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getPlans, PlansResponse, redirectToCheckout } from '../services/billingApi';
 import { PricingCard } from '../components/PricingCard';
 import { FriendlyError } from '../components/ui/FriendlyError';
+import { useAuth } from '../contexts/AuthProvider';
 import './PricingPage.css';
 
 export const PricingPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { isAuthenticated } = useAuth();
   const [plansData, setPlansData] = useState<PlansResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('annual');
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const checkoutTriggered = useRef(false);
+
+  // Handle checkout after returning from login
+  const pendingCheckout = searchParams.get('checkout');
+  
+  const triggerCheckout = useCallback(async (priceId: string) => {
+    try {
+      setCheckoutLoading(true);
+      // Clear the checkout param from URL
+      navigate('/pricing', { replace: true });
+      await redirectToCheckout(priceId);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Network error during checkout';
+      setError(errorMessage);
+      console.error('Checkout error:', err);
+      setCheckoutLoading(false);
+    }
+  }, [navigate]);
+
+  // Auto-trigger checkout if user just logged in with a pending checkout
+  useEffect(() => {
+    if (isAuthenticated && pendingCheckout && !checkoutTriggered.current) {
+      checkoutTriggered.current = true;
+      triggerCheckout(decodeURIComponent(pendingCheckout));
+    }
+  }, [isAuthenticated, pendingCheckout, triggerCheckout]);
 
   useEffect(() => {
     fetchPlans();
@@ -38,14 +67,25 @@ export const PricingPage: React.FC = () => {
 
   const handleSelectPlan = async (priceId: string | null) => {
     if (!priceId) {
-      // Free plan - redirect to signup/home to start using
-      navigate('/');
+      // Free plan - redirect to login if not authenticated, otherwise home
+      if (!isAuthenticated) {
+        navigate('/login?returnTo=/');
+      } else {
+        navigate('/');
+      }
       return;
     }
 
     // Check if Stripe price ID is configured
     if (!priceId || priceId === 'null') {
       alert('⚠️ Stripe checkout is not configured yet. Coming soon!');
+      return;
+    }
+
+    // Redirect to login first if not authenticated
+    if (!isAuthenticated) {
+      // Store the intended checkout in the return URL
+      navigate(`/login?returnTo=/pricing&checkout=${encodeURIComponent(priceId)}`);
       return;
     }
 
@@ -152,6 +192,17 @@ export const PricingPage: React.FC = () => {
               const priceId = billingPeriod === 'monthly' 
                 ? proPlan?.stripePriceIdMonthly 
                 : proPlan?.stripePriceIdAnnual;
+              
+              // Redirect to login if not authenticated
+              if (!isAuthenticated) {
+                if (priceId) {
+                  navigate(`/login?returnTo=/pricing&checkout=${encodeURIComponent(priceId)}`);
+                } else {
+                  navigate('/login?returnTo=/pricing');
+                }
+                return;
+              }
+              
               if (priceId) {
                 handleSelectPlan(priceId);
               } else {
