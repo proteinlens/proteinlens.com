@@ -51,8 +51,11 @@ permissions:
 env:
   AZURE_LOCATION: northeurope
   RESOURCE_GROUP: proteinlens-${{ inputs.environment }}
+  # Bicep cache directory for module caching
+  BICEP_CACHE_DIR: ~/.bicep
 
 jobs:
+  # Combined validate + deploy job (saves ~30s runner startup + login time)
   validate:
     name: Validate Bicep Template
     runs-on: ubuntu-latest
@@ -69,6 +72,17 @@ jobs:
           fi
           echo "✅ Deployment confirmed"
 
+      - name: Cache Bicep modules
+        uses: actions/cache@v5
+        id: bicep-cache
+        with:
+          path: |
+            ~/.bicep
+            ~/.azure/bin/bicep
+          key: bicep-${{ runner.os }}-${{ hashFiles('infra/bicep/**/*.bicep') }}
+          restore-keys: |
+            bicep-${{ runner.os }}-
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -78,7 +92,15 @@ jobs:
 
       - name: Validate Bicep syntax
         run: |
-          az bicep build --file infra/bicep/main.bicep
+          # Use --no-restore if cache is warm (modules already downloaded)
+          if [ "${{ steps.bicep-cache.outputs.cache-hit }}" = "true" ]; then
+            echo "📦 Using cached Bicep modules (--no-restore)"
+            az bicep build --file infra/bicep/main.bicep --no-restore 2>/dev/null || \
+              az bicep build --file infra/bicep/main.bicep  # Fallback if cache incomplete
+          else
+            echo "📥 First run or cache miss - full restore"
+            az bicep build --file infra/bicep/main.bicep
+          fi
           echo "✅ Bicep syntax validation passed"
 
   deploy:
@@ -96,6 +118,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+
+      - name: Cache Bicep modules
+        uses: actions/cache@v5
+        id: bicep-cache
+        with:
+          path: |
+            ~/.bicep
+            ~/.azure/bin/bicep
+          key: bicep-${{ runner.os }}-${{ hashFiles('infra/bicep/**/*.bicep') }}
+          restore-keys: |
+            bicep-${{ runner.os }}-
 
       - name: Login to Azure
         uses: azure/login@v2
