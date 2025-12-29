@@ -78,6 +78,7 @@ As an administrator, I want to receive a Slack notification when a user verifies
 - **FR-007**: System MUST log notification failures for troubleshooting
 - **FR-008**: System MUST allow Slack webhook URL to be configured via environment variable
 - **FR-009**: Notifications MUST be visually distinguishable by type (signup vs reset vs verification) using different message formats or emojis
+- **FR-010**: System MUST retry failed notifications once with a 1-second delay before giving up
 
 ### Key Entities
 
@@ -100,3 +101,9 @@ As an administrator, I want to receive a Slack notification when a user verifies
 - Team has permissions to create a Slack webhook (Incoming Webhook integration)
 - Notification volume is manageable (estimated <100 events/day initially) without needing batching
 - UTC timestamps are acceptable for initial implementation
+
+## Clarifications
+
+### Session 2025-12-29
+
+- Q: What retry behavior when Slack is temporarily unavailable? → A: 1 retry with 1-second delay before giving up
