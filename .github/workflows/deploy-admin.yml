@@ -48,7 +48,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd admin
-          npm ci --verbose
+          npm ci --prefer-offline
           echo "✅ Admin dependencies installed"
 
       - name: Create production environment file

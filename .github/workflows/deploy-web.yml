@@ -49,7 +49,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd frontend
-          npm ci --verbose
+          npm ci --prefer-offline
           echo "✅ Dependencies installed"
 
       - name: Create production environment file
