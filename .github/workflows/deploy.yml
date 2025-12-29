@@ -394,9 +394,20 @@ jobs:
           # Generate a unique test user ID for this run
           TEST_USER_ID="smoke-test-$(date +%s)-${{ github.run_id }}"
           echo "TEST_USER_ID=$TEST_USER_ID" >> $GITHUB_ENV
-          echo "API_URL=${{ needs.infra.outputs.functionapp_url }}" >> $GITHUB_ENV
-          echo "WEB_URL=${{ needs.infra.outputs.staticwebapp_url }}" >> $GITHUB_ENV
+          
+          # Use infra outputs if available, otherwise use production URLs
+          API_URL="${{ needs.infra.outputs.functionapp_url }}"
+          WEB_URL="${{ needs.infra.outputs.staticwebapp_url }}"
+          
+          # Fallback to known production URLs when infra job is skipped
+          [ -z "$API_URL" ] && API_URL="https://api.proteinlens.com"
+          [ -z "$WEB_URL" ] && WEB_URL="https://www.proteinlens.com"
+          
+          echo "API_URL=$API_URL" >> $GITHUB_ENV
+          echo "WEB_URL=$WEB_URL" >> $GITHUB_ENV
           echo "🧪 Test user ID: $TEST_USER_ID"
+          echo "🌐 API URL: $API_URL"
+          echo "🌐 Web URL: $WEB_URL"
 
       - name: Test API - Liveness endpoint
         run: |
