@@ -37,6 +37,9 @@ param senderUsername string = 'noreply'
 @description('Sender display name')
 param senderDisplayName string = 'ProteinLens'
 
+@description('Whether the custom domain is verified and ready to be linked')
+param domainVerified bool = false
+
 @description('Tags for resources')
 param tags object = {}
 
@@ -75,16 +78,17 @@ resource senderUsernameResource 'Microsoft.Communication/emailServices/domains/s
   }
 }
 
-// Communication Service (with linked custom email domain)
+// Communication Service (with linked custom email domain if verified)
 resource communicationService 'Microsoft.Communication/communicationServices@2023-04-01' = {
   name: '${baseName}-acs'
   location: location
   tags: tags
   properties: {
     dataLocation: dataLocation
-    linkedDomains: [
+    // Only link domain if it's verified - linking an unverified domain will fail
+    linkedDomains: domainVerified ? [
       customDomain.id
-    ]
+    ] : []
   }
 }
 
