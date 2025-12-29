@@ -588,6 +588,37 @@ jobs:
           
           echo "✅ Function App ESM configuration complete"
 
+      - name: Configure Stripe Settings
+        env:
+          STRIPE_PRICE_MONTHLY: ${{ vars.STRIPE_PRICE_MONTHLY }}
+          STRIPE_PRICE_ANNUAL: ${{ vars.STRIPE_PRICE_ANNUAL }}
+        run: |
+          FUNCTION_APP_NAME=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.functionAppName.value')
+          
+          echo "💳 Configuring Stripe pricing settings..."
+          
+          # Set Stripe price IDs (from GitHub repository variables)
+          PRICE_MONTHLY="${STRIPE_PRICE_MONTHLY:-}"
+          PRICE_ANNUAL="${STRIPE_PRICE_ANNUAL:-}"
+          
+          if [ -n "$PRICE_MONTHLY" ] && [ -n "$PRICE_ANNUAL" ]; then
+            az functionapp config appsettings set \
+              --name "$FUNCTION_APP_NAME" \
+              --resource-group "${{ env.RESOURCE_GROUP }}" \
+              --settings \
+                "STRIPE_PRICE_MONTHLY=$PRICE_MONTHLY" \
+                "STRIPE_PRICE_ANNUAL=$PRICE_ANNUAL" \
+              --output none
+            
+            echo "✅ Stripe price IDs configured"
+            echo "   Monthly: $PRICE_MONTHLY"
+            echo "   Annual: $PRICE_ANNUAL"
+          else
+            echo "⚠️  Stripe price IDs not set (STRIPE_PRICE_MONTHLY/STRIPE_PRICE_ANNUAL)"
+            echo "   Add these as repository variables in GitHub Settings > Secrets and Variables > Actions > Variables"
+            echo "   Pro upgrade will show 'coming soon' message until configured"
+          fi
+
       - name: Configure Function App Email Settings
         run: |
           FUNCTION_APP_NAME=$(echo '${{ steps.deploy.outputs.deployment_output }}' | jq -r '.functionAppName.value')
