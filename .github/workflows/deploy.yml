@@ -10,6 +10,32 @@ on:
       - '.gitignore'
       - 'LICENSE'
   workflow_dispatch:
+    inputs:
+      deploy_all:
+        description: 'Deploy all components (infra, backend, frontend, admin)'
+        required: false
+        default: false
+        type: boolean
+      deploy_infra:
+        description: 'Deploy infrastructure'
+        required: false
+        default: false
+        type: boolean
+      deploy_backend:
+        description: 'Deploy backend API'
+        required: false
+        default: false
+        type: boolean
+      deploy_frontend:
+        description: 'Deploy frontend'
+        required: false
+        default: false
+        type: boolean
+      deploy_admin:
+        description: 'Deploy admin dashboard'
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -32,10 +58,10 @@ jobs:
     name: Detect Changes
     runs-on: ubuntu-latest
     outputs:
-      backend: ${{ steps.filter.outputs.backend }}
-      frontend: ${{ steps.filter.outputs.frontend }}
-      admin: ${{ steps.filter.outputs.admin }}
-      infra: ${{ steps.filter.outputs.infra }}
+      backend: ${{ steps.result.outputs.backend }}
+      frontend: ${{ steps.result.outputs.frontend }}
+      admin: ${{ steps.result.outputs.admin }}
+      infra: ${{ steps.result.outputs.infra }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -60,6 +86,59 @@ jobs:
               - 'infra/**'
               - '.github/workflows/infra.yml'
               - '.github/workflows/deploy.yml'
+
+      - name: Determine deployment targets
+        id: result
+        run: |
+          # Manual triggers with deploy_all or specific flags override change detection
+          DEPLOY_ALL="${{ github.event.inputs.deploy_all }}"
+          DEPLOY_INFRA="${{ github.event.inputs.deploy_infra }}"
+          DEPLOY_BACKEND="${{ github.event.inputs.deploy_backend }}"
+          DEPLOY_FRONTEND="${{ github.event.inputs.deploy_frontend }}"
+          DEPLOY_ADMIN="${{ github.event.inputs.deploy_admin }}"
+          
+          # Change detection results
+          CHANGED_INFRA="${{ steps.filter.outputs.infra }}"
+          CHANGED_BACKEND="${{ steps.filter.outputs.backend }}"
+          CHANGED_FRONTEND="${{ steps.filter.outputs.frontend }}"
+          CHANGED_ADMIN="${{ steps.filter.outputs.admin }}"
+          
+          # Determine final outputs
+          if [ "$DEPLOY_ALL" == "true" ]; then
+            echo "🚀 Manual trigger: Deploy ALL components"
+            echo "infra=true" >> $GITHUB_OUTPUT
+            echo "backend=true" >> $GITHUB_OUTPUT
+            echo "frontend=true" >> $GITHUB_OUTPUT
+            echo "admin=true" >> $GITHUB_OUTPUT
+          else
+            # Use manual flags if set, otherwise fall back to change detection
+            if [ "$DEPLOY_INFRA" == "true" ]; then
+              echo "infra=true" >> $GITHUB_OUTPUT
+            else
+              echo "infra=$CHANGED_INFRA" >> $GITHUB_OUTPUT
+            fi
+            
+            if [ "$DEPLOY_BACKEND" == "true" ]; then
+              echo "backend=true" >> $GITHUB_OUTPUT
+            else
+              echo "backend=$CHANGED_BACKEND" >> $GITHUB_OUTPUT
+            fi
+            
+            if [ "$DEPLOY_FRONTEND" == "true" ]; then
+              echo "frontend=true" >> $GITHUB_OUTPUT
+            else
+              echo "frontend=$CHANGED_FRONTEND" >> $GITHUB_OUTPUT
+            fi
+            
+            if [ "$DEPLOY_ADMIN" == "true" ]; then
+              echo "admin=true" >> $GITHUB_OUTPUT
+            else
+              echo "admin=$CHANGED_ADMIN" >> $GITHUB_OUTPUT
+            fi
+          fi
+          
+          echo "📋 Deployment targets:"
+          cat $GITHUB_OUTPUT
 
   # ============================================================================
   # STAGE 1: Pre-flight checks (run in PARALLEL for speed)
