@@ -98,10 +98,14 @@ VITE_API_URL=http://localhost:7071    # Development
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "node",
     "OPENAI_API_KEY": "your-key-here",
-    "DATABASE_URL": "postgresql://..."
+    "DATABASE_URL": "postgresql://...",
+    "SLACK_WEBHOOK_URL": "https://hooks.slack.com/services/T.../B.../xxx"
   }
 }
 ```
+
+> **Note**: `SLACK_WEBHOOK_URL` is optional. If not configured, Slack notifications are silently disabled.
+> See [Feature 014 Quickstart](specs/014-slack-auth-notifications/quickstart.md) for webhook setup instructions.
 
 ## Common Issues
 

@@ -23,6 +23,7 @@ import {
 } from '../utils/jwt.js';
 import { getEmailService } from '../utils/email.js';
 import { AuthEventService } from '../utils/authEvents.js';
+import { slackNotifier } from '../utils/slack.js';
 import {
   setRefreshTokenCookie,
   clearRefreshTokenCookie,
@@ -676,6 +677,9 @@ async function verifyEmail(request: HttpRequest, context: InvocationContext): Pr
       verificationToken.user.email!,
       { ipAddress, userAgent: userAgent || undefined }
     );
+
+    // Feature 014: Send Slack notification on successful email verification
+    slackNotifier.notify({ eventType: 'EMAIL_VERIFIED', email: verificationToken.user.email! });
 
     return {
       status: 200,

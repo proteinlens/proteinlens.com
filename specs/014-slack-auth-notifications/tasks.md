@@ -19,9 +19,9 @@
 
 **Purpose**: Create SlackNotifier utility class and configure environment
 
-- [ ] T001 [P] Create SlackNotifier class in backend/src/utils/slack.ts
-- [ ] T002 [P] Add SLACK_WEBHOOK_URL to backend/local.settings.json.example
-- [ ] T003 [P] Add SLACK_WEBHOOK_URL env var to infra/bicep/function-app.bicep
+- [X] T001 [P] Create SlackNotifier class in backend/src/utils/slack.ts
+- [X] T002 [P] Add SLACK_WEBHOOK_URL to backend/.env.example
+- [X] T003 [P] Add SLACK_WEBHOOK_URL env var to infra/bicep/function-app.bicep
 
 ---
 
@@ -31,11 +31,11 @@
 
 **⚠️ CRITICAL**: No user story integration can begin until this phase is complete
 
-- [ ] T004 Implement `formatMessage()` for all 3 event types (SIGNUP, PASSWORD_RESET, EMAIL_VERIFIED) in backend/src/utils/slack.ts
-- [ ] T005 Implement `sendWithRetry()` with 1 retry + 1s delay in backend/src/utils/slack.ts
-- [ ] T006 Implement `notify()` as fire-and-forget (no throw, log errors) in backend/src/utils/slack.ts
-- [ ] T007 Export singleton `slackNotifier` instance in backend/src/utils/slack.ts
-- [ ] T008 [P] Create unit tests for SlackNotifier in backend/tests/unit/slack.test.ts
+- [X] T004 Implement `formatMessage()` for all 3 event types (SIGNUP, PASSWORD_RESET, EMAIL_VERIFIED) in backend/src/utils/slack.ts
+- [X] T005 Implement `sendWithRetry()` with 1 retry + 1s delay in backend/src/utils/slack.ts
+- [X] T006 Implement `notify()` as fire-and-forget (no throw, log errors) in backend/src/utils/slack.ts
+- [X] T007 Export singleton `slackNotifier` instance in backend/src/utils/slack.ts
+- [X] T008 [P] Create unit tests for SlackNotifier in backend/tests/unit/slack.test.ts
 
 **Checkpoint**: SlackNotifier is functional and tested - integration can begin
 
@@ -49,8 +49,8 @@
 
 ### Implementation for User Story 1
 
-- [ ] T009 [US1] Import slackNotifier in backend/src/utils/email.ts
-- [ ] T010 [US1] Call slackNotifier.notify() after sendVerificationEmail() success in backend/src/utils/email.ts
+- [X] T009 [US1] Import slackNotifier in backend/src/utils/email.ts
+- [X] T010 [US1] Call slackNotifier.notify() after sendVerificationEmail() success in backend/src/utils/email.ts
 
 **Checkpoint**: Signup notifications working - can be tested and deployed independently
 
@@ -64,7 +64,7 @@
 
 ### Implementation for User Story 2
 
-- [ ] T011 [US2] Call slackNotifier.notify() after sendPasswordResetEmail() success in backend/src/utils/email.ts
+- [X] T011 [US2] Call slackNotifier.notify() after sendPasswordResetEmail() success in backend/src/utils/email.ts
 
 **Checkpoint**: Password reset notifications working - can be tested independently
 
@@ -78,8 +78,8 @@
 
 ### Implementation for User Story 3
 
-- [ ] T012 [US3] Import slackNotifier in backend/src/functions/auth.ts
-- [ ] T013 [US3] Call slackNotifier.notify() after email verification success in backend/src/functions/auth.ts verifyEmail()
+- [X] T012 [US3] Import slackNotifier in backend/src/functions/auth.ts
+- [X] T013 [US3] Call slackNotifier.notify() after email verification success in backend/src/functions/auth.ts verifyEmail()
 
 **Checkpoint**: All 3 notification types working - feature complete
 
@@ -89,10 +89,10 @@
 
 **Purpose**: Documentation and validation
 
-- [ ] T014 [P] Update quickstart.md with local testing instructions in specs/014-slack-auth-notifications/quickstart.md
-- [ ] T015 [P] Add SLACK_WEBHOOK_URL documentation to DEVELOPMENT-GUIDE.md
-- [ ] T016 Run quickstart.md validation (test all 3 notification types)
-- [ ] T017 Run existing backend tests to ensure no regression: `cd backend && npm test`
+- [X] T014 [P] Update quickstart.md with local testing instructions in specs/014-slack-auth-notifications/quickstart.md
+- [X] T015 [P] Add SLACK_WEBHOOK_URL documentation to DEVELOPMENT-GUIDE.md
+- [X] T016 Run quickstart.md validation (test all 3 notification types)
+- [X] T017 Run existing backend tests to ensure no regression: `cd backend && npm test`
 
 ---
 
