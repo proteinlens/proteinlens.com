@@ -52,8 +52,9 @@ export function HomePage() {
   const [retryCount, setRetryCount] = useState(0)
   const [successMessage] = useState(() => getRandomMessage(successMessages))
 
-  // Mock daily progress (in production, fetch from user's actual data)
-  const [todayProtein] = useState(() => Math.floor(Math.random() * 60) + 20) // 20-80g already logged
+  // Today's protein from previous meals (in production, fetch from API for authenticated users)
+  // For now, show 0g for logged-in users until real tracking is implemented
+  const todayProtein = isAuthenticated ? 0 : 0
   const proteinGoal = DEFAULT_PROTEIN_GOAL
 
   const validateFile = (file: File): string | null => {
@@ -243,22 +244,37 @@ export function HomePage() {
           
           {/* Daily progress bar */}
           <div className="bg-white/20 rounded-xl p-4 backdrop-blur-sm">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">Today's Progress</span>
-              <span className="text-sm font-bold">{newTotalProtein}g / {proteinGoal}g</span>
-            </div>
-            <div className="h-3 bg-white/30 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-white rounded-full transition-all duration-1000 ease-out"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-            <p className="text-sm mt-2 opacity-90">
-              {progressPercent >= 100 
-                ? "🎉 You've hit your protein goal today!" 
-                : `${progressPercent}% toward your ${proteinGoal}g goal`
-              }
-            </p>
+            {isAuthenticated ? (
+              <>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">Today's Progress</span>
+                  <span className="text-sm font-bold">{newTotalProtein}g / {proteinGoal}g</span>
+                </div>
+                <div className="h-3 bg-white/30 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-white rounded-full transition-all duration-1000 ease-out"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+                <p className="text-sm mt-2 opacity-90">
+                  {progressPercent >= 100 
+                    ? "🎉 You've hit your protein goal today!" 
+                    : `${progressPercent}% toward your ${proteinGoal}g goal`
+                  }
+                </p>
+              </>
+            ) : (
+              <div className="text-center py-2">
+                <p className="text-sm font-medium mb-2">📊 Track Your Daily Progress</p>
+                <p className="text-xs opacity-85 mb-3">Log in to see how this meal fits into your daily protein goal</p>
+                <button
+                  onClick={() => navigate('/login')}
+                  className="bg-white text-primary px-4 py-2 rounded-lg text-sm font-semibold hover:bg-white/90 transition-colors"
+                >
+                  Log In to Track
+                </button>
+              </div>
+            )}
           </div>
         </div>
         
