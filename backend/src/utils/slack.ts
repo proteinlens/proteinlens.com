@@ -1,8 +1,8 @@
 /**
- * Slack Notifier - Authentication Event Notifications
+ * Slack Notifier - Event Notifications
  *
  * Feature: 014-slack-auth-notifications
- * Purpose: Send Slack notifications for auth events (signup, password reset, email verification)
+ * Purpose: Send Slack notifications for auth and billing events
  *
  * Key Design Decisions:
  * - Fire-and-forget: Notification failures never block user operations (FR-006)
@@ -14,13 +14,22 @@
 // Types
 // ===========================================
 
-export type NotificationEventType = 'SIGNUP' | 'PASSWORD_RESET' | 'EMAIL_VERIFIED';
+export type NotificationEventType = 
+  | 'SIGNUP' 
+  | 'PASSWORD_RESET' 
+  | 'EMAIL_VERIFIED'
+  | 'CHECKOUT_COMPLETED'      // User completed checkout (anonymous → pro or free → pro)
+  | 'SUBSCRIPTION_UPGRADED'   // User upgraded plan
+  | 'SUBSCRIPTION_DOWNGRADED' // User downgraded or cancelled (pro → free)
+  | 'PAYMENT_FAILED';         // Payment failed
 
 export interface NotificationOptions {
   eventType: NotificationEventType;
   email: string;
   timestamp?: Date;
   metadata?: Record<string, string>;
+  plan?: string;              // For subscription events (e.g., 'PRO', 'FREE')
+  previousPlan?: string;      // For upgrade/downgrade events
 }
 
 interface SlackBlock {
@@ -45,9 +54,15 @@ interface SlackPayload {
 // ===========================================
 
 const EVENT_CONFIG: Record<NotificationEventType, { emoji: string; title: string }> = {
+  // Auth events
   SIGNUP: { emoji: '🎉', title: 'New Signup' },
   PASSWORD_RESET: { emoji: '🔐', title: 'Password Reset Requested' },
   EMAIL_VERIFIED: { emoji: '✅', title: 'Email Verified' },
+  // Billing events
+  CHECKOUT_COMPLETED: { emoji: '💳', title: 'Checkout Completed' },
+  SUBSCRIPTION_UPGRADED: { emoji: '⬆️', title: 'Subscription Upgraded' },
+  SUBSCRIPTION_DOWNGRADED: { emoji: '⬇️', title: 'Subscription Downgraded' },
+  PAYMENT_FAILED: { emoji: '⚠️', title: 'Payment Failed' },
 };
 
 // ===========================================
@@ -89,11 +104,19 @@ export class SlackNotifier {
    * Format notification message with Block Kit
    */
   private formatMessage(options: NotificationOptions): SlackPayload {
-    const { eventType, email, timestamp = new Date() } = options;
+    const { eventType, email, timestamp = new Date(), plan, previousPlan } = options;
     const config = EVENT_CONFIG[eventType];
 
     const text = `${config.emoji} ${config.title}: ${email}`;
     const timestampStr = timestamp.toISOString();
+
+    // Build plan info for billing events
+    let planInfo = '';
+    if (plan && previousPlan) {
+      planInfo = `\n📊 ${previousPlan} → ${plan}`;
+    } else if (plan) {
+      planInfo = `\n📊 Plan: ${plan}`;
+    }
 
     return {
       text, // Fallback for notifications/accessibility
@@ -102,7 +125,7 @@ export class SlackNotifier {
           type: 'section',
           text: {
             type: 'mrkdwn',
-            text: `${config.emoji} *${config.title}*\n\`${email}\``,
+            text: `${config.emoji} *${config.title}*\n\`${email}\`${planInfo}`,
           },
         },
         {

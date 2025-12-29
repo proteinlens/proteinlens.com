@@ -13,6 +13,7 @@ import {
   SubscriptionStatus,
 } from '../services/subscriptionService.js';
 import { getPrismaClient } from '../utils/prisma.js';
+import { slackNotifier } from '../utils/slack.js';
 
 const prisma = getPrismaClient();
 
@@ -159,6 +160,15 @@ async function handleCheckoutCompleted(
     },
   });
 
+  // Feature 014: Send Slack notification for checkout completed
+  const userEmail = user.email || session.customer_email || userId;
+  slackNotifier.notify({ 
+    eventType: 'CHECKOUT_COMPLETED', 
+    email: userEmail,
+    plan: 'PRO',
+    previousPlan: user.plan || 'FREE',
+  });
+
   context.log('User upgraded to Pro', { userId, customerId });
   return userId;
 }
@@ -218,6 +228,14 @@ async function handleSubscriptionDeleted(
     return null;
   }
 
+  // Feature 014: Send Slack notification for subscription downgrade
+  slackNotifier.notify({ 
+    eventType: 'SUBSCRIPTION_DOWNGRADED', 
+    email: user.email || user.id,
+    plan: 'FREE',
+    previousPlan: 'PRO',
+  });
+
   context.log('User downgraded to Free', { userId: user.id });
   return user.id;
 }
@@ -255,6 +273,13 @@ async function handlePaymentFailed(
     data: {
       subscriptionStatus: SubscriptionStatus.past_due,
     },
+  });
+
+  // Feature 014: Send Slack notification for payment failure
+  slackNotifier.notify({ 
+    eventType: 'PAYMENT_FAILED', 
+    email: user.email || user.id,
+    plan: user.plan || 'PRO',
   });
 
   context.log('User subscription marked past_due', { userId: user.id });

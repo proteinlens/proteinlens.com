@@ -212,10 +212,11 @@ describe('SlackNotifier', () => {
   });
 
   describe('Event Types', () => {
-    const eventTypes: NotificationEventType[] = ['SIGNUP', 'PASSWORD_RESET', 'EMAIL_VERIFIED'];
+    const authEventTypes: NotificationEventType[] = ['SIGNUP', 'PASSWORD_RESET', 'EMAIL_VERIFIED'];
+    const billingEventTypes: NotificationEventType[] = ['CHECKOUT_COMPLETED', 'SUBSCRIPTION_UPGRADED', 'SUBSCRIPTION_DOWNGRADED', 'PAYMENT_FAILED'];
     
-    eventTypes.forEach(eventType => {
-      it(`should handle ${eventType} event type`, async () => {
+    authEventTypes.forEach(eventType => {
+      it(`should handle ${eventType} auth event type`, async () => {
         mockFetch.mockResolvedValueOnce({ ok: true, text: () => Promise.resolve('ok') });
         
         await notifier.notify({
@@ -226,6 +227,78 @@ describe('SlackNotifier', () => {
         
         expect(mockFetch).toHaveBeenCalledTimes(1);
       });
+    });
+
+    billingEventTypes.forEach(eventType => {
+      it(`should handle ${eventType} billing event type`, async () => {
+        mockFetch.mockResolvedValueOnce({ ok: true, text: () => Promise.resolve('ok') });
+        
+        await notifier.notify({
+          eventType,
+          email: 'user@example.com',
+          plan: 'PRO'
+        });
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        expect(mockFetch).toHaveBeenCalledTimes(1);
+      });
+    });
+  });
+
+  describe('Billing Events with Plan Info', () => {
+    it('should include plan info for CHECKOUT_COMPLETED', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: true, text: () => Promise.resolve('ok') });
+      
+      await notifier.notify({
+        eventType: 'CHECKOUT_COMPLETED',
+        email: 'user@example.com',
+        plan: 'PRO',
+        previousPlan: 'FREE'
+      });
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      const callArgs = mockFetch.mock.calls[0];
+      const body = JSON.parse(callArgs[1].body);
+      expect(body.text).toContain('💳');
+      expect(body.text).toContain('Checkout Completed');
+      
+      // Plan transition should be in the blocks
+      const payloadString = JSON.stringify(body.blocks);
+      expect(payloadString).toContain('FREE');
+      expect(payloadString).toContain('PRO');
+    });
+
+    it('should include plan info for SUBSCRIPTION_DOWNGRADED', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: true, text: () => Promise.resolve('ok') });
+      
+      await notifier.notify({
+        eventType: 'SUBSCRIPTION_DOWNGRADED',
+        email: 'user@example.com',
+        plan: 'FREE',
+        previousPlan: 'PRO'
+      });
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      const callArgs = mockFetch.mock.calls[0];
+      const body = JSON.parse(callArgs[1].body);
+      expect(body.text).toContain('⬇️');
+      expect(body.text).toContain('Subscription Downgraded');
+    });
+
+    it('should include plan info for PAYMENT_FAILED', async () => {
+      mockFetch.mockResolvedValueOnce({ ok: true, text: () => Promise.resolve('ok') });
+      
+      await notifier.notify({
+        eventType: 'PAYMENT_FAILED',
+        email: 'user@example.com',
+        plan: 'PRO'
+      });
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
+      const callArgs = mockFetch.mock.calls[0];
+      const body = JSON.parse(callArgs[1].body);
+      expect(body.text).toContain('⚠️');
+      expect(body.text).toContain('Payment Failed');
     });
   });
 
