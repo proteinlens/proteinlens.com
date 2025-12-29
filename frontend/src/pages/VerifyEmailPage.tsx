@@ -72,7 +72,8 @@ export const VerifyEmailPage: FC = () => {
         })
         .catch((err) => {
           setStatus('error');
-          setError(err.message || 'Verification failed. Please try again.');
+          // Convert technical errors to user-friendly messages
+          setError(getUserFriendlyError(err));
         });
     } else if (pendingEmail) {
       // Post-signup flow: show pending verification message
@@ -80,11 +81,60 @@ export const VerifyEmailPage: FC = () => {
     } else {
       // No token and no email, show error
       setStatus('error');
-      setError('Verification link is invalid. Please request a new one.');
+      setError('This verification link appears to be incomplete. Please click the link in your email again, or request a new verification email.');
     }
   }, [searchParams, isAuthenticated, user, pendingEmail]);
 
-  // Helper to get human-readable error messages
+  // Convert error to user-friendly message
+  function getUserFriendlyError(err: unknown): string {
+    // Handle AuthError with code
+    const error = err as { code?: string; message?: string; status?: number };
+    
+    // Check error code first
+    if (error.code) {
+      const codeMessages: Record<string, string> = {
+        'EXPIRED': 'This verification link has expired. Please request a new verification email below.',
+        'NOT_FOUND': 'This verification link has expired or was already used. Please request a new verification email below.',
+        'INVALID_TOKEN': 'This verification link is invalid. Please request a new verification email below.',
+        'ALREADY_VERIFIED': 'Your email is already verified! You can log in to your account.',
+        'TOKEN_EXPIRED': 'This verification link has expired. Please request a new verification email below.',
+        'SERVER_ERROR': 'We encountered a problem verifying your email. Please try again in a few minutes.',
+        'BAD_GATEWAY': 'Our servers are temporarily unavailable. Please try again in a few minutes.',
+        'SERVICE_UNAVAILABLE': 'We\'re performing maintenance. Please try again in a few minutes.',
+        'PARSE_ERROR': 'We encountered a problem processing your request. Please try again.',
+      };
+      if (codeMessages[error.code]) {
+        return codeMessages[error.code];
+      }
+    }
+    
+    // Check HTTP status
+    if (error.status) {
+      if (error.status === 404 || error.status === 410) {
+        return 'This verification link has expired or was already used. Please request a new verification email below.';
+      }
+      if (error.status >= 500) {
+        return 'We encountered a problem on our end. Please try again in a few minutes.';
+      }
+    }
+    
+    // Check message for common patterns
+    const message = error.message || '';
+    if (message.toLowerCase().includes('expired')) {
+      return 'This verification link has expired. Please request a new verification email below.';
+    }
+    if (message.toLowerCase().includes('invalid') || message.toLowerCase().includes('not found')) {
+      return 'This verification link is invalid or has already been used. Please request a new verification email below.';
+    }
+    if (message.toLowerCase().includes('json') || message.toLowerCase().includes('parse')) {
+      return 'We encountered a problem processing your request. Please try again in a few minutes.';
+    }
+    
+    // Fallback to a friendly generic message
+    return 'We couldn\'t verify your email with this link. It may have expired. Please request a new verification email below.';
+  }
+
+  // Helper to get human-readable error messages from URL error codes
   function getErrorMessage(code: string): string {
     const errorMessages: Record<string, string> = {
       expired: 'This verification link has expired. Please request a new one.',
@@ -258,11 +308,11 @@ export const VerifyEmailPage: FC = () => {
         {status === 'error' && (
           <>
             <div
-              className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100"
+              className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-amber-100"
               aria-hidden="true"
             >
               <svg
-                className="h-8 w-8 text-red-600"
+                className="h-8 w-8 text-amber-600"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -271,12 +321,12 @@ export const VerifyEmailPage: FC = () => {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
             </div>
             <h1 className="mt-6 text-2xl font-bold text-gray-900">
-              Verification failed
+              Link Expired or Invalid
             </h1>
             <p className="mt-2 text-gray-600">{error}</p>
             <div className="mt-8 flex flex-col gap-3">
@@ -284,13 +334,13 @@ export const VerifyEmailPage: FC = () => {
                 onClick={handleResend}
                 className="w-full rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
-                Request new verification email
+                Request New Verification Email
               </button>
               <button
-                onClick={() => navigate('/support')}
+                onClick={() => navigate('/login')}
                 className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
-                Contact Support
+                Back to Login
               </button>
             </div>
           </>

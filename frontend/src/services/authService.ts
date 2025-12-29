@@ -229,18 +229,95 @@ async function handleResponse<T>(response: Response): Promise<T> {
     throw new RateLimitError(message, retrySeconds, lockedUntil);
   }
   
-  const data = await response.json();
-  
-  if (!response.ok) {
+  // Safely parse JSON response
+  let data: Record<string, unknown>;
+  try {
+    const text = await response.text();
+    if (!text || text.trim() === '') {
+      // Empty response body
+      if (!response.ok) {
+        throw new AuthError(
+          getHttpErrorMessage(response.status),
+          getHttpErrorCode(response.status),
+          response.status
+        );
+      }
+      data = {} as Record<string, unknown>;
+    } else {
+      data = JSON.parse(text);
+    }
+  } catch (parseError) {
+    // JSON parsing failed - provide user-friendly message based on status
+    if (!response.ok) {
+      throw new AuthError(
+        getHttpErrorMessage(response.status),
+        getHttpErrorCode(response.status),
+        response.status
+      );
+    }
+    // If response was OK but couldn't parse, throw generic error
     throw new AuthError(
-      data.error || 'An error occurred',
-      data.code || 'UNKNOWN_ERROR',
-      response.status,
-      data.details
+      'Unable to process server response. Please try again.',
+      'PARSE_ERROR',
+      response.status
     );
   }
   
-  return data;
+  if (!response.ok) {
+    // Extract details array if present and properly typed
+    const details = Array.isArray(data.details) 
+      ? data.details as Array<{ field: string; message: string }>
+      : undefined;
+    
+    throw new AuthError(
+      data.error as string || getHttpErrorMessage(response.status),
+      data.code as string || getHttpErrorCode(response.status),
+      response.status,
+      details
+    );
+  }
+  
+  return data as T;
+}
+
+/**
+ * Get user-friendly error message based on HTTP status code
+ */
+function getHttpErrorMessage(status: number): string {
+  const messages: Record<number, string> = {
+    400: 'Invalid request. Please check your information and try again.',
+    401: 'Your session has expired. Please log in again.',
+    403: 'You do not have permission to perform this action.',
+    404: 'The requested resource was not found. The link may have expired.',
+    409: 'This action conflicts with existing data.',
+    410: 'This link has expired. Please request a new one.',
+    422: 'The provided information is invalid. Please check and try again.',
+    500: 'Something went wrong on our end. Please try again later.',
+    502: 'Service temporarily unavailable. Please try again in a moment.',
+    503: 'Service is currently undergoing maintenance. Please try again later.',
+    504: 'The request took too long. Please try again.',
+  };
+  return messages[status] || 'An unexpected error occurred. Please try again.';
+}
+
+/**
+ * Get error code based on HTTP status code
+ */
+function getHttpErrorCode(status: number): string {
+  const codes: Record<number, string> = {
+    400: 'BAD_REQUEST',
+    401: 'UNAUTHORIZED',
+    403: 'FORBIDDEN',
+    404: 'NOT_FOUND',
+    409: 'CONFLICT',
+    410: 'EXPIRED',
+    422: 'VALIDATION_ERROR',
+    500: 'SERVER_ERROR',
+    502: 'BAD_GATEWAY',
+    503: 'SERVICE_UNAVAILABLE',
+    504: 'TIMEOUT',
+  };
+  return codes[status] || 'UNKNOWN_ERROR';
 }
 
 /**
