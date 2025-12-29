@@ -104,9 +104,9 @@ export const VerifyEmailPage: FC = () => {
     }
   };
 
-  // Handle resend click
+  // Handle resend click - navigate to resend verification page
   const handleResend = () => {
-    navigate('/login', { state: { showResendVerification: true } });
+    navigate('/resend-verification');
   };
 
   // Show loading state
