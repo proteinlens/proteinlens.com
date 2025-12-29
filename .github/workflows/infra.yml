@@ -64,7 +64,9 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Validate confirmation
-        if: github.event_name == 'workflow_dispatch'
+        # Only require confirmation when infra.yml is triggered directly via workflow_dispatch
+        # When called via workflow_call from deploy.yml, skip this check
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.confirm_deploy != null
         run: |
           if [ "${{ github.event.inputs.confirm_deploy }}" != "deploy-infra" ]; then
             echo "❌ Deployment confirmation failed. Expected 'deploy-infra' but got '${{ github.event.inputs.confirm_deploy }}'"
