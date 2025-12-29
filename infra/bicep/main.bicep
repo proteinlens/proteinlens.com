@@ -104,6 +104,16 @@ module postgres 'postgres.bicep' = {
   }
 }
 
+// 3b. Azure Communication Services for transactional emails (signup verification, password reset)
+module acsEmail 'acs-email.bicep' = {
+  name: 'acs-email-deployment'
+  params: {
+    baseName: appNamePrefix
+    location: 'global' // ACS requires global location
+    dataLocation: 'europe' // Store data in Europe for GDPR
+  }
+}
+
 // 4. Function App (depends on Key Vault and Storage)
 module functionApp 'function-app.bicep' = {
   name: 'function-app-deployment'
@@ -113,6 +123,8 @@ module functionApp 'function-app.bicep' = {
     storageAccountName: storage.outputs.storageAccountName
     keyVaultUri: keyVault.outputs.keyVaultUri
     adminEmails: adminEmails
+    acsConnectionString: acsEmail.outputs.connectionString
+    acsSenderAddress: acsEmail.outputs.senderAddress
   }
 }
 

@@ -84,3 +84,6 @@ output senderAddress string = 'DoNotReply@${emailDomain.properties.mailFromSende
 
 @description('Communication Service resource ID')
 output communicationServiceId string = communicationService.id
+
+@description('Connection string for email sending')
+output connectionString string = communicationService.listKeys().primaryConnectionString

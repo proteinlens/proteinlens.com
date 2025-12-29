@@ -9,6 +9,13 @@ param keyVaultUri string
 @description('Comma-separated list of admin email addresses for admin dashboard access')
 param adminEmails string = ''
 
+@description('Azure Communication Services connection string for transactional emails')
+@secure()
+param acsConnectionString string = ''
+
+@description('Email sender address (from ACS)')
+param acsSenderAddress string = ''
+
 resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
   name: appServicePlanName
   location: location
@@ -124,6 +131,19 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
         {
           name: 'ADMIN_EMAILS'
           value: adminEmails
+        }
+        // Azure Communication Services for transactional emails (signup verification, password reset)
+        {
+          name: 'ACS_EMAIL_CONNECTION_STRING'
+          value: acsConnectionString
+        }
+        {
+          name: 'ACS_EMAIL_SENDER'
+          value: acsSenderAddress
+        }
+        {
+          name: 'FRONTEND_URL'
+          value: 'https://www.proteinlens.com'
         }
       ]
       cors: {

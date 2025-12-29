@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.39.26.7824",
-      "templateHash": "15580745336884980934"
+      "templateHash": "13614809949571872216"
     }
   },
   "parameters": {
@@ -80,6 +80,10 @@
       "type": "string",
       "defaultValue": "[format('{0}-web-{1}', parameters('appNamePrefix'), parameters('environmentName'))]"
     },
+    "adminStaticWebAppName": {
+      "type": "string",
+      "defaultValue": "[format('{0}-admin-{1}', parameters('appNamePrefix'), parameters('environmentName'))]"
+    },
     "frontDoorName": {
       "type": "string",
       "defaultValue": "[format('{0}-fd-{1}', parameters('appNamePrefix'), parameters('environmentName'))]"
@@ -114,6 +118,21 @@
     "webCustomDomainName": {
       "type": "string",
       "defaultValue": "www.proteinlens.com"
+    },
+    "adminCustomDomainName": {
+      "type": "string",
+      "defaultValue": "admin.proteinlens.com"
+    },
+    "adminEmails": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Comma-separated list of admin email addresses allowed to access admin dashboard"
+      }
+    },
+    "alertEmailAddresses": {
+      "type": "array",
+      "defaultValue": []
     }
   },
   "variables": {
@@ -481,6 +500,178 @@
         }
       }
     },
+    "acsEmail": {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "acs-email-deployment",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "baseName": {
+            "value": "[parameters('appNamePrefix')]"
+          },
+          "location": {
+            "value": "global"
+          },
+          "dataLocation": {
+            "value": "europe"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "11732399877059771159"
+            }
+          },
+          "parameters": {
+            "baseName": {
+              "type": "string",
+              "metadata": {
+                "description": "Base name for resources"
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "global",
+              "metadata": {
+                "description": "Location for Communication Services (must be global)"
+              }
+            },
+            "dataLocation": {
+              "type": "string",
+              "defaultValue": "europe",
+              "allowedValues": [
+                "unitedstates",
+                "europe",
+                "asia",
+                "australia",
+                "brazil",
+                "canada",
+                "france",
+                "germany",
+                "india",
+                "japan",
+                "korea",
+                "norway",
+                "switzerland",
+                "uae",
+                "uk"
+              ],
+              "metadata": {
+                "description": "Data location for email service"
+              }
+            },
+            "tags": {
+              "type": "object",
+              "defaultValue": {},
+              "metadata": {
+                "description": "Tags for resources"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Communication/emailServices",
+              "apiVersion": "2023-04-01",
+              "name": "[format('{0}-email', parameters('baseName'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "dataLocation": "[parameters('dataLocation')]"
+              }
+            },
+            {
+              "type": "Microsoft.Communication/emailServices/domains",
+              "apiVersion": "2023-04-01",
+              "name": "[format('{0}/{1}', format('{0}-email', parameters('baseName')), 'AzureManagedDomain')]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "domainManagement": "AzureManaged",
+                "userEngagementTracking": "Disabled"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Communication/emailServices', format('{0}-email', parameters('baseName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Communication/communicationServices",
+              "apiVersion": "2023-04-01",
+              "name": "[format('{0}-acs', parameters('baseName'))]",
+              "location": "[parameters('location')]",
+              "tags": "[parameters('tags')]",
+              "properties": {
+                "dataLocation": "[parameters('dataLocation')]",
+                "linkedDomains": [
+                  "[resourceId('Microsoft.Communication/emailServices/domains', format('{0}-email', parameters('baseName')), 'AzureManagedDomain')]"
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Communication/emailServices/domains', format('{0}-email', parameters('baseName')), 'AzureManagedDomain')]"
+              ]
+            }
+          ],
+          "outputs": {
+            "communicationServiceName": {
+              "type": "string",
+              "metadata": {
+                "description": "Communication Service name"
+              },
+              "value": "[format('{0}-acs', parameters('baseName'))]"
+            },
+            "emailServiceName": {
+              "type": "string",
+              "metadata": {
+                "description": "Email Service name"
+              },
+              "value": "[format('{0}-email', parameters('baseName'))]"
+            },
+            "emailDomainName": {
+              "type": "string",
+              "metadata": {
+                "description": "Email domain name"
+              },
+              "value": "AzureManagedDomain"
+            },
+            "endpoint": {
+              "type": "string",
+              "metadata": {
+                "description": "Communication Service endpoint"
+              },
+              "value": "[reference(resourceId('Microsoft.Communication/communicationServices', format('{0}-acs', parameters('baseName'))), '2023-04-01').hostName]"
+            },
+            "senderAddress": {
+              "type": "string",
+              "metadata": {
+                "description": "Email sender address (Azure-managed domain)"
+              },
+              "value": "[format('DoNotReply@{0}', reference(resourceId('Microsoft.Communication/emailServices/domains', format('{0}-email', parameters('baseName')), 'AzureManagedDomain'), '2023-04-01').mailFromSenderDomain)]"
+            },
+            "communicationServiceId": {
+              "type": "string",
+              "metadata": {
+                "description": "Communication Service resource ID"
+              },
+              "value": "[resourceId('Microsoft.Communication/communicationServices', format('{0}-acs', parameters('baseName')))]"
+            },
+            "connectionString": {
+              "type": "string",
+              "metadata": {
+                "description": "Connection string for email sending"
+              },
+              "value": "[listKeys(resourceId('Microsoft.Communication/communicationServices', format('{0}-acs', parameters('baseName'))), '2023-04-01').primaryConnectionString]"
+            }
+          }
+        }
+      }
+    },
     "functionApp": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2025-04-01",
@@ -502,6 +693,15 @@
           },
           "keyVaultUri": {
             "value": "[reference('keyVault').outputs.keyVaultUri.value]"
+          },
+          "adminEmails": {
+            "value": "[parameters('adminEmails')]"
+          },
+          "acsConnectionString": {
+            "value": "[reference('acsEmail').outputs.connectionString.value]"
+          },
+          "acsSenderAddress": {
+            "value": "[reference('acsEmail').outputs.senderAddress.value]"
           }
         },
         "template": {
@@ -511,7 +711,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.39.26.7824",
-              "templateHash": "8584495934461176404"
+              "templateHash": "16890859059338654253"
             }
           },
           "parameters": {
@@ -531,6 +731,27 @@
             },
             "keyVaultUri": {
               "type": "string"
+            },
+            "adminEmails": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "Comma-separated list of admin email addresses for admin dashboard access"
+              }
+            },
+            "acsConnectionString": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "Azure Communication Services connection string for transactional emails"
+              }
+            },
+            "acsSenderAddress": {
+              "type": "string",
+              "defaultValue": "",
+              "metadata": {
+                "description": "Email sender address (from ACS)"
+              }
             }
           },
           "resources": [
@@ -628,6 +849,10 @@
                       "value": "[format('@Microsoft.KeyVault(SecretUri={0}secrets/stripe-webhook-secret/)', parameters('keyVaultUri'))]"
                     },
                     {
+                      "name": "HCAPTCHA_SECRET",
+                      "value": "[format('@Microsoft.KeyVault(SecretUri={0}secrets/hcaptcha-secret/)', parameters('keyVaultUri'))]"
+                    },
+                    {
                       "name": "BLOB_STORAGE_CONNECTION",
                       "value": "[format('@Microsoft.KeyVault(SecretUri={0}secrets/blob-storage-connection/)', parameters('keyVaultUri'))]"
                     },
@@ -638,14 +863,32 @@
                     {
                       "name": "MAX_FILE_SIZE_MB",
                       "value": "8"
+                    },
+                    {
+                      "name": "ADMIN_EMAILS",
+                      "value": "[parameters('adminEmails')]"
+                    },
+                    {
+                      "name": "ACS_EMAIL_CONNECTION_STRING",
+                      "value": "[parameters('acsConnectionString')]"
+                    },
+                    {
+                      "name": "ACS_EMAIL_SENDER",
+                      "value": "[parameters('acsSenderAddress')]"
+                    },
+                    {
+                      "name": "FRONTEND_URL",
+                      "value": "https://www.proteinlens.com"
                     }
                   ],
                   "cors": {
                     "allowedOrigins": [
                       "http://localhost:5173",
+                      "http://localhost:5174",
                       "http://localhost:3000",
                       "https://www.proteinlens.com",
                       "https://proteinlens.com",
+                      "https://admin.proteinlens.com",
                       "https://happy-stone-003f15b1e.azurestaticapps.net",
                       "https://api.proteinlens.com"
                     ],
@@ -683,6 +926,7 @@
         }
       },
       "dependsOn": [
+        "acsEmail",
         "keyVault",
         "storage"
       ]
@@ -1016,6 +1260,164 @@
       },
       "dependsOn": [
         "staticWebApp"
+      ]
+    },
+    "adminStaticWebApp": {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "admin-static-web-app-deployment",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('swaLocation')]"
+          },
+          "adminStaticWebAppName": {
+            "value": "[parameters('adminStaticWebAppName')]"
+          },
+          "apiUrl": {
+            "value": "[reference('functionApp').outputs.functionAppUrl.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "14549669280038403185"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "defaultValue": "westeurope"
+            },
+            "adminStaticWebAppName": {
+              "type": "string"
+            },
+            "apiUrl": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Web/staticSites",
+              "apiVersion": "2023-01-01",
+              "name": "[parameters('adminStaticWebAppName')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "Free",
+                "tier": "Free"
+              },
+              "properties": {
+                "buildProperties": {
+                  "appBuildCommand": "npm run build --prefix admin",
+                  "appLocation": "admin",
+                  "outputLocation": "admin/dist",
+                  "skipGithubActionWorkflowGeneration": true
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Web/staticSites/config",
+              "apiVersion": "2023-01-01",
+              "name": "[format('{0}/{1}', parameters('adminStaticWebAppName'), 'appsettings')]",
+              "properties": {
+                "VITE_API_URL": "[parameters('apiUrl')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/staticSites', parameters('adminStaticWebAppName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "adminStaticWebAppName": {
+              "type": "string",
+              "value": "[parameters('adminStaticWebAppName')]"
+            },
+            "adminStaticWebAppId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Web/staticSites', parameters('adminStaticWebAppName'))]"
+            },
+            "adminStaticWebAppDefaultHostname": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/staticSites', parameters('adminStaticWebAppName')), '2023-01-01').defaultHostname]"
+            },
+            "adminStaticWebAppUrl": {
+              "type": "string",
+              "value": "[format('https://{0}', reference(resourceId('Microsoft.Web/staticSites', parameters('adminStaticWebAppName')), '2023-01-01').defaultHostname)]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "functionApp"
+      ]
+    },
+    "adminStaticWebAppCustomDomain": {
+      "condition": "[parameters('enableCustomDomain')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "admin-static-web-app-custom-domain-deployment",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "staticWebAppName": {
+            "value": "[reference('adminStaticWebApp').outputs.adminStaticWebAppName.value]"
+          },
+          "customDomain": {
+            "value": "[parameters('adminCustomDomainName')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "7067937578363115239"
+            }
+          },
+          "parameters": {
+            "staticWebAppName": {
+              "type": "string"
+            },
+            "customDomain": {
+              "type": "string",
+              "defaultValue": "www.proteinlens.com"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Web/staticSites/customDomains",
+              "apiVersion": "2023-01-01",
+              "name": "[format('{0}/{1}', parameters('staticWebAppName'), parameters('customDomain'))]",
+              "properties": {}
+            }
+          ],
+          "outputs": {
+            "customDomain": {
+              "type": "string",
+              "value": "[parameters('customDomain')]"
+            },
+            "validationStatus": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/staticSites/customDomains', parameters('staticWebAppName'), parameters('customDomain')), '2023-01-01').status]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "adminStaticWebApp"
       ]
     },
     "frontDoor": {
@@ -1685,6 +2087,22 @@
     "staticWebAppCustomDomainEnabled": {
       "type": "bool",
       "value": "[parameters('enableCustomDomain')]"
+    },
+    "adminStaticWebAppName": {
+      "type": "string",
+      "value": "[reference('adminStaticWebApp').outputs.adminStaticWebAppName.value]"
+    },
+    "adminStaticWebAppUrl": {
+      "type": "string",
+      "value": "[if(parameters('enableCustomDomain'), format('https://{0}', parameters('adminCustomDomainName')), reference('adminStaticWebApp').outputs.adminStaticWebAppUrl.value)]"
+    },
+    "adminStaticWebAppAzureUrl": {
+      "type": "string",
+      "value": "[reference('adminStaticWebApp').outputs.adminStaticWebAppUrl.value]"
+    },
+    "adminStaticWebAppDefaultHostname": {
+      "type": "string",
+      "value": "[reference('adminStaticWebApp').outputs.adminStaticWebAppDefaultHostname.value]"
     },
     "frontDoorEnabled": {
       "type": "bool",
