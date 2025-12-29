@@ -56,3 +56,22 @@ allowlist = { paths = [
   '''specs/.*\.md$''',
   '''screenshorts/.*\.har$''',
 ] }
+
+# Allow example Slack webhook URLs in documentation and example files
+[[rules]]
+id = "slack-webhook-url"
+description = "Slack webhook URL - allow examples in docs and .env.example"
+allowlist = { 
+  paths = [
+    '''\.env\.example$''',
+    '''specs/.*\.md$''',
+    '''docs/.*\.md$''',
+    '''.*README.*\.md$''',
+    '''quickstart\.md$''',
+    '''research\.md$''',
+  ],
+  regexes = [
+    # Example/placeholder webhook URLs (T00000000/B00000000/XXX pattern)
+    '''https://hooks\.slack\.com/services/T[0-9]+/B[0-9]+/X+''',
+  ]
+}
