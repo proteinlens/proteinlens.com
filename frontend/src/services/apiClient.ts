@@ -103,37 +103,86 @@ class ApiClient {
    * T038: Request upload SAS URL from backend
    */
   async requestUploadUrl(request: UploadUrlRequest): Promise<UploadUrlResponse> {
-    const response = await fetch(`${API_PATH}/upload-url`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(request),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+    
+    try {
+      const response = await fetch(`${API_PATH}/upload-url`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(request),
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
 
-    if (!response.ok) {
-      const error: ApiError = await response.json();
-      throw new Error(error.error || `Upload URL request failed: ${response.status}`);
+      if (!response.ok) {
+        const error: ApiError = await response.json();
+        throw new Error(error.error || `Upload URL request failed: ${response.status}`);
+      }
+
+      return response.json();
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (err instanceof Error && err.name === 'AbortError') {
+        throw new Error('Request timed out. Please check your connection and try again.');
+      }
+      throw err;
     }
-
-    return response.json();
   }
 
   /**
    * Upload file directly to Azure Blob Storage using SAS URL
    * Constitution Principle III: Client → Blob (no base64 to backend)
+   * Includes timeout and retry logic for mobile networks
    */
-  async uploadToBlob(sasUrl: string, file: File): Promise<void> {
-    const response = await fetch(sasUrl, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': file.type,
-        'x-ms-blob-type': 'BlockBlob',
-      },
-      body: file,
-    });
+  async uploadToBlob(sasUrl: string, file: File | Blob, contentType?: string): Promise<void> {
+    const mimeType = contentType || (file instanceof File ? file.type : 'image/jpeg');
+    const maxRetries = 3;
+    const timeoutMs = 60000; // 60 second timeout for mobile networks
+    
+    let lastError: Error | null = null;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+        
+        const response = await fetch(sasUrl, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': mimeType,
+            'x-ms-blob-type': 'BlockBlob',
+          },
+          body: file,
+          signal: controller.signal,
+        });
+        
+        clearTimeout(timeoutId);
 
-    if (!response.ok) {
-      throw new Error(`Blob upload failed: ${response.status} ${response.statusText}`);
+        if (!response.ok) {
+          throw new Error(`Blob upload failed: ${response.status} ${response.statusText}`);
+        }
+        
+        return; // Success!
+      } catch (err) {
+        lastError = err instanceof Error ? err : new Error('Upload failed');
+        
+        // Don't retry on non-retryable errors
+        if (lastError.name !== 'AbortError' && !lastError.message.includes('network')) {
+          if (attempt === maxRetries || (err instanceof Error && err.message.includes('403'))) {
+            throw lastError;
+          }
+        }
+        
+        // Wait before retry (exponential backoff)
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
+        }
+      }
     }
+    
+    throw lastError || new Error('Upload failed after retries');
   }
 
   /**
@@ -142,22 +191,36 @@ class ApiClient {
    * Throws ApiRequestError with quota info on 429
    */
   async analyzeMeal(request: AnalyzeRequest): Promise<AnalysisResponse> {
-    const response = await fetch(`${API_PATH}/meals/analyze`, {
-      method: 'POST',
-      headers: getHeaders(),
-      body: JSON.stringify(request),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 90000); // 90s timeout for AI analysis
+    
+    try {
+      const response = await fetch(`${API_PATH}/meals/analyze`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(request),
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
 
-    if (!response.ok) {
-      const errorBody: ApiError = await response.json();
-      throw new ApiRequestError(
-        errorBody.message || errorBody.error || `Analysis request failed: ${response.status}`,
-        response.status,
-        errorBody
-      );
+      if (!response.ok) {
+        const errorBody: ApiError = await response.json();
+        throw new ApiRequestError(
+          errorBody.message || errorBody.error || `Analysis request failed: ${response.status}`,
+          response.status,
+          errorBody
+        );
+      }
+
+      return response.json();
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (err instanceof Error && err.name === 'AbortError') {
+        throw new Error('Analysis timed out. Please try again.');
+      }
+      throw err;
     }
-
-    return response.json();
   }
 
   /**

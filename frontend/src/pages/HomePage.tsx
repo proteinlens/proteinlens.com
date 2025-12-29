@@ -108,20 +108,42 @@ export function HomePage() {
       setProgressText(ANALYSIS_STEPS[0].text)
       setError(null)
       
-      let fileToUpload = selectedFile
+      let fileToUpload: File | Blob = selectedFile
+      let contentType = selectedFile.type
+      let fileName = selectedFile.name
+      
+      // Compress large images (common on mobile)
       if (selectedFile.size > 1024 * 1024) {
-        fileToUpload = await imageCompression(selectedFile, { maxSizeMB: 0.8, maxWidthOrHeight: 1920, useWebWorker: true })
+        try {
+          const compressed = await imageCompression(selectedFile, { 
+            maxSizeMB: 0.8, 
+            maxWidthOrHeight: 1920, 
+            useWebWorker: true,
+            fileType: 'image/jpeg', // Force JPEG for better compatibility
+          })
+          fileToUpload = compressed
+          contentType = 'image/jpeg'
+          // Keep original name but change extension
+          fileName = fileName.replace(/\.[^.]+$/, '.jpg')
+        } catch (compressionError) {
+          console.warn('Image compression failed, using original:', compressionError)
+          // Continue with original file if compression fails
+        }
       }
       
       // Step 1: Prepare
       setProgress(30)
       setProgressText(ANALYSIS_STEPS[1].text)
-      const uploadUrlResponse = await apiClient.requestUploadUrl({ fileName: fileToUpload.name, fileSize: fileToUpload.size, contentType: fileToUpload.type })
+      const uploadUrlResponse = await apiClient.requestUploadUrl({ 
+        fileName, 
+        fileSize: fileToUpload.size, 
+        contentType 
+      })
       
       // Step 2: Upload
       setProgress(50)
       setProgressText(ANALYSIS_STEPS[2].text)
-      await apiClient.uploadToBlob(uploadUrlResponse.uploadUrl, fileToUpload)
+      await apiClient.uploadToBlob(uploadUrlResponse.uploadUrl, fileToUpload, contentType)
       
       // Step 3: Analyze
       setProgress(70)
@@ -145,7 +167,9 @@ export function HomePage() {
                                errorMessage.toLowerCase().includes('fetch') ||
                                errorMessage.toLowerCase().includes('500') ||
                                errorMessage.toLowerCase().includes('503') ||
-                               errorMessage.toLowerCase().includes('timeout')
+                               errorMessage.toLowerCase().includes('timeout') ||
+                               errorMessage.toLowerCase().includes('timed out') ||
+                               errorMessage.toLowerCase().includes('aborted')
       
       if (isTransientError && retryCount < MAX_RETRIES && !isRetry) {
         setRetryCount(prev => prev + 1)
