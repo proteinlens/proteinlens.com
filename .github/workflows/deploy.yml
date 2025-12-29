@@ -333,7 +333,11 @@ jobs:
   infra:
     name: Provision Infra
     needs: [changes, secret_scan, dns_gate]
-    if: needs.dns_gate.outputs.ok == 'true' && needs.changes.outputs.infra == 'true'
+    if: |
+      always() &&
+      needs.dns_gate.outputs.ok == 'true' &&
+      needs.changes.outputs.infra == 'true' &&
+      (needs.secret_scan.result == 'success' || needs.secret_scan.result == 'skipped')
     uses: ./.github/workflows/infra.yml
     secrets: inherit
     with:
