@@ -63,12 +63,14 @@ export interface PasswordChangedEmailData {
 export class EmailService {
   private client: EmailClient | null = null;
   private senderAddress: string;
+  private senderDisplayName: string;
   private frontendUrl: string;
   private mode: 'acs' | 'console';
 
   constructor(config?: Partial<EmailConfig>) {
     const connectionString = config?.connectionString || process.env.ACS_EMAIL_CONNECTION_STRING;
-    this.senderAddress = config?.senderAddress || process.env.ACS_EMAIL_SENDER || 'DoNotReply@proteinlens.com';
+    this.senderAddress = config?.senderAddress || process.env.ACS_EMAIL_SENDER || 'noreply@proteinlens.com';
+    this.senderDisplayName = process.env.ACS_EMAIL_SENDER_NAME || 'ProteinLens';
     this.frontendUrl = config?.frontendUrl || process.env.FRONTEND_URL || 'http://localhost:5173';
     
     // Determine mode based on EMAIL_SERVICE env var or connection string availability
@@ -100,14 +102,21 @@ export class EmailService {
     try {
       const message: EmailMessage = {
         senderAddress: this.senderAddress,
+        // Add headers for better deliverability
+        headers: {
+          // Using display name helps with spam filtering
+          'X-Sender-Display-Name': this.senderDisplayName
+        },
         recipients: {
-          to: [{ address: to }]
+          to: [{ address: to, displayName: to.split('@')[0] }]
         },
         content: {
           subject,
           html,
           plainText
-        }
+        },
+        // Set reply-to for better engagement
+        replyTo: [{ address: this.senderAddress, displayName: this.senderDisplayName }]
       };
 
       // Begin send and poll for completion
