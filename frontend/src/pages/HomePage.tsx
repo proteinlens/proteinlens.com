@@ -6,6 +6,7 @@ import { FriendlyError } from '@/components/ui/FriendlyError'
 import { FunLoading } from '@/components/ui/FunLoading'
 import { getRandomMessage, successMessages } from '@/utils/friendlyErrors'
 import { useAuth } from '@/contexts/AuthProvider'
+import { getRandomDemoMeal, DEFAULT_PROTEIN_GOAL, type DemoMeal } from '@/data/demoMeals'
 
 interface FoodItem {
   name: string
@@ -21,10 +22,19 @@ interface AnalysisResult {
   notes?: string
 }
 
-type UploadState = 'idle' | 'selected' | 'uploading' | 'analyzing' | 'done' | 'error'
+type UploadState = 'idle' | 'selected' | 'uploading' | 'analyzing' | 'done' | 'error' | 'demo'
 
 // Max retry attempts for transient errors
 const MAX_RETRIES = 3
+
+// Progress steps for loading animation
+const ANALYSIS_STEPS = [
+  { progress: 10, text: '📷 Preparing your photo...' },
+  { progress: 30, text: '🔍 Finding foods in your meal...' },
+  { progress: 50, text: '📏 Estimating portion sizes...' },
+  { progress: 70, text: '🧮 Calculating protein content...' },
+  { progress: 90, text: '✨ Putting it all together...' },
+]
 
 export function HomePage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -36,9 +46,15 @@ export function HomePage() {
   const [uploadState, setUploadState] = useState<UploadState>('idle')
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<AnalysisResult | null>(null)
+  const [demoMeal, setDemoMeal] = useState<DemoMeal | null>(null)
   const [progress, setProgress] = useState(0)
+  const [progressText, setProgressText] = useState('')
   const [retryCount, setRetryCount] = useState(0)
   const [successMessage] = useState(() => getRandomMessage(successMessages))
+
+  // Mock daily progress (in production, fetch from user's actual data)
+  const [todayProtein] = useState(() => Math.floor(Math.random() * 60) + 20) // 20-80g already logged
+  const proteinGoal = DEFAULT_PROTEIN_GOAL
 
   const validateFile = (file: File): string | null => {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
@@ -69,25 +85,53 @@ export function HomePage() {
     if (e.dataTransfer.files?.[0]) handleFileSelected(e.dataTransfer.files[0])
   }
 
+  // Demo scan - shows example results without uploading
+  const handleDemoScan = () => {
+    const demo = getRandomDemoMeal()
+    setDemoMeal(demo)
+    setPreviewUrl(demo.imageUrl)
+    setResult({
+      mealAnalysisId: `demo-${demo.id}`,
+      foods: demo.foods,
+      totalProtein: demo.totalProtein,
+      confidence: demo.confidence,
+      notes: demo.notes,
+    })
+    setUploadState('demo')
+  }
+
   const handleAnalyze = async (isRetry = false) => {
     if (!selectedFile) return
     try {
       setUploadState('uploading')
       setProgress(10)
+      setProgressText(ANALYSIS_STEPS[0].text)
       setError(null)
       
       let fileToUpload = selectedFile
       if (selectedFile.size > 1024 * 1024) {
         fileToUpload = await imageCompression(selectedFile, { maxSizeMB: 0.8, maxWidthOrHeight: 1920, useWebWorker: true })
       }
+      
+      // Step 1: Prepare
       setProgress(30)
+      setProgressText(ANALYSIS_STEPS[1].text)
       const uploadUrlResponse = await apiClient.requestUploadUrl({ fileName: fileToUpload.name, fileSize: fileToUpload.size, contentType: fileToUpload.type })
+      
+      // Step 2: Upload
       setProgress(50)
+      setProgressText(ANALYSIS_STEPS[2].text)
       await apiClient.uploadToBlob(uploadUrlResponse.uploadUrl, fileToUpload)
+      
+      // Step 3: Analyze
       setProgress(70)
+      setProgressText(ANALYSIS_STEPS[3].text)
       setUploadState('analyzing')
       const analysisResponse = await apiClient.analyzeMeal({ blobName: uploadUrlResponse.blobName })
+      
+      // Step 4: Complete
       setProgress(100)
+      setProgressText(ANALYSIS_STEPS[4].text)
       setResult(analysisResponse)
       setUploadState('done')
       setRetryCount(0) // Reset retry count on success
@@ -118,31 +162,97 @@ export function HomePage() {
     setUploadState('idle')
     setError(null)
     setResult(null)
+    setDemoMeal(null)
     setProgress(0)
+    setProgressText('')
     setRetryCount(0)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
-  // Results
-  if (uploadState === 'done' && result) {
+  // Calculate progress percentage
+  const getProgressPercentage = (mealProtein: number) => {
+    const newTotal = todayProtein + mealProtein
+    return Math.min(Math.round((newTotal / proteinGoal) * 100), 100)
+  }
+
+  // Results (including demo results)
+  if ((uploadState === 'done' || uploadState === 'demo') && result) {
+    const isDemo = uploadState === 'demo'
+    const progressPercent = getProgressPercentage(result.totalProtein)
+    const newTotalProtein = todayProtein + result.totalProtein
+    
     return (
       <div className="max-w-xl mx-auto px-4 py-8">
-        <div className="inline-block bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-4">
-          {successMessage.emoji} {successMessage.text}
-        </div>
-        <h1 className="text-2xl font-bold text-foreground mb-5">Your Meal Analysis</h1>
-        {previewUrl && <img src={previewUrl} alt="Meal" className="w-full h-48 object-cover rounded-2xl mb-5" />}
-        <div className="bg-primary text-primary-foreground p-6 rounded-2xl flex justify-between items-center mb-5">
-          <div>
-            <span className="block text-sm opacity-85">Total Protein</span>
-            <span className="block text-4xl font-bold">{result.totalProtein}g</span>
+        {/* Success badge */}
+        {!isDemo && (
+          <div className="inline-block bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-4">
+            {successMessage.emoji} {successMessage.text}
           </div>
-          <span className="text-5xl">💪</span>
+        )}
+        
+        {/* Demo banner */}
+        {isDemo && (
+          <div className="bg-gradient-to-r from-accent/20 to-primary/20 border border-accent/30 rounded-xl p-4 mb-4 text-center">
+            <span className="text-sm font-medium text-foreground">
+              ✨ This is an example result • <button onClick={handleReset} className="text-primary underline hover:no-underline">Try with your own photo</button>
+            </span>
+          </div>
+        )}
+        
+        <h1 className="text-2xl font-bold text-foreground mb-5">
+          {isDemo ? 'Example Result' : 'Your Meal Analysis'}
+        </h1>
+        
+        {/* Meal image */}
+        {previewUrl && <img src={previewUrl} alt="Meal" className="w-full h-48 object-cover rounded-2xl mb-5" />}
+        
+        {/* Progress toward goal - THE KEY "AHA" MOMENT */}
+        <div className="bg-gradient-to-br from-primary to-accent text-white p-6 rounded-2xl mb-5">
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <span className="block text-sm opacity-85">This meal</span>
+              <span className="block text-4xl font-bold">{result.totalProtein}g</span>
+              <span className="block text-sm opacity-85 mt-1">of protein</span>
+            </div>
+            <span className="text-5xl">💪</span>
+          </div>
+          
+          {/* Daily progress bar */}
+          <div className="bg-white/20 rounded-xl p-4 backdrop-blur-sm">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">Today's Progress</span>
+              <span className="text-sm font-bold">{newTotalProtein}g / {proteinGoal}g</span>
+            </div>
+            <div className="h-3 bg-white/30 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-white rounded-full transition-all duration-1000 ease-out"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            <p className="text-sm mt-2 opacity-90">
+              {progressPercent >= 100 
+                ? "🎉 You've hit your protein goal today!" 
+                : `${progressPercent}% toward your ${proteinGoal}g goal`
+              }
+            </p>
+          </div>
         </div>
+        
+        {/* Foods breakdown */}
         <div className="bg-card border border-border rounded-2xl overflow-hidden mb-5">
-          <h2 className="text-sm font-semibold p-4 border-b border-border">🍽️ What We Found</h2>
+          <div className="flex justify-between items-center p-4 border-b border-border">
+            <h2 className="text-sm font-semibold">🍽️ What We Found</h2>
+            <span className={`text-xs px-2 py-1 rounded-full ${
+              result.confidence === 'high' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+              result.confidence === 'medium' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
+              'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'
+            }`}>
+              {result.confidence === 'high' ? '✓ High confidence' : 
+               result.confidence === 'medium' ? '~ Estimate' : '? Best guess'}
+            </span>
+          </div>
           {result.foods.map((food, i) => (
-            <div key={i} className="flex justify-between items-center p-4 border-b border-border last:border-b-0">
+            <div key={i} className="flex justify-between items-center p-4 border-b border-border last:border-b-0 hover:bg-secondary/30 transition-colors">
               <div>
                 <div className="font-medium text-foreground">{food.name}</div>
                 <div className="text-xs text-muted-foreground">{food.portion}</div>
@@ -151,46 +261,63 @@ export function HomePage() {
             </div>
           ))}
         </div>
+        
+        {/* Notes/tips */}
         {result.notes && (
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-4 rounded-xl text-sm text-yellow-800 dark:text-yellow-200 mb-5 text-left">
             <strong>💡 Pro tip:</strong> {result.notes}
           </div>
         )}
-        <p className="text-xs text-muted-foreground mb-6 text-center">✨ Estimates are approximate - your mileage may vary!</p>
         
-        {/* Save to Profile button for non-authenticated users */}
-        {!isAuthenticated && (
+        {/* Accuracy disclaimer */}
+        <p className="text-xs text-muted-foreground mb-6 text-center">
+          ✨ Estimates are approximate—portion sizes and preparation can affect actual values
+        </p>
+        
+        {/* Action buttons */}
+        {isDemo ? (
           <button 
-            onClick={() => navigate('/login?returnTo=/history')} 
+            onClick={handleReset} 
             className="w-full py-4 px-6 bg-gradient-to-r from-primary to-accent text-primary-foreground border-none rounded-xl text-base font-semibold cursor-pointer shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02] transition-all mb-3"
           >
-            💾 Save to My Profile
+            📸 Try With Your Own Photo
           </button>
+        ) : (
+          <>
+            {!isAuthenticated && (
+              <button 
+                onClick={() => navigate('/signup?returnTo=/history')} 
+                className="w-full py-4 px-6 bg-gradient-to-r from-primary to-accent text-primary-foreground border-none rounded-xl text-base font-semibold cursor-pointer shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02] transition-all mb-3"
+              >
+                💾 Save to My History
+              </button>
+            )}
+            
+            {isAuthenticated && (
+              <button 
+                onClick={() => navigate('/history')} 
+                className="w-full py-4 px-6 bg-gradient-to-r from-primary to-accent text-primary-foreground border-none rounded-xl text-base font-semibold cursor-pointer shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02] transition-all mb-3"
+              >
+                📊 View in History
+              </button>
+            )}
+            
+            <button onClick={handleReset} className="w-full py-4 px-6 bg-secondary text-secondary-foreground border border-border rounded-xl text-base font-semibold cursor-pointer hover:bg-secondary/80 transition-colors">
+              📸 Analyze Another Meal
+            </button>
+          </>
         )}
-        
-        {/* View History button for authenticated users */}
-        {isAuthenticated && (
-          <button 
-            onClick={() => navigate('/history')} 
-            className="w-full py-4 px-6 bg-gradient-to-r from-primary to-accent text-primary-foreground border-none rounded-xl text-base font-semibold cursor-pointer shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02] transition-all mb-3"
-          >
-            📊 View in History
-          </button>
-        )}
-        
-        <button onClick={handleReset} className="w-full py-4 px-6 bg-secondary text-secondary-foreground border border-border rounded-xl text-base font-semibold cursor-pointer hover:bg-secondary/80 transition-colors">
-          📸 Analyze Another Meal
-        </button>
       </div>
     )
   }
 
-  // Loading - Use FunLoading component
+  // Loading with step-by-step progress
   if (uploadState === 'uploading' || uploadState === 'analyzing') {
     return (
       <FunLoading 
         type={uploadState === 'uploading' ? 'uploading' : 'analyzing'} 
-        progress={progress} 
+        progress={progress}
+        progressText={progressText}
       />
     )
   }
@@ -214,19 +341,43 @@ export function HomePage() {
     )
   }
 
-  // Main idle state
+  // Main landing/idle state
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 text-center">
-      {/* Hero */}
-      <div className="mb-10">
-        <h1 className="text-4xl font-bold text-foreground mb-4">
-          Analyze Your Meal's
+      {/* Hero section - Clear value proposition */}
+      <div className="mb-8">
+        <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4 leading-tight">
+          Snap a meal photo.
           <br />
-          <span className="text-primary">Protein Content</span>
+          <span className="text-primary">Get protein estimate.</span>
         </h1>
         <p className="text-lg text-muted-foreground max-w-md mx-auto">
-          Upload a photo of your food and let AI calculate the protein content instantly
+          No logging, no guessing. AI-powered protein tracking in seconds.
         </p>
+      </div>
+
+      {/* 3-step visual how it works */}
+      <div className="flex justify-center items-center gap-2 md:gap-4 mb-8 text-sm">
+        <div className="flex flex-col items-center">
+          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-2">
+            <span className="text-2xl">📸</span>
+          </div>
+          <span className="text-muted-foreground">Snap photo</span>
+        </div>
+        <span className="text-muted-foreground text-2xl">→</span>
+        <div className="flex flex-col items-center">
+          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-2">
+            <span className="text-2xl">🤖</span>
+          </div>
+          <span className="text-muted-foreground">AI analyzes</span>
+        </div>
+        <span className="text-muted-foreground text-2xl">→</span>
+        <div className="flex flex-col items-center">
+          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-2">
+            <span className="text-2xl">💪</span>
+          </div>
+          <span className="text-muted-foreground">Track progress</span>
+        </div>
       </div>
 
       {/* Upload Area */}
@@ -242,38 +393,60 @@ export function HomePage() {
             </button>
           </div>
           <p className="text-sm text-muted-foreground mb-4">{selectedFile?.name}</p>
+          
+          {/* Capture tips */}
+          <div className="bg-primary/5 border border-primary/20 rounded-xl p-3 mb-4 text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">📷 For best results:</span> Good lighting • Plate centered • All food visible
+          </div>
+          
           <button 
             onClick={() => handleAnalyze()} 
-            className="w-full py-4 px-8 bg-primary text-primary-foreground border-none rounded-xl text-lg font-semibold cursor-pointer shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all"
+            className="w-full py-4 px-8 bg-gradient-to-r from-primary to-accent text-primary-foreground border-none rounded-xl text-lg font-semibold cursor-pointer shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02] transition-all"
           >
             🔍 Analyze Protein Content
           </button>
         </div>
       ) : (
-        <div
-          className={`bg-card border-2 border-dashed rounded-2xl p-16 cursor-pointer transition-all mb-6 ${
-            isDragActive 
-              ? 'border-primary bg-primary/5' 
-              : 'border-border hover:border-primary/50'
-          }`}
-          onDragEnter={handleDrag}
-          onDragLeave={handleDrag}
-          onDragOver={handleDrag}
-          onDrop={handleDrop}
-          onClick={() => fileInputRef.current?.click()}
-        >
-          <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5 transition-colors ${
-            isDragActive 
-              ? 'bg-primary/20 text-primary' 
-              : 'bg-primary/10 text-muted-foreground'
-          }`}>
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M12 12V4m0 0L8 8m4-4l4 4" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+        <>
+          {/* Primary CTA - Scan a meal */}
+          <div
+            className={`bg-card border-2 border-dashed rounded-2xl p-12 md:p-16 cursor-pointer transition-all mb-4 ${
+              isDragActive 
+                ? 'border-primary bg-primary/5' 
+                : 'border-border hover:border-primary/50'
+            }`}
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5 transition-colors ${
+              isDragActive 
+                ? 'bg-primary/20 text-primary' 
+                : 'bg-primary/10 text-muted-foreground'
+            }`}>
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M12 12V4m0 0L8 8m4-4l4 4" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-foreground mb-2">📸 Scan a Meal</h3>
+            <p className="text-muted-foreground">Drag & drop or click to upload</p>
           </div>
-          <h3 className="text-lg font-semibold text-foreground mb-2">Drag & drop your food photo</h3>
-          <p className="text-muted-foreground">or click to browse</p>
-        </div>
+
+          {/* Secondary CTA - Demo scan */}
+          <button
+            onClick={handleDemoScan}
+            className="text-primary hover:text-primary/80 text-sm font-medium mb-6 underline decoration-primary/30 hover:decoration-primary/60 transition-colors"
+          >
+            See an example (no photo needed)
+          </button>
+
+          {/* No account needed message */}
+          <p className="text-sm text-primary bg-primary/10 border border-primary/20 py-2.5 px-5 rounded-full inline-block mb-4">
+            ✨ No account needed for your first scan
+          </p>
+        </>
       )}
 
       {error && uploadState === 'idle' && (
@@ -284,13 +457,9 @@ export function HomePage() {
           className="mb-4"
         />
       )}
-
-      <p className="text-sm text-primary bg-primary/10 border border-primary/20 py-2.5 px-5 rounded-full inline-block mb-4">
-        📸 Snap a photo of your meal - we'll count the protein!
-      </p>
       
       <p className="text-xs text-muted-foreground mt-6">
-        🤖 Powered by AI • Results are estimates for fun & guidance
+        🔒 Privacy first • Photos processed securely • Results are estimates
       </p>
 
       <input

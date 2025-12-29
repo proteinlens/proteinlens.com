@@ -7,6 +7,7 @@ import { loadingMessages, getRandomMessage } from '@/utils/friendlyErrors'
 interface FunLoadingProps {
   type: 'uploading' | 'analyzing'
   progress?: number
+  progressText?: string // Step-by-step description of what's happening
   className?: string
 }
 
@@ -16,21 +17,24 @@ const funFacts = [
   "Chicken breast is 31% protein - nature's protein bar! 🍗",
   "Tip: Eating protein at breakfast helps reduce cravings! 🌅",
   "Pro tip: Almonds have 6g protein per ounce! 🥜",
+  "Lentils pack 18g protein per cup - powerhouse legume! 🫘",
+  "Cottage cheese has 14g protein per half cup! 🧀",
 ]
 
-export function FunLoading({ type, progress = 0, className = "" }: FunLoadingProps) {
+export function FunLoading({ type, progress = 0, progressText, className = "" }: FunLoadingProps) {
   const messages = loadingMessages[type]
   const [currentMessage, setCurrentMessage] = useState(() => getRandomMessage(messages))
   const [funFact, setFunFact] = useState(() => funFacts[Math.floor(Math.random() * funFacts.length)])
   const [dots, setDots] = useState('')
 
-  // Rotate messages every 3 seconds
+  // Only rotate fallback messages if no progressText provided
   useEffect(() => {
+    if (progressText) return // Skip if we have step-by-step text
     const interval = setInterval(() => {
       setCurrentMessage(getRandomMessage(messages))
     }, 3000)
     return () => clearInterval(interval)
-  }, [messages])
+  }, [messages, progressText])
 
   // Animate dots
   useEffect(() => {
@@ -60,10 +64,17 @@ export function FunLoading({ type, progress = 0, className = "" }: FunLoadingPro
           <div className="absolute inset-0 w-24 h-24 mx-auto rounded-full border-4 border-primary/20 animate-ping" />
         </div>
 
-        {/* Main message */}
+        {/* Main message - show step-by-step progress text if available */}
         <h2 className="text-xl font-bold text-foreground mb-2 transition-all duration-300">
-          {currentMessage.text}{dots}
+          {progressText || `${currentMessage.text}${dots}`}
         </h2>
+        
+        {/* Show secondary context when we have step text */}
+        {progressText && (
+          <p className="text-sm text-muted-foreground mb-2">
+            {currentMessage.emoji} {currentMessage.text}
+          </p>
+        )}
 
         {/* Progress bar */}
         {progress > 0 && (
