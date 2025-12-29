@@ -17,6 +17,9 @@ paths = [
   '''backend/tests/.*\.spec\.ts$''',
   '''\.har$''',
   '''screenshorts/.*''',
+  # Backup files with local dev settings
+  '''.*\.bak$''',
+  '''backend/local\.settings\.json\.bak$''',
 ]
 
 # Ignore specific patterns that are false positives
@@ -38,6 +41,8 @@ commits = [
   "b7006c64c5dc93520cbb7ca2b80e312e9e3b5b47",
   "33a1fea779b756284db7dd4fea8ed18ca065c247",
   "262017caa7b6600f22987c8166cef157fd3beb64",
+  # local.settings.json.bak with dev API key
+  "432a8676e6d134f870323da1742c3a5332e6e756",
 ]
 
 # Rules to modify or disable
@@ -59,6 +64,9 @@ description = "Generic API key - with allowlist for test files"
     '''scripts/cleanup.*\.sh$''',
     '''specs/.*\.md$''',
     '''screenshorts/.*\.har$''',
+    # Local dev settings backups
+    '''.*\.bak$''',
+    '''backend/local\.settings\.json\.bak$''',
   ]
 
 # Allow example Slack webhook URLs in documentation and example files
