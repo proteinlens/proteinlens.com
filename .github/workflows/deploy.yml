@@ -598,6 +598,22 @@ jobs:
             exit 1
           fi
 
+      - name: Test API - Auth check-email endpoint
+        run: |
+          echo "🔍 Testing auth check-email endpoint..."
+          response=$(curl -s -w "\n%{http_code}" "$API_URL/api/auth/check-email?email=smoke-test@example.com")
+          code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | head -n -1)
+          
+          if [ "$code" = "200" ]; then
+            echo "✅ Auth check-email endpoint passed"
+            echo "$body" | jq . 2>/dev/null || echo "$body"
+          else
+            echo "❌ Auth check-email endpoint failed: HTTP $code"
+            echo "$body"
+            exit 1
+          fi
+
       - name: Test Frontend - Main page loads
         run: |
           echo "🔍 Testing frontend main page..."
@@ -658,6 +674,7 @@ jobs:
           echo "| Upload URL Generation | ✅ |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Usage Endpoint | ✅ |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Plans Endpoint | ✅ |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Auth Check Email | ✅ |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Frontend Load | ✅ |" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "**Test User ID:** \`$TEST_USER_ID\`" >> "$GITHUB_STEP_SUMMARY"

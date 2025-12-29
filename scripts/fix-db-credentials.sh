@@ -141,7 +141,7 @@ cmd_diagnose() {
   print_step "Checking Function App settings..."
   local settings=$(az functionapp config appsettings list -n "$FUNC_APP" -g "$RG" 2>/dev/null)
   
-  for setting in "DATABASE_URL" "ACS_EMAIL_CONNECTION_STRING" "FRONTEND_URL" "EMAIL_SERVICE"; do
+  for setting in "DATABASE_URL" "ACS_EMAIL_CONNECTION_STRING" "FRONTEND_URL" "EMAIL_SERVICE" "JWT_SECRET" "JWT_ISSUER" "JWT_AUDIENCE"; do
     if echo "$settings" | jq -e ".[] | select(.name==\"$setting\")" > /dev/null 2>&1; then
       local value=$(echo "$settings" | jq -r ".[] | select(.name==\"$setting\") | .value")
       if [[ "$value" == @Microsoft.KeyVault* ]]; then
@@ -392,6 +392,125 @@ cmd_reset() {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
+# JWT Command - Setup/verify JWT secrets
+# ─────────────────────────────────────────────────────────────────────────────
+
+cmd_jwt() {
+  print_header "JWT Secret Management"
+
+  local subcmd="${1:-status}"
+  
+  case "$subcmd" in
+    setup)
+      print_step "Setting up JWT secrets..."
+      
+      # Check if JWT secret exists
+      local secret_exists=$(az keyvault secret show --vault-name "$KV_NAME" --name jwt-secret --query "attributes.enabled" -o tsv 2>/dev/null || echo "")
+      
+      if [ "$secret_exists" = "true" ]; then
+        print_warning "JWT secret already exists. Use 'jwt rotate' to generate a new one."
+        return
+      fi
+      
+      # Generate JWT secret
+      local jwt_secret=$(openssl rand -base64 64 | tr -d '\n')
+      
+      print_step "Storing JWT secret in Key Vault..."
+      az keyvault secret set \
+        --vault-name "$KV_NAME" \
+        --name jwt-secret \
+        --value "$jwt_secret" \
+        --content-type "JWT signing key" \
+        --output none
+      print_success "JWT secret stored"
+      
+      # Get Key Vault URI
+      local kv_uri=$(az keyvault show --name "$KV_NAME" --query "properties.vaultUri" -o tsv | sed 's/\/$//')
+      
+      print_step "Configuring Function App..."
+      az functionapp config appsettings set \
+        --name "$FUNC_APP" \
+        --resource-group "$RG" \
+        --settings \
+          "JWT_SECRET=@Microsoft.KeyVault(SecretUri=$kv_uri/secrets/jwt-secret)" \
+          "JWT_ISSUER=proteinlens-api" \
+          "JWT_AUDIENCE=proteinlens-frontend" \
+        --output none
+      print_success "Function App settings configured"
+      
+      print_step "Restarting Function App..."
+      az functionapp restart --name "$FUNC_APP" --resource-group "$RG" --output none
+      print_success "JWT setup complete!"
+      ;;
+      
+    rotate)
+      print_warning "This will invalidate ALL existing user sessions!"
+      read -p "Are you sure? (yes/no): " confirm
+      if [ "$confirm" != "yes" ]; then
+        echo "Aborted."
+        return
+      fi
+      
+      # Generate new JWT secret
+      local jwt_secret=$(openssl rand -base64 64 | tr -d '\n')
+      
+      print_step "Creating new JWT secret version..."
+      az keyvault secret set \
+        --vault-name "$KV_NAME" \
+        --name jwt-secret \
+        --value "$jwt_secret" \
+        --content-type "JWT signing key - rotated $(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        --output none
+      print_success "New JWT secret version created"
+      
+      # Update Function App timestamp
+      az functionapp config appsettings set \
+        --name "$FUNC_APP" \
+        --resource-group "$RG" \
+        --settings "JWT_SECRET_ROTATED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+        --output none
+      
+      print_step "Restarting Function App..."
+      az functionapp restart --name "$FUNC_APP" --resource-group "$RG" --output none
+      print_success "JWT secret rotated! All users must re-login."
+      ;;
+      
+    status|*)
+      print_step "JWT Secret Status:"
+      
+      # Check Key Vault
+      local secret_info=$(az keyvault secret show --vault-name "$KV_NAME" --name jwt-secret 2>/dev/null)
+      if [ -n "$secret_info" ]; then
+        local created=$(echo "$secret_info" | jq -r '.attributes.created')
+        local updated=$(echo "$secret_info" | jq -r '.attributes.updated')
+        print_success "Key Vault secret exists"
+        echo "    Created: $created"
+        echo "    Updated: $updated"
+      else
+        print_error "JWT secret not found in Key Vault"
+      fi
+      
+      # Check Function App settings
+      local settings=$(az functionapp config appsettings list -n "$FUNC_APP" -g "$RG" 2>/dev/null)
+      echo ""
+      print_step "Function App JWT Settings:"
+      for setting in "JWT_SECRET" "JWT_ISSUER" "JWT_AUDIENCE"; do
+        local value=$(echo "$settings" | jq -r ".[] | select(.name==\"$setting\") | .value" 2>/dev/null)
+        if [ -n "$value" ]; then
+          if [[ "$value" == @Microsoft.KeyVault* ]]; then
+            echo "    $setting: 🔐 Key Vault Reference"
+          else
+            echo "    $setting: $value"
+          fi
+        else
+          echo "    $setting: ❌ Not configured"
+        fi
+      done
+      ;;
+  esac
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Main
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -416,6 +535,9 @@ case "$COMMAND" in
   tables)
     cmd_tables
     ;;
+  jwt)
+    cmd_jwt "$2"
+    ;;
   *)
     echo "Usage: $0 [command]"
     echo ""
@@ -426,6 +548,7 @@ case "$COMMAND" in
     echo "  logs      - Show recent Function App errors"
     echo "  signup    - Test the signup flow"
     echo "  tables    - Show database tables and row counts"
+    echo "  jwt       - JWT secret management (status|setup|rotate)"
     exit 1
     ;;
 esac

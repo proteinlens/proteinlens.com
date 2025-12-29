@@ -37,6 +37,10 @@ variables:
   # (Optional) if you need them later
   resourceGroupName: 'rg-proteinlens'
   storageAccountName: 'stproteinlens'
+  
+  # JWT Configuration (defaults - can be overridden in pipeline variables)
+  JWT_ISSUER: 'proteinlens-api'
+  JWT_AUDIENCE: 'proteinlens-frontend'
 
 stages:
   # ================================
@@ -287,15 +291,15 @@ stages:
       - DeployInfrastructure
     condition: succeeded()
     jobs:
-      - job: SyncDatabaseCredentials
-        displayName: 'Ensure database credentials are synchronized'
+      - job: SyncCredentials
+        displayName: 'Sync database and JWT credentials'
         pool:
           vmImage: 'windows-latest'
         steps:
           - checkout: self
 
           - task: AzurePowerShell@5
-            displayName: 'Sync PostgreSQL password with Key Vault'
+            displayName: 'Sync PostgreSQL and JWT secrets with Key Vault'
             inputs:
               azureSubscription: '$(azureSubscription)'
               ScriptType: 'FilePath'
@@ -309,6 +313,8 @@ stages:
                 -DatabaseAdminUsername "pgadmin" \
                 -DatabaseName "proteinlens" \
                 -FunctionAppName "$(FUNCTION_APP_NAME)" \
+                -JwtIssuer "$(JWT_ISSUER)" \
+                -JwtAudience "$(JWT_AUDIENCE)" \
                 -Verbose
               azurePowerShellVersion: 'LatestVersion'
               errorActionPreference: 'stop'
@@ -319,6 +325,8 @@ stages:
               KEY_VAULT_NAME: $(KEY_VAULT_NAME)
               DATABASE_PASSWORD: $(DATABASE_PASSWORD)
               FUNCTION_APP_NAME: $(FUNCTION_APP_NAME)
+              JWT_ISSUER: $(JWT_ISSUER)
+              JWT_AUDIENCE: $(JWT_AUDIENCE)
 
   # ================================
   # Stage 5: Deploy to Staging (develop)

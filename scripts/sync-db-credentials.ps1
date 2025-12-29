@@ -1,7 +1,7 @@
 #!/usr/bin/env pwsh
 <#
 .SYNOPSIS
-    Synchronizes PostgreSQL admin password with Azure Key Vault secret.
+    Synchronizes PostgreSQL credentials and JWT secrets with Azure Key Vault.
     Ensures both the database and the backend have the same credentials.
 
 .DESCRIPTION
@@ -9,7 +9,9 @@
     It guarantees that:
     1. PostgreSQL server has the correct admin password
     2. Key Vault DATABASE-URL secret is updated
-    3. Function App settings are refreshed
+    3. JWT secret exists in Key Vault (generates if missing)
+    4. Function App settings are refreshed with Key Vault references
+    5. Function App is restarted to apply changes
 
 .PARAMETER SubscriptionId
     Azure Subscription ID
@@ -34,6 +36,15 @@
 
 .PARAMETER FunctionAppName
     Azure Function App name to restart
+
+.PARAMETER JwtIssuer
+    JWT issuer claim (default: proteinlens-api)
+
+.PARAMETER JwtAudience
+    JWT audience claim (default: proteinlens-frontend)
+
+.PARAMETER RotateJwtSecret
+    Force rotation of JWT secret (invalidates all existing tokens)
 
 .EXAMPLE
     .\sync-db-credentials.ps1 `
@@ -72,6 +83,15 @@ param(
 
     [Parameter(Mandatory = $false)]
     [int]$DatabasePort = 5432,
+
+    [Parameter(Mandatory = $false)]
+    [string]$JwtIssuer = 'proteinlens-api',
+
+    [Parameter(Mandatory = $false)]
+    [string]$JwtAudience = 'proteinlens-frontend',
+
+    [Parameter(Mandatory = $false)]
+    [switch]$RotateJwtSecret,
 
     [Parameter(Mandatory = $false)]
     [switch]$Verbose
@@ -133,17 +153,77 @@ try {
         }
     }
 
-    # 5. Update Function App settings (if name provided)
+    # 5. Ensure JWT secret exists in Key Vault
+    Write-Information "Checking JWT secret in Key Vault..."
+    $jwtSecretName = 'jwt-secret'
+    $jwtSecretExists = $false
+    
+    try {
+        $existingJwtSecret = Get-AzKeyVaultSecret -VaultName $KeyVaultName -Name $jwtSecretName -ErrorAction SilentlyContinue
+        $jwtSecretExists = $null -ne $existingJwtSecret
+    }
+    catch {
+        $jwtSecretExists = $false
+    }
+
+    if (-not $jwtSecretExists -or $RotateJwtSecret) {
+        if ($RotateJwtSecret) {
+            Write-Information "Rotating JWT secret as requested..."
+        } else {
+            Write-Information "JWT secret not found, generating new one..."
+        }
+        
+        # Generate cryptographically secure JWT secret (64 bytes = 512 bits)
+        $jwtSecretBytes = New-Object byte[] 64
+        $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+        $rng.GetBytes($jwtSecretBytes)
+        $jwtSecretValue = [Convert]::ToBase64String($jwtSecretBytes)
+        
+        $contentType = if ($RotateJwtSecret) {
+            "JWT signing key - rotated $(Get-Date -Format 'yyyy-MM-ddTHH:mm:ssZ')"
+        } else {
+            "JWT signing key"
+        }
+        
+        Set-AzKeyVaultSecret -VaultName $KeyVaultName `
+            -Name $jwtSecretName `
+            -SecretValue (ConvertTo-SecureString $jwtSecretValue -AsPlainText -Force) `
+            -ContentType $contentType | Out-Null
+        Write-Information "✓ JWT secret stored in Key Vault"
+    } else {
+        Write-Information "✓ JWT secret already exists in Key Vault"
+    }
+
+    # 6. Update Function App settings (if name provided)
     if (-not [string]::IsNullOrEmpty($FunctionAppName)) {
         Write-Information "Refreshing Function App settings..."
         try {
             # Force Key Vault reference refresh by re-setting the app setting
             $functionApp = Get-AzFunctionApp -ResourceGroupName $ResourceGroupName -Name $FunctionAppName
 
+            # Get Key Vault URI
+            $keyVault = Get-AzKeyVault -VaultName $KeyVaultName
+            $keyVaultUri = $keyVault.VaultUri.TrimEnd('/')
+
             # Update app settings to force refresh of Key Vault references
             $settings = $functionApp.ApplicationSettings
             $settings['WEBSITE_OVERRIDE_STICKY_DIAGNOSTICS_SETTINGS'] = '0'
             $settings['WEBSITE_SLOT_POLL_WORKER_FOR_CHANGE_NOTIFICATION'] = '1'
+            
+            # Set DATABASE_URL as Key Vault reference
+            $settings['DATABASE_URL'] = "@Microsoft.KeyVault(SecretUri=$keyVaultUri/secrets/database-url)"
+            
+            # Set JWT settings
+            $settings['JWT_SECRET'] = "@Microsoft.KeyVault(SecretUri=$keyVaultUri/secrets/jwt-secret)"
+            $settings['JWT_ISSUER'] = $JwtIssuer
+            $settings['JWT_AUDIENCE'] = $JwtAudience
+            
+            # Track when credentials were last synced
+            $settings['CREDENTIALS_SYNCED_AT'] = (Get-Date -Format 'yyyy-MM-ddTHH:mm:ssZ')
+            
+            if ($RotateJwtSecret) {
+                $settings['JWT_SECRET_ROTATED_AT'] = (Get-Date -Format 'yyyy-MM-ddTHH:mm:ssZ')
+            }
             
             Update-AzFunctionAppSetting -ResourceGroupName $ResourceGroupName `
                 -Name $FunctionAppName `
