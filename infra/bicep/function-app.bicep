@@ -142,6 +142,10 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
           value: acsSenderAddress
         }
         {
+          name: 'ACS_EMAIL_SENDER_NAME'
+          value: 'ProteinLens'
+        }
+        {
           name: 'FRONTEND_URL'
           value: 'https://www.proteinlens.com'
         }

@@ -1,5 +1,5 @@
 // Azure Communication Services Email Module
-// Creates ACS Communication Service and Email Service with Azure-managed domain
+// Creates ACS Communication Service and Email Service with custom domain for better deliverability
 // Idempotent - can be run multiple times safely
 
 @description('Base name for resources')
@@ -28,6 +28,15 @@ param location string = 'global'
 ])
 param dataLocation string = 'europe'
 
+@description('Custom email domain (e.g., proteinlens.com)')
+param customEmailDomain string = 'proteinlens.com'
+
+@description('Sender username for emails')
+param senderUsername string = 'noreply'
+
+@description('Sender display name')
+param senderDisplayName string = 'ProteinLens'
+
 @description('Tags for resources')
 param tags object = {}
 
@@ -41,19 +50,32 @@ resource emailService 'Microsoft.Communication/emailServices@2023-04-01' = {
   }
 }
 
-// Azure-managed domain (free tier with *.azurecomm.net)
-resource emailDomain 'Microsoft.Communication/emailServices/domains@2023-04-01' = {
+// Custom domain for professional email sending (better deliverability than Azure-managed)
+// IMPORTANT: After deployment, you must add the DNS records shown in the Azure Portal
+// to verify domain ownership. Navigate to:
+// Azure Portal > Communication Services > Email > Domains > proteinlens.com > DNS Records
+resource customDomain 'Microsoft.Communication/emailServices/domains@2023-04-01' = {
   parent: emailService
-  name: 'AzureManagedDomain'
+  name: customEmailDomain
   location: location
   tags: tags
   properties: {
-    domainManagement: 'AzureManaged'
+    domainManagement: 'CustomerManaged'
     userEngagementTracking: 'Disabled'
   }
 }
 
-// Communication Service (with linked email domain)
+// Sender username for the custom domain (e.g., noreply@proteinlens.com)
+resource senderUsernameResource 'Microsoft.Communication/emailServices/domains/senderUsernames@2023-04-01' = {
+  parent: customDomain
+  name: senderUsername
+  properties: {
+    username: senderUsername
+    displayName: senderDisplayName
+  }
+}
+
+// Communication Service (with linked custom email domain)
 resource communicationService 'Microsoft.Communication/communicationServices@2023-04-01' = {
   name: '${baseName}-acs'
   location: location
@@ -61,7 +83,7 @@ resource communicationService 'Microsoft.Communication/communicationServices@202
   properties: {
     dataLocation: dataLocation
     linkedDomains: [
-      emailDomain.id
+      customDomain.id
     ]
   }
 }
@@ -73,17 +95,24 @@ output communicationServiceName string = communicationService.name
 @description('Email Service name')
 output emailServiceName string = emailService.name
 
-@description('Email domain name')
-output emailDomainName string = emailDomain.name
+@description('Custom domain name')
+output emailDomainName string = customDomain.name
 
 @description('Communication Service endpoint')
 output endpoint string = communicationService.properties.hostName
 
-@description('Email sender address (Azure-managed domain)')
-output senderAddress string = 'DoNotReply@${emailDomain.properties.mailFromSenderDomain}'
+@description('Email sender address (custom domain)')
+output senderAddress string = '${senderUsername}@${customEmailDomain}'
 
 @description('Communication Service resource ID')
 output communicationServiceId string = communicationService.id
 
 @description('Connection string for email sending')
 output connectionString string = communicationService.listKeys().primaryConnectionString
+
+// DNS Records needed for domain verification (output for reference)
+// After deployment, check Azure Portal for the exact values to add to your DNS:
+// 1. TXT record for domain verification
+// 2. TXT record for SPF (Sender Policy Framework)
+// 3. CNAME records for DKIM (DomainKeys Identified Mail)
+// Navigate to: Azure Portal > Communication Services > Email > Domains > [domain] > DNS Records
