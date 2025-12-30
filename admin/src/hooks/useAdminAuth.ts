@@ -4,6 +4,8 @@
 
 import { useState, useEffect } from 'react';
 
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
+
 interface AdminAuthState {
   isAdmin: boolean;
   isLoading: boolean;
@@ -22,23 +24,80 @@ export function useAdminAuth(): AdminAuthState {
   useEffect(() => {
     async function checkAuth() {
       try {
-        // In production, this would verify with Azure AD or similar
-        // For now, check if admin email is set
-        const adminEmail = localStorage.getItem('adminEmail') || 
-                          import.meta.env.VITE_ADMIN_EMAIL;
+        // Get access token from localStorage (shared with main frontend)
+        const accessToken = localStorage.getItem('proteinlens_access_token');
         
-        if (adminEmail) {
+        if (!accessToken) {
+          setState({
+            isAdmin: false,
+            isLoading: false,
+            error: new Error('Not authenticated. Please login at proteinlens.com first.'),
+            adminEmail: null,
+          });
+          return;
+        }
+        
+        // Call /api/me to get user profile
+        const meResponse = await fetch(`${API_BASE}/me`, {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+          },
+        });
+        
+        if (!meResponse.ok) {
+          setState({
+            isAdmin: false,
+            isLoading: false,
+            error: new Error('Authentication failed. Please login at proteinlens.com'),
+            adminEmail: null,
+          });
+          return;
+        }
+        
+        const user = await meResponse.json();
+        const userEmail = user.email;
+        
+        if (!userEmail) {
+          setState({
+            isAdmin: false,
+            isLoading: false,
+            error: new Error('No email found in user profile'),
+            adminEmail: null,
+          });
+          return;
+        }
+        
+        // Store admin email for API calls
+        localStorage.setItem('adminEmail', userEmail);
+        
+        // Try to call an admin endpoint to verify admin access
+        const adminCheckResponse = await fetch(`${API_BASE}/admin/users?limit=1`, {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'x-admin-email': userEmail,
+          },
+        });
+        
+        if (adminCheckResponse.ok) {
           setState({
             isAdmin: true,
             isLoading: false,
             error: null,
-            adminEmail,
+            adminEmail: userEmail,
           });
-        } else {
+        } else if (adminCheckResponse.status === 403) {
           setState({
             isAdmin: false,
             isLoading: false,
             error: null,
+            adminEmail: null,
+          });
+        } else {
+          const errorData = await adminCheckResponse.json().catch(() => ({}));
+          setState({
+            isAdmin: false,
+            isLoading: false,
+            error: new Error(errorData.message || 'Failed to verify admin access'),
             adminEmail: null,
           });
         }

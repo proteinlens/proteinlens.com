@@ -13,12 +13,32 @@ function ProtectedRoutes() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-admin-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-admin-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Checking admin access...</p>
+        </div>
       </div>
     );
   }
 
-  if (error || !isAdmin) {
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center max-w-md px-4">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Authentication Required</h1>
+          <p className="text-gray-600 mb-4">{error.message}</p>
+          <a 
+            href="https://www.proteinlens.com/signin" 
+            className="inline-block px-4 py-2 bg-admin-600 text-white rounded-lg hover:bg-admin-700"
+          >
+            Login to ProteinLens
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
