@@ -36,9 +36,12 @@ export function useAdminAuth(): AdminAuthState & { recheckAuth: () => void } {
       try {
         // Get access token from localStorage
         const accessToken = localStorage.getItem('proteinlens_access_token');
-        console.log('[useAdminAuth] Checking token:', accessToken ? 'present' : 'missing');
+        console.log('[useAdminAuth] Token from storage:', accessToken ? `${accessToken.substring(0, 30)}...` : 'NULL');
+        console.log('[useAdminAuth] Token type:', typeof accessToken);
+        console.log('[useAdminAuth] Token length:', accessToken?.length || 0);
         
         if (!accessToken) {
+          console.log('[useAdminAuth] No token, showing login page');
           setState({
             isAdmin: false,
             isLoading: false,
@@ -50,10 +53,13 @@ export function useAdminAuth(): AdminAuthState & { recheckAuth: () => void } {
         }
         
         // Call /api/me to get user profile
-        console.log('[useAdminAuth] Calling /api/me with token');
+        const authHeader = `Bearer ${accessToken}`;
+        console.log('[useAdminAuth] Auth header to send:', authHeader.substring(0, 40) + '...');
+        console.log('[useAdminAuth] Calling /api/me');
         const meResponse = await fetch(`${API_BASE}/api/me`, {
+          method: 'GET',
           headers: {
-            'Authorization': `Bearer ${accessToken}`,
+            'Authorization': authHeader,
           },
         });
         
