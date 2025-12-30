@@ -41,3 +41,10 @@ import './functions/organization';
 import './functions/signup';
 import './functions/auth';
 import './functions/oauth';
+
+// Feature 012: Admin Dashboard
+import './functions/admin-users';
+import './functions/admin-metrics';
+import './functions/admin-plan-override';
+import './functions/admin-suspend';
+import './functions/admin-audit-log';
