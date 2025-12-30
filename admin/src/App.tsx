@@ -25,11 +25,14 @@ function ProtectedRoutes() {
   if (needsLogin) {
     return (
       <LoginPage 
-        onLoginSuccess={(_accessToken, _email) => {
-          // Small delay to ensure localStorage is committed
+        onLoginSuccess={(accessToken, _email) => {
+          console.log('[App] Login success, token received:', accessToken ? accessToken.substring(0, 20) + '...' : 'none');
+          console.log('[App] Token in localStorage:', localStorage.getItem('proteinlens_access_token')?.substring(0, 20) || 'none');
+          // Longer delay to ensure localStorage is fully committed
           setTimeout(() => {
+            console.log('[App] Calling recheckAuth after delay');
             recheckAuth();
-          }, 100);
+          }, 250);
         }} 
       />
     );

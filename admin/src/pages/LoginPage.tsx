@@ -20,6 +20,11 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
     setError(null);
     setIsLoading(true);
 
+    // Clear any old tokens first to prevent stale token issues
+    localStorage.removeItem('proteinlens_access_token');
+    localStorage.removeItem('proteinlens_refresh_token');
+    localStorage.removeItem('proteinlens_token_expiry');
+
     try {
       const response = await fetch(`${API_BASE}/api/auth/signin`, {
         method: 'POST',
@@ -37,10 +42,12 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
 
       const data = await response.json();
       
-      // Store tokens
-      if (data.accessToken) {
-        localStorage.setItem('proteinlens_access_token', data.accessToken);
+      if (!data.accessToken) {
+        throw new Error('No access token received from server');
       }
+      
+      // Store tokens synchronously before callback
+      localStorage.setItem('proteinlens_access_token', data.accessToken);
       if (data.refreshToken) {
         localStorage.setItem('proteinlens_refresh_token', data.refreshToken);
       }
@@ -52,6 +59,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
       const userEmail = data.user?.email || email;
       localStorage.setItem('adminEmail', userEmail);
       
+      console.log('[LoginPage] Token stored, calling onLoginSuccess');
       onLoginSuccess(data.accessToken, userEmail);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
