@@ -94,3 +94,4 @@ backend/.deploy/
 backend/deploy.zip
 screenshots/
 screenshorts/
+.env.production
