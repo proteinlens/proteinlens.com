@@ -71,6 +71,6 @@ export async function adminUsers(
 app.http('admin-users', {
   methods: ['GET'],
   authLevel: 'anonymous',
-  route: 'admin/users',
+  route: 'dashboard/users',
   handler: adminUsers,
 });

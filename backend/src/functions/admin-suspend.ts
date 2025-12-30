@@ -136,13 +136,13 @@ export async function adminReactivateUser(
 app.http('admin-suspend-user', {
   methods: ['POST'],
   authLevel: 'anonymous',
-  route: 'admin/users/{userId}/suspend',
+  route: 'dashboard/users/{userId}/suspend',
   handler: adminSuspendUser,
 });
 
 app.http('admin-reactivate-user', {
   methods: ['POST'],
   authLevel: 'anonymous',
-  route: 'admin/users/{userId}/reactivate',
+  route: 'dashboard/users/{userId}/reactivate',
   handler: adminReactivateUser,
 });

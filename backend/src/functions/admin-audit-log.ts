@@ -110,13 +110,13 @@ export async function adminLogExport(
 app.http('admin-audit-log', {
   methods: ['GET'],
   authLevel: 'anonymous',
-  route: 'admin/audit-log',
+  route: 'dashboard/audit-log',
   handler: adminAuditLog,
 });
 
 app.http('admin-log-export', {
   methods: ['POST'],
   authLevel: 'anonymous',
-  route: 'admin/log-export',
+  route: 'dashboard/log-export',
   handler: adminLogExport,
 });

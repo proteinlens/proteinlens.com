@@ -111,7 +111,7 @@ export function useAdminAuth(): AdminAuthState & { recheckAuth: (token?: string)
         // Try to call an admin endpoint to verify admin access
         const adminAuthHeader = 'Bearer ' + accessToken;
         
-        const adminCheckResponse = await fetch(`${API_BASE}/api/admin/users?limit=1`, {
+        const adminCheckResponse = await fetch(`${API_BASE}/api/dashboard/users?limit=1`, {
           method: 'GET',
           headers: {
             'Authorization': adminAuthHeader,

@@ -41,6 +41,6 @@ export async function adminMetrics(
 app.http('admin-metrics', {
   methods: ['GET'],
   authLevel: 'anonymous',
-  route: 'admin/metrics',
+  route: 'dashboard/metrics',
   handler: adminMetrics,
 });

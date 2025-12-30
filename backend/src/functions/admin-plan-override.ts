@@ -81,6 +81,6 @@ export async function adminPlanOverride(
 app.http('admin-plan-override', {
   methods: ['PUT'],
   authLevel: 'anonymous',
-  route: 'admin/users/{userId}/plan',
+  route: 'dashboard/users/{userId}/plan',
   handler: adminPlanOverride,
 });

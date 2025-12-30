@@ -104,7 +104,7 @@ export async function fetchUsers(params: UserListParams = {}): Promise<UserListR
   if (params.sortOrder) searchParams.set('sortOrder', params.sortOrder);
 
   const query = searchParams.toString();
-  return request<UserListResponse>(`/admin/users${query ? `?${query}` : ''}`);
+  return request<UserListResponse>(`/dashboard/users${query ? `?${query}` : ''}`);
 }
 
 export interface UserDetail {
@@ -140,7 +140,7 @@ export interface UserDetail {
 }
 
 export async function fetchUserDetail(userId: string): Promise<UserDetail> {
-  return request<UserDetail>(`/admin/users/${userId}`);
+  return request<UserDetail>(`/dashboard/users/${userId}`);
 }
 
 // ===========================================
@@ -167,7 +167,7 @@ export async function overrideUserPlan(
   userId: string,
   data: PlanOverrideParams
 ): Promise<PlanOverrideResponse> {
-  return request<PlanOverrideResponse>(`/admin/users/${userId}/plan`, {
+  return request<PlanOverrideResponse>(`/dashboard/users/${userId}/plan`, {
     method: 'PUT',
     body: data,
   });
@@ -198,7 +198,7 @@ export async function suspendUser(
   userId: string,
   data: SuspendUserParams
 ): Promise<SuspendUserResponse> {
-  return request<SuspendUserResponse>(`/admin/users/${userId}/suspend`, {
+  return request<SuspendUserResponse>(`/dashboard/users/${userId}/suspend`, {
     method: 'POST',
     body: data,
   });
@@ -215,7 +215,7 @@ export interface ReactivateUserResponse {
 }
 
 export async function reactivateUser(userId: string): Promise<ReactivateUserResponse> {
-  return request<ReactivateUserResponse>(`/admin/users/${userId}/reactivate`, {
+  return request<ReactivateUserResponse>(`/dashboard/users/${userId}/reactivate`, {
     method: 'POST',
   });
 }
@@ -246,7 +246,7 @@ export interface MetricsResponse {
 }
 
 export async function fetchMetrics(): Promise<MetricsResponse> {
-  return request<MetricsResponse>('/admin/metrics');
+  return request<MetricsResponse>('/dashboard/metrics');
 }
 
 // ===========================================
@@ -300,11 +300,11 @@ export async function fetchAuditLog(params: AuditLogParams = {}): Promise<AuditL
   if (params.endDate) searchParams.set('endDate', params.endDate);
 
   const query = searchParams.toString();
-  return request<AuditLogResponse>(`/admin/audit-log${query ? `?${query}` : ''}`);
+  return request<AuditLogResponse>(`/dashboard/audit-log${query ? `?${query}` : ''}`);
 }
 
 export async function logExport(exportedCount: number): Promise<{ success: boolean; auditLogId: string }> {
-  return request<{ success: boolean; auditLogId: string }>('/admin/log-export', {
+  return request<{ success: boolean; auditLogId: string }>('/dashboard/log-export', {
     method: 'POST',
     body: { exportedCount },
   });
