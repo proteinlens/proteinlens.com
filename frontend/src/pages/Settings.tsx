@@ -1,11 +1,15 @@
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { GoalInput } from '@/components/settings/GoalInput';
 import { ThemeToggle } from '@/components/settings/ThemeToggle';
 import { Button } from '@/components/ui/Button';
 import { getPageVariants, getPageTransition } from '@/utils/animations';
+import { useAuth } from '@/contexts/AuthProvider';
 
 export function Settings() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const pageVariants = getPageVariants();
   const pageTransition = getPageTransition();
 
@@ -47,16 +51,18 @@ export function Settings() {
           <div className="bg-card border border-border rounded-lg p-6 space-y-4">
             <div>
               <p className="text-sm text-muted-foreground mb-1">Email</p>
-              <p className="font-medium text-foreground">user@example.com</p>
+              <p className="font-medium text-foreground">{user?.email || 'Not logged in'}</p>
             </div>
 
             <div>
               <p className="text-sm text-muted-foreground mb-1">Your Plan</p>
               <div className="flex items-center justify-between">
-                <p className="font-medium text-foreground">Free Plan</p>
-                <Button variant="outline" size="sm">
-                  ⭐ Upgrade
-                </Button>
+                <p className="font-medium text-foreground">{user?.plan === 'PRO' ? 'Pro Plan' : 'Free Plan'}</p>
+                {user?.plan !== 'PRO' && (
+                  <Button variant="outline" size="sm" onClick={() => navigate('/pricing')}>
+                    ⭐ Upgrade
+                  </Button>
+                )}
               </div>
             </div>
 
