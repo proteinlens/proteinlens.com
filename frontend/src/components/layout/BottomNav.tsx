@@ -31,6 +31,20 @@ export function BottomNav() {
         </Link>
 
         <Link
+          to="/protein-calculator"
+          className={cn(
+            'flex flex-col items-center justify-center flex-1 h-16 text-xs transition-colors',
+            isActive('/protein-calculator')
+              ? 'text-primary'
+              : 'text-muted-foreground hover:text-foreground'
+          )}
+          aria-label="Protein Calculator"
+        >
+          <span className="text-lg mb-1">🎯</span>
+          Calculator
+        </Link>
+
+        <Link
           to="/history"
           className={cn(
             'flex flex-col items-center justify-center flex-1 h-16 text-xs transition-colors',
@@ -44,15 +58,6 @@ export function BottomNav() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 2m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           History
-        </Link>
-
-        <Link
-          to="/pricing"
-          className="flex flex-col items-center justify-center flex-1 h-16 text-xs transition-colors text-accent hover:text-accent/80"
-          aria-label="Go Pro"
-        >
-          <span className="text-lg mb-1">✨</span>
-          Go Pro
         </Link>
 
         <Link

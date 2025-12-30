@@ -6,6 +6,7 @@ import { UsersPage } from './pages/UsersPage';
 import { UserDetailPage } from './pages/UserDetailPage';
 import { AuditLogPage } from './pages/AuditLogPage';
 import { MealsPage } from './pages/MealsPage';
+import { ProteinPresetsPage } from './pages/ProteinPresetsPage';
 import { LoginPage } from './pages/LoginPage';
 import { useAdminAuth } from './hooks/useAdminAuth';
 
@@ -85,6 +86,7 @@ function ProtectedRoutes() {
         <Route path="/users" element={<UsersPage />} />
         <Route path="/users/:userId" element={<UserDetailPage />} />
         <Route path="/meals" element={<MealsPage />} />
+        <Route path="/protein-presets" element={<ProteinPresetsPage />} />
         <Route path="/audit-log" element={<AuditLogPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -100,6 +100,26 @@ enum AuthProvider {
 }
 
 // ===========================================
+// Enums for Protein Calculator (Feature 015)
+// ===========================================
+
+enum TrainingLevel {
+  NONE      // Sedentary / no regular training
+  REGULAR   // Regular training (3+ sessions/week)
+}
+
+enum ProteinGoal {
+  MAINTAIN  // Maintain current weight
+  LOSE      // Lose weight (cut)
+  GAIN      // Gain weight (bulk)
+}
+
+enum WeightUnit {
+  KG        // Kilograms
+  LBS       // Pounds
+}
+
+// ===========================================
 // User Model (Extended for Billing + Signup)
 // ===========================================
 
@@ -152,6 +172,7 @@ model User {
   emailVerificationTokens EmailVerificationToken[]
   passwordResetTokens   PasswordResetToken[]
   authEvents            AuthEvent[]
+  proteinProfile        UserProteinProfile?  // Feature 015: Protein Calculator
   
   @@index([externalId])
   @@index([stripeCustomerId])
@@ -464,4 +485,76 @@ model AdminAuditLog {
   @@index([targetUserId, createdAt])
   @@index([action, createdAt])
   @@index([createdAt])
+}
+
+// ===========================================
+// Protein Calculator Models (Feature 015)
+// ===========================================
+
+// User's protein profile (one per user)
+model UserProteinProfile {
+  id              String        @id @default(uuid())
+  
+  userId          String        @unique
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  weightKg        Decimal       @db.Decimal(5, 2)  // User's weight in kg
+  weightUnit      WeightUnit    @default(KG)       // Display preference
+  trainingLevel   TrainingLevel
+  goal            ProteinGoal
+  mealsPerDay     Int           @default(3)        // 2-5 meals
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // One-to-one with calculated target
+  target          ProteinTarget?
+  
+  @@index([userId])
+}
+
+// Calculated protein target (one per profile)
+model ProteinTarget {
+  id                String              @id @default(uuid())
+  
+  profileId         String              @unique
+  profile           UserProteinProfile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  
+  proteinTargetG    Int                 // Daily target in grams (rounded to 5)
+  perMealTargetsG   Json                // Array of per-meal targets: number[]
+  multiplierUsed    Decimal             @db.Decimal(3, 2)  // The g/kg multiplier used
+  
+  calculatedAt      DateTime            @default(now())
+  
+  @@index([profileId])
+}
+
+// Admin-configurable protein presets (6 rows)
+model ProteinPreset {
+  id                String        @id @default(uuid())
+  
+  trainingLevel     TrainingLevel
+  goal              ProteinGoal
+  multiplierGPerKg  Decimal       @db.Decimal(3, 2)  // e.g., 1.8
+  
+  active            Boolean       @default(true)
+  
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  @@unique([trainingLevel, goal])
+  @@index([active])
+}
+
+// Admin-configurable global settings (singleton)
+model ProteinConfig {
+  id                  String    @id @default(uuid())
+  
+  minGDay             Int       @default(60)    // Floor clamp
+  maxGDay             Int       @default(220)   // Ceiling clamp
+  defaultMealsPerDay  Int       @default(3)
+  mealSplits          Json      // { "2": [0.45, 0.55], "3": [...], "4": [...], "5": [...] }
+  
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 }

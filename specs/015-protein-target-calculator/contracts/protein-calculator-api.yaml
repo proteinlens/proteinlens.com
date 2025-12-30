@@ -1,0 +1,497 @@
+openapi: 3.0.3
+info:
+  title: Protein Calculator API
+  description: API endpoints for protein target calculation and profile management
+  version: 1.0.0
+
+servers:
+  - url: /api
+    description: Backend API
+
+paths:
+  /protein/calculate:
+    post:
+      summary: Calculate protein targets (anonymous or authenticated)
+      description: |
+        Calculates daily and per-meal protein targets based on user inputs.
+        Does NOT persist results - use for preview/anonymous calculations.
+      operationId: calculateProtein
+      tags:
+        - Protein Calculator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalculateProteinRequest'
+      responses:
+        '200':
+          description: Protein targets calculated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProteinTargetResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /protein/profile:
+    get:
+      summary: Get current user's protein profile and target
+      description: Returns the authenticated user's saved protein profile and calculated target
+      operationId: getProteinProfile
+      tags:
+        - Protein Calculator
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Profile found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProteinProfileResponse'
+        '404':
+          description: No profile exists for user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Create or update protein profile
+      description: |
+        Creates a new protein profile or updates existing one.
+        Automatically calculates and stores the protein target.
+      operationId: saveProteinProfile
+      tags:
+        - Protein Calculator
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaveProteinProfileRequest'
+      responses:
+        '200':
+          description: Profile saved and target calculated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProteinProfileResponse'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete protein profile
+      description: Removes user's protein profile and calculated target
+      operationId: deleteProteinProfile
+      tags:
+        - Protein Calculator
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Profile deleted successfully
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: No profile exists for user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /protein/config:
+    get:
+      summary: Get public protein configuration
+      description: |
+        Returns the current protein calculation configuration (presets, meal splits).
+        Public endpoint - no authentication required.
+      operationId: getProteinConfig
+      tags:
+        - Protein Calculator
+      responses:
+        '200':
+          description: Configuration returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProteinConfigResponse'
+
+  /dashboard/protein/presets:
+    get:
+      summary: List all protein presets (admin)
+      operationId: listProteinPresets
+      tags:
+        - Admin - Protein Config
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of presets
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminPresetsResponse'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Not an admin
+
+    put:
+      summary: Update protein preset (admin)
+      operationId: updateProteinPreset
+      tags:
+        - Admin - Protein Config
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePresetRequest'
+      responses:
+        '200':
+          description: Preset updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProteinPreset'
+        '400':
+          description: Invalid input
+        '401':
+          description: Not authenticated
+        '403':
+          description: Not an admin
+
+  /dashboard/protein/config:
+    get:
+      summary: Get protein config (admin)
+      operationId: getAdminProteinConfig
+      tags:
+        - Admin - Protein Config
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Config returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminConfigResponse'
+        '401':
+          description: Not authenticated
+        '403':
+          description: Not an admin
+
+    put:
+      summary: Update protein config (admin)
+      operationId: updateProteinConfig
+      tags:
+        - Admin - Protein Config
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateConfigRequest'
+      responses:
+        '200':
+          description: Config updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminConfigResponse'
+        '400':
+          description: Invalid input
+        '401':
+          description: Not authenticated
+        '403':
+          description: Not an admin
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    TrainingLevel:
+      type: string
+      enum: [none, regular]
+      description: User's training frequency
+
+    ProteinGoal:
+      type: string
+      enum: [maintain, lose, gain]
+      description: User's fitness goal
+
+    WeightUnit:
+      type: string
+      enum: [kg, lbs]
+      description: Weight display unit preference
+
+    CalculateProteinRequest:
+      type: object
+      required:
+        - weightKg
+        - trainingLevel
+        - goal
+      properties:
+        weightKg:
+          type: number
+          minimum: 1
+          maximum: 500
+          description: User's weight in kilograms
+        trainingLevel:
+          $ref: '#/components/schemas/TrainingLevel'
+        goal:
+          $ref: '#/components/schemas/ProteinGoal'
+        mealsPerDay:
+          type: integer
+          minimum: 2
+          maximum: 5
+          default: 3
+          description: Number of meals per day
+
+    ProteinTargetResponse:
+      type: object
+      required:
+        - proteinTargetG
+        - perMealTargetsG
+        - multiplierUsed
+      properties:
+        proteinTargetG:
+          type: integer
+          description: Daily protein target in grams (rounded to 5)
+          example: 125
+        perMealTargetsG:
+          type: array
+          items:
+            type: integer
+          description: Per-meal protein targets in grams
+          example: [30, 45, 50]
+        multiplierUsed:
+          type: number
+          description: The g/kg multiplier used
+          example: 1.8
+        lowMealWarning:
+          type: boolean
+          description: True if any meal target is below 20g
+          example: false
+
+    SaveProteinProfileRequest:
+      type: object
+      required:
+        - weightKg
+        - trainingLevel
+        - goal
+      properties:
+        weightKg:
+          type: number
+          minimum: 1
+          maximum: 500
+        weightUnit:
+          $ref: '#/components/schemas/WeightUnit'
+        trainingLevel:
+          $ref: '#/components/schemas/TrainingLevel'
+        goal:
+          $ref: '#/components/schemas/ProteinGoal'
+        mealsPerDay:
+          type: integer
+          minimum: 2
+          maximum: 5
+          default: 3
+
+    ProteinProfileResponse:
+      type: object
+      required:
+        - profile
+        - target
+      properties:
+        profile:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            weightKg:
+              type: number
+            weightUnit:
+              $ref: '#/components/schemas/WeightUnit'
+            trainingLevel:
+              $ref: '#/components/schemas/TrainingLevel'
+            goal:
+              $ref: '#/components/schemas/ProteinGoal'
+            mealsPerDay:
+              type: integer
+            updatedAt:
+              type: string
+              format: date-time
+        target:
+          $ref: '#/components/schemas/ProteinTargetResponse'
+
+    ProteinConfigResponse:
+      type: object
+      properties:
+        presets:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: number
+          example:
+            none:
+              maintain: 1.0
+              lose: 1.2
+              gain: 1.2
+            regular:
+              maintain: 1.6
+              lose: 1.8
+              gain: 1.8
+        mealSplits:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: number
+          example:
+            "2": [0.45, 0.55]
+            "3": [0.25, 0.35, 0.40]
+        defaults:
+          type: object
+          properties:
+            minGDay:
+              type: integer
+            maxGDay:
+              type: integer
+            mealsPerDay:
+              type: integer
+
+    ProteinPreset:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        trainingLevel:
+          $ref: '#/components/schemas/TrainingLevel'
+        goal:
+          $ref: '#/components/schemas/ProteinGoal'
+        multiplierGPerKg:
+          type: number
+        active:
+          type: boolean
+        updatedAt:
+          type: string
+          format: date-time
+
+    AdminPresetsResponse:
+      type: object
+      properties:
+        presets:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProteinPreset'
+
+    UpdatePresetRequest:
+      type: object
+      required:
+        - trainingLevel
+        - goal
+        - multiplierGPerKg
+      properties:
+        trainingLevel:
+          $ref: '#/components/schemas/TrainingLevel'
+        goal:
+          $ref: '#/components/schemas/ProteinGoal'
+        multiplierGPerKg:
+          type: number
+          minimum: 0.1
+          maximum: 3.0
+
+    AdminConfigResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        minGDay:
+          type: integer
+        maxGDay:
+          type: integer
+        defaultMealsPerDay:
+          type: integer
+        mealSplits:
+          type: object
+        updatedAt:
+          type: string
+          format: date-time
+
+    UpdateConfigRequest:
+      type: object
+      properties:
+        minGDay:
+          type: integer
+          minimum: 30
+          maximum: 100
+        maxGDay:
+          type: integer
+          minimum: 150
+          maximum: 300
+        defaultMealsPerDay:
+          type: integer
+          minimum: 2
+          maximum: 5
+        mealSplits:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: number
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          description: Additional error details
