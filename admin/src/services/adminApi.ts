@@ -16,20 +16,20 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
   // Get auth token from localStorage
   const accessToken = localStorage.getItem('proteinlens_access_token');
 
-  // Build headers using explicit Headers object
-  const requestHeaders = new Headers();
-  requestHeaders.set('Content-Type', 'application/json');
-  requestHeaders.set('x-admin-email', getAdminEmail());
+  // Build headers using plain object - string concatenation to avoid any compilation issues
+  const authHeader = accessToken ? ('Bearer ' + accessToken) : '';
+  const adminEmail = getAdminEmail();
+  
+  const requestHeaders: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'x-admin-email': adminEmail,
+    ...headers,
+  };
   
   // Add Authorization header if token exists
-  if (accessToken) {
-    requestHeaders.set('Authorization', `Bearer ${accessToken}`);
+  if (authHeader) {
+    requestHeaders['Authorization'] = authHeader;
   }
-  
-  // Add any custom headers
-  Object.entries(headers).forEach(([key, value]) => {
-    requestHeaders.set(key, value);
-  });
 
   const response = await fetch(`${API_BASE}/api${endpoint}`, {
     method,

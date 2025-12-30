@@ -2,7 +2,7 @@
 // Feature: 012-admin-dashboard
 // T026: Admin auth check hook
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 
@@ -14,7 +14,7 @@ interface AdminAuthState {
   needsLogin: boolean;
 }
 
-export function useAdminAuth(): AdminAuthState & { recheckAuth: () => void } {
+export function useAdminAuth(): AdminAuthState & { recheckAuth: (token?: string) => void } {
   const [state, setState] = useState<AdminAuthState>({
     isAdmin: false,
     isLoading: true,
@@ -24,8 +24,14 @@ export function useAdminAuth(): AdminAuthState & { recheckAuth: () => void } {
   });
   
   const [checkTrigger, setCheckTrigger] = useState(0);
+  // Store token passed from login for immediate use
+  const pendingTokenRef = useRef<string | null>(null);
 
-  const recheckAuth = useCallback(() => {
+  const recheckAuth = useCallback((token?: string) => {
+    // If token is passed directly, store it for immediate use
+    if (token) {
+      pendingTokenRef.current = token;
+    }
     setCheckTrigger(prev => prev + 1);
   }, []);
 
@@ -33,15 +39,19 @@ export function useAdminAuth(): AdminAuthState & { recheckAuth: () => void } {
     async function checkAuth() {
       setState(prev => ({ ...prev, isLoading: true }));
       
+      // Small delay to ensure localStorage is committed
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       try {
-        // Get access token from localStorage
-        const accessToken = localStorage.getItem('proteinlens_access_token');
-        console.log('[useAdminAuth] Token from storage:', accessToken ? `${accessToken.substring(0, 30)}...` : 'NULL');
-        console.log('[useAdminAuth] Token type:', typeof accessToken);
-        console.log('[useAdminAuth] Token length:', accessToken?.length || 0);
+        // Use pending token if available, otherwise get from localStorage
+        let accessToken = pendingTokenRef.current;
+        if (!accessToken) {
+          accessToken = localStorage.getItem('proteinlens_access_token');
+        }
+        // Clear the pending token after use
+        pendingTokenRef.current = null;
         
         if (!accessToken) {
-          console.log('[useAdminAuth] No token, showing login page');
           setState({
             isAdmin: false,
             isLoading: false,
@@ -53,13 +63,15 @@ export function useAdminAuth(): AdminAuthState & { recheckAuth: () => void } {
         }
         
         // Call /api/me to get user profile
-        // Use explicit Headers object to ensure Authorization is sent
-        const headers = new Headers();
-        headers.set('Authorization', `Bearer ${accessToken}`);
+        // Build auth header explicitly - must be a string concatenation, not template literal issue
+        const authHeader = 'Bearer ' + accessToken;
         
         const meResponse = await fetch(`${API_BASE}/api/me`, {
           method: 'GET',
-          headers: headers,
+          headers: {
+            'Authorization': authHeader,
+            'Content-Type': 'application/json',
+          },
         });
         
         console.log('[useAdminAuth] /api/me response:', meResponse.status);
@@ -97,13 +109,15 @@ export function useAdminAuth(): AdminAuthState & { recheckAuth: () => void } {
         localStorage.setItem('adminEmail', userEmail);
         
         // Try to call an admin endpoint to verify admin access
-        const adminHeaders = new Headers();
-        adminHeaders.set('Authorization', `Bearer ${accessToken}`);
-        adminHeaders.set('x-admin-email', userEmail);
+        const adminAuthHeader = 'Bearer ' + accessToken;
         
         const adminCheckResponse = await fetch(`${API_BASE}/api/admin/users?limit=1`, {
           method: 'GET',
-          headers: adminHeaders,
+          headers: {
+            'Authorization': adminAuthHeader,
+            'Content-Type': 'application/json',
+            'x-admin-email': userEmail,
+          },
         });
         
         if (adminCheckResponse.ok) {

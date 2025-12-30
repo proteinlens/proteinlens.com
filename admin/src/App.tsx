@@ -26,13 +26,8 @@ function ProtectedRoutes() {
     return (
       <LoginPage 
         onLoginSuccess={(accessToken, _email) => {
-          console.log('[App] Login success, token received:', accessToken ? accessToken.substring(0, 20) + '...' : 'none');
-          console.log('[App] Token in localStorage:', localStorage.getItem('proteinlens_access_token')?.substring(0, 20) || 'none');
-          // Longer delay to ensure localStorage is fully committed
-          setTimeout(() => {
-            console.log('[App] Calling recheckAuth after delay');
-            recheckAuth();
-          }, 250);
+          // Pass the token directly to recheckAuth to avoid localStorage race condition
+          recheckAuth(accessToken);
         }} 
       />
     );
@@ -45,7 +40,7 @@ function ProtectedRoutes() {
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Error</h1>
           <p className="text-gray-600 mb-4">{error.message}</p>
           <button 
-            onClick={recheckAuth}
+            onClick={() => recheckAuth()}
             className="inline-block px-4 py-2 bg-admin-600 text-white rounded-lg hover:bg-admin-700"
           >
             Try Again
