@@ -149,6 +149,11 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
           name: 'FRONTEND_URL'
           value: 'https://www.proteinlens.com'
         }
+        // App URL for Stripe redirect URLs (checkout success/cancel)
+        {
+          name: 'APP_URL'
+          value: 'https://www.proteinlens.com'
+        }
         // Slack notifications for auth events (Feature 014)
         {
           name: 'SLACK_WEBHOOK_URL'
