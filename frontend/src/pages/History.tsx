@@ -1,16 +1,19 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { useMeals } from '@/hooks/useMeal'
 import { useWeeklyTrend } from '@/hooks/useWeeklyTrend'
 import { WeeklyTrendChart } from '@/components/history/WeeklyTrendChart'
 import { MealHistoryList } from '@/components/history/MealHistoryList'
 import { MealDetailModal } from '@/components/history/MealDetailModal'
-import { getUserId } from '@/utils/userId'
+import { getUserId, setUserId } from '@/utils/userId'
 import { useAuth } from '@/contexts/AuthProvider'
 import { FriendlyError } from '@/components/ui/FriendlyError'
 import { emptyStates } from '@/utils/friendlyErrors'
+import { migrateMeals } from '@/services/authService'
 
 export function History() {
   const { user } = useAuth()
+  const migrationAttemptedRef = useRef(false)
+  const [isMigrating, setIsMigrating] = useState(false)
   
   // Use authenticated user ID if available, otherwise fall back to localStorage ID
   // This ensures consistency between logged-in users and anonymous users
@@ -32,6 +35,57 @@ export function History() {
   const { days, averageProtein } = useWeeklyTrend(meals)
   const [selectedMeal, setSelectedMeal] = useState<any>(null)
 
+  // Auto-migrate meals from old localStorage ID to authenticated user
+  useEffect(() => {
+    async function attemptMigration() {
+      // Only run once, only for authenticated users, only when meals loaded
+      if (migrationAttemptedRef.current || !user?.id || isLoading) return
+      
+      // Get the old localStorage userId (before we sync it)
+      const oldUserId = localStorage.getItem('proteinlens_user_id')
+      
+      // Skip if no old ID or old ID is same as authenticated ID
+      if (!oldUserId || oldUserId === user.id) {
+        // Sync localStorage with authenticated user ID
+        setUserId(user.id)
+        migrationAttemptedRef.current = true
+        return
+      }
+      
+      // Skip if old ID is already a proper UUID (already migrated)
+      if (oldUserId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+        migrationAttemptedRef.current = true
+        return
+      }
+      
+      migrationAttemptedRef.current = true
+      setIsMigrating(true)
+      
+      console.log('[History] Attempting to migrate meals from', oldUserId, 'to', user.id)
+      
+      try {
+        const result = await migrateMeals(oldUserId)
+        if (result.migratedCount > 0) {
+          console.log(`[History] Migrated ${result.migratedCount} meals`)
+          // Sync localStorage and refetch meals
+          setUserId(user.id)
+          refetch()
+        } else {
+          // No meals to migrate, just sync the userId
+          setUserId(user.id)
+        }
+      } catch (err) {
+        console.warn('[History] Migration failed:', err)
+        // Still sync userId even if migration fails
+        setUserId(user.id)
+      } finally {
+        setIsMigrating(false)
+      }
+    }
+    
+    attemptMigration()
+  }, [user?.id, isLoading, refetch])
+
   const handleMealClick = (meal: any) => {
     setSelectedMeal(meal)
   }
@@ -41,9 +95,14 @@ export function History() {
     refetch()
   }
 
-  if (isLoading) {
+  if (isLoading || isMigrating) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
+        {isMigrating && (
+          <div className="mb-4 p-4 bg-primary/10 border border-primary/20 rounded-lg text-center">
+            <span className="text-primary">🔄 Syncing your meals...</span>
+          </div>
+        )}
         <div className="space-y-4">
           {/* Skeleton Chart */}
           <div className="bg-card border border-border rounded-lg p-6 h-80 animate-pulse">

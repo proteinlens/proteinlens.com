@@ -14,10 +14,11 @@ import {
   SigninData,
   SignupData,
   AuthError,
+  migrateMeals,
 } from '../services/authService';
 import { API_ENDPOINTS, AUTH } from '../config';
 import { isMsalConfigured, loginRequest } from '../auth/msalConfig';
-import { setUserId, clearUserId } from '../utils/userId';
+import { setUserId, clearUserId, getUserId } from '../utils/userId';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -121,13 +122,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setError(null);
     setIsLoading(true);
     
+    // Capture old userId before login for potential migration
+    const oldUserId = getUserId();
+    
     try {
       const result = await apiSignin(credentials);
       setUser(result.user);
       setIsAuthenticated(true);
+      
       // Sync localStorage userId with authenticated user ID
       if (result.user.id) {
         setUserId(result.user.id);
+        
+        // Auto-migrate meals from old anonymous ID to authenticated user
+        if (oldUserId && oldUserId !== result.user.id) {
+          // Don't await - let it run in background
+          migrateMeals(oldUserId).then(({ migratedCount }) => {
+            if (migratedCount > 0) {
+              console.log(`[Auth] Auto-migrated ${migratedCount} meals to authenticated user`);
+            }
+          });
+        }
       }
     } catch (err) {
       if (err instanceof AuthError) {

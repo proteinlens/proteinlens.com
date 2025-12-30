@@ -571,3 +571,47 @@ export async function fetchUserProfile(): Promise<AuthUser | null> {
     return null;
   }
 }
+
+/**
+ * Migrate meals from an old anonymous/device user ID to the authenticated user
+ * Called automatically after login/signup to consolidate meals
+ */
+export async function migrateMeals(fromUserId: string): Promise<{ migratedCount: number }> {
+  const token = await getValidAccessToken();
+  
+  if (!token) {
+    console.warn('[Auth] Cannot migrate meals: no access token');
+    return { migratedCount: 0 };
+  }
+  
+  // Don't migrate if the user ID looks like an authenticated ID (UUID format)
+  if (fromUserId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+    console.log('[Auth] Skipping migration: fromUserId is already a proper UUID');
+    return { migratedCount: 0 };
+  }
+  
+  try {
+    console.log('[Auth] Migrating meals from', fromUserId);
+    
+    const response = await fetch(API_ENDPOINTS.MIGRATE_MEALS, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ fromUserId }),
+    });
+    
+    if (!response.ok) {
+      console.warn('[Auth] Meal migration failed:', response.status);
+      return { migratedCount: 0 };
+    }
+    
+    const result = await response.json();
+    console.log('[Auth] Meal migration complete:', result);
+    return { migratedCount: result.migratedCount || 0 };
+  } catch (error) {
+    console.warn('[Auth] Meal migration error:', error);
+    return { migratedCount: 0 };
+  }
+}

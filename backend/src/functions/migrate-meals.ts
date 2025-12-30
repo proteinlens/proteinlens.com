@@ -60,8 +60,18 @@ export async function migrateMeals(request: HttpRequest, context: InvocationCont
       };
     }
 
-    // Target user ID is either provided or defaults to authenticated user
-    const targetUserId = toUserId || authenticatedUserId;
+    // Security: Target user ID MUST be the authenticated user
+    // This prevents users from stealing meals from others
+    const targetUserId = authenticatedUserId;
+    
+    // Ignore toUserId from request body for security
+    if (toUserId && toUserId !== authenticatedUserId) {
+      Logger.warn('Attempted migration to different user blocked', {
+        requestId,
+        authenticatedUserId,
+        attemptedTarget: toUserId,
+      });
+    }
 
     Logger.info('Migrating meals', { 
       requestId, 

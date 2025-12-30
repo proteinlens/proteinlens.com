@@ -98,6 +98,9 @@ export const API_ENDPOINTS = {
   AUTH_LOGIN_GOOGLE: `${API_BASE_URL}/api/auth/login/google`,
   AUTH_LOGIN_MICROSOFT: `${API_BASE_URL}/api/auth/login/microsoft`,
   AUTH_SESSIONS: `${API_BASE_URL}/api/auth/sessions`,
+
+  // Admin endpoints
+  MIGRATE_MEALS: `${API_BASE_URL}/api/admin/migrate-meals`,
 };
 
 /**
