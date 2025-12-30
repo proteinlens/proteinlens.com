@@ -5,10 +5,11 @@ import { DashboardPage } from './pages/DashboardPage';
 import { UsersPage } from './pages/UsersPage';
 import { UserDetailPage } from './pages/UserDetailPage';
 import { AuditLogPage } from './pages/AuditLogPage';
+import { LoginPage } from './pages/LoginPage';
 import { useAdminAuth } from './hooks/useAdminAuth';
 
 function ProtectedRoutes() {
-  const { isAdmin, isLoading, error } = useAdminAuth();
+  const { isAdmin, isLoading, error, needsLogin, recheckAuth } = useAdminAuth();
 
   if (isLoading) {
     return (
@@ -21,18 +22,28 @@ function ProtectedRoutes() {
     );
   }
 
+  if (needsLogin) {
+    return (
+      <LoginPage 
+        onLoginSuccess={() => {
+          recheckAuth();
+        }} 
+      />
+    );
+  }
+
   if (error) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center max-w-md px-4">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Authentication Required</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Error</h1>
           <p className="text-gray-600 mb-4">{error.message}</p>
-          <a 
-            href="https://www.proteinlens.com/signin" 
+          <button 
+            onClick={recheckAuth}
             className="inline-block px-4 py-2 bg-admin-600 text-white rounded-lg hover:bg-admin-700"
           >
-            Login to ProteinLens
-          </a>
+            Try Again
+          </button>
         </div>
       </div>
     );
