@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PageContainer } from '@/components/layout/PageContainer';
@@ -6,12 +7,58 @@ import { ThemeToggle } from '@/components/settings/ThemeToggle';
 import { Button } from '@/components/ui/Button';
 import { getPageVariants, getPageTransition } from '@/utils/animations';
 import { useAuth } from '@/contexts/AuthProvider';
+import { useMeals } from '@/hooks/useMeal';
 
 export function Settings() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { data: meals = [], isLoading: mealsLoading } = useMeals(user?.id);
+  const [isExporting, setIsExporting] = useState(false);
   const pageVariants = getPageVariants();
   const pageTransition = getPageTransition();
+
+  const handleExportCSV = async () => {
+    if (meals.length === 0) {
+      alert('No meals to export yet! 📸 Take some photos first.');
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      // Build CSV content
+      const headers = ['Date', 'Time', 'Food Items', 'Total Protein (g)', 'Confidence'];
+      const rows = meals.map((meal: any) => {
+        const date = new Date(meal.uploadedAt);
+        const dateStr = date.toLocaleDateString();
+        const timeStr = date.toLocaleTimeString();
+        const foodItems = meal.analysis?.foods?.map((f: any) => `${f.name} (${f.portion})`).join('; ') || '';
+        const protein = meal.analysis?.totalProtein || 0;
+        const confidence = meal.analysis?.confidence || 'unknown';
+        return [dateStr, timeStr, `"${foodItems}"`, protein, confidence];
+      });
+
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.join(','))
+      ].join('\n');
+
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `proteinlens-meals-${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Export failed. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <PageContainer>
@@ -86,8 +133,13 @@ export function Settings() {
             <p className="text-sm text-muted-foreground">
               Download your meal history - it's your data, take it anywhere! 
             </p>
-            <Button variant="outline" className="w-full">
-              📥 Export Meals (CSV)
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={handleExportCSV}
+              disabled={isExporting || mealsLoading}
+            >
+              {isExporting ? '⏳ Exporting...' : mealsLoading ? '⏳ Loading...' : '📥 Export Meals (CSV)'}
             </Button>
           </div>
         </section>
