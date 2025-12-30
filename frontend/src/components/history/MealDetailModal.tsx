@@ -10,6 +10,45 @@ interface Food {
   protein: number;
 }
 
+// Pro tips based on meal protein content
+const proTips = {
+  low: [
+    "Add Greek yogurt, eggs, or cottage cheese to boost protein in this meal! 🥚",
+    "Consider pairing this with a protein shake to hit your daily goals. 💪",
+    "Nuts, seeds, or nut butter make great protein-rich additions! 🥜",
+    "Try adding chicken, fish, or tofu next time for more protein. 🍗",
+  ],
+  medium: [
+    "Great protein content! Spread meals like this throughout the day. ⏰",
+    "You're on track! Aim for 25-35g protein per meal for optimal absorption. ✨",
+    "Nice balance! Adding a handful of nuts can push this even higher. 🥜",
+    "Solid protein meal! Your muscles will thank you. 💪",
+  ],
+  high: [
+    "Excellent protein intake! Your body can absorb ~30-40g per meal optimally. 🎯",
+    "Power meal! Perfect for post-workout recovery. 🏋️",
+    "High protein champion! Great for muscle maintenance and satiety. 🏆",
+    "Protein-packed! This meal will keep you full for hours. 😋",
+  ],
+};
+
+function getProTip(totalProtein: number, foods: Food[]): string {
+  // Determine protein level
+  let level: 'low' | 'medium' | 'high';
+  if (totalProtein < 15) {
+    level = 'low';
+  } else if (totalProtein < 30) {
+    level = 'medium';
+  } else {
+    level = 'high';
+  }
+  
+  // Get a consistent tip based on the meal (use foods length as a simple hash)
+  const tips = proTips[level];
+  const index = foods.length % tips.length;
+  return tips[index];
+}
+
 interface MealDetailModalProps {
   meal: {
     id: string;
@@ -174,17 +213,15 @@ export function MealDetailModal({ meal, isOpen, onClose, onDelete }: MealDetailM
                 )}
               </div>
 
-              {/* Notes */}
-              {meal.analysis.notes && (
-                <div className="space-y-2">
-                  <h3 className="font-semibold text-foreground flex items-center gap-2">
-                    💡 Notes
-                  </h3>
-                  <p className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3">
-                    {meal.analysis.notes}
-                  </p>
-                </div>
-              )}
+              {/* Pro Tip - helpful nutrition advice */}
+              <div className="space-y-2">
+                <h3 className="font-semibold text-foreground flex items-center gap-2">
+                  💡 Pro Tip
+                </h3>
+                <p className="text-sm text-muted-foreground bg-primary/10 border border-primary/20 rounded-lg p-3">
+                  {getProTip(meal.analysis.totalProtein, meal.analysis.foods)}
+                </p>
+              </div>
 
               {/* Actions */}
               <div className="flex gap-3 pt-4 border-t border-border">
