@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 interface LoginPageProps {
   onLoginSuccess: (accessToken: string, email: string) => void;
@@ -21,7 +21,7 @@ export function LoginPage({ onLoginSuccess }: LoginPageProps) {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE}/auth/signin`, {
+      const response = await fetch(`${API_BASE}/api/auth/signin`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -2,7 +2,7 @@
 // Feature: 012-admin-dashboard
 // T016: Admin API client with base configuration
 
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -13,7 +13,7 @@ interface RequestOptions {
 async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body, headers = {} } = options;
 
-  const response = await fetch(`${API_BASE}${endpoint}`, {
+  const response = await fetch(`${API_BASE}/api${endpoint}`, {
     method,
     headers: {
       'Content-Type': 'application/json',

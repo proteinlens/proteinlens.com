@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+const API_BASE = import.meta.env.VITE_API_URL || '';
 
 interface AdminAuthState {
   isAdmin: boolean;
@@ -49,7 +49,7 @@ export function useAdminAuth(): AdminAuthState & { recheckAuth: () => void } {
         }
         
         // Call /api/me to get user profile
-        const meResponse = await fetch(`${API_BASE}/me`, {
+        const meResponse = await fetch(`${API_BASE}/api/me`, {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
           },
@@ -88,7 +88,7 @@ export function useAdminAuth(): AdminAuthState & { recheckAuth: () => void } {
         localStorage.setItem('adminEmail', userEmail);
         
         // Try to call an admin endpoint to verify admin access
-        const adminCheckResponse = await fetch(`${API_BASE}/admin/users?limit=1`, {
+        const adminCheckResponse = await fetch(`${API_BASE}/api/admin/users?limit=1`, {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
             'x-admin-email': userEmail,
