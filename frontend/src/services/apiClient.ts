@@ -36,6 +36,22 @@ export interface AnalysisResponse {
   requestId: string;
 }
 
+export interface MealHistoryItem {
+  id: string;
+  mealAnalysisId: string;
+  uploadedAt: string;
+  imageUrl: string;
+  analysis: {
+    totalProtein: number;
+    confidence: 'high' | 'medium' | 'low';
+    foods: FoodItem[];
+    notes?: string;
+  };
+  aiModel?: string;
+  requestId?: string;
+  userCorrections?: any;
+}
+
 export interface ApiError {
   error: string;
   requestId?: string;
@@ -227,7 +243,7 @@ class ApiClient {
    * Get user's meal history
    * T067: Get meal history (User Story 2, Phase 4)
    */
-  async getMealHistory(userId?: string, limit = 50): Promise<AnalysisResponse[]> {
+  async getMealHistory(userId?: string, limit = 50): Promise<MealHistoryItem[]> {
     // Use provided userId or get from storage
     const effectiveUserId = userId || getUserId();
     const response = await fetch(`${API_PATH}/meals?userId=${effectiveUserId}&limit=${limit}`, {
@@ -240,7 +256,24 @@ class ApiClient {
       throw new Error(error.error || `Get meal history failed: ${response.status}`);
     }
 
-    return response.json();
+    const meals = await response.json();
+    
+    // Transform API response to match component expected format
+    return meals.map((meal: any) => ({
+      id: meal.id,
+      mealAnalysisId: meal.id,
+      uploadedAt: meal.timestamp,
+      imageUrl: meal.imageUrl,
+      analysis: {
+        totalProtein: meal.totalProtein,
+        confidence: meal.confidence,
+        foods: meal.foods,
+        notes: meal.notes,
+      },
+      aiModel: meal.aiModel,
+      requestId: meal.requestId,
+      userCorrections: meal.userCorrections,
+    }));
   }
 
   /**
