@@ -53,14 +53,13 @@ export function useAdminAuth(): AdminAuthState & { recheckAuth: () => void } {
         }
         
         // Call /api/me to get user profile
-        const authHeader = `Bearer ${accessToken}`;
-        console.log('[useAdminAuth] Auth header to send:', authHeader.substring(0, 40) + '...');
-        console.log('[useAdminAuth] Calling /api/me');
+        // Use explicit Headers object to ensure Authorization is sent
+        const headers = new Headers();
+        headers.set('Authorization', `Bearer ${accessToken}`);
+        
         const meResponse = await fetch(`${API_BASE}/api/me`, {
           method: 'GET',
-          headers: {
-            'Authorization': authHeader,
-          },
+          headers: headers,
         });
         
         console.log('[useAdminAuth] /api/me response:', meResponse.status);
@@ -98,11 +97,13 @@ export function useAdminAuth(): AdminAuthState & { recheckAuth: () => void } {
         localStorage.setItem('adminEmail', userEmail);
         
         // Try to call an admin endpoint to verify admin access
+        const adminHeaders = new Headers();
+        adminHeaders.set('Authorization', `Bearer ${accessToken}`);
+        adminHeaders.set('x-admin-email', userEmail);
+        
         const adminCheckResponse = await fetch(`${API_BASE}/api/admin/users?limit=1`, {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'x-admin-email': userEmail,
-          },
+          method: 'GET',
+          headers: adminHeaders,
         });
         
         if (adminCheckResponse.ok) {

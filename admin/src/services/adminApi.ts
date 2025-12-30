@@ -12,15 +12,28 @@ interface RequestOptions {
 
 async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body, headers = {} } = options;
+  
+  // Get auth token from localStorage
+  const accessToken = localStorage.getItem('proteinlens_access_token');
+
+  // Build headers using explicit Headers object
+  const requestHeaders = new Headers();
+  requestHeaders.set('Content-Type', 'application/json');
+  requestHeaders.set('x-admin-email', getAdminEmail());
+  
+  // Add Authorization header if token exists
+  if (accessToken) {
+    requestHeaders.set('Authorization', `Bearer ${accessToken}`);
+  }
+  
+  // Add any custom headers
+  Object.entries(headers).forEach(([key, value]) => {
+    requestHeaders.set(key, value);
+  });
 
   const response = await fetch(`${API_BASE}/api${endpoint}`, {
     method,
-    headers: {
-      'Content-Type': 'application/json',
-      // Admin email from session/auth context
-      'x-admin-email': getAdminEmail(),
-      ...headers,
-    },
+    headers: requestHeaders,
     body: body ? JSON.stringify(body) : undefined,
     credentials: 'include',
   });
