@@ -309,3 +309,100 @@ export async function logExport(exportedCount: number): Promise<{ success: boole
     body: { exportedCount },
   });
 }
+
+// ===========================================
+// Meals APIs
+// ===========================================
+
+export interface MealListParams {
+  page?: number;
+  limit?: number;
+  userId?: string;
+  search?: string;
+  confidence?: 'high' | 'medium' | 'low';
+  sortBy?: 'createdAt' | 'totalProtein' | 'confidence';
+  sortOrder?: 'asc' | 'desc';
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface FoodItem {
+  id: string;
+  name: string;
+  portion: string;
+  protein: number;
+  displayOrder: number;
+}
+
+export interface MealListItem {
+  id: string;
+  userId: string;
+  userEmail: string | null;
+  blobName: string;
+  blobUrl: string;
+  imageUrl: string;
+  totalProtein: number;
+  confidence: 'high' | 'medium' | 'low';
+  notes: string | null;
+  aiModel: string;
+  foodCount: number;
+  foods: FoodItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MealsListResponse {
+  meals: MealListItem[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  summary: {
+    totalMeals: number;
+    totalProteinSum: number;
+    averageProtein: number;
+    confidenceBreakdown: {
+      high: number;
+      medium: number;
+      low: number;
+    };
+  };
+}
+
+export interface MealDetailResponse extends MealListItem {
+  requestId: string;
+  blobHash: string | null;
+  aiResponseRaw: unknown;
+  userCorrections: unknown;
+  user: {
+    id: string;
+    email: string | null;
+    firstName: string | null;
+    lastName: string | null;
+    plan: string;
+  } | null;
+}
+
+export async function fetchMeals(params: MealListParams = {}): Promise<MealsListResponse> {
+  const searchParams = new URLSearchParams();
+  
+  if (params.page) searchParams.set('page', params.page.toString());
+  if (params.limit) searchParams.set('limit', params.limit.toString());
+  if (params.userId) searchParams.set('userId', params.userId);
+  if (params.search) searchParams.set('search', params.search);
+  if (params.confidence) searchParams.set('confidence', params.confidence);
+  if (params.sortBy) searchParams.set('sortBy', params.sortBy);
+  if (params.sortOrder) searchParams.set('sortOrder', params.sortOrder);
+  if (params.startDate) searchParams.set('startDate', params.startDate);
+  if (params.endDate) searchParams.set('endDate', params.endDate);
+
+  const query = searchParams.toString();
+  return request<MealsListResponse>(`/dashboard/meals${query ? `?${query}` : ''}`);
+}
+
+export async function fetchMealDetail(mealId: string): Promise<MealDetailResponse> {
+  return request<MealDetailResponse>(`/dashboard/meals/${mealId}`);
+}
+

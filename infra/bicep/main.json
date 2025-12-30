@@ -295,7 +295,7 @@
                         "http://localhost:3000",
                         "https://www.proteinlens.com",
                         "https://proteinlens.com",
-                        "https://happy-stone-003f15b1e.azurestaticapps.net"
+                        "https://white-moss-07b3a9303.6.azurestaticapps.net"
                       ],
                       "allowedMethods": [
                         "GET",
@@ -889,7 +889,7 @@
                       "https://www.proteinlens.com",
                       "https://proteinlens.com",
                       "https://admin.proteinlens.com",
-                      "https://happy-stone-003f15b1e.azurestaticapps.net",
+                      "https://white-moss-07b3a9303.6.azurestaticapps.net",
                       "https://api.proteinlens.com"
                     ],
                     "supportCredentials": true

@@ -36,19 +36,20 @@ export function SearchInput({
   }, [localValue, debounceMs, onChange, value]);
 
   return (
-    <div className="relative">
-      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+    <div className="relative group">
+      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
         <svg
-          className="h-5 w-5 text-gray-400"
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 20 20"
-          fill="currentColor"
+          className="h-5 w-5 text-gray-400 group-focus-within:text-admin-500 transition-colors"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
           aria-hidden="true"
         >
           <path
-            fillRule="evenodd"
-            d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z"
-            clipRule="evenodd"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
           />
         </svg>
       </div>
@@ -57,7 +58,7 @@ export function SearchInput({
         value={localValue}
         onChange={(e) => setLocalValue(e.target.value)}
         placeholder={placeholder}
-        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-admin-500 focus:border-admin-500 sm:text-sm"
+        className="block w-full pl-11 pr-10 py-2.5 border-2 border-gray-200 rounded-xl leading-5 bg-white/80 backdrop-blur-sm placeholder-gray-400 text-gray-900 focus:outline-none focus:placeholder-gray-300 focus:border-admin-400 focus:ring-4 focus:ring-admin-500/10 sm:text-sm transition-all duration-200 hover:border-gray-300"
       />
       {localValue && (
         <button
@@ -66,18 +67,19 @@ export function SearchInput({
             setLocalValue('');
             onChange('');
           }}
-          className="absolute inset-y-0 right-0 pr-3 flex items-center"
+          className="absolute inset-y-0 right-0 pr-3 flex items-center group/clear"
         >
           <svg
-            className="h-5 w-5 text-gray-400 hover:text-gray-600"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-            fill="currentColor"
+            className="h-5 w-5 text-gray-400 hover:text-gray-600 transition-colors"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
           >
             <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
-              clipRule="evenodd"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
             />
           </svg>
         </button>

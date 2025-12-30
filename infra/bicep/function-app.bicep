@@ -168,7 +168,7 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
           'https://www.proteinlens.com'
           'https://proteinlens.com'
           'https://admin.proteinlens.com'  // Admin dashboard
-          'https://happy-stone-003f15b1e.azurestaticapps.net'
+          'https://white-moss-07b3a9303.6.azurestaticapps.net'
           'https://api.proteinlens.com'
         ]
         supportCredentials: true

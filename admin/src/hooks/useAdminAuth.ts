@@ -14,7 +14,7 @@ interface AdminAuthState {
   needsLogin: boolean;
 }
 
-export function useAdminAuth(): AdminAuthState & { recheckAuth: (token?: string) => void } {
+export function useAdminAuth(): AdminAuthState & { recheckAuth: (token?: string) => void; logout: () => void } {
   const [state, setState] = useState<AdminAuthState>({
     isAdmin: false,
     isLoading: true,
@@ -33,6 +33,23 @@ export function useAdminAuth(): AdminAuthState & { recheckAuth: (token?: string)
       pendingTokenRef.current = token;
     }
     setCheckTrigger(prev => prev + 1);
+  }, []);
+
+  const logout = useCallback(() => {
+    // Clear all auth-related localStorage items
+    localStorage.removeItem('proteinlens_access_token');
+    localStorage.removeItem('proteinlens_refresh_token');
+    localStorage.removeItem('proteinlens_token_expiry');
+    localStorage.removeItem('adminEmail');
+    
+    // Reset state to trigger login screen
+    setState({
+      isAdmin: false,
+      isLoading: false,
+      error: null,
+      adminEmail: null,
+      needsLogin: true,
+    });
   }, []);
 
   useEffect(() => {
@@ -160,7 +177,7 @@ export function useAdminAuth(): AdminAuthState & { recheckAuth: (token?: string)
     checkAuth();
   }, [checkTrigger]);
 
-  return { ...state, recheckAuth };
+  return { ...state, recheckAuth, logout };
 }
 
 export function setAdminEmail(email: string): void {

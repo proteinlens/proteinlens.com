@@ -33,10 +33,13 @@ resource blobService 'Microsoft.Storage/storageAccounts/blobServices@2023-01-01'
         {
           allowedOrigins: [
             'http://localhost:5173'
+            'http://localhost:5174'
+            'http://localhost:5175'
             'http://localhost:3000'
             'https://www.proteinlens.com'
             'https://proteinlens.com'
-            'https://happy-stone-003f15b1e.azurestaticapps.net'
+            'https://admin.proteinlens.com'
+            'https://white-moss-07b3a9303.6.azurestaticapps.net'
           ]
           allowedMethods: [
             'GET'

@@ -48,3 +48,4 @@ import './functions/admin-metrics';
 import './functions/admin-plan-override';
 import './functions/admin-suspend';
 import './functions/admin-audit-log';
+import './functions/admin-meals';

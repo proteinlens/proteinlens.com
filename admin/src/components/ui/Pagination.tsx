@@ -15,40 +15,51 @@ export function Pagination({ page, totalPages, total, limit, onPageChange }: Pag
   const end = Math.min(page * limit, total);
 
   return (
-    <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+    <div className="flex items-center justify-between border-t border-gray-100 bg-gradient-to-r from-gray-50/50 to-white px-4 py-4 sm:px-6">
+      {/* Mobile view */}
       <div className="flex flex-1 justify-between sm:hidden">
         <button
           onClick={() => onPageChange(page - 1)}
           disabled={page <= 1}
-          className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="relative inline-flex items-center gap-1.5 rounded-xl border-2 border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
           Previous
         </button>
         <button
           onClick={() => onPageChange(page + 1)}
           disabled={page >= totalPages}
-          className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="relative ml-3 inline-flex items-center gap-1.5 rounded-xl border-2 border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Next
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
         </button>
       </div>
+      
+      {/* Desktop view */}
       <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm text-gray-700">
-            Showing <span className="font-medium">{start}</span> to{' '}
-            <span className="font-medium">{end}</span> of{' '}
-            <span className="font-medium">{total}</span> results
+          <p className="text-sm text-gray-600">
+            Showing <span className="font-semibold text-gray-900">{start}</span> to{' '}
+            <span className="font-semibold text-gray-900">{end}</span> of{' '}
+            <span className="font-semibold text-gray-900">{total}</span> results
           </p>
         </div>
         <div>
-          <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+          <nav className="isolate inline-flex items-center gap-1" aria-label="Pagination">
             <button
               onClick={() => onPageChange(page - 1)}
               disabled={page <= 1}
-              className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="relative inline-flex items-center justify-center w-10 h-10 rounded-xl text-gray-500 bg-white border-2 border-gray-200 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 focus:z-20 focus:outline-none focus:ring-2 focus:ring-admin-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span className="sr-only">Previous</span>
-              ←
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
             </button>
             
             {/* Page numbers */}
@@ -68,10 +79,10 @@ export function Pagination({ page, totalPages, total, limit, onPageChange }: Pag
                 <button
                   key={pageNum}
                   onClick={() => onPageChange(pageNum)}
-                  className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
+                  className={`relative inline-flex items-center justify-center w-10 h-10 rounded-xl text-sm font-semibold transition-all ${
                     pageNum === page
-                      ? 'z-10 bg-admin-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-admin-600'
-                      : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
+                      ? 'bg-gradient-to-r from-admin-500 to-admin-600 text-white shadow-md shadow-admin-500/30'
+                      : 'text-gray-700 bg-white border-2 border-gray-200 hover:bg-gray-50 hover:border-gray-300 focus:z-20 focus:outline-none focus:ring-2 focus:ring-admin-500/20'
                   }`}
                 >
                   {pageNum}
@@ -82,10 +93,12 @@ export function Pagination({ page, totalPages, total, limit, onPageChange }: Pag
             <button
               onClick={() => onPageChange(page + 1)}
               disabled={page >= totalPages}
-              className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="relative inline-flex items-center justify-center w-10 h-10 rounded-xl text-gray-500 bg-white border-2 border-gray-200 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 focus:z-20 focus:outline-none focus:ring-2 focus:ring-admin-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span className="sr-only">Next</span>
-              →
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </button>
           </nav>
         </div>
