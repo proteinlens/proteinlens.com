@@ -3,6 +3,7 @@ import { useMeals } from '@/hooks/useMeal'
 import { useWeeklyTrend } from '@/hooks/useWeeklyTrend'
 import { WeeklyTrendChart } from '@/components/history/WeeklyTrendChart'
 import { MealHistoryList } from '@/components/history/MealHistoryList'
+import { MealDetailModal } from '@/components/history/MealDetailModal'
 import { getUserId } from '@/utils/userId'
 import { FriendlyError } from '@/components/ui/FriendlyError'
 import { emptyStates } from '@/utils/friendlyErrors'
@@ -19,11 +20,10 @@ export function History() {
   }, [])
   const { data: meals = [], isLoading, error, refetch } = useMeals(userId)
   const { days, averageProtein } = useWeeklyTrend(meals)
-  const [key, setKey] = useState(0)
+  const [selectedMeal, setSelectedMeal] = useState<any>(null)
 
   const handleMealClick = (meal: any) => {
-    // TODO: Navigate to /meal/:id or open modal
-    console.log('Clicked meal:', meal)
+    setSelectedMeal(meal)
   }
 
   const handleMealDelete = () => {
@@ -108,6 +108,16 @@ export function History() {
           meals={meals} 
           onMealClick={handleMealClick}
           onMealDelete={handleMealDelete}
+        />
+      )}
+
+      {/* Meal Detail Modal */}
+      {selectedMeal && (
+        <MealDetailModal
+          meal={selectedMeal}
+          isOpen={!!selectedMeal}
+          onClose={() => setSelectedMeal(null)}
+          onDelete={handleMealDelete}
         />
       )}
     </div>
