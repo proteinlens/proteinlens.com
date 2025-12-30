@@ -147,7 +147,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     
     try {
-      return await apiSignup(data);
+      const result = await apiSignup(data);
+      // Sync localStorage userId with the server-assigned user ID immediately after signup
+      // This ensures any subsequent API calls use the correct ID
+      if (result.userId) {
+        setUserId(result.userId);
+      }
+      return result;
     } catch (err) {
       if (err instanceof AuthError) {
         setError(err.message);
