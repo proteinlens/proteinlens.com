@@ -17,6 +17,7 @@ import {
 } from '../services/authService';
 import { API_ENDPOINTS, AUTH } from '../config';
 import { isMsalConfigured, loginRequest } from '../auth/msalConfig';
+import { setUserId, clearUserId } from '../utils/userId';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -124,6 +125,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const result = await apiSignin(credentials);
       setUser(result.user);
       setIsAuthenticated(true);
+      // Sync localStorage userId with authenticated user ID
+      if (result.user.id) {
+        setUserId(result.user.id);
+      }
     } catch (err) {
       if (err instanceof AuthError) {
         setError(err.message);
@@ -225,6 +230,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (profile) {
             setUser(profile);
             setIsAuthenticated(true);
+            // Sync localStorage userId with authenticated user ID
+            if (profile.id) {
+              setUserId(profile.id);
+            }
             setIsLoading(false);
             return;
           }
@@ -242,6 +251,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (profile) {
           setUser(profile);
           setIsAuthenticated(true);
+          // Sync localStorage userId with authenticated user ID
+          if (profile.id) {
+            setUserId(profile.id);
+          }
         } else {
           clearTokens();
         }

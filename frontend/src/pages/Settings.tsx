@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PageContainer } from '@/components/layout/PageContainer';
@@ -8,11 +8,23 @@ import { Button } from '@/components/ui/Button';
 import { getPageVariants, getPageTransition } from '@/utils/animations';
 import { useAuth } from '@/contexts/AuthProvider';
 import { useMeals } from '@/hooks/useMeal';
+import { getUserId } from '@/utils/userId';
 
 export function Settings() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: meals = [], isLoading: mealsLoading } = useMeals(user?.id);
+  
+  // Use authenticated user ID if available, otherwise fall back to localStorage ID
+  const userId = useMemo(() => {
+    if (user?.id) return user.id;
+    try {
+      return getUserId();
+    } catch {
+      return undefined;
+    }
+  }, [user?.id]);
+  
+  const { data: meals = [], isLoading: mealsLoading } = useMeals(userId);
   const [isExporting, setIsExporting] = useState(false);
   const pageVariants = getPageVariants();
   const pageTransition = getPageTransition();

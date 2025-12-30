@@ -5,19 +5,29 @@ import { WeeklyTrendChart } from '@/components/history/WeeklyTrendChart'
 import { MealHistoryList } from '@/components/history/MealHistoryList'
 import { MealDetailModal } from '@/components/history/MealDetailModal'
 import { getUserId } from '@/utils/userId'
+import { useAuth } from '@/contexts/AuthProvider'
 import { FriendlyError } from '@/components/ui/FriendlyError'
 import { emptyStates } from '@/utils/friendlyErrors'
 
 export function History() {
-  // Use persistent user ID from storage - safely handle localStorage errors
+  const { user } = useAuth()
+  
+  // Use authenticated user ID if available, otherwise fall back to localStorage ID
+  // This ensures consistency between logged-in users and anonymous users
   const userId = useMemo(() => {
+    // Prefer authenticated user ID
+    if (user?.id) {
+      return user.id
+    }
+    // Fall back to localStorage-based ID for anonymous users
     try {
       return getUserId()
     } catch (e) {
       console.error('Failed to get user ID:', e)
       return 'anonymous'
     }
-  }, [])
+  }, [user?.id])
+  
   const { data: meals = [], isLoading, error, refetch } = useMeals(userId)
   const { days, averageProtein } = useWeeklyTrend(meals)
   const [selectedMeal, setSelectedMeal] = useState<any>(null)
