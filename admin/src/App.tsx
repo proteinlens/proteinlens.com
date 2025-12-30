@@ -25,8 +25,11 @@ function ProtectedRoutes() {
   if (needsLogin) {
     return (
       <LoginPage 
-        onLoginSuccess={() => {
-          recheckAuth();
+        onLoginSuccess={(_accessToken, _email) => {
+          // Small delay to ensure localStorage is committed
+          setTimeout(() => {
+            recheckAuth();
+          }, 100);
         }} 
       />
     );

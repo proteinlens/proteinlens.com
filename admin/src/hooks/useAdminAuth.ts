@@ -36,6 +36,7 @@ export function useAdminAuth(): AdminAuthState & { recheckAuth: () => void } {
       try {
         // Get access token from localStorage
         const accessToken = localStorage.getItem('proteinlens_access_token');
+        console.log('[useAdminAuth] Checking token:', accessToken ? 'present' : 'missing');
         
         if (!accessToken) {
           setState({
@@ -49,11 +50,14 @@ export function useAdminAuth(): AdminAuthState & { recheckAuth: () => void } {
         }
         
         // Call /api/me to get user profile
+        console.log('[useAdminAuth] Calling /api/me with token');
         const meResponse = await fetch(`${API_BASE}/api/me`, {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
           },
         });
+        
+        console.log('[useAdminAuth] /api/me response:', meResponse.status);
         
         if (!meResponse.ok) {
           // Token might be expired, clear and ask for login
