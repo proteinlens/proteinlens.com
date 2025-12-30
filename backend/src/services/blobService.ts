@@ -105,12 +105,12 @@ class BlobService {
    * Generate read SAS URL for AI access
    * User requirement 6.2: Generate SAS server-side with Entra identity
    */
-  async generateReadSasUrl(blobName: string): Promise<string> {
+  async generateReadSasUrl(blobName: string, expiryMinutes: number = 15): Promise<string> {
     const blobClient = this.containerClient.getBlobClient(blobName);
     
     const blobServiceClient = this.blobServiceClient;
     const startsOn = new Date();
-    const expiresOn = new Date(startsOn.getTime() + 15 * 60 * 1000); // 15 min for AI processing
+    const expiresOn = new Date(startsOn.getTime() + expiryMinutes * 60 * 1000);
     
     try {
       const userDelegationKey = await blobServiceClient.getUserDelegationKey(startsOn, expiresOn);
@@ -130,7 +130,7 @@ class BlobService {
       
       const sasUrl = `${blobClient.url}?${sasToken}`;
       
-      Logger.info('Generated read SAS URL', { blobName });
+      Logger.info('Generated read SAS URL', { blobName, expiryMinutes });
       
       return sasUrl;
     } catch (error) {

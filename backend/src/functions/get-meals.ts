@@ -7,6 +7,7 @@ import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/fu
 import { v4 as uuidv4 } from 'uuid';
 import { Logger } from '../utils/logger.js';
 import { mealService } from '../services/mealService.js';
+import { blobService } from '../services/blobService.js';
 import { extractUserId } from '../middleware/quotaMiddleware.js';
 
 interface Food {
@@ -86,22 +87,40 @@ export async function getMeals(request: HttpRequest, context: InvocationContext)
       mealCount: meals.length,
     });
 
-    // Transform to API response format
-    const response = meals.map((meal) => ({
-      id: meal.id,
-      timestamp: meal.createdAt.toISOString(),
-      imageUrl: meal.blobUrl,
-      totalProtein: Number(meal.totalProtein),
-      confidence: meal.confidence,
-      notes: meal.notes,
-      foods: (meal.foods as Food[]).map((food) => ({
-        name: food.name,
-        portion: food.portion,
-        protein: typeof food.protein === 'number' ? food.protein : Number(food.protein),
-      })),
-      aiModel: meal.aiModel,
-      requestId: meal.requestId,
-      userCorrections: meal.userCorrections,
+    // Transform to API response format with SAS URLs for images
+    // Generate SAS tokens for each meal's image to allow secure access
+    const response = await Promise.all(meals.map(async (meal) => {
+      // Generate SAS URL for secure image access (60 min expiry for viewing)
+      let imageUrl = meal.blobUrl;
+      try {
+        if (meal.blobName) {
+          imageUrl = await blobService.generateReadSasUrl(meal.blobName, 60);
+        }
+      } catch (error) {
+        Logger.warn('Failed to generate SAS URL for meal image', { 
+          requestId, 
+          mealId: meal.id, 
+          blobName: meal.blobName 
+        });
+        // Keep the original URL as fallback
+      }
+
+      return {
+        id: meal.id,
+        timestamp: meal.createdAt.toISOString(),
+        imageUrl,
+        totalProtein: Number(meal.totalProtein),
+        confidence: meal.confidence,
+        notes: meal.notes,
+        foods: (meal.foods as Food[]).map((food) => ({
+          name: food.name,
+          portion: food.portion,
+          protein: typeof food.protein === 'number' ? food.protein : Number(food.protein),
+        })),
+        aiModel: meal.aiModel,
+        requestId: meal.requestId,
+        userCorrections: meal.userCorrections,
+      };
     }));
 
     return {
