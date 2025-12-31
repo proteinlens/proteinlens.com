@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.39.26.7824",
-      "templateHash": "13614809949571872216"
+      "templateHash": "2390739082484437240"
     }
   },
   "parameters": {
@@ -245,7 +245,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.39.26.7824",
-              "templateHash": "9946880608849978033"
+              "templateHash": "12668474908967975173"
             }
           },
           "parameters": {
@@ -292,9 +292,12 @@
                     {
                       "allowedOrigins": [
                         "http://localhost:5173",
+                        "http://localhost:5174",
+                        "http://localhost:5175",
                         "http://localhost:3000",
                         "https://www.proteinlens.com",
                         "https://proteinlens.com",
+                        "https://admin.proteinlens.com",
                         "https://white-moss-07b3a9303.6.azurestaticapps.net"
                       ],
                       "allowedMethods": [
@@ -517,7 +520,16 @@
             "value": "global"
           },
           "dataLocation": {
-            "value": "europe"
+            "value": "unitedstates"
+          },
+          "domainVerified": {
+            "value": true
+          },
+          "senderUsername": {
+            "value": "DoNotReply"
+          },
+          "senderDisplayName": {
+            "value": "ProteinLens"
           }
         },
         "template": {
@@ -527,7 +539,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.39.26.7824",
-              "templateHash": "11732399877059771159"
+              "templateHash": "9766740156138375096"
             }
           },
           "parameters": {
@@ -568,6 +580,34 @@
                 "description": "Data location for email service"
               }
             },
+            "customEmailDomain": {
+              "type": "string",
+              "defaultValue": "proteinlens.com",
+              "metadata": {
+                "description": "Custom email domain (e.g., proteinlens.com)"
+              }
+            },
+            "senderUsername": {
+              "type": "string",
+              "defaultValue": "DoNotReply",
+              "metadata": {
+                "description": "Sender username for emails"
+              }
+            },
+            "senderDisplayName": {
+              "type": "string",
+              "defaultValue": "ProteinLens",
+              "metadata": {
+                "description": "Sender display name"
+              }
+            },
+            "domainVerified": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Whether the custom domain is verified and ready to be linked"
+              }
+            },
             "tags": {
               "type": "object",
               "defaultValue": {},
@@ -590,15 +630,27 @@
             {
               "type": "Microsoft.Communication/emailServices/domains",
               "apiVersion": "2023-04-01",
-              "name": "[format('{0}/{1}', format('{0}-email', parameters('baseName')), 'AzureManagedDomain')]",
+              "name": "[format('{0}/{1}', format('{0}-email', parameters('baseName')), parameters('customEmailDomain'))]",
               "location": "[parameters('location')]",
               "tags": "[parameters('tags')]",
               "properties": {
-                "domainManagement": "AzureManaged",
+                "domainManagement": "CustomerManaged",
                 "userEngagementTracking": "Disabled"
               },
               "dependsOn": [
                 "[resourceId('Microsoft.Communication/emailServices', format('{0}-email', parameters('baseName')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Communication/emailServices/domains/senderUsernames",
+              "apiVersion": "2023-04-01",
+              "name": "[format('{0}/{1}/{2}', format('{0}-email', parameters('baseName')), parameters('customEmailDomain'), parameters('senderUsername'))]",
+              "properties": {
+                "username": "[parameters('senderUsername')]",
+                "displayName": "[parameters('senderDisplayName')]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Communication/emailServices/domains', format('{0}-email', parameters('baseName')), parameters('customEmailDomain'))]"
               ]
             },
             {
@@ -609,12 +661,10 @@
               "tags": "[parameters('tags')]",
               "properties": {
                 "dataLocation": "[parameters('dataLocation')]",
-                "linkedDomains": [
-                  "[resourceId('Microsoft.Communication/emailServices/domains', format('{0}-email', parameters('baseName')), 'AzureManagedDomain')]"
-                ]
+                "linkedDomains": "[if(parameters('domainVerified'), createArray(resourceId('Microsoft.Communication/emailServices/domains', format('{0}-email', parameters('baseName')), parameters('customEmailDomain'))), createArray())]"
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Communication/emailServices/domains', format('{0}-email', parameters('baseName')), 'AzureManagedDomain')]"
+                "[resourceId('Microsoft.Communication/emailServices/domains', format('{0}-email', parameters('baseName')), parameters('customEmailDomain'))]"
               ]
             }
           ],
@@ -636,9 +686,9 @@
             "emailDomainName": {
               "type": "string",
               "metadata": {
-                "description": "Email domain name"
+                "description": "Custom domain name"
               },
-              "value": "AzureManagedDomain"
+              "value": "[parameters('customEmailDomain')]"
             },
             "endpoint": {
               "type": "string",
@@ -650,9 +700,9 @@
             "senderAddress": {
               "type": "string",
               "metadata": {
-                "description": "Email sender address (Azure-managed domain)"
+                "description": "Email sender address (custom domain)"
               },
-              "value": "[format('DoNotReply@{0}', reference(resourceId('Microsoft.Communication/emailServices/domains', format('{0}-email', parameters('baseName')), 'AzureManagedDomain'), '2023-04-01').mailFromSenderDomain)]"
+              "value": "[format('{0}@{1}', parameters('senderUsername'), parameters('customEmailDomain'))]"
             },
             "communicationServiceId": {
               "type": "string",
@@ -711,7 +761,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.39.26.7824",
-              "templateHash": "16890859059338654253"
+              "templateHash": "8808050772475893103"
             }
           },
           "parameters": {
@@ -740,7 +790,7 @@
               }
             },
             "acsConnectionString": {
-              "type": "string",
+              "type": "securestring",
               "defaultValue": "",
               "metadata": {
                 "description": "Azure Communication Services connection string for transactional emails"
@@ -877,8 +927,20 @@
                       "value": "[parameters('acsSenderAddress')]"
                     },
                     {
+                      "name": "ACS_EMAIL_SENDER_NAME",
+                      "value": "ProteinLens"
+                    },
+                    {
                       "name": "FRONTEND_URL",
                       "value": "https://www.proteinlens.com"
+                    },
+                    {
+                      "name": "APP_URL",
+                      "value": "https://www.proteinlens.com"
+                    },
+                    {
+                      "name": "SLACK_WEBHOOK_URL",
+                      "value": "[format('@Microsoft.KeyVault(SecretUri={0}secrets/slack-webhook-url/)', parameters('keyVaultUri'))]"
                     }
                   ],
                   "cors": {
