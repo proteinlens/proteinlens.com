@@ -51,85 +51,114 @@ interface ConfigData {
 }
 
 // ===========================================
+// Fallback Constants (used when DB unavailable)
+// ===========================================
+
+const FALLBACK_MULTIPLIERS: PresetsMap = {
+  none: { maintain: 1.0, lose: 1.2, gain: 1.2 },
+  regular: { maintain: 1.6, lose: 1.8, gain: 1.8 },
+};
+
+const FALLBACK_CONFIG: ConfigData = {
+  minGDay: 60,
+  maxGDay: 220,
+  defaultMealsPerDay: 3,
+  mealSplits: DEFAULT_MEAL_SPLITS,
+};
+
+// ===========================================
 // Database Queries
 // ===========================================
 
 /**
  * Get all active presets as a nested map
+ * Gracefully falls back to hardcoded defaults if DB unavailable
  */
 export async function getPresets(prisma: PrismaClient): Promise<PresetsMap> {
-  const presets = await prisma.proteinPreset.findMany({
-    where: { active: true },
-  });
+  try {
+    const presets = await prisma.proteinPreset.findMany({
+      where: { active: true },
+    });
 
-  const result: PresetsMap = {};
+    if (presets.length > 0) {
+      const result: PresetsMap = {};
 
-  for (const preset of presets) {
-    const training = fromPrismaTrainingLevel(preset.trainingLevel);
-    const goal = fromPrismaGoal(preset.goal);
+      for (const preset of presets) {
+        const training = fromPrismaTrainingLevel(preset.trainingLevel);
+        const goal = fromPrismaGoal(preset.goal);
 
-    if (!result[training]) {
-      result[training] = {};
+        if (!result[training]) {
+          result[training] = {};
+        }
+
+        result[training][goal] = Number(preset.multiplierGPerKg);
+      }
+
+      return result;
     }
-
-    result[training][goal] = Number(preset.multiplierGPerKg);
+  } catch {
+    // Database unavailable or table doesn't exist - use fallback
+    console.warn(`[ProteinCalculator] DB unavailable, using fallback presets`);
   }
 
-  return result;
+  // Return fallback presets
+  return FALLBACK_MULTIPLIERS;
 }
 
 /**
  * Get configuration (singleton, with defaults)
+ * Gracefully falls back to hardcoded defaults if DB unavailable
  */
 export async function getConfig(prisma: PrismaClient): Promise<ConfigData> {
-  const config = await prisma.proteinConfig.findFirst();
+  try {
+    const config = await prisma.proteinConfig.findFirst();
 
-  if (config) {
-    return {
-      minGDay: config.minGDay,
-      maxGDay: config.maxGDay,
-      defaultMealsPerDay: config.defaultMealsPerDay,
-      mealSplits: config.mealSplits as Record<string, number[]>,
-    };
+    if (config) {
+      return {
+        minGDay: config.minGDay,
+        maxGDay: config.maxGDay,
+        defaultMealsPerDay: config.defaultMealsPerDay,
+        mealSplits: config.mealSplits as Record<string, number[]>,
+      };
+    }
+  } catch {
+    // Database unavailable or table doesn't exist - use fallback
+    console.warn(`[ProteinCalculator] DB unavailable, using fallback config`);
   }
 
   // Fallback to hardcoded defaults
-  return {
-    minGDay: 60,
-    maxGDay: 220,
-    defaultMealsPerDay: 3,
-    mealSplits: DEFAULT_MEAL_SPLITS,
-  };
+  return FALLBACK_CONFIG;
 }
 
 /**
  * Get multiplier for training level + goal combination
+ * Gracefully falls back to hardcoded defaults if DB unavailable
  */
 async function getMultiplier(
   prisma: PrismaClient,
   trainingLevel: TrainingLevel,
   goal: ProteinGoal
 ): Promise<number> {
-  const preset = await prisma.proteinPreset.findUnique({
-    where: {
-      trainingLevel_goal: {
-        trainingLevel: toPrismaTrainingLevel(trainingLevel),
-        goal: toPrismaGoal(goal),
+  try {
+    const preset = await prisma.proteinPreset.findUnique({
+      where: {
+        trainingLevel_goal: {
+          trainingLevel: toPrismaTrainingLevel(trainingLevel),
+          goal: toPrismaGoal(goal),
+        },
       },
-    },
-  });
+    });
 
-  if (preset) {
-    return Number(preset.multiplierGPerKg);
+    if (preset) {
+      return Number(preset.multiplierGPerKg);
+    }
+  } catch {
+    // Database unavailable or table doesn't exist - use fallback
+    console.warn(`[ProteinCalculator] DB unavailable, using fallback multipliers`);
   }
 
-  // Fallback defaults (from spec)
-  const fallbackMap: Record<string, Record<string, number>> = {
-    none: { maintain: 1.0, lose: 1.2, gain: 1.2 },
-    regular: { maintain: 1.6, lose: 1.8, gain: 1.8 },
-  };
-
-  return fallbackMap[trainingLevel]?.[goal] ?? 1.0;
+  // Return fallback default
+  return FALLBACK_MULTIPLIERS[trainingLevel]?.[goal] ?? 1.0;
 }
 
 // ===========================================
