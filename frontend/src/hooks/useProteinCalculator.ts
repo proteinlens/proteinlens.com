@@ -161,24 +161,25 @@ export function useProteinCalculator(): [ProteinCalculatorState, ProteinCalculat
   }, []);
 
   // Actions
+  // When form values change, clear result and mark profile as needing save
   const setWeightKg = useCallback((weight: number) => {
-    setState((s) => ({ ...s, weightKg: weight, result: null }));
+    setState((s) => ({ ...s, weightKg: weight, result: null, hasServerProfile: false }));
   }, []);
 
   const setWeightUnit = useCallback((unit: WeightUnit) => {
-    setState((s) => ({ ...s, weightUnit: unit }));
+    setState((s) => ({ ...s, weightUnit: unit, hasServerProfile: false }));
   }, []);
 
   const setTrainingLevel = useCallback((level: TrainingLevel) => {
-    setState((s) => ({ ...s, trainingLevel: level, result: null }));
+    setState((s) => ({ ...s, trainingLevel: level, result: null, hasServerProfile: false }));
   }, []);
 
   const setGoal = useCallback((goal: ProteinGoal) => {
-    setState((s) => ({ ...s, goal: goal, result: null }));
+    setState((s) => ({ ...s, goal: goal, result: null, hasServerProfile: false }));
   }, []);
 
   const setMealsPerDay = useCallback((meals: number) => {
-    setState((s) => ({ ...s, mealsPerDay: meals, result: null }));
+    setState((s) => ({ ...s, mealsPerDay: meals, result: null, hasServerProfile: false }));
   }, []);
 
   const calculate = useCallback(async () => {
