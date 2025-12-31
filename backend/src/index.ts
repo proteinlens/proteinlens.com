@@ -44,6 +44,7 @@ import './functions/oauth';
 
 // Feature 012: Admin Dashboard
 import './functions/admin-users';
+import './functions/admin-user-detail';
 import './functions/admin-metrics';
 import './functions/admin-plan-override';
 import './functions/admin-suspend';
