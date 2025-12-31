@@ -172,6 +172,36 @@ jobs:
             exit 1
           fi
 
+      - name: Run Database Migrations
+        run: |
+          RG="${{ inputs.resource_group }}"
+          FA_NAME="${{ inputs.functionapp_name }}"
+          
+          echo "🔄 Fetching DATABASE_URL from Function App..."
+          DATABASE_URL=$(az functionapp config appsettings list \
+            --name "$FA_NAME" \
+            --resource-group "$RG" \
+            --query "[?name=='DATABASE_URL'].value" -o tsv)
+          
+          if [ -z "$DATABASE_URL" ]; then
+            echo "⚠️ DATABASE_URL not found in Function App settings - skipping migrations"
+            exit 0
+          fi
+          
+          echo "✅ DATABASE_URL found"
+          
+          # Run Prisma migrations
+          cd backend
+          export DATABASE_URL="$DATABASE_URL"
+          
+          echo "📊 Checking migration status..."
+          npx prisma migrate status || true
+          
+          echo "🚀 Running database migrations..."
+          npx prisma migrate deploy
+          
+          echo "✅ Database migrations completed"
+
       - name: Verify Storage RBAC (informational)
         continue-on-error: true
         run: |
