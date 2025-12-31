@@ -65,28 +65,26 @@ export function AdminLayout({ children, onLogout, adminEmail }: AdminLayoutProps
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-50">
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-lg border-b border-gray-200/50 px-4 py-3">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-lg border-b border-green-200/50 px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-admin-500 to-admin-700 rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
+            <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-700 rounded-lg flex items-center justify-center">
+              <span className="text-white text-lg">🥗</span>
             </div>
-            <span className="font-bold text-gray-900">ProteinLens</span>
+            <span className="font-bold text-green-900">ProteinLens</span>
           </div>
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            className="p-2 rounded-lg hover:bg-green-100 transition-colors"
           >
             {isMobileMenuOpen ? (
-              <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             ) : (
-              <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             )}
@@ -108,16 +106,14 @@ export function AdminLayout({ children, onLogout, adminEmail }: AdminLayoutProps
         isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
       )}>
         <div className="flex flex-col h-full">
-          <div className="p-6 border-b border-gray-100">
+          <div className="p-6 border-b border-green-100">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-admin-500 to-admin-700 rounded-xl flex items-center justify-center shadow-lg shadow-admin-500/25">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
+              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-700 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/25">
+                <span className="text-white text-xl">🥗</span>
               </div>
               <div>
-                <h1 className="text-lg font-bold text-gray-900">ProteinLens</h1>
-                <p className="text-xs text-gray-500">Admin Dashboard</p>
+                <h1 className="text-lg font-bold text-green-900">ProteinLens</h1>
+                <p className="text-xs text-green-600">Admin Dashboard</p>
               </div>
             </div>
           </div>
@@ -133,8 +129,8 @@ export function AdminLayout({ children, onLogout, adminEmail }: AdminLayoutProps
                   className={clsx(
                     'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200',
                     isActive
-                      ? 'bg-gradient-to-r from-admin-500 to-admin-600 text-white shadow-md shadow-admin-500/25'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md shadow-green-500/25'
+                      : 'text-green-700 hover:bg-green-50 hover:text-green-900'
                   )}
                 >
                   {item.icon}
@@ -145,16 +141,16 @@ export function AdminLayout({ children, onLogout, adminEmail }: AdminLayoutProps
           </nav>
 
           {adminEmail && (
-            <div className="p-4 border-t border-gray-100">
-              <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-50">
-                <div className="w-8 h-8 bg-admin-100 rounded-full flex items-center justify-center">
-                  <svg className="w-4 h-4 text-admin-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-4 border-t border-green-100">
+              <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-green-50">
+                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-500">Signed in as</p>
-                  <p className="text-sm font-medium text-gray-900 truncate">{adminEmail}</p>
+                  <p className="text-xs text-green-600">Signed in as</p>
+                  <p className="text-sm font-medium text-green-900 truncate">{adminEmail}</p>
                 </div>
               </div>
               {onLogout && (
@@ -175,18 +171,16 @@ export function AdminLayout({ children, onLogout, adminEmail }: AdminLayoutProps
 
       <div className="flex">
         {/* Desktop Sidebar */}
-        <aside className="hidden lg:flex w-72 fixed left-0 top-0 bottom-0 bg-white border-r border-gray-200/80 flex-col shadow-sm">
+        <aside className="hidden lg:flex w-72 fixed left-0 top-0 bottom-0 bg-white border-r border-green-200/80 flex-col shadow-sm">
           {/* Logo */}
-          <div className="p-6 border-b border-gray-100">
+          <div className="p-6 border-b border-green-100">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 bg-gradient-to-br from-admin-500 to-admin-700 rounded-xl flex items-center justify-center shadow-lg shadow-admin-500/25">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
+              <div className="w-11 h-11 bg-gradient-to-br from-green-500 to-green-700 rounded-xl flex items-center justify-center shadow-lg shadow-green-500/25">
+                <span className="text-white text-2xl">🥗</span>
               </div>
               <div>
-                <h1 className="text-lg font-bold text-gray-900">ProteinLens</h1>
-                <p className="text-xs text-gray-500">Admin Dashboard</p>
+                <h1 className="text-lg font-bold text-green-900">ProteinLens</h1>
+                <p className="text-xs text-green-600">Admin Dashboard</p>
               </div>
             </div>
           </div>
@@ -202,8 +196,8 @@ export function AdminLayout({ children, onLogout, adminEmail }: AdminLayoutProps
                   className={clsx(
                     'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200',
                     isActive
-                      ? 'bg-gradient-to-r from-admin-500 to-admin-600 text-white shadow-md shadow-admin-500/25'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md shadow-green-500/25'
+                      : 'text-green-700 hover:bg-green-50 hover:text-green-900'
                   )}
                 >
                   {item.icon}
@@ -215,22 +209,22 @@ export function AdminLayout({ children, onLogout, adminEmail }: AdminLayoutProps
 
           {/* User Info */}
           {adminEmail && (
-            <div className="p-4 border-t border-gray-100">
-              <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-50/80">
-                <div className="w-9 h-9 bg-gradient-to-br from-admin-100 to-admin-200 rounded-full flex items-center justify-center">
-                  <svg className="w-5 h-5 text-admin-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="p-4 border-t border-green-100">
+              <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-green-50/80">
+                <div className="w-9 h-9 bg-gradient-to-br from-green-100 to-green-200 rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-500">Signed in as</p>
-                  <p className="text-sm font-medium text-gray-900 truncate">{adminEmail}</p>
+                  <p className="text-xs text-green-600">Signed in as</p>
+                  <p className="text-sm font-medium text-green-900 truncate">{adminEmail}</p>
                 </div>
               </div>
               {onLogout && (
                 <button
                   onClick={onLogout}
-                  className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200"
+                  className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-green-700 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -242,8 +236,8 @@ export function AdminLayout({ children, onLogout, adminEmail }: AdminLayoutProps
           )}
 
           {/* Footer */}
-          <div className="p-4 border-t border-gray-100">
-            <p className="text-xs text-gray-400 text-center">
+          <div className="p-4 border-t border-green-100">
+            <p className="text-xs text-green-500 text-center">
               © {new Date().getFullYear()} ProteinLens
             </p>
           </div>

@@ -1,36 +1,93 @@
 @import "tailwindcss";
 
 @theme {
-  /* Admin Blue Theme */
-  --color-primary: rgb(14 165 233);
+  /* Primary Green Theme - Same as Frontend */
+  --color-primary: rgb(34 197 94);
   --color-primary-foreground: rgb(255 255 255);
-  --color-secondary: rgb(240 249 255);
-  --color-secondary-foreground: rgb(7 89 133);
-  --color-muted: rgb(224 242 254);
-  --color-muted-foreground: rgb(3 105 161);
-  --color-accent: rgb(56 189 248);
-  --color-accent-foreground: rgb(12 74 110);
+  --color-secondary: rgb(240 253 244);
+  --color-secondary-foreground: rgb(22 101 52);
+  --color-muted: rgb(220 252 231);
+  --color-muted-foreground: rgb(21 128 61);
+  --color-accent: rgb(74 222 128);
+  --color-accent-foreground: rgb(20 83 45);
   --color-destructive: rgb(239 68 68);
   --color-destructive-foreground: rgb(255 255 255);
-  --color-border: rgb(186 230 253);
-  --color-input: rgb(224 242 254);
-  --color-ring: rgb(14 165 233);
-  --color-background: rgb(248 250 252);
-  --color-foreground: rgb(15 23 42);
+  --color-border: rgb(187 247 208);
+  --color-input: rgb(220 252 231);
+  --color-ring: rgb(34 197 94);
+  --color-background: rgb(255 255 255);
+  --color-foreground: rgb(20 83 45);
   --color-card: rgb(255 255 255);
-  --color-card-foreground: rgb(15 23 42);
+  --color-card-foreground: rgb(20 83 45);
+  --color-popover: rgb(255 255 255);
+  --color-popover-foreground: rgb(20 83 45);
   
-  /* Admin-specific colors */
-  --color-admin-50: rgb(240 249 255);
-  --color-admin-100: rgb(224 242 254);
-  --color-admin-200: rgb(186 230 253);
-  --color-admin-300: rgb(125 211 252);
-  --color-admin-400: rgb(56 189 248);
-  --color-admin-500: rgb(14 165 233);
-  --color-admin-600: rgb(2 132 199);
-  --color-admin-700: rgb(3 105 161);
-  --color-admin-800: rgb(7 89 133);
-  --color-admin-900: rgb(12 74 110);
+  /* Success/Warning/Info Colors */
+  --color-success: rgb(34 197 94);
+  --color-warning: rgb(234 179 8);
+  --color-info: rgb(59 130 246);
+
+  /* Standard Colors - Emerald */
+  --color-emerald-50: rgb(236 253 245);
+  --color-emerald-100: rgb(209 250 229);
+  --color-emerald-200: rgb(167 243 208);
+  --color-emerald-300: rgb(110 231 183);
+  --color-emerald-400: rgb(52 211 153);
+  --color-emerald-500: rgb(16 185 129);
+  --color-emerald-600: rgb(5 150 105);
+  --color-emerald-700: rgb(4 120 87);
+  --color-emerald-800: rgb(6 95 70);
+  --color-emerald-900: rgb(6 78 59);
+
+  /* Standard Colors - Green */
+  --color-green-50: rgb(240 253 244);
+  --color-green-100: rgb(220 252 231);
+  --color-green-200: rgb(187 247 208);
+  --color-green-300: rgb(134 239 172);
+  --color-green-400: rgb(74 222 128);
+  --color-green-500: rgb(34 197 94);
+  --color-green-600: rgb(22 163 74);
+  --color-green-700: rgb(21 128 61);
+  --color-green-800: rgb(22 101 52);
+  --color-green-900: rgb(20 83 45);
+
+  /* Standard Colors - Gray */
+  --color-gray-50: rgb(249 250 251);
+  --color-gray-100: rgb(243 244 246);
+  --color-gray-200: rgb(229 231 235);
+  --color-gray-300: rgb(209 213 219);
+  --color-gray-400: rgb(156 163 175);
+  --color-gray-500: rgb(107 114 128);
+  --color-gray-600: rgb(75 85 99);
+  --color-gray-700: rgb(55 65 81);
+  --color-gray-800: rgb(31 41 55);
+  --color-gray-900: rgb(17 24 39);
+  --color-gray-950: rgb(3 7 18);
+
+  /* Standard Colors - Red */
+  --color-red-50: rgb(254 242 242);
+  --color-red-100: rgb(254 226 226);
+  --color-red-200: rgb(254 202 202);
+  --color-red-500: rgb(239 68 68);
+  --color-red-600: rgb(220 38 38);
+
+  /* Standard Colors - Amber */
+  --color-amber-50: rgb(255 251 235);
+  --color-amber-100: rgb(254 243 199);
+  --color-amber-200: rgb(253 230 138);
+  --color-amber-500: rgb(245 158 11);
+  --color-amber-600: rgb(217 119 6);
+  --color-amber-800: rgb(146 64 14);
+
+  /* Standard Colors - Blue */
+  --color-blue-50: rgb(239 246 255);
+  --color-blue-100: rgb(219 234 254);
+  --color-blue-500: rgb(59 130 246);
+  --color-blue-600: rgb(37 99 235);
+
+  /* White and Black */
+  --color-white: rgb(255 255 255);
+  --color-black: rgb(0 0 0);
 
   /* Font */
   --font-sans: Inter, system-ui, sans-serif;
@@ -52,21 +109,21 @@ body {
   min-height: 100vh;
 }
 
-/* Admin-specific scrollbar styling */
+/* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: var(--color-secondary);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--color-border);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: var(--color-primary);
 }
