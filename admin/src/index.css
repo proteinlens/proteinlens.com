@@ -1,15 +1,49 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  /* Admin Blue Theme */
+  --color-primary: rgb(14 165 233);
+  --color-primary-foreground: rgb(255 255 255);
+  --color-secondary: rgb(240 249 255);
+  --color-secondary-foreground: rgb(7 89 133);
+  --color-muted: rgb(224 242 254);
+  --color-muted-foreground: rgb(3 105 161);
+  --color-accent: rgb(56 189 248);
+  --color-accent-foreground: rgb(12 74 110);
+  --color-destructive: rgb(239 68 68);
+  --color-destructive-foreground: rgb(255 255 255);
+  --color-border: rgb(186 230 253);
+  --color-input: rgb(224 242 254);
+  --color-ring: rgb(14 165 233);
+  --color-background: rgb(248 250 252);
+  --color-foreground: rgb(15 23 42);
+  --color-card: rgb(255 255 255);
+  --color-card-foreground: rgb(15 23 42);
+  
+  /* Admin-specific colors */
+  --color-admin-50: rgb(240 249 255);
+  --color-admin-100: rgb(224 242 254);
+  --color-admin-200: rgb(186 230 253);
+  --color-admin-300: rgb(125 211 252);
+  --color-admin-400: rgb(56 189 248);
+  --color-admin-500: rgb(14 165 233);
+  --color-admin-600: rgb(2 132 199);
+  --color-admin-700: rgb(3 105 161);
+  --color-admin-800: rgb(7 89 133);
+  --color-admin-900: rgb(12 74 110);
+
+  /* Font */
+  --font-sans: Inter, system-ui, sans-serif;
+}
 
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
   line-height: 1.5;
   font-weight: 400;
 
   color-scheme: light;
-  color: #213547;
-  background-color: #f8fafc;
+  color: var(--color-foreground);
+  background-color: var(--color-background);
 }
 
 body {
