@@ -189,25 +189,27 @@ jobs:
           fi
           
           # Check if it's a Key Vault reference
-          if [[ "$DATABASE_URL_RAW" =~ ^@Microsoft\.KeyVault ]]; then
+          if [[ "$DATABASE_URL_RAW" == @Microsoft.KeyVault* ]]; then
             echo "🔐 DATABASE_URL is a Key Vault reference, resolving..."
             
-            # Extract vault name and secret name from the reference
-            # Format: @Microsoft.KeyVault(VaultName=xxx;SecretName=yyy) or
+            # Extract vault name and secret name using grep/sed instead of bash regex
             # Format: @Microsoft.KeyVault(SecretUri=https://xxx.vault.azure.net/secrets/yyy)
-            if [[ "$DATABASE_URL_RAW" =~ SecretUri=([^)]+) ]]; then
-              SECRET_URI="${BASH_REMATCH[1]}"
-              # Extract vault name from URI: https://vaultname.vault.azure.net/secrets/secretname
+            if echo "$DATABASE_URL_RAW" | grep -q "SecretUri="; then
+              SECRET_URI=$(echo "$DATABASE_URL_RAW" | sed -n 's/.*SecretUri=\([^)]*\).*/\1/p')
               VAULT_NAME=$(echo "$SECRET_URI" | sed -n 's|https://\([^.]*\)\.vault\.azure\.net.*|\1|p')
-              SECRET_NAME=$(echo "$SECRET_URI" | sed -n 's|.*/secrets/\([^/]*\).*|\1|p')
-            elif [[ "$DATABASE_URL_RAW" =~ VaultName=([^;)]+) ]] && [[ "$DATABASE_URL_RAW" =~ SecretName=([^;)]+) ]]; then
-              VAULT_NAME="${BASH_REMATCH[1]}"
-              # Re-match for SecretName
-              [[ "$DATABASE_URL_RAW" =~ SecretName=([^;)]+) ]]
-              SECRET_NAME="${BASH_REMATCH[1]}"
+              SECRET_NAME=$(echo "$SECRET_URI" | sed -n 's|.*/secrets/\([^/)]*\).*|\1|p')
+            elif echo "$DATABASE_URL_RAW" | grep -q "VaultName="; then
+              VAULT_NAME=$(echo "$DATABASE_URL_RAW" | sed -n 's/.*VaultName=\([^;)]*\).*/\1/p')
+              SECRET_NAME=$(echo "$DATABASE_URL_RAW" | sed -n 's/.*SecretName=\([^;)]*\).*/\1/p')
             else
               echo "❌ Could not parse Key Vault reference format"
               echo "   Reference: $DATABASE_URL_RAW"
+              exit 1
+            fi
+            
+            if [ -z "$VAULT_NAME" ] || [ -z "$SECRET_NAME" ]; then
+              echo "❌ Could not extract vault name or secret name"
+              echo "   Vault: $VAULT_NAME, Secret: $SECRET_NAME"
               exit 1
             fi
             
@@ -229,7 +231,7 @@ jobs:
           fi
           
           # Validate URL format
-          if [[ ! "$DATABASE_URL" =~ ^postgres(ql)?:// ]]; then
+          if [[ "$DATABASE_URL" != postgres://* ]] && [[ "$DATABASE_URL" != postgresql://* ]]; then
             echo "❌ DATABASE_URL does not start with postgresql:// or postgres://"
             echo "   Value starts with: ${DATABASE_URL:0:15}..."
             exit 1
