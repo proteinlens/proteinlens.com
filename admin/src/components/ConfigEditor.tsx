@@ -4,7 +4,7 @@
  * Editor for protein calculator global config (min/max protein, default meals)
  */
 import { useState } from 'react';
-import type { ProteinConfig, UpdateConfigRequest } from '../services/adminProteinApi';
+import type { ProteinConfig, UpdateConfigRequest } from '../services/calculatorApi';
 
 interface ConfigEditorProps {
   config: ProteinConfig | null;

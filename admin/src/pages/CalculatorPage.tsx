@@ -1,25 +1,25 @@
 /**
- * Protein Presets Page (Feature 015)
+ * Calculator Page (Feature 015)
  * 
  * Admin page for managing protein calculator configuration
  */
 import { useState, useEffect, useCallback } from 'react';
-import { PresetEditor } from '../components/PresetEditor';
+import { MultiplierEditor } from '../components/MultiplierEditor';
 import { MealSplitEditor } from '../components/MealSplitEditor';
 import { ConfigEditor } from '../components/ConfigEditor';
 import {
-  getPresets,
-  updatePreset,
+  getMultipliers,
+  updateMultiplier,
   getProteinConfig,
   updateProteinConfig,
-  type ProteinPreset,
+  type Multiplier,
   type ProteinConfig,
-  type UpdatePresetRequest,
+  type UpdateMultiplierRequest,
   type UpdateConfigRequest,
-} from '../services/adminProteinApi';
+} from '../services/calculatorApi';
 
-export function ProteinPresetsPage() {
-  const [presets, setPresets] = useState<ProteinPreset[]>([]);
+export function CalculatorPage() {
+  const [multipliers, setMultipliers] = useState<Multiplier[]>([]);
   const [config, setConfig] = useState<ProteinConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,11 +28,11 @@ export function ProteinPresetsPage() {
     setLoading(true);
     setError(null);
     try {
-      const [presetsRes, configRes] = await Promise.all([
-        getPresets(),
+      const [multipliersRes, configRes] = await Promise.all([
+        getMultipliers(),
         getProteinConfig(),
       ]);
-      setPresets(presetsRes.presets);
+      setMultipliers(multipliersRes.presets);
       setConfig(configRes);
     } catch (err) {
       console.error('Failed to load protein settings:', err);
@@ -46,13 +46,13 @@ export function ProteinPresetsPage() {
     loadData();
   }, [loadData]);
 
-  const handleUpdatePreset = async (request: UpdatePresetRequest) => {
-    const updated = await updatePreset(request);
-    setPresets((prev) =>
-      prev.map((p) =>
-        p.trainingLevel === updated.trainingLevel && p.goal === updated.goal
+  const handleUpdateMultiplier = async (request: UpdateMultiplierRequest) => {
+    const updated = await updateMultiplier(request);
+    setMultipliers((prev) =>
+      prev.map((m) =>
+        m.trainingLevel === updated.trainingLevel && m.goal === updated.goal
           ? updated
-          : p
+          : m
       )
     );
   };
@@ -107,7 +107,7 @@ export function ProteinPresetsPage() {
             Protein Calculator Settings
           </h1>
           <p className="text-sm text-gray-500 mt-1">
-            Manage protein multiplier presets, meal splits, and global configuration
+            Manage protein multipliers, meal splits, and global configuration
           </p>
         </div>
         <button
@@ -126,10 +126,10 @@ export function ProteinPresetsPage() {
         isLoading={loading}
       />
 
-      {/* Presets */}
-      <PresetEditor
-        presets={presets}
-        onUpdate={handleUpdatePreset}
+      {/* Multipliers */}
+      <MultiplierEditor
+        multipliers={multipliers}
+        onUpdate={handleUpdateMultiplier}
         isLoading={loading}
       />
 

@@ -1,7 +1,7 @@
 /**
- * Admin Protein API Client (Feature 015)
+ * Admin Calculator API Client (Feature 015)
  * 
- * API functions for managing protein presets and configuration
+ * API functions for managing protein calculator multipliers and configuration
  */
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
@@ -13,7 +13,7 @@ const API_BASE = import.meta.env.VITE_API_URL || '';
 export type TrainingLevel = 'none' | 'regular';
 export type ProteinGoal = 'maintain' | 'lose' | 'gain';
 
-export interface ProteinPreset {
+export interface Multiplier {
   id: string;
   trainingLevel: TrainingLevel;
   goal: ProteinGoal;
@@ -22,8 +22,8 @@ export interface ProteinPreset {
   updatedAt: string;
 }
 
-export interface PresetsResponse {
-  presets: ProteinPreset[];
+export interface MultipliersResponse {
+  presets: Multiplier[];
 }
 
 export interface ProteinConfig {
@@ -35,7 +35,7 @@ export interface ProteinConfig {
   updatedAt: string;
 }
 
-export interface UpdatePresetRequest {
+export interface UpdateMultiplierRequest {
   trainingLevel: TrainingLevel;
   goal: ProteinGoal;
   multiplierGPerKg: number;
@@ -81,28 +81,28 @@ async function handleResponse<T>(response: Response): Promise<T> {
 // ===========================================
 
 /**
- * Get all protein presets
+ * Get all protein multipliers
  */
-export async function getPresets(): Promise<PresetsResponse> {
+export async function getMultipliers(): Promise<MultipliersResponse> {
   const response = await fetch(`${API_BASE}/api/dashboard/protein/presets`, {
     method: 'GET',
     headers: getAuthHeaders(),
     credentials: 'include',
   });
-  return handleResponse<PresetsResponse>(response);
+  return handleResponse<MultipliersResponse>(response);
 }
 
 /**
- * Update a protein preset
+ * Update a protein multiplier
  */
-export async function updatePreset(request: UpdatePresetRequest): Promise<ProteinPreset> {
+export async function updateMultiplier(request: UpdateMultiplierRequest): Promise<Multiplier> {
   const response = await fetch(`${API_BASE}/api/dashboard/protein/presets`, {
     method: 'PUT',
     headers: getAuthHeaders(),
     credentials: 'include',
     body: JSON.stringify(request),
   });
-  return handleResponse<ProteinPreset>(response);
+  return handleResponse<Multiplier>(response);
 }
 
 /**
