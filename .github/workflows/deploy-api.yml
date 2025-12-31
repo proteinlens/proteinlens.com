@@ -178,17 +178,27 @@ jobs:
           FA_NAME="${{ inputs.functionapp_name }}"
           
           echo "🔄 Fetching DATABASE_URL from Function App..."
-          DATABASE_URL=$(az functionapp config appsettings list \
+          DATABASE_URL_RAW=$(az functionapp config appsettings list \
             --name "$FA_NAME" \
             --resource-group "$RG" \
             --query "[?name=='DATABASE_URL'].value" -o tsv)
           
-          if [ -z "$DATABASE_URL" ]; then
+          if [ -z "$DATABASE_URL_RAW" ]; then
             echo "⚠️ DATABASE_URL not found in Function App settings - skipping migrations"
             exit 0
           fi
           
-          echo "✅ DATABASE_URL found"
+          # Clean up the URL - remove any surrounding quotes and whitespace
+          DATABASE_URL=$(echo "$DATABASE_URL_RAW" | tr -d '"' | tr -d "'" | xargs)
+          
+          # Validate URL format
+          if [[ ! "$DATABASE_URL" =~ ^postgres(ql)?:// ]]; then
+            echo "❌ DATABASE_URL does not start with postgresql:// or postgres://"
+            echo "   Raw value starts with: ${DATABASE_URL:0:20}..."
+            exit 1
+          fi
+          
+          echo "✅ DATABASE_URL found and validated"
           
           # Run Prisma migrations
           cd backend
