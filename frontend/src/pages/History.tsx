@@ -4,11 +4,13 @@ import { useWeeklyTrend } from '@/hooks/useWeeklyTrend'
 import { WeeklyTrendChart } from '@/components/history/WeeklyTrendChart'
 import { MealHistoryList } from '@/components/history/MealHistoryList'
 import { MealDetailModal } from '@/components/history/MealDetailModal'
+import { ProteinTargetCard } from '@/components/history/ProteinTargetCard'
 import { getUserId, setUserId } from '@/utils/userId'
 import { useAuth } from '@/contexts/AuthProvider'
 import { FriendlyError } from '@/components/ui/FriendlyError'
 import { emptyStates } from '@/utils/friendlyErrors'
 import { migrateMeals } from '@/services/authService'
+import { isToday, parseISO } from 'date-fns'
 
 export function History() {
   const { user } = useAuth()
@@ -34,6 +36,22 @@ export function History() {
   const { data: meals = [], isLoading, error, refetch } = useMeals(userId)
   const { days, averageProtein } = useWeeklyTrend(meals)
   const [selectedMeal, setSelectedMeal] = useState<any>(null)
+
+  // Calculate today's total protein intake
+  const todayProtein = useMemo(() => {
+    return meals
+      .filter(meal => {
+        try {
+          const mealDate = typeof meal.uploadedAt === 'string' 
+            ? parseISO(meal.uploadedAt) 
+            : new Date(meal.uploadedAt);
+          return isToday(mealDate);
+        } catch {
+          return false;
+        }
+      })
+      .reduce((sum, meal) => sum + (meal.analysis?.totalProtein || 0), 0);
+  }, [meals]);
 
   // Auto-migrate meals from old localStorage ID to authenticated user
   useEffect(() => {
@@ -146,6 +164,11 @@ export function History() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 pb-24 md:pb-8">
       <h1 className="text-2xl md:text-3xl font-bold mb-6">📊 Meal History</h1>
+
+      {/* Protein Target Progress Card */}
+      <div className="mb-6">
+        <ProteinTargetCard todayProtein={todayProtein} />
+      </div>
 
       {/* Empty State */}
       {meals.length === 0 && !isLoading && (
