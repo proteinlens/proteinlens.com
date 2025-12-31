@@ -17,6 +17,8 @@ import { CheckoutSuccessPage } from './pages/CheckoutSuccessPage';
 import HomePage from './pages/HomePage';
 import { UsageCounter } from './components/UsageCounter';
 import { useUsage } from './hooks/useUsage';
+import { useGoal } from './hooks/useGoal';
+import { useProteinGap } from './hooks/useProteinGap';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider, useAuth } from './contexts/AuthProvider';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -50,6 +52,8 @@ const Navigation: React.FC = () => {
   // Use persistent user ID from storage
   const userId = getUserId();
   const { usage, loading } = useUsage(userId);
+  const { goal } = useGoal();
+  const proteinGap = useProteinGap({ userId, dailyGoalGrams: goal });
   
   const navItems = [
     { path: '/', label: 'Scan', icon: '📸' },
@@ -128,6 +132,17 @@ const Navigation: React.FC = () => {
           
           {/* Right Side - Usage & CTA */}
           <div className="flex items-center gap-3">
+            {/* Mobile Protein Tracker - Shows daily progress on small screens */}
+            <Link 
+              to="/history"
+              className="sm:hidden flex items-center gap-1.5 px-2.5 py-1.5 bg-secondary/80 rounded-lg border border-primary/20"
+            >
+              <span className="text-sm">🥩</span>
+              <span className={`text-xs font-semibold ${proteinGap.isMet ? 'text-green-500' : 'text-foreground'}`}>
+                {Math.round(proteinGap.consumedGrams)}g/{goal}g
+              </span>
+            </Link>
+            
             {/* Usage Counter - Compact & Modern */}
             <div className="hidden sm:block">
               <UsageCounter usage={usage} loading={loading} compact />

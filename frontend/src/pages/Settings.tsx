@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { GoalInput } from '@/components/settings/GoalInput';
@@ -96,6 +96,14 @@ export function Settings() {
         <section className="space-y-2">
           <h2 className="text-lg font-semibold text-foreground">🎯 Nutrition Goals</h2>
           <GoalInput />
+          <Link 
+            to="/protein-calculator"
+            className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors mt-2"
+          >
+            <span>🧮</span>
+            <span>Not sure? Use our Protein Calculator to find your personalized target</span>
+            <span>→</span>
+          </Link>
         </section>
 
         {/* Appearance Section */}
