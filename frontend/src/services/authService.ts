@@ -163,10 +163,31 @@ export function clearTokens(): void {
 }
 
 /**
+ * Read CSRF token from cookie
+ * Cookie name: proteinlens_csrf (set by server with httpOnly: false)
+ */
+function getCsrfTokenFromCookie(): string | null {
+  const cookies = document.cookie.split(';');
+  for (const cookie of cookies) {
+    const [name, value] = cookie.trim().split('=');
+    if (name === 'proteinlens_csrf' && value) {
+      return value;
+    }
+  }
+  return null;
+}
+
+/**
  * Get the CSRF token for protected requests
+ * Prefers in-memory token, falls back to cookie
  */
 export function getCsrfToken(): string | null {
-  return csrfToken;
+  // Try in-memory first
+  if (csrfToken) {
+    return csrfToken;
+  }
+  // Fall back to cookie (survives page refresh)
+  return getCsrfTokenFromCookie();
 }
 
 /**
@@ -177,8 +198,10 @@ export function getAuthHeaders(): Record<string, string> {
     'Content-Type': 'application/json',
   };
   
-  if (csrfToken) {
-    headers['X-CSRF-Token'] = csrfToken;
+  // Get CSRF token from memory or cookie
+  const token = getCsrfToken();
+  if (token) {
+    headers['X-CSRF-Token'] = token;
   }
   
   return headers;
