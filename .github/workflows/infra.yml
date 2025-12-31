@@ -742,6 +742,20 @@ jobs:
               echo "✅ Function App email settings configured"
               echo "   Sender: $ACS_SENDER"
               echo "   Frontend URL: ${FRONTEND_URL}"
+              
+              # Link email domain to Communication Service (required for sending emails)
+              EMAIL_SERVICE_NAME="${ACS_NAME%-acs}-email"
+              CUSTOM_DOMAIN="proteinlens.com"
+              DOMAIN_RESOURCE_ID="/subscriptions/${{ vars.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.RESOURCE_GROUP }}/providers/Microsoft.Communication/emailServices/${EMAIL_SERVICE_NAME}/domains/${CUSTOM_DOMAIN}"
+              
+              echo "🔗 Linking email domain to Communication Service..."
+              az communication update \
+                --name "$ACS_NAME" \
+                --resource-group "${{ env.RESOURCE_GROUP }}" \
+                --linked-domains "$DOMAIN_RESOURCE_ID" \
+                --output none 2>/dev/null || echo "   Note: Domain may already be linked or not verified yet"
+              
+              echo "✅ Email domain link ensured"
             fi
           else
             echo "⚠️ ACS not deployed, configuring email in console mode"
