@@ -405,24 +405,45 @@ export async function getPublicConfig(
 
 /**
  * Get all presets for admin
+ * Returns fallback defaults if DB unavailable
  */
 export async function listPresets(
   prisma: PrismaClient
 ): Promise<AdminPresetsResponse> {
-  const presets = await prisma.proteinPreset.findMany({
-    orderBy: [{ trainingLevel: 'asc' }, { goal: 'asc' }],
-  });
+  try {
+    const presets = await prisma.proteinPreset.findMany({
+      orderBy: [{ trainingLevel: 'asc' }, { goal: 'asc' }],
+    });
 
-  return {
-    presets: presets.map((p) => ({
-      id: p.id,
-      trainingLevel: fromPrismaTrainingLevel(p.trainingLevel),
-      goal: fromPrismaGoal(p.goal),
-      multiplierGPerKg: Number(p.multiplierGPerKg),
-      active: p.active,
-      updatedAt: p.updatedAt.toISOString(),
-    })),
+    if (presets.length > 0) {
+      return {
+        presets: presets.map((p) => ({
+          id: p.id,
+          trainingLevel: fromPrismaTrainingLevel(p.trainingLevel),
+          goal: fromPrismaGoal(p.goal),
+          multiplierGPerKg: Number(p.multiplierGPerKg),
+          active: p.active,
+          updatedAt: p.updatedAt.toISOString(),
+        })),
+      };
+    }
+  } catch {
+    console.warn(`[ProteinCalculator] DB unavailable for listPresets, using fallback`);
+  }
+
+  // Return fallback presets as admin response
+  const fallbackPresets: AdminPresetsResponse = {
+    presets: [
+      { id: 'fallback-1', trainingLevel: 'none', goal: 'maintain', multiplierGPerKg: 1.0, active: true, updatedAt: new Date().toISOString() },
+      { id: 'fallback-2', trainingLevel: 'none', goal: 'lose', multiplierGPerKg: 1.2, active: true, updatedAt: new Date().toISOString() },
+      { id: 'fallback-3', trainingLevel: 'none', goal: 'gain', multiplierGPerKg: 1.2, active: true, updatedAt: new Date().toISOString() },
+      { id: 'fallback-4', trainingLevel: 'regular', goal: 'maintain', multiplierGPerKg: 1.6, active: true, updatedAt: new Date().toISOString() },
+      { id: 'fallback-5', trainingLevel: 'regular', goal: 'lose', multiplierGPerKg: 1.8, active: true, updatedAt: new Date().toISOString() },
+      { id: 'fallback-6', trainingLevel: 'regular', goal: 'gain', multiplierGPerKg: 1.8, active: true, updatedAt: new Date().toISOString() },
+    ],
   };
+
+  return fallbackPresets;
 }
 
 /**
@@ -464,31 +485,46 @@ export async function updatePreset(
 
 /**
  * Get admin config
+ * Returns fallback defaults if DB unavailable
  */
 export async function getAdminConfig(
   prisma: PrismaClient
 ): Promise<AdminConfigResponse> {
-  let config = await prisma.proteinConfig.findFirst();
+  try {
+    let config = await prisma.proteinConfig.findFirst();
 
-  if (!config) {
-    // Create default config
-    config = await prisma.proteinConfig.create({
-      data: {
-        minGDay: 60,
-        maxGDay: 220,
-        defaultMealsPerDay: 3,
-        mealSplits: DEFAULT_MEAL_SPLITS,
-      },
-    });
+    if (!config) {
+      // Create default config
+      config = await prisma.proteinConfig.create({
+        data: {
+          minGDay: 60,
+          maxGDay: 220,
+          defaultMealsPerDay: 3,
+          mealSplits: DEFAULT_MEAL_SPLITS,
+        },
+      });
+    }
+
+    return {
+      id: config.id,
+      minGDay: config.minGDay,
+      maxGDay: config.maxGDay,
+      defaultMealsPerDay: config.defaultMealsPerDay,
+      mealSplits: config.mealSplits as Record<string, number[]>,
+      updatedAt: config.updatedAt.toISOString(),
+    };
+  } catch {
+    console.warn(`[ProteinCalculator] DB unavailable for getAdminConfig, using fallback`);
   }
 
+  // Return fallback config
   return {
-    id: config.id,
-    minGDay: config.minGDay,
-    maxGDay: config.maxGDay,
-    defaultMealsPerDay: config.defaultMealsPerDay,
-    mealSplits: config.mealSplits as Record<string, number[]>,
-    updatedAt: config.updatedAt.toISOString(),
+    id: 'fallback-config',
+    minGDay: FALLBACK_CONFIG.minGDay,
+    maxGDay: FALLBACK_CONFIG.maxGDay,
+    defaultMealsPerDay: FALLBACK_CONFIG.defaultMealsPerDay,
+    mealSplits: FALLBACK_CONFIG.mealSplits,
+    updatedAt: new Date().toISOString(),
   };
 }
 
