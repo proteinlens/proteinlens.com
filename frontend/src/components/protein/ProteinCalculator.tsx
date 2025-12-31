@@ -170,7 +170,7 @@ export function ProteinCalculator({ className }: ProteinCalculatorProps) {
           {!isAuthenticated && (
             <div className="p-4 bg-muted rounded-lg">
               <p className="text-sm text-muted-foreground text-center">
-                <a href="/signin" className="text-primary hover:underline">
+                <a href="/login" className="text-primary hover:underline">
                   Sign in
                 </a>{' '}
                 to save your protein target and access it anywhere.

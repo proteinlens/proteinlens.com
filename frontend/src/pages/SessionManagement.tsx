@@ -40,7 +40,7 @@ export const SessionManagement: React.FC = () => {
       const token = await getAccessToken();
       
       if (!token) {
-        navigate('/signin');
+        navigate('/login');
         return;
       }
 
@@ -53,7 +53,7 @@ export const SessionManagement: React.FC = () => {
 
       if (!response.ok) {
         if (response.status === 401) {
-          navigate('/signin');
+          navigate('/login');
           return;
         }
         throw new Error('Failed to load sessions');
@@ -73,7 +73,7 @@ export const SessionManagement: React.FC = () => {
     if (isAuthenticated) {
       fetchSessions();
     } else {
-      navigate('/signin');
+      navigate('/login');
     }
   }, [isAuthenticated, fetchSessions, navigate]);
 
@@ -88,7 +88,7 @@ export const SessionManagement: React.FC = () => {
       const token = await getAccessToken();
       
       if (!token) {
-        navigate('/signin');
+        navigate('/login');
         return;
       }
 
@@ -102,7 +102,7 @@ export const SessionManagement: React.FC = () => {
 
       if (!response.ok) {
         if (response.status === 401) {
-          navigate('/signin');
+          navigate('/login');
           return;
         }
         const data = await response.json();

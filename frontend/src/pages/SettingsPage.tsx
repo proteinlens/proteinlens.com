@@ -49,7 +49,7 @@ export const SettingsPage: React.FC = () => {
     try {
       trackLogout();
       await logout();
-      navigate('/signin');
+      navigate('/login');
     } catch (err) {
       setError('Failed to sign out. Please try again.');
       setLogoutLoading(false);
@@ -289,7 +289,7 @@ export const SettingsPage: React.FC = () => {
                 You are not signed in.
               </p>
               <div className="settings-account__actions">
-                <a href="/signin" className="settings-account__button settings-account__button--signin">
+                <a href="/login" className="settings-account__button settings-account__button--signin">
                   <span className="settings-account__button-icon">🔑</span>
                   Sign In
                 </a>
