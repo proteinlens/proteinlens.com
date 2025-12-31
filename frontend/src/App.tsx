@@ -132,13 +132,13 @@ const Navigation: React.FC = () => {
           
           {/* Right Side - Usage & CTA */}
           <div className="flex items-center gap-3">
-            {/* Mobile Protein Tracker - Shows daily progress on small screens */}
+            {/* Protein Tracker - Shows daily progress */}
             <Link 
               to="/history"
-              className="sm:hidden flex items-center gap-1.5 px-2.5 py-1.5 bg-secondary/80 rounded-lg border border-primary/20"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 bg-secondary/80 rounded-lg border border-primary/20 hover:bg-secondary hover:border-primary/40 transition-all"
             >
               <span className="text-sm">🥩</span>
-              <span className={`text-xs font-semibold ${proteinGap.isMet ? 'text-green-500' : 'text-foreground'}`}>
+              <span className={`text-xs sm:text-sm font-semibold ${proteinGap.isMet ? 'text-green-500' : 'text-foreground'}`}>
                 {Math.round(proteinGap.consumedGrams)}g/{goal}g
               </span>
             </Link>
