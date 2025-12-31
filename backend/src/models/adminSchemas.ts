@@ -84,6 +84,7 @@ export const UserDetailResponseSchema = z.object({
   lastName: z.string().nullable(),
   organizationName: z.string().nullable(),
   phone: z.string().nullable(),
+  authProvider: z.string(),
   emailVerified: z.boolean(),
   profileCompleted: z.boolean(),
   plan: PlanSchema,

@@ -151,6 +151,7 @@ export async function getUserDetail(
     lastName: user.lastName,
     organizationName: user.organizationName,
     phone: user.phone,
+    authProvider: user.authProvider,
     emailVerified: user.emailVerified,
     profileCompleted: user.profileCompleted,
     plan: user.plan,

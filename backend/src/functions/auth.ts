@@ -810,8 +810,8 @@ async function forgotPassword(request: HttpRequest, context: InvocationContext):
     // Find user (don't reveal if exists)
     const user = await prisma.user.findUnique({ where: { email } });
 
-    if (!user || user.authProvider !== 'LOCAL') {
-      // Don't reveal if email exists or uses social login
+    if (!user) {
+      // Don't reveal if email exists
       return {
         status: 200,
         jsonBody: { message: 'If an account exists with this email, a password reset link will be sent.' },
