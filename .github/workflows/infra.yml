@@ -716,17 +716,25 @@ jobs:
           ACS_OUTPUT='${{ steps.acs.outputs.acs_output }}'
           if [ -n "$ACS_OUTPUT" ] && [ "$ACS_OUTPUT" != "null" ]; then
             ACS_SENDER=$(echo "$ACS_OUTPUT" | jq -r '.senderAddress.value')
+            ACS_NAME=$(echo "$ACS_OUTPUT" | jq -r '.communicationServiceName.value')
             
-            if [ -n "$ACS_SENDER" ] && [ "$ACS_SENDER" != "null" ]; then
+            if [ -n "$ACS_SENDER" ] && [ "$ACS_SENDER" != "null" ] && [ -n "$ACS_NAME" ] && [ "$ACS_NAME" != "null" ]; then
               echo "📧 Configuring Function App email settings..."
               
-              # Configure Function App with ACS email settings using Key Vault references
+              # Get ACS connection string directly (more reliable than Key Vault reference)
+              ACS_CONN=$(az communication list-key \
+                --name "$ACS_NAME" \
+                --resource-group "${{ env.RESOURCE_GROUP }}" \
+                --query "primaryConnectionString" -o tsv)
+              
+              # Configure Function App with ACS email settings (direct value, not Key Vault reference)
               az functionapp config appsettings set \
                 --name "$FUNCTION_APP_NAME" \
                 --resource-group "${{ env.RESOURCE_GROUP }}" \
                 --settings \
-                  "ACS_EMAIL_CONNECTION_STRING=@Microsoft.KeyVault(VaultName=${KEYVAULT_NAME};SecretName=acs-email-connection)" \
+                  "ACS_EMAIL_CONNECTION_STRING=${ACS_CONN}" \
                   "ACS_EMAIL_SENDER=${ACS_SENDER}" \
+                  "ACS_EMAIL_SENDER_NAME=ProteinLens" \
                   "FRONTEND_URL=${FRONTEND_URL}" \
                   "EMAIL_SERVICE=acs" \
                 --output none
