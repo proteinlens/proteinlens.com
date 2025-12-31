@@ -49,3 +49,7 @@ import './functions/admin-plan-override';
 import './functions/admin-suspend';
 import './functions/admin-audit-log';
 import './functions/admin-meals';
+
+// Feature 015: Protein Calculator
+import './functions/protein-calculator';
+import './functions/admin-protein';

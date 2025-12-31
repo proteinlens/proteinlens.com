@@ -42,6 +42,7 @@ const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const SessionManagement = lazy(() => import('./pages/SessionManagement'));
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
 const TermsPage = lazy(() => import('./pages/TermsPage'));
+const ProteinCalculatorPage = lazy(() => import('./pages/ProteinCalculatorPage'));
 
 // Navigation component with usage counter
 const Navigation: React.FC = () => {
@@ -52,6 +53,7 @@ const Navigation: React.FC = () => {
   
   const navItems = [
     { path: '/', label: 'Scan', icon: '📸' },
+    { path: '/protein-calculator', label: 'Calculator', icon: '🎯' },
     { path: '/history', label: 'History', icon: '📊' },
     { path: '/settings', label: 'Settings', icon: '⚙️' },
   ];
@@ -182,6 +184,7 @@ function App() {
                     <Routes>
                       {/* Public routes */}
                       <Route path="/" element={<HomePage />} />
+                      <Route path="/protein-calculator" element={<ProteinCalculatorPage />} />
                       <Route path="/pricing" element={<PricingPage />} />
                       <Route path="/privacy" element={<PrivacyPage />} />
                       <Route path="/terms" element={<TermsPage />} />
