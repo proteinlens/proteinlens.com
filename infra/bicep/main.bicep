@@ -111,6 +111,9 @@ module acsEmail 'acs-email.bicep' = {
     baseName: appNamePrefix
     location: 'global' // ACS requires global location
     dataLocation: 'unitedstates' // Match existing resource (created with unitedstates)
+    domainVerified: true // Domain is verified - link it to enable sending from DoNotReply@proteinlens.com
+    senderUsername: 'DoNotReply' // Match existing sender username (case-sensitive)
+    senderDisplayName: 'ProteinLens'
   }
 }
 

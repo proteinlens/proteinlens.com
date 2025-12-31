@@ -32,7 +32,7 @@ param dataLocation string = 'europe'
 param customEmailDomain string = 'proteinlens.com'
 
 @description('Sender username for emails')
-param senderUsername string = 'noreply'
+param senderUsername string = 'DoNotReply'
 
 @description('Sender display name')
 param senderDisplayName string = 'ProteinLens'
