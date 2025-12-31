@@ -477,7 +477,7 @@ export function HomePage() {
           {/* Secondary CTA - Demo scan */}
           <button
             onClick={handleDemoScan}
-            className="text-primary hover:text-primary/80 text-sm font-medium mb-6 underline decoration-primary/30 hover:decoration-primary/60 transition-colors"
+            className="text-emerald-700 hover:text-emerald-800 text-sm font-medium mb-6 underline decoration-emerald-400 hover:decoration-emerald-600 transition-colors"
           >
             See an example (no photo needed)
           </button>
