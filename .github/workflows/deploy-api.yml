@@ -244,23 +244,29 @@ jobs:
           export DATABASE_URL="$DATABASE_URL"
           
           echo "📊 Checking migration status..."
-          npx prisma migrate status || true
+          MIGRATION_STATUS=$(npx prisma migrate status 2>&1 || true)
+          echo "$MIGRATION_STATUS"
           
           # Resolve any failed migrations before attempting deploy
           echo "🔍 Checking for failed migrations..."
-          FAILED_MIGRATIONS=$(npx prisma migrate status 2>&1 | grep -oP '(?<=Following migration have failed:\n).*' || echo "")
-          
-          if [ -n "$FAILED_MIGRATIONS" ]; then
-            echo "⚠️  Found failed migrations: $FAILED_MIGRATIONS"
-            echo "🔄 Marking failed migrations as rolled back..."
+          if echo "$MIGRATION_STATUS" | grep -q "Following migration have failed:"; then
+            echo "⚠️  Found failed migrations, extracting names..."
             
-            # Extract migration names and mark as rolled back
-            echo "$FAILED_MIGRATIONS" | while IFS= read -r migration; do
-              if [ -n "$migration" ]; then
+            # Extract migration names (lines after "Following migration have failed:" until blank line)
+            FAILED_MIGRATIONS=$(echo "$MIGRATION_STATUS" | sed -n '/Following migration have failed:/,/^$/p' | tail -n +2 | grep -v '^$' | xargs)
+            
+            if [ -n "$FAILED_MIGRATIONS" ]; then
+              echo "📋 Failed migrations: $FAILED_MIGRATIONS"
+              echo "🔄 Marking failed migrations as rolled back..."
+              
+              # Mark each migration as rolled back
+              for migration in $FAILED_MIGRATIONS; do
                 echo "  → Rolling back: $migration"
                 npx prisma migrate resolve --rolled-back "$migration" || echo "⚠️  Could not mark $migration as rolled back"
-              fi
-            done
+              done
+            fi
+          else
+            echo "✅ No failed migrations detected"
           fi
           
           echo "🚀 Running database migrations..."
