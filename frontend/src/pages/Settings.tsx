@@ -12,7 +12,7 @@ import { getUserId } from '@/utils/userId';
 
 export function Settings() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, logout, isAuthenticated } = useAuth();
   
   // Use authenticated user ID if available, otherwise fall back to localStorage ID
   const userId = useMemo(() => {
@@ -26,8 +26,21 @@ export function Settings() {
   
   const { data: meals = [], isLoading: mealsLoading } = useMeals(userId);
   const [isExporting, setIsExporting] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const pageVariants = getPageVariants();
   const pageTransition = getPageTransition();
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   const handleExportCSV = async () => {
     if (meals.length === 0) {
@@ -132,6 +145,20 @@ export function Settings() {
                 )}
               </div>
             </div>
+
+            <hr className="border-border" />
+
+            {/* Logout Button */}
+            {isAuthenticated && (
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+              >
+                {isLoggingOut ? '⏳ Logging out...' : '🚪 Log Out'}
+              </Button>
+            )}
 
             <hr className="border-border" />
 
