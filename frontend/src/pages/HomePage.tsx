@@ -20,6 +20,7 @@ interface AnalysisResult {
   totalProtein: number
   confidence: 'high' | 'medium' | 'low'
   notes?: string
+  dietFeedback?: string // Feature 017: Diet-specific feedback
 }
 
 type UploadState = 'idle' | 'selected' | 'uploading' | 'analyzing' | 'done' | 'error' | 'demo'
@@ -306,6 +307,13 @@ export function HomePage() {
         {result.notes && (
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-4 rounded-xl text-sm text-yellow-800 dark:text-yellow-200 mb-5 text-left">
             <strong>💡 Pro tip:</strong> {result.notes}
+          </div>
+        )}
+        
+        {/* Diet feedback - Feature 017 */}
+        {result.dietFeedback && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4 rounded-xl text-sm text-blue-800 dark:text-blue-200 mb-5 text-left">
+            <strong>🥗 Diet Insight:</strong> {result.dietFeedback}
           </div>
         )}
         

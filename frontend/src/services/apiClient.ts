@@ -32,6 +32,7 @@ export interface AnalysisResponse {
   totalProtein: number;
   confidence: 'high' | 'medium' | 'low';
   notes?: string;
+  dietFeedback?: string; // Feature 017: Diet-specific feedback based on user's diet style
   blobName: string;
   requestId: string;
 }
@@ -328,6 +329,30 @@ class ApiClient {
     if (!response.ok) {
       const error: ApiError = await response.json();
       throw new Error(error.error || `Update meal failed: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Feature 017: Update meal privacy status
+   * T020: Toggle public/private visibility for meal sharing
+   */
+  async updateMealPrivacy(mealId: string, isPublic: boolean): Promise<{
+    id: string;
+    shareId: string;
+    isPublic: boolean;
+    shareUrl: string | null;
+  }> {
+    const response = await fetch(`${API_PATH}/meals/${mealId}/privacy`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify({ isPublic }),
+    });
+
+    if (!response.ok) {
+      const error: ApiError = await response.json();
+      throw new Error(error.error || `Update privacy failed: ${response.status}`);
     }
 
     return response.json();

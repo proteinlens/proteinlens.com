@@ -53,9 +53,9 @@ npm test && npm run lint
 TypeScript 5.3+ / Node.js 20: Follow standard conventions
 
 ## Recent Changes
+- 017-shareable-meals-diets: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
 - 016-goal-sync: Added TypeScript 5.x, Node.js 20+ + React 18, Vite, Azure Functions v4, Prisma ORM
 - 015-protein-target-calculator: Added TypeScript 5.x (Node 20+) + Azure Functions v4, Prisma ORM, React 18, TanStack Query, Tailwind CSS, Zod
-- 014-slack-auth-notifications: Added TypeScript 5.x (Node.js 20+) + Native `fetch` API (no new dependencies required)
 
 
 <!-- MANUAL ADDITIONS START -->

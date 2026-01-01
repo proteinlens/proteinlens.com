@@ -1,10 +1,12 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { useMeals } from '@/hooks/useMeal'
 import { useWeeklyTrend } from '@/hooks/useWeeklyTrend'
+import { useDailySummary } from '@/hooks/useDietStyles'
 import { WeeklyTrendChart } from '@/components/history/WeeklyTrendChart'
 import { MealHistoryList } from '@/components/history/MealHistoryList'
 import { MealDetailModal } from '@/components/history/MealDetailModal'
 import { ProteinTargetCard } from '@/components/history/ProteinTargetCard'
+import { MacroSplitDisplay } from '@/components/meal/MacroSplitDisplay'
 import { getUserId, setUserId } from '@/utils/userId'
 import { useAuth } from '@/contexts/AuthProvider'
 import { FriendlyError } from '@/components/ui/FriendlyError'
@@ -17,6 +19,9 @@ export function History() {
   const { user } = useAuth()
   const migrationAttemptedRef = useRef(false)
   const [isMigrating, setIsMigrating] = useState(false)
+  
+  // Feature 017, US5: Daily macro summary for diet users
+  const { data: dailySummary } = useDailySummary()
   
   // Use authenticated user ID if available, otherwise fall back to localStorage ID
   // This ensures consistency between logged-in users and anonymous users
@@ -219,6 +224,19 @@ export function History() {
       <div className="mb-6">
         <ProteinTargetCard todayProtein={todayProtein} />
       </div>
+
+      {/* Feature 017, T050: Macro Split Display for diet users */}
+      {dailySummary && dailySummary.meals > 0 && (
+        <div className="mb-6">
+          <MacroSplitDisplay
+            macros={dailySummary.macros}
+            percentages={dailySummary.percentages}
+            totalCalories={dailySummary.totalCalories}
+            carbWarning={dailySummary.carbWarning}
+            carbLimit={dailySummary.carbLimit}
+          />
+        </div>
+      )}
 
       {/* Empty State */}
       {meals.length === 0 && !isLoading && (

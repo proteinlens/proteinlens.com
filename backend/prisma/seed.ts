@@ -96,6 +96,81 @@ async function seedProteinConfig(): Promise<void> {
 }
 
 // ============================================
+// Diet Styles Seeds (Feature 017)
+// ============================================
+
+const DEFAULT_DIET_STYLES = [
+  {
+    slug: 'balanced',
+    name: 'Balanced',
+    description: 'Standard nutrition with no specific restrictions. Focus on overall protein goals.',
+    netCarbCapG: null,
+    fatTargetPercent: null,
+    isActive: true,
+    sortOrder: 0,
+  },
+  {
+    slug: 'mediterranean',
+    name: 'Mediterranean',
+    description: 'Heart-healthy eating emphasizing olive oil, fish, whole grains, and vegetables.',
+    netCarbCapG: null,
+    fatTargetPercent: 35,
+    isActive: true,
+    sortOrder: 1,
+  },
+  {
+    slug: 'low-carb',
+    name: 'Low-Carb',
+    description: 'Reduced carbohydrate intake while maintaining moderate protein. Good for blood sugar management.',
+    netCarbCapG: 100,
+    fatTargetPercent: null,
+    isActive: true,
+    sortOrder: 2,
+  },
+  {
+    slug: 'ketogenic',
+    name: 'Ketogenic',
+    description: 'Very low carb, high fat diet to achieve ketosis. Strict carb limits with protein moderation.',
+    netCarbCapG: 30,
+    fatTargetPercent: 70,
+    isActive: true,
+    sortOrder: 3,
+  },
+  {
+    slug: 'plant-based',
+    name: 'Plant-Based',
+    description: 'Nutrition from plant sources only. Focus on legumes, tofu, tempeh, and nuts for protein.',
+    netCarbCapG: null,
+    fatTargetPercent: null,
+    isActive: true,
+    sortOrder: 4,
+  },
+];
+
+async function seedDietStyles(): Promise<void> {
+  console.log('Seeding diet styles...');
+
+  for (const dietStyle of DEFAULT_DIET_STYLES) {
+    await prisma.dietStyle.upsert({
+      where: {
+        slug: dietStyle.slug,
+      },
+      update: {
+        name: dietStyle.name,
+        description: dietStyle.description,
+        netCarbCapG: dietStyle.netCarbCapG,
+        fatTargetPercent: dietStyle.fatTargetPercent,
+        isActive: dietStyle.isActive,
+        sortOrder: dietStyle.sortOrder,
+      },
+      create: dietStyle,
+    });
+  }
+
+  console.log(`✓ Seeded ${DEFAULT_DIET_STYLES.length} diet styles`);
+}
+
+// ============================================
 // Main seed function
 // ============================================
 
@@ -105,6 +180,9 @@ async function main(): Promise<void> {
   // Protein Calculator (Feature 015)
   await seedProteinPresets();
   await seedProteinConfig();
+
+  // Diet Styles (Feature 017)
+  await seedDietStyles();
 
   console.log('\n✅ Database seed complete!');
 }

@@ -110,6 +110,15 @@ export function MealHistoryCard({ mealId, meal, onClick, onDelete }: MealHistory
               {meal.analysis.foods.length > 2 && ` +${meal.analysis.foods.length - 2} more`}
             </div>
           )}
+          
+          {/* Diet style at scan - Feature 017 */}
+          {meal.dietStyleAtScan && (
+            <div className="mt-2">
+              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                🥗 {meal.dietStyleAtScan.name}
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </motion.div>

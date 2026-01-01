@@ -234,3 +234,71 @@ export interface AdminUserLookup {
   totalMeals: number;
   lastActivity?: string;
 }
+
+// ========================
+// Diet Style Types - Feature 017
+// ========================
+
+/**
+ * T053: Diet style public representation
+ * Used in frontend for diet style selection and display
+ */
+export interface DietStyle {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  netCarbCapG: number | null;
+  fatTargetPercent: number | null;
+}
+
+/**
+ * Diet style snapshot for meal history
+ * Captures which diet style was active when a meal was scanned
+ */
+export interface DietStyleAtScan {
+  id: string;
+  slug: string;
+  name: string;
+}
+
+/**
+ * Daily macro summary for diet users
+ * Feature 017, US5: Macro Split Display
+ */
+export interface DailySummary {
+  date: string;
+  meals: number;
+  macros: {
+    protein: number;
+    carbs: number;
+    fat: number;
+  };
+  percentages: {
+    protein: number;
+    carbs: number;
+    fat: number;
+  };
+  totalCalories: number;
+  carbWarning: boolean;
+  carbLimit: number | null;
+}
+
+/**
+ * User diet style update request
+ */
+export interface UpdateDietStyleRequest {
+  dietStyleId: string | null;
+}
+
+/**
+ * User diet style update response
+ */
+export interface UpdateDietStyleResponse {
+  success: boolean;
+  dietStyle: {
+    id: string;
+    slug: string;
+    name: string;
+  } | null;
+}

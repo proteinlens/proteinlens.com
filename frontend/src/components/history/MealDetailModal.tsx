@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/Button';
-import { useDeleteMeal } from '@/hooks/useMeal';
+import { useDeleteMeal, useUpdateMealPrivacy } from '@/hooks/useMeal';
+import { ShareButton } from '@/components/meal/ShareButton';
+import { PrivacyToggle } from '@/components/meal/PrivacyToggle';
 
 interface Food {
   name: string;
@@ -61,15 +63,51 @@ interface MealDetailModalProps {
       foods: Food[];
       notes?: string;
     };
+    // Feature 017: Shareable fields
+    shareId?: string;
+    shareUrl?: string | null;
+    isPublic?: boolean;
+    proTip?: string | null;
+    dietStyleAtScan?: {
+      slug: string;
+      name: string;
+    } | null;
   };
   isOpen: boolean;
   onClose: () => void;
   onDelete?: () => void;
+  onPrivacyChange?: (isPublic: boolean) => void;
 }
 
-export function MealDetailModal({ meal, isOpen, onClose, onDelete }: MealDetailModalProps) {
+export function MealDetailModal({ meal, isOpen, onClose, onDelete, onPrivacyChange }: MealDetailModalProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [localIsPublic, setLocalIsPublic] = useState(meal.isPublic ?? true);
   const deleteHook = useDeleteMeal();
+  const updatePrivacyHook = useUpdateMealPrivacy();
+
+  // Sync local state with prop changes
+  React.useEffect(() => {
+    setLocalIsPublic(meal.isPublic ?? true);
+  }, [meal.isPublic]);
+
+  const handlePrivacyToggle = async (newIsPublic: boolean) => {
+    try {
+      await updatePrivacyHook.mutateAsync({ 
+        mealId: meal.id || meal.mealAnalysisId, 
+        isPublic: newIsPublic 
+      });
+      setLocalIsPublic(newIsPublic);
+      onPrivacyChange?.(newIsPublic);
+    } catch (error) {
+      console.error('Failed to update privacy:', error);
+      throw error; // Let the toggle component handle the error
+    }
+  };
+
+  // Compute share URL
+  const shareUrl = localIsPublic && meal.shareId 
+    ? meal.shareUrl || `https://www.proteinlens.com/meal/${meal.shareId}`
+    : null;
 
   const getConfidenceColor = (confidence: string) => {
     switch (confidence) {
@@ -219,9 +257,54 @@ export function MealDetailModal({ meal, isOpen, onClose, onDelete }: MealDetailM
                   💡 Pro Tip
                 </h3>
                 <p className="text-sm text-muted-foreground bg-primary/10 border border-primary/20 rounded-lg p-3">
-                  {getProTip(meal.analysis.totalProtein, meal.analysis.foods)}
+                  {/* Feature 017: Use stored proTip if available, otherwise generate */}
+                  {meal.proTip || meal.analysis.notes || getProTip(meal.analysis.totalProtein, meal.analysis.foods)}
                 </p>
               </div>
+
+              {/* Feature 017: Share & Privacy Controls */}
+              {meal.shareId && (
+                <div className="space-y-3 p-4 bg-muted/30 rounded-lg border border-border">
+                  <h3 className="font-semibold text-foreground flex items-center gap-2">
+                    🔗 Share this meal
+                  </h3>
+                  
+                  <div className="flex items-center justify-between gap-4">
+                    {/* Privacy Toggle */}
+                    <PrivacyToggle
+                      isPublic={localIsPublic}
+                      onToggle={handlePrivacyToggle}
+                      disabled={updatePrivacyHook.isPending}
+                    />
+                    
+                    {/* Share Button - only show when public */}
+                    {localIsPublic && shareUrl && (
+                      <ShareButton shareUrl={shareUrl} />
+                    )}
+                  </div>
+                  
+                  {localIsPublic && shareUrl && (
+                    <p className="text-xs text-muted-foreground">
+                      Anyone with the link can view this meal's analysis and image.
+                    </p>
+                  )}
+                  {!localIsPublic && (
+                    <p className="text-xs text-muted-foreground">
+                      This meal is private. Toggle to public to share it.
+                    </p>
+                  )}
+
+                  {/* Diet Style Badge */}
+                  {meal.dietStyleAtScan && meal.dietStyleAtScan.name !== 'Balanced' && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                        {meal.dietStyleAtScan.name}
+                      </span>
+                      diet at scan time
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Actions */}
               <div className="flex gap-3 pt-4 border-t border-border">
