@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/utils/cn';
@@ -14,6 +14,13 @@ export const GoalInput = ({ onSave }: GoalInputProps) => {
   const [inputValue, setInputValue] = useState(goal.toString());
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
+
+  // Sync input value when goal loads from storage/API
+  useEffect(() => {
+    if (!isLoading) {
+      setInputValue(goal.toString());
+    }
+  }, [goal, isLoading]);
 
   const cardVariants = getCardVariants();
   const transition = getPageTransition();
