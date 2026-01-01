@@ -14,7 +14,7 @@ type SortBy = 'createdAt' | 'totalProtein' | 'confidence';
 type SortOrder = 'asc' | 'desc';
 
 // Confidence badge colors
-const CONFIDENCE_CONFIG: Record<Confidence, { bg: string; text: string; icon: JSX.Element }> = {
+const CONFIDENCE_CONFIG: Record<Confidence, { bg: string; text: string; icon: React.ReactElement }> = {
   high: {
     bg: 'bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-200',
     text: 'text-emerald-700',
