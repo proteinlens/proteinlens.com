@@ -190,28 +190,6 @@ export function Settings() {
             </Button>
           </div>
         </section>
-
-        {/* Danger Zone */}
-        <section className="space-y-2">
-          <h2 className="text-lg font-semibold text-destructive">⚠️ Danger Zone</h2>
-          <div className="bg-destructive/5 border border-destructive/30 rounded-lg p-6 space-y-4">
-            <p className="text-sm text-foreground">
-              This will permanently delete all your data. No take-backs! 😬
-            </p>
-            <Button
-              variant="destructive"
-              className="w-full"
-              onClick={() => {
-                if (confirm('Are you absolutely sure? All your meals and history will be gone forever! 💨')) {
-                  // TODO: Implement delete all data
-                  console.log('Delete all data');
-                }
-              }}
-            >
-              🗑️ Delete Everything
-            </Button>
-          </div>
-        </section>
       </motion.div>
     </PageContainer>
   );
