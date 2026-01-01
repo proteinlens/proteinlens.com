@@ -148,14 +148,14 @@
 
 **Purpose**: Documentation, cleanup, and final validation
 
-- [ ] T052 [P] Update quickstart.md with actual test commands
-- [ ] T053 [P] Add diet style types to frontend/src/types/index.ts
-- [ ] T054 Verify OG tags render correctly on Twitter Card Validator
-- [ ] T055 Verify OG tags render correctly on Facebook Debugger
-- [ ] T056 Test meal privacy toggle (public → private → verify 404)
-- [ ] T057 Test diet style change flow end-to-end
-- [ ] T058 Run quickstart.md validation checklist
-- [ ] T059 Update README.md with Feature 017 highlights
+- [X] T052 [P] Update quickstart.md with actual test commands
+- [X] T053 [P] Add diet style types to frontend/src/types/index.ts
+- [X] T054 Verify OG tags render correctly on Twitter Card Validator
+- [X] T055 Verify OG tags render correctly on Facebook Debugger
+- [X] T056 Test meal privacy toggle (public → private → verify 404)
+- [X] T057 Test diet style change flow end-to-end
+- [X] T058 Run quickstart.md validation checklist
+- [X] T059 Update README.md with Feature 017 highlights
 
 ---
 

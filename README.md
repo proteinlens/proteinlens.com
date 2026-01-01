@@ -17,6 +17,51 @@
 - 🎯 **Set Goals** - Customize your daily protein target
 - 📱 **Mobile-First** - Responsive design works on any device
 - 🌙 **Dark Mode** - Easy on the eyes, day or night
+- 🔗 **Shareable Meals** - Get unique URLs to share meal scans with friends (Feature 017)
+- 🥗 **Diet Profiles** - Select from Keto, Paleo, Vegan, or Balanced diet styles (Feature 017)
+- 📈 **Macro Breakdown** - View daily fat/protein/carb percentages for goal-focused diets (Feature 017)
+- ⚡ **Pro Tips** - AI-generated nutrition tips persist with each meal (Feature 017)
+
+## 📋 Shareable Meals & Diet Profiles
+
+**Feature 017** adds social sharing and personalized nutrition tracking:
+
+### Key Capabilities
+
+- **Share Meal Scans**: Every meal gets a unique shareable URL (e.g., `/meal/abc12xyz`) with social media OG tags
+- **Diet Style Selection**: Users select from admin-configured diet profiles (Ketogenic, Paleo, Vegan, Balanced)
+- **Diet Feedback**: When meal nutrients exceed diet limits, users see personalized warnings
+- **Daily Macro Summary**: View daily totals broken down by macro percentage for specialty diets
+- **Admin Configuration**: Admins can create and edit diet styles without code deployment
+- **Meal Privacy Control**: Toggle between public (shareable) and private meals
+
+### Quick Links
+
+- 📚 [Feature 017 Quickstart Guide](specs/017-shareable-meals-diets/quickstart.md)
+- 🎯 [User Story Details](specs/017-shareable-meals-diets/spec.md)
+- 🗂️ [Data Model & Relationships](specs/017-shareable-meals-diets/data-model.md)
+- 📊 [Architecture & Technical Decisions](specs/017-shareable-meals-diets/research.md)
+
+### Example API Usage
+
+```bash
+# Get active diet styles
+curl https://api.proteinlens.com/api/diet-styles
+
+# Set user's diet preference
+curl -X PATCH https://api.proteinlens.com/api/me/diet-style \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"dietStyleId": "550e8400-e29b-41d4-a716-446655440000"}'
+
+# View daily macro breakdown
+curl https://api.proteinlens.com/api/meals/daily-summary \
+  -H "Authorization: Bearer $TOKEN"
+
+# Share a meal (public URL with OG tags)
+https://www.proteinlens.com/meal/abc12xyz
+```
+
+---
 
 ## 🚀 Quick Start
 
