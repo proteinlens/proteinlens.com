@@ -24,6 +24,18 @@ function isTestEnvironment(): boolean {
 }
 
 /**
+ * Get cookie domain for cross-subdomain sharing
+ * In production, use .proteinlens.com to share between www and api subdomains
+ */
+function getCookieDomain(): string | undefined {
+  if (isProduction()) {
+    return '.proteinlens.com';
+  }
+  // In development, don't set domain to allow localhost
+  return undefined;
+}
+
+/**
  * Create HttpOnly cookie for refresh token
  * - httpOnly: true prevents JavaScript access (XSS protection)
  * - secure: true in production (HTTPS only)
@@ -38,8 +50,9 @@ export function setRefreshTokenCookie(refreshToken: string, expiresAt: Date): Co
     value: refreshToken,
     httpOnly: true,
     secure: isProduction(),
-    sameSite: 'Strict',
-    path: '/api/auth',
+    sameSite: 'Lax', // Lax allows cross-subdomain with top-level navigation
+    path: '/',
+    domain: getCookieDomain(),
     maxAge: Math.max(0, maxAge), // Ensure non-negative
   };
 }
@@ -54,8 +67,9 @@ export function clearRefreshTokenCookie(): Cookie {
     value: '',
     httpOnly: true,
     secure: isProduction(),
-    sameSite: 'Strict',
-    path: '/api/auth',
+    sameSite: 'Lax',
+    path: '/',
+    domain: getCookieDomain(),
     maxAge: 0, // Immediate expiration
   };
 }
@@ -78,8 +92,9 @@ export function setCsrfTokenCookie(csrfToken: string): Cookie {
     value: csrfToken,
     httpOnly: false, // JS needs to read this for double-submit pattern
     secure: isProduction(),
-    sameSite: 'Strict',
+    sameSite: 'Lax', // Lax allows reading from www subdomain
     path: '/',
+    domain: getCookieDomain(),
     maxAge: 60 * 60 * 24, // 24 hours
   };
 }
@@ -93,8 +108,9 @@ export function clearCsrfTokenCookie(): Cookie {
     value: '',
     httpOnly: false,
     secure: isProduction(),
-    sameSite: 'Strict',
+    sameSite: 'Lax',
     path: '/',
+    domain: getCookieDomain(),
     maxAge: 0,
   };
 }
