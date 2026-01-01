@@ -1,7 +1,9 @@
 // Azure Function: GET /api/meals
 // Get meal history for a user
 // Feature: 001-blob-vision-analysis, User Story 2
+// Feature 017: Shareable Meal Scans & Diet Style Profiles
 // Task: T067 - Meal history retrieval
+// Task: T017 - Extended to include shareable fields
 
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { v4 as uuidv4 } from 'uuid';
@@ -9,11 +11,18 @@ import { Logger } from '../utils/logger.js';
 import { mealService } from '../services/mealService.js';
 import { blobService } from '../services/blobService.js';
 import { extractUserId } from '../middleware/quotaMiddleware.js';
+import { getShareUrl } from '../utils/nanoid.js';
 
 interface Food {
   name: string;
   portion: string;
   protein: number | { toNumber: () => number };
+}
+
+interface DietStyleSnapshot {
+  id: string;
+  slug: string;
+  name: string;
 }
 
 interface MealWithFoods {
@@ -32,6 +41,10 @@ interface MealWithFoods {
   createdAt: Date;
   updatedAt: Date;
   foods: Food[];
+  // Feature 017: Shareable fields
+  shareId: string;
+  isPublic: boolean;
+  dietStyleAtScan: DietStyleSnapshot | null;
 }
 
 export async function getMeals(request: HttpRequest, context: InvocationContext): Promise<HttpResponseInit> {
@@ -112,6 +125,7 @@ export async function getMeals(request: HttpRequest, context: InvocationContext)
         totalProtein: Number(meal.totalProtein),
         confidence: meal.confidence,
         notes: meal.notes,
+        proTip: meal.notes, // Feature 017: Pro Tip (alias for notes)
         foods: (meal.foods as Food[]).map((food) => ({
           name: food.name,
           portion: food.portion,
@@ -120,6 +134,16 @@ export async function getMeals(request: HttpRequest, context: InvocationContext)
         aiModel: meal.aiModel,
         requestId: meal.requestId,
         userCorrections: meal.userCorrections,
+        // Feature 017: Shareable fields
+        shareId: meal.shareId,
+        shareUrl: meal.isPublic ? getShareUrl(meal.shareId) : null, // Only show shareUrl if public
+        isPublic: meal.isPublic,
+        dietStyleAtScan: meal.dietStyleAtScan
+          ? {
+              slug: meal.dietStyleAtScan.slug,
+              name: meal.dietStyleAtScan.name,
+            }
+          : null,
       };
     }));
 

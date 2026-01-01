@@ -164,6 +164,10 @@ model User {
   suspendedReason       String?             @db.VarChar(500)
   suspendedBy           String?             @db.VarChar(255)  // Admin email who suspended
   
+  // Feature 017: Diet Style preference
+  dietStyleId           String?             @db.Uuid
+  dietStyle             DietStyle?          @relation(fields: [dietStyleId], references: [id], onDelete: SetNull)
+  
   // Relations
   usage                 Usage[]
   subscriptionEvents    SubscriptionEvent[]
@@ -179,6 +183,7 @@ model User {
   @@index([plan])
   @@index([email])
   @@index([authProvider, oauthProviderId])
+  @@index([dietStyleId])
 }
 
 // ===========================================
@@ -393,6 +398,36 @@ model SubscriptionEvent {
 }
 
 // ===========================================
+// Diet Style (Feature 017 - Shareable Meals & Diet Profiles)
+// ===========================================
+// Diet style configuration (admin-editable)
+
+model DietStyle {
+  id                String    @id @default(uuid())
+  
+  slug              String    @unique @db.VarChar(50)  // "ketogenic", "mediterranean"
+  name              String    @db.VarChar(100)         // Display name
+  description       String    @db.Text                 // User-facing explanation
+  
+  // Macro constraints (null = no constraint)
+  netCarbCapG       Int?                               // Daily carb limit in grams
+  fatTargetPercent  Int?                               // Target fat percentage (0-100)
+  
+  // Admin controls
+  isActive          Boolean   @default(true)
+  sortOrder         Int       @default(0)              // Display order in UI
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Relations
+  users             User[]
+  mealSnapshots     MealAnalysis[]  @relation("dietStyleAtScan")
+  
+  @@index([isActive, sortOrder])
+}
+
+// ===========================================
 // Meal Analysis (Core Feature)
 // ===========================================
 
@@ -420,6 +455,14 @@ model MealAnalysis {
   // User corrections (Constitution Principle IV: maintain original + corrections)
   userCorrections Json?    // Stores user-edited values separately
   
+  // Feature 017: Shareable URLs
+  shareId           String    @unique @db.VarChar(12)  // nanoid for short URLs
+  isPublic          Boolean   @default(true)           // Privacy toggle
+  
+  // Feature 017: Diet style at scan time (snapshot)
+  dietStyleAtScanId String?   @db.Uuid
+  dietStyleAtScan   DietStyle? @relation("dietStyleAtScan", fields: [dietStyleAtScanId], references: [id], onDelete: SetNull)
+  
   // Timestamps
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -431,6 +474,7 @@ model MealAnalysis {
   @@index([userId, createdAt])
   @@index([blobHash])
   @@index([requestId])
+  @@index([shareId])
 }
 
 model Food {

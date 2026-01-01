@@ -8,11 +8,19 @@ import { Button } from '@/components/ui/Button';
 import { getPageVariants, getPageTransition } from '@/utils/animations';
 import { useAuth } from '@/contexts/AuthProvider';
 import { useMeals } from '@/hooks/useMeal';
+import { useDietStyles, useUpdateDietStyle } from '@/hooks/useDietStyles';
 import { getUserId } from '@/utils/userId';
 
 export function Settings() {
   const navigate = useNavigate();
   const { user, logout, isAuthenticated } = useAuth();
+  
+  // Feature 017: Diet styles hook
+  const { data: dietStyles = [], isLoading: dietStylesLoading } = useDietStyles();
+  const updateDietStyle = useUpdateDietStyle();
+  const [selectedDietStyleId, setSelectedDietStyleId] = useState<string | null>(
+    (user as any)?.dietStyle?.id || null
+  );
   
   // Use authenticated user ID if available, otherwise fall back to localStorage ID
   const userId = useMemo(() => {
@@ -117,6 +125,62 @@ export function Settings() {
             <span>Not sure? Use our Protein Calculator to find your personalized target</span>
             <span>→</span>
           </Link>
+        </section>
+
+        {/* Diet Style Section - Feature 017 */}
+        <section className="space-y-2">
+          <h2 className="text-lg font-semibold text-foreground">🥗 Diet Style</h2>
+          <p className="text-sm text-muted-foreground">
+            Select your diet preference to get personalized feedback on your meals.
+          </p>
+          <div className="bg-card border border-border rounded-lg p-4">
+            {dietStylesLoading ? (
+              <div className="flex items-center justify-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent" />
+              </div>
+            ) : dietStyles.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No diet styles available
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {dietStyles.map((style) => (
+                  <button
+                    key={style.id}
+                    onClick={() => {
+                      setSelectedDietStyleId(style.id);
+                      updateDietStyle.mutate(style.slug);
+                    }}
+                    className={`w-full text-left p-3 rounded-lg border transition-all ${
+                      selectedDietStyleId === style.id
+                        ? 'border-primary bg-primary/10 ring-1 ring-primary'
+                        : 'border-border hover:border-primary/50 hover:bg-accent'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-medium text-foreground">{style.name}</h3>
+                        {style.description && (
+                          <p className="text-sm text-muted-foreground mt-0.5">
+                            {style.description}
+                          </p>
+                        )}
+                      </div>
+                      {selectedDietStyleId === style.id && (
+                        <span className="text-primary text-lg">✓</span>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+            {updateDietStyle.isPending && (
+              <p className="text-sm text-muted-foreground mt-2">Saving...</p>
+            )}
+            {updateDietStyle.isError && (
+              <p className="text-sm text-red-500 mt-2">Failed to update diet style</p>
+            )}
+          </div>
         </section>
 
         {/* Appearance Section */}

@@ -7,10 +7,12 @@
 // Feature 009: Auth routes + AuthProvider
 // T049: Added /settings/sessions route for session management
 // Feature 011: Error boundary with telemetry
+// Feature 017: Shareable meals + HelmetProvider for SEO
 
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { HelmetProvider } from 'react-helmet-async';
 import { MealUpload } from './components/MealUpload';
 import { PricingPage } from './pages/PricingPage';
 import { CheckoutSuccessPage } from './pages/CheckoutSuccessPage';
@@ -45,6 +47,8 @@ const SessionManagement = lazy(() => import('./pages/SessionManagement'));
 const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
 const TermsPage = lazy(() => import('./pages/TermsPage'));
 const ProteinCalculatorPage = lazy(() => import('./pages/ProteinCalculatorPage'));
+// Feature 017: Shareable meal pages
+const SharedMealPage = lazy(() => import('./pages/SharedMealPage'));
 
 // Navigation component with usage counter
 const Navigation: React.FC = () => {
@@ -179,21 +183,22 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <AuthProvider>
-            <BrowserRouter>
-              <div className="app flex flex-col min-h-screen bg-background text-foreground">
-                <Navigation />
-                <PageContainer>
-                  <Suspense
-                    fallback={
-                      <div className="flex items-center justify-center min-h-screen">
-                        <div className="text-center">
-                          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                          <p className="text-muted-foreground">Loading...</p>
+      <HelmetProvider>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider>
+            <AuthProvider>
+              <BrowserRouter>
+                <div className="app flex flex-col min-h-screen bg-background text-foreground">
+                  <Navigation />
+                  <PageContainer>
+                    <Suspense
+                      fallback={
+                        <div className="flex items-center justify-center min-h-screen">
+                          <div className="text-center">
+                            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                            <p className="text-muted-foreground">Loading...</p>
+                          </div>
                         </div>
-                      </div>
                     }
                   >
                     <Routes>
@@ -210,6 +215,8 @@ function App() {
                       <Route path="/resend-verification" element={<ResendVerificationPage />} />
                       <Route path="/invite/:token" element={<InviteSignupPage />} />
                       <Route path="/reset-password" element={<ResetPassword />} />
+                      {/* Feature 017: Public shared meal page */}
+                      <Route path="/meal/:shareId" element={<SharedMealPage />} />
 
                       {/* Protected routes */}
                       <Route element={<ProtectedRoute />}>
@@ -231,6 +238,7 @@ function App() {
           </AuthProvider>
         </ThemeProvider>
       </QueryClientProvider>
+      </HelmetProvider>
     </ErrorBoundary>
   );
 }

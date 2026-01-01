@@ -12,6 +12,8 @@ interface Config {
   databaseUrl: string;
   sasTokenExpiryMinutes: number;
   maxFileSizeMB: number;
+  // Feature 017: Shareable URLs
+  frontendUrl: string;
 }
 
 function loadConfig(): Config {
@@ -47,6 +49,8 @@ function loadConfig(): Config {
     databaseUrl: process.env.DATABASE_URL!,
     sasTokenExpiryMinutes: parseInt(process.env.SAS_TOKEN_EXPIRY_MINUTES || '10', 10),
     maxFileSizeMB: parseInt(process.env.MAX_FILE_SIZE_MB || '8', 10),
+    // Feature 017: Frontend URL for shareable links
+    frontendUrl: process.env.FRONTEND_URL || 'https://www.proteinlens.com',
   };
 }
 

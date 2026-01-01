@@ -62,3 +62,68 @@ export function useDeleteMeal() {
     },
   })
 }
+
+/**
+ * Feature 017: Update meal privacy status
+ */
+export function useUpdateMealPrivacy() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ mealId, isPublic }: { mealId: string; isPublic: boolean }) => {
+      return apiClient.updateMealPrivacy(mealId, isPublic)
+    },
+    onMutate: async ({ mealId, isPublic }) => {
+      // Cancel ongoing queries
+      await queryClient.cancelQueries({ queryKey: queryKeys.meals.all })
+
+      // Optimistically update all meals lists
+      queryClient.setQueriesData(
+        { queryKey: queryKeys.meals.lists() },
+        (old: any) => {
+          if (Array.isArray(old)) {
+            return old.map((meal: any) => {
+              if (meal.id === mealId || meal.mealAnalysisId === mealId) {
+                return { 
+                  ...meal, 
+                  isPublic,
+                  shareUrl: isPublic ? meal.shareUrl : null 
+                }
+              }
+              return meal
+            })
+          }
+          return old
+        }
+      )
+
+      return { mealId, isPublic }
+    },
+    onError: (error, variables, context) => {
+      // Rollback optimistic update
+      queryClient.invalidateQueries({ queryKey: queryKeys.meals.all })
+    },
+    onSuccess: (data, variables) => {
+      // Update cache with server response
+      queryClient.setQueriesData(
+        { queryKey: queryKeys.meals.lists() },
+        (old: any) => {
+          if (Array.isArray(old)) {
+            return old.map((meal: any) => {
+              if (meal.id === variables.mealId || meal.mealAnalysisId === variables.mealId) {
+                return { 
+                  ...meal, 
+                  isPublic: data.isPublic,
+                  shareUrl: data.shareUrl,
+                  shareId: data.shareId 
+                }
+              }
+              return meal
+            })
+          }
+          return old
+        }
+      )
+    },
+  })
+}

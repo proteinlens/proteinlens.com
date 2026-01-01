@@ -1,6 +1,7 @@
 // Meal Service for database operations via Prisma
 // Constitution Principle IV: Traceability & Auditability
 // T033: Prisma integration for meal analysis persistence
+// Feature 017: Shareable meal URLs with shareId generation
 
 import { getPrismaClient } from '../utils/prisma.js';
 import type { MealAnalysis } from '../utils/prisma.js';
@@ -8,6 +9,7 @@ import { Logger } from '../utils/logger.js';
 import { AIAnalysisResponse } from '../models/schemas.js';
 import { config } from '../utils/config.js';
 import crypto from 'crypto';
+import { generateShareId, getShareUrl } from '../utils/nanoid.js';
 
 const prisma = getPrismaClient();
 
@@ -16,6 +18,7 @@ class MealService {
    * T033: Create meal analysis record with normalized foods
    * Constitution Principle IV: Stores requestId for traceability
    * T077: Updated to accept blobHash parameter for caching
+   * Feature 017: Generates shareId for shareable URLs and captures diet style snapshot
    */
   async createMealAnalysis(
     userId: string,
@@ -24,12 +27,17 @@ class MealService {
     requestId: string,
     aiResponse: AIAnalysisResponse,
     modelName: string,
-    blobHash?: string
-  ): Promise<string> {
+    blobHash?: string,
+    dietStyleAtScanId?: string | null
+  ): Promise<{ id: string; shareId: string; shareUrl: string }> {
     Logger.info('Creating meal analysis', { userId, blobName, requestId, foodCount: aiResponse.foods.length });
 
     // Use provided hash or generate one
     const hash = blobHash || this.generateBlobHash(blobName);
+    
+    // Generate unique shareId for this meal
+    const shareId = generateShareId();
+    const shareUrl = getShareUrl(shareId);
 
     const mealAnalysis = await prisma.mealAnalysis.create({
       data: {
@@ -42,6 +50,10 @@ class MealService {
         totalProtein: aiResponse.totalProtein,
         confidence: aiResponse.confidence,
         blobHash: hash,
+        notes: aiResponse.notes, // Pro Tips from AI response
+        shareId, // Feature 017: Shareable URL ID
+        isPublic: true, // Default to public (Constitution Principle VII: user controls privacy)
+        dietStyleAtScanId: dietStyleAtScanId ?? null, // Feature 017: Diet style snapshot
         foods: {
           create: aiResponse.foods.map((food, index) => ({
             name: food.name,
@@ -59,15 +71,17 @@ class MealService {
     Logger.info('Meal analysis created successfully', {
       requestId,
       mealAnalysisId: mealAnalysis.id,
+      shareId,
       foodCount: aiResponse.foods.length,
     });
 
-    return mealAnalysis.id;
+    return { id: mealAnalysis.id, shareId, shareUrl };
   }
 
   /**
    * T077: Create meal analysis from cached result
    * Creates a new record for the user but references cached AI response
+   * Feature 017: Generates new shareId for shareable URLs
    */
   async createMealAnalysisFromCache(
     userId: string,
@@ -75,8 +89,9 @@ class MealService {
     blobUrl: string,
     requestId: string,
     blobHash: string,
-    cachedMealId: string
-  ): Promise<string> {
+    cachedMealId: string,
+    dietStyleAtScanId?: string | null
+  ): Promise<{ id: string; shareId: string; shareUrl: string }> {
     // Get the cached analysis to copy the data
     const cachedAnalysis = await prisma.mealAnalysis.findUnique({
       where: { id: cachedMealId },
@@ -95,6 +110,10 @@ class MealService {
       blobHash: blobHash.substring(0, 16) + '...',
     });
 
+    // Generate unique shareId for this meal (each meal gets its own share URL)
+    const shareId = generateShareId();
+    const shareUrl = getShareUrl(shareId);
+
     const mealAnalysis = await prisma.mealAnalysis.create({
       data: {
         userId,
@@ -106,7 +125,10 @@ class MealService {
         totalProtein: cachedAnalysis.totalProtein,
         confidence: cachedAnalysis.confidence,
         blobHash,
-        notes: `Cached from meal ${cachedMealId}`, // Track that this was a cache hit
+        notes: cachedAnalysis.notes ?? `Cached from meal ${cachedMealId}`, // Preserve Pro Tips from cache
+        shareId, // Feature 017: Shareable URL ID
+        isPublic: true, // Default to public
+        dietStyleAtScanId: dietStyleAtScanId ?? null, // Feature 017: Diet style snapshot
         foods: {
           create: cachedAnalysis.foods.map((food, index) => ({
             name: food.name,
@@ -124,10 +146,11 @@ class MealService {
     Logger.info('Meal analysis created from cache', {
       requestId,
       mealAnalysisId: mealAnalysis.id,
+      shareId,
       cachedFromId: cachedMealId,
     });
 
-    return mealAnalysis.id;
+    return { id: mealAnalysis.id, shareId, shareUrl };
   }
 
   /**
@@ -178,7 +201,17 @@ class MealService {
 
     return prisma.mealAnalysis.findMany({
       where: whereClause,
-      include: { foods: true },
+      include: { 
+        foods: true,
+        // Feature 017: Include diet style snapshot
+        dietStyleAtScan: {
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+          },
+        },
+      },
       orderBy: { createdAt: 'desc' },
       take: limit,
     });
@@ -270,6 +303,270 @@ class MealService {
    */
   private generateBlobHash(blobName: string): string {
     return crypto.createHash('sha256').update(blobName).digest('hex');
+  }
+
+  // ===========================================
+  // Feature 017: Shareable Meal URL Methods
+  // ===========================================
+
+  /**
+   * Get public meal by shareId for shared view
+   * Returns null if meal doesn't exist or is private
+   */
+  async getPublicMealByShareId(shareId: string): Promise<MealAnalysis | null> {
+    return prisma.mealAnalysis.findFirst({
+      where: { 
+        shareId, 
+        isPublic: true 
+      },
+      include: { 
+        foods: true,
+        dietStyleAtScan: {
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            netCarbCapG: true,
+            fatTargetPercent: true,
+          },
+        },
+      },
+    });
+  }
+
+  /**
+   * Get meal by shareId (for owner, ignores privacy)
+   */
+  async getMealByShareId(shareId: string, userId: string): Promise<MealAnalysis | null> {
+    return prisma.mealAnalysis.findFirst({
+      where: { shareId, userId },
+      include: { 
+        foods: true,
+        dietStyleAtScan: {
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            netCarbCapG: true,
+            fatTargetPercent: true,
+          },
+        },
+      },
+    });
+  }
+
+  /**
+   * Update meal privacy toggle
+   * Returns updated meal with shareUrl if public, null shareUrl if private
+   */
+  async updateMealPrivacy(
+    mealId: string, 
+    userId: string, 
+    isPublic: boolean
+  ): Promise<{ shareId: string; shareUrl: string | null; isPublic: boolean } | null> {
+    // Verify ownership
+    const meal = await prisma.mealAnalysis.findFirst({
+      where: { id: mealId, userId },
+      select: { id: true, shareId: true },
+    });
+
+    if (!meal) {
+      return null;
+    }
+
+    await prisma.mealAnalysis.update({
+      where: { id: mealId },
+      data: { isPublic },
+    });
+
+    Logger.info('Meal privacy updated', { mealId, userId, isPublic });
+
+    return {
+      shareId: meal.shareId,
+      shareUrl: isPublic ? getShareUrl(meal.shareId) : null,
+      isPublic,
+    };
+  }
+
+  /**
+   * Get user meals with shareable fields included
+   * Extended for Feature 017
+   */
+  async getUserMealAnalysesWithSharing(
+    userId: string,
+    options: { limit?: number; daysBack?: number } = {}
+  ): Promise<(MealAnalysis & { shareUrl: string | null })[]> {
+    const meals = await this.getUserMealAnalyses(userId, options);
+    
+    return meals.map(meal => ({
+      ...meal,
+      shareUrl: (meal as any).isPublic ? getShareUrl((meal as any).shareId) : null,
+    }));
+  }
+
+  /**
+   * T047: Calculate daily macro totals from all meals
+   * Feature 017, US5: Macro split display for diet users
+   * Uses heuristic estimation for carbs and fat based on food names
+   */
+  async getDailySummary(
+    userId: string,
+    date: Date = new Date()
+  ): Promise<{
+    date: string;
+    meals: number;
+    macros: {
+      protein: number;
+      carbs: number;
+      fat: number;
+    };
+    percentages: {
+      protein: number;
+      carbs: number;
+      fat: number;
+    };
+    totalCalories: number;
+    carbWarning: boolean;
+    carbLimit: number | null;
+  }> {
+    // Get start and end of the day
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // Get user with diet style for carb limit
+    const user = await prisma.user.findUnique({
+      where: { externalId: userId },
+      include: { dietStyle: true },
+    });
+
+    const carbLimit = user?.dietStyle?.netCarbCapG ?? null;
+
+    // Get all meals for this day
+    const meals = await prisma.mealAnalysis.findMany({
+      where: {
+        userId,
+        createdAt: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+      },
+      include: {
+        foods: true,
+      },
+    });
+
+    // Calculate totals
+    let totalProtein = 0;
+    let totalCarbs = 0;
+    let totalFat = 0;
+
+    for (const meal of meals) {
+      totalProtein += Number(meal.totalProtein) || 0;
+      
+      // Estimate carbs and fat from food items
+      for (const food of meal.foods) {
+        totalCarbs += this.estimateCarbsFromFood(food.name, food.portion);
+        totalFat += this.estimateFatFromFood(food.name, food.portion);
+      }
+    }
+
+    // Calculate calories (protein: 4cal/g, carbs: 4cal/g, fat: 9cal/g)
+    const totalCalories = (totalProtein * 4) + (totalCarbs * 4) + (totalFat * 9);
+
+    // Calculate percentages
+    const percentages = totalCalories > 0 ? {
+      protein: Math.round((totalProtein * 4 / totalCalories) * 100),
+      carbs: Math.round((totalCarbs * 4 / totalCalories) * 100),
+      fat: Math.round((totalFat * 9 / totalCalories) * 100),
+    } : {
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+    };
+
+    return {
+      date: date.toISOString().split('T')[0],
+      meals: meals.length,
+      macros: {
+        protein: Math.round(totalProtein),
+        carbs: Math.round(totalCarbs),
+        fat: Math.round(totalFat),
+      },
+      percentages,
+      totalCalories: Math.round(totalCalories),
+      carbWarning: carbLimit !== null && totalCarbs > carbLimit,
+      carbLimit,
+    };
+  }
+
+  /**
+   * Estimate carbs from food name (heuristic)
+   * Part of T047 for macro split calculation
+   */
+  private estimateCarbsFromFood(name: string, portion: string): number {
+    const lowName = name.toLowerCase();
+    
+    // High-carb foods
+    if (lowName.includes('rice')) return 30;
+    if (lowName.includes('bread')) return 20;
+    if (lowName.includes('pasta') || lowName.includes('noodle')) return 35;
+    if (lowName.includes('potato')) return 25;
+    if (lowName.includes('beans') || lowName.includes('legume')) return 20;
+    if (lowName.includes('corn')) return 20;
+    if (lowName.includes('cereal') || lowName.includes('oat')) return 25;
+    if (lowName.includes('fruit') || lowName.includes('apple') || lowName.includes('banana')) return 15;
+    if (lowName.includes('sugar') || lowName.includes('honey')) return 25;
+    if (lowName.includes('juice') || lowName.includes('soda')) return 30;
+    
+    // Medium-carb foods
+    if (lowName.includes('milk') || lowName.includes('yogurt')) return 8;
+    if (lowName.includes('vegetable') || lowName.includes('salad')) return 5;
+    
+    // Low-carb foods (proteins, fats)
+    if (lowName.includes('chicken') || lowName.includes('beef') || lowName.includes('pork')) return 0;
+    if (lowName.includes('fish') || lowName.includes('salmon') || lowName.includes('tuna')) return 0;
+    if (lowName.includes('egg')) return 1;
+    if (lowName.includes('cheese')) return 1;
+    if (lowName.includes('oil') || lowName.includes('butter')) return 0;
+    
+    // Default: assume some carbs in unknown foods
+    return 10;
+  }
+
+  /**
+   * Estimate fat from food name (heuristic)
+   * Part of T047 for macro split calculation
+   */
+  private estimateFatFromFood(name: string, portion: string): number {
+    const lowName = name.toLowerCase();
+    
+    // High-fat foods
+    if (lowName.includes('oil') || lowName.includes('butter')) return 15;
+    if (lowName.includes('cheese')) return 10;
+    if (lowName.includes('avocado')) return 15;
+    if (lowName.includes('nuts') || lowName.includes('almond') || lowName.includes('walnut')) return 15;
+    if (lowName.includes('bacon') || lowName.includes('sausage')) return 12;
+    if (lowName.includes('mayo') || lowName.includes('mayonnaise')) return 10;
+    
+    // Medium-fat foods
+    if (lowName.includes('salmon') || lowName.includes('fish')) return 8;
+    if (lowName.includes('beef') || lowName.includes('steak')) return 10;
+    if (lowName.includes('pork')) return 8;
+    if (lowName.includes('egg')) return 5;
+    if (lowName.includes('milk') || lowName.includes('yogurt')) return 3;
+    
+    // Low-fat foods
+    if (lowName.includes('chicken') && lowName.includes('breast')) return 3;
+    if (lowName.includes('chicken')) return 6;
+    if (lowName.includes('turkey')) return 4;
+    if (lowName.includes('rice') || lowName.includes('pasta') || lowName.includes('bread')) return 1;
+    if (lowName.includes('vegetable') || lowName.includes('salad')) return 1;
+    if (lowName.includes('fruit')) return 0;
+    
+    // Default
+    return 5;
   }
 }
 

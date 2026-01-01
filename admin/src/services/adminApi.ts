@@ -406,3 +406,73 @@ export async function fetchMealDetail(mealId: string): Promise<MealDetailRespons
   return request<MealDetailResponse>(`/dashboard/meals/${mealId}`);
 }
 
+// ===========================================
+// Diet Style APIs - Feature 017
+// ===========================================
+
+export interface DietStyleItem {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  netCarbCapG: number | null;
+  fatTargetPercent: number | null;
+  isActive: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+  usersCount: number;
+  mealsCount: number;
+}
+
+export interface DietStyleListResponse {
+  dietStyles: DietStyleItem[];
+}
+
+export interface DietStyleCreateParams {
+  slug: string;
+  name: string;
+  description: string;
+  netCarbCapG?: number | null;
+  fatTargetPercent?: number | null;
+  isActive?: boolean;
+  sortOrder?: number;
+}
+
+export interface DietStyleUpdateParams {
+  slug?: string;
+  name?: string;
+  description?: string;
+  netCarbCapG?: number | null;
+  fatTargetPercent?: number | null;
+  isActive?: boolean;
+  sortOrder?: number;
+}
+
+export interface DietStyleResponse {
+  dietStyle: DietStyleItem;
+}
+
+export async function fetchDietStyles(): Promise<DietStyleListResponse> {
+  return request<DietStyleListResponse>('/dashboard/diet-styles');
+}
+
+export async function createDietStyle(params: DietStyleCreateParams): Promise<DietStyleResponse> {
+  return request<DietStyleResponse>('/dashboard/diet-styles', {
+    method: 'POST',
+    body: params,
+  });
+}
+
+export async function updateDietStyle(id: string, params: DietStyleUpdateParams): Promise<DietStyleResponse> {
+  return request<DietStyleResponse>(`/dashboard/diet-styles/${id}`, {
+    method: 'PUT',
+    body: params,
+  });
+}
+
+export async function deleteDietStyle(id: string): Promise<{ message: string }> {
+  return request<{ message: string }>(`/dashboard/diet-styles/${id}`, {
+    method: 'DELETE',
+  });
+}
