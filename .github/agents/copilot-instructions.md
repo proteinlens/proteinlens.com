@@ -32,6 +32,8 @@ Auto-generated from all feature plans. Last updated: 2025-12-22
 - N/A (stateless notifications) (014-slack-auth-notifications)
 - TypeScript 5.x (Node 20+) + Azure Functions v4, Prisma ORM, React 18, TanStack Query, Tailwind CSS, Zod (015-protein-target-calculator)
 - PostgreSQL (user profiles/targets), localStorage (anonymous users) (015-protein-target-calculator)
+- TypeScript 5.x, Node.js 20+ + React 18, Vite, Azure Functions v4, Prisma ORM (016-goal-sync)
+- PostgreSQL (via Prisma), localStorage for anonymous users (016-goal-sync)
 
 - TypeScript 5.3+ / Node.js 20 + Azure Functions v4, Prisma 5.8+, Stripe SDK, React 18, Vite 5 (002-saas-billing)
 
@@ -51,9 +53,9 @@ npm test && npm run lint
 TypeScript 5.3+ / Node.js 20: Follow standard conventions
 
 ## Recent Changes
+- 016-goal-sync: Added TypeScript 5.x, Node.js 20+ + React 18, Vite, Azure Functions v4, Prisma ORM
 - 015-protein-target-calculator: Added TypeScript 5.x (Node 20+) + Azure Functions v4, Prisma ORM, React 18, TanStack Query, Tailwind CSS, Zod
 - 014-slack-auth-notifications: Added TypeScript 5.x (Node.js 20+) + Native `fetch` API (no new dependencies required)
-- 013-self-managed-auth: Added TypeScript 5.x (Node.js 20.x runtime) + Azure Functions v4, Prisma ORM, jose (JWT), bcrypt, zod (validation), @azure/communication-email
 
 
 <!-- MANUAL ADDITIONS START -->
