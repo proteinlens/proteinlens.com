@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { loadLocalProteinProfile, saveLocalProteinProfile } from '../utils/proteinStorage';
 import { getProteinProfile, isUserAuthenticated } from '../services/proteinApi';
+import { useAuth } from '../contexts/AuthProvider';
 
 interface DailyGoal {
   goalGrams: number;
@@ -17,10 +18,12 @@ const GOAL_CHANGED_EVENT = 'proteinlens:goal-changed';
  * Hook to manage daily protein goal
  * Syncs with protein calculator profile (localStorage + backend API)
  * Uses custom events to sync goal across all component instances
+ * Re-fetches goal when authentication state changes
  */
 export const useGoal = () => {
   const [goal, setGoalState] = useState<number>(DEFAULT_GOAL);
   const [isLoading, setIsLoading] = useState(true);
+  const { isAuthenticated, user } = useAuth();
 
   // Function to load goal from storage
   const loadGoalFromStorage = useCallback(async () => {
@@ -60,10 +63,11 @@ export const useGoal = () => {
     }
   }, []);
 
-  // Load goal on mount
+  // Load goal on mount AND when authentication state changes
   useEffect(() => {
+    setIsLoading(true);
     loadGoalFromStorage().finally(() => setIsLoading(false));
-  }, [loadGoalFromStorage]);
+  }, [loadGoalFromStorage, isAuthenticated, user?.id]);
 
   // Listen for goal changes from other components
   useEffect(() => {
