@@ -104,10 +104,11 @@ As a user following a ketogenic diet, I want to see my daily macro split (fat/pr
 ### Functional Requirements
 
 **Shareable URLs:**
-- **FR-001**: System MUST generate a unique, permanent URL for each meal analysis (format: \`/meal/{id}\`)
-- **FR-002**: Shared meal pages MUST include Open Graph meta tags for rich social media previews (image, title, description)
+- **FR-001**: System MUST generate a unique, permanent URL for each meal analysis using short URL-safe encoded IDs (8-12 chars, e.g., `/meal/abc12xyz`)
+- **FR-002**: Shared meal pages MUST include Open Graph meta tags with the user's actual meal photo as the preview image
+- **FR-002a**: If meal image fails to load, Open Graph MUST fall back to text-only preview with protein stats and ProteinLens branding
 - **FR-003**: Shared meal pages MUST be publicly accessible (read-only) without authentication
-- **FR-004**: System MUST support meal privacy toggle (public/private) for authenticated users
+- **FR-004**: All meals MUST be public by default; authenticated users MAY toggle individual meals to private
 
 **Pro Tips Persistence:**
 - **FR-005**: System MUST store the Pro Tip text with each meal analysis at scan time
@@ -116,9 +117,9 @@ As a user following a ketogenic diet, I want to see my daily macro split (fat/pr
 
 **Diet Styles:**
 - **FR-008**: System MUST support multiple diet styles: Balanced, Mediterranean, Low-carb, Ketogenic, Plant-based
-- **FR-009**: Each diet style MUST have configurable parameters: display name, description, protein multiplier modifier, carb cap (optional), fat target (optional)
+- **FR-009**: Each diet style MUST have configurable parameters: display name, description, carb cap (optional), fat target (optional) - protein calculation remains unchanged
 - **FR-010**: Users MUST be able to select their diet style from Settings page
-- **FR-011**: Diet style selection MUST affect protein calculator output and meal analysis feedback
+- **FR-011**: Diet style selection MUST add constraints to meal analysis feedback (e.g., carb warnings) but NOT modify protein targets
 - **FR-012**: Ketogenic diet MUST enforce a daily net carb limit (default: 20-50g, admin-configurable)
 
 **Admin Configuration:**
@@ -129,9 +130,9 @@ As a user following a ketogenic diet, I want to see my daily macro split (fat/pr
 
 ### Key Entities
 
-- **MealAnalysis**: Extended to include \`proTip\` (text), \`shareId\` (unique slug), \`isPublic\` (boolean), \`dietStyleAtScan\` (reference to diet style used)
-- **DietStyle**: name, slug, description, proteinMultiplierMod (float, 1.0 = no change), netCarbCapG (int, nullable), fatTargetPercent (int, nullable), isActive (boolean)
-- **UserProfile**: Extended to include \`dietStyleId\` (foreign key to DietStyle)
+- **MealAnalysis**: Extended to include `proTip` (text), `shareId` (short URL-safe string 8-12 chars), `isPublic` (boolean, default true), `dietStyleAtScan` (reference to diet style used)
+- **DietStyle**: name, slug, description, netCarbCapG (int, nullable), fatTargetPercent (int, nullable), isActive (boolean) - NO protein modifier
+- **UserProfile**: Extended to include `dietStyleId` (foreign key to DietStyle)
 
 ## Success Criteria *(mandatory)*
 
@@ -151,3 +152,13 @@ As a user following a ketogenic diet, I want to see my daily macro split (fat/pr
 - The existing protein calculator multiplier system can accommodate diet-style modifiers as an additional layer
 - Social platforms support Open Graph meta tags for rich link previews
 - Admin users already have authentication via the existing admin dashboard
+
+## Clarifications
+
+### Session 2026-01-01
+
+- Q: What format for shareable meal URLs? → A: Short URL-safe encoded IDs (8-12 chars) like `/meal/abc12xyz`
+- Q: Default meal privacy setting? → A: Public by default - all meals shareable unless user explicitly makes private
+- Q: Should diet style modify protein calculation? → A: No - diet style only adds constraints (carb caps, fat targets); protein calculation unchanged
+- Q: What image for Open Graph social previews? → A: User's actual meal photo
+- Q: Fallback if social preview image fails? → A: Text-only preview with protein stats and ProteinLens branding
