@@ -26,6 +26,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
   }
   properties: {
     reserved: true  // Required for Linux
+    maximumElasticWorkerCount: 3  // Allow scaling up to 3 instances
   }
 }
 
@@ -41,6 +42,9 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
     httpsOnly: true
     siteConfig: {
       linuxFxVersion: 'NODE|20'
+      alwaysOn: true  // Keep at least one instance warm to avoid cold starts
+      functionAppScaleLimit: 3  // Limit scale to control costs
+      minimumElasticInstanceCount: 1  // Always keep 1 instance warm
       appSettings: [
         {
           name: 'FUNCTIONS_WORKER_RUNTIME'
@@ -57,6 +61,15 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
         {
           name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
           value: 'false'
+        }
+        // Warmup configuration to prevent cold starts
+        {
+          name: 'WEBSITE_WARMUP_PATH'
+          value: '/api/health'  // Use health endpoint for warmup
+        }
+        {
+          name: 'FUNCTIONS_WORKER_PROCESS_COUNT'
+          value: '2'  // Allow 2 worker processes for better concurrency
         }
         // Use managed identity for AzureWebJobsStorage
         // RBAC roles (Blob Data Owner, Queue/Table Data Contributor) must be assigned

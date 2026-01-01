@@ -117,10 +117,12 @@ class ApiClient {
   /**
    * Request SAS URL for blob upload
    * T038: Request upload SAS URL from backend
+   * Increased timeout for mobile networks and cold start scenarios
    */
   async requestUploadUrl(request: UploadUrlRequest): Promise<UploadUrlResponse> {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+    // 45s timeout to account for cold start (can take 10-20s) + network latency
+    const timeoutId = setTimeout(() => controller.abort(), 45000);
     
     try {
       const response = await fetch(`${API_PATH}/upload-url`, {
@@ -141,7 +143,7 @@ class ApiClient {
     } catch (err) {
       clearTimeout(timeoutId);
       if (err instanceof Error && err.name === 'AbortError') {
-        throw new Error('Request timed out. Please check your connection and try again.');
+        throw new Error('Request timed out. The server may be waking up - please try again.');
       }
       throw err;
     }
@@ -155,7 +157,8 @@ class ApiClient {
   async uploadToBlob(sasUrl: string, file: File | Blob, contentType?: string): Promise<void> {
     const mimeType = contentType || (file instanceof File ? file.type : 'image/jpeg');
     const maxRetries = 3;
-    const timeoutMs = 60000; // 60 second timeout for mobile networks
+    // 90 second timeout for mobile networks (especially on slow 3G/4G)
+    const timeoutMs = 90000;
     
     let lastError: Error | null = null;
     
@@ -205,38 +208,57 @@ class ApiClient {
    * Request AI analysis of uploaded meal photo
    * T038: Request meal analysis from backend
    * Throws ApiRequestError with quota info on 429
+   * Includes retry logic for transient failures (cold start scenarios)
    */
   async analyzeMeal(request: AnalyzeRequest): Promise<AnalysisResponse> {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 90000); // 90s timeout for AI analysis
+    const maxRetries = 2;  // Retry once on timeout
+    const timeoutMs = 120000; // 2 minute timeout for AI analysis (includes cold start)
     
-    try {
-      const response = await fetch(`${API_PATH}/meals/analyze`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify(request),
-        signal: controller.signal,
-      });
+    let lastError: Error | null = null;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
       
-      clearTimeout(timeoutId);
+      try {
+        const response = await fetch(`${API_PATH}/meals/analyze`, {
+          method: 'POST',
+          headers: getHeaders(),
+          body: JSON.stringify(request),
+          signal: controller.signal,
+        });
+        
+        clearTimeout(timeoutId);
 
-      if (!response.ok) {
-        const errorBody: ApiError = await response.json();
-        throw new ApiRequestError(
-          errorBody.message || errorBody.error || `Analysis request failed: ${response.status}`,
-          response.status,
-          errorBody
-        );
-      }
+        if (!response.ok) {
+          const errorBody: ApiError = await response.json();
+          throw new ApiRequestError(
+            errorBody.message || errorBody.error || `Analysis request failed: ${response.status}`,
+            response.status,
+            errorBody
+          );
+        }
 
-      return response.json();
-    } catch (err) {
-      clearTimeout(timeoutId);
-      if (err instanceof Error && err.name === 'AbortError') {
-        throw new Error('Analysis timed out. Please try again.');
+        return response.json();
+      } catch (err) {
+        clearTimeout(timeoutId);
+        lastError = err instanceof Error ? err : new Error('Analysis failed');
+        
+        // Only retry on timeout (AbortError), not on server errors
+        if (err instanceof Error && err.name === 'AbortError') {
+          console.log(`Analysis attempt ${attempt} timed out, ${attempt < maxRetries ? 'retrying...' : 'giving up'}`);
+          if (attempt < maxRetries) {
+            // Brief delay before retry
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            continue;
+          }
+          throw new Error('Analysis timed out. The server may be busy - please try again in a moment.');
+        }
+        throw err;
       }
-      throw err;
     }
+    
+    throw lastError || new Error('Analysis failed after retries');
   }
 
   /**
