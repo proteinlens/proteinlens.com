@@ -246,6 +246,23 @@ jobs:
           echo "📊 Checking migration status..."
           npx prisma migrate status || true
           
+          # Resolve any failed migrations before attempting deploy
+          echo "🔍 Checking for failed migrations..."
+          FAILED_MIGRATIONS=$(npx prisma migrate status 2>&1 | grep -oP '(?<=Following migration have failed:\n).*' || echo "")
+          
+          if [ -n "$FAILED_MIGRATIONS" ]; then
+            echo "⚠️  Found failed migrations: $FAILED_MIGRATIONS"
+            echo "🔄 Marking failed migrations as rolled back..."
+            
+            # Extract migration names and mark as rolled back
+            echo "$FAILED_MIGRATIONS" | while IFS= read -r migration; do
+              if [ -n "$migration" ]; then
+                echo "  → Rolling back: $migration"
+                npx prisma migrate resolve --rolled-back "$migration" || echo "⚠️  Could not mark $migration as rolled back"
+              fi
+            done
+          fi
+          
           echo "🚀 Running database migrations..."
           npx prisma migrate deploy
           
