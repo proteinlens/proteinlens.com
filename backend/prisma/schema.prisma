@@ -194,7 +194,7 @@ model DietStyle {
   
   slug                String      @unique
   name                String
-  description         String?
+  description         String      // Non-nullable - required description
   netCarbCapG         Int         @default(100)
   fatTargetPercent    Int         @default(30)
   
@@ -207,7 +207,7 @@ model DietStyle {
   
   // Relations
   users               User[]
-  meals               MealAnalysis[]
+  mealSnapshots       MealAnalysis[] @relation("dietStyleSnapshot")
   
   @@index([slug])
   @@index([isActive])
@@ -456,7 +456,7 @@ model MealAnalysis {
   shareId         String?  @unique
   isPublic        Boolean  @default(true)
   dietStyleAtScanId String?
-  dietStyleAtScan DietStyle? @relation(fields: [dietStyleAtScanId], references: [id])
+  dietStyleAtScan DietStyle? @relation("dietStyleSnapshot", fields: [dietStyleAtScanId], references: [id])
   
   // Timestamps
   createdAt       DateTime @default(now())

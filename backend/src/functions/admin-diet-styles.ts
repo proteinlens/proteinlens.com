@@ -146,8 +146,8 @@ export async function adminCreateDietStyle(
         slug: data.slug,
         name: data.name,
         description: data.description,
-        netCarbCapG: data.netCarbCapG ?? null,
-        fatTargetPercent: data.fatTargetPercent ?? null,
+        netCarbCapG: data.netCarbCapG ?? 100,
+        fatTargetPercent: data.fatTargetPercent ?? 30,
         isActive: data.isActive ?? true,
         sortOrder: data.sortOrder ?? 0,
       },
@@ -267,13 +267,13 @@ export async function adminUpdateDietStyle(
     const dietStyle = await prisma.dietStyle.update({
       where: { id },
       data: {
-        ...(data.slug !== undefined && { slug: data.slug }),
-        ...(data.name !== undefined && { name: data.name }),
-        ...(data.description !== undefined && { description: data.description }),
-        ...(data.netCarbCapG !== undefined && { netCarbCapG: data.netCarbCapG }),
-        ...(data.fatTargetPercent !== undefined && { fatTargetPercent: data.fatTargetPercent }),
-        ...(data.isActive !== undefined && { isActive: data.isActive }),
-        ...(data.sortOrder !== undefined && { sortOrder: data.sortOrder }),
+        ...(data.slug !== undefined && data.slug !== null && { slug: data.slug }),
+        ...(data.name !== undefined && data.name !== null && { name: data.name }),
+        ...(data.description !== undefined && data.description !== null && { description: data.description }),
+        ...(data.netCarbCapG !== undefined && data.netCarbCapG !== null && { netCarbCapG: data.netCarbCapG }),
+        ...(data.fatTargetPercent !== undefined && data.fatTargetPercent !== null && { fatTargetPercent: data.fatTargetPercent }),
+        ...(data.isActive !== undefined && data.isActive !== null && { isActive: data.isActive }),
+        ...(data.sortOrder !== undefined && data.sortOrder !== null && { sortOrder: data.sortOrder }),
       },
     });
 

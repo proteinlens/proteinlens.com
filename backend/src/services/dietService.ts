@@ -406,8 +406,8 @@ export async function createDietStyle(
       slug: input.slug,
       name: input.name,
       description: input.description,
-      netCarbCapG: input.netCarbCapG ?? null,
-      fatTargetPercent: input.fatTargetPercent ?? null,
+      netCarbCapG: input.netCarbCapG ?? 100,
+      fatTargetPercent: input.fatTargetPercent ?? 30,
       isActive: input.isActive ?? true,
       sortOrder: input.sortOrder ?? 0,
     },
@@ -460,13 +460,13 @@ export async function updateDietStyle(
   const dietStyle = await prisma.dietStyle.update({
     where: { id },
     data: {
-      ...(input.slug !== undefined && { slug: input.slug }),
-      ...(input.name !== undefined && { name: input.name }),
-      ...(input.description !== undefined && { description: input.description }),
-      ...(input.netCarbCapG !== undefined && { netCarbCapG: input.netCarbCapG }),
-      ...(input.fatTargetPercent !== undefined && { fatTargetPercent: input.fatTargetPercent }),
-      ...(input.isActive !== undefined && { isActive: input.isActive }),
-      ...(input.sortOrder !== undefined && { sortOrder: input.sortOrder }),
+      ...(input.slug !== undefined && input.slug !== null && { slug: input.slug }),
+      ...(input.name !== undefined && input.name !== null && { name: input.name }),
+      ...(input.description !== undefined && input.description !== null && { description: input.description }),
+      ...(input.netCarbCapG !== undefined && input.netCarbCapG !== null && { netCarbCapG: input.netCarbCapG }),
+      ...(input.fatTargetPercent !== undefined && input.fatTargetPercent !== null && { fatTargetPercent: input.fatTargetPercent }),
+      ...(input.isActive !== undefined && input.isActive !== null && { isActive: input.isActive }),
+      ...(input.sortOrder !== undefined && input.sortOrder !== null && { sortOrder: input.sortOrder }),
     },
   });
 

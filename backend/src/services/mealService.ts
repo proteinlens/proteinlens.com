@@ -382,8 +382,8 @@ class MealService {
     Logger.info('Meal privacy updated', { mealId, userId, isPublic });
 
     return {
-      shareId: meal.shareId,
-      shareUrl: isPublic ? getShareUrl(meal.shareId) : null,
+      shareId: meal.shareId || '',  // shareId should always exist, fallback to empty string
+      shareUrl: isPublic && meal.shareId ? getShareUrl(meal.shareId) : null,
       isPublic,
     };
   }
