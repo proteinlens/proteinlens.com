@@ -1,0 +1,160 @@
+name: Database Backup
+
+on:
+  # Run daily at 2 AM UTC
+  schedule:
+    - cron: '0 2 * * *'
+  
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      retention_days:
+        description: 'Backup retention in days'
+        required: false
+        default: '30'
+
+jobs:
+  backup:
+    name: Backup PostgreSQL Database
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Fetch DATABASE_URL from Azure Key Vault
+        id: get-db-url
+        run: |
+          echo "🔄 Fetching DATABASE_URL from Function App..."
+          DATABASE_URL_RAW=$(az functionapp config appsettings list \
+            --name func-proteinlens \
+            --resource-group rg-proteinlens \
+            --query "[?name=='DATABASE_URL'].value" -o tsv)
+          
+          if [[ "$DATABASE_URL_RAW" == @Microsoft.KeyVault* ]]; then
+            echo "🔐 Resolving Key Vault reference..."
+            VAULT_NAME=$(echo "$DATABASE_URL_RAW" | sed -n 's/.*VaultName=\([^;)]*\).*/\1/p')
+            SECRET_NAME=$(echo "$DATABASE_URL_RAW" | sed -n 's/.*SecretName=\([^;)]*\).*/\1/p')
+            
+            DATABASE_URL=$(az keyvault secret show \
+              --vault-name "$VAULT_NAME" \
+              --name "$SECRET_NAME" \
+              --query "value" -o tsv)
+          else
+            DATABASE_URL="$DATABASE_URL_RAW"
+          fi
+          
+          echo "✅ DATABASE_URL retrieved"
+          echo "DATABASE_URL=$DATABASE_URL" >> $GITHUB_OUTPUT
+
+      - name: Create database backup
+        env:
+          DATABASE_URL: ${{ steps.get-db-url.outputs.DATABASE_URL }}
+          PGPASSWORD: ${{ steps.get-db-url.outputs.DATABASE_URL }}
+        run: |
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          BACKUP_FILE="proteinlens_backup_${TIMESTAMP}.sql.gz"
+          
+          echo "📦 Creating database backup: $BACKUP_FILE"
+          
+          # Extract connection details from DATABASE_URL
+          DB_HOST=$(echo "$DATABASE_URL" | sed -n 's/.*@\([^:]*\):.*/\1/p')
+          DB_PORT=$(echo "$DATABASE_URL" | sed -n 's/.*:\([0-9]*\)\/.*/\1/p')
+          DB_NAME=$(echo "$DATABASE_URL" | sed -n 's/.*\/\([^?]*\).*/\1/p')
+          DB_USER=$(echo "$DATABASE_URL" | sed -n 's/.*:\/\/\([^:]*\):.*/\1/p')
+          DB_PASS=$(echo "$DATABASE_URL" | sed -n 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/p')
+          
+          # Create compressed backup
+          PGPASSWORD="$DB_PASS" pg_dump \
+            -h "$DB_HOST" \
+            -p "$DB_PORT" \
+            -U "$DB_USER" \
+            -d "$DB_NAME" \
+            --no-owner \
+            --no-acl \
+            --clean \
+            --if-exists \
+            | gzip > "$BACKUP_FILE"
+          
+          BACKUP_SIZE=$(du -h "$BACKUP_FILE" | cut -f1)
+          echo "✅ Backup created: $BACKUP_SIZE"
+          echo "BACKUP_FILE=$BACKUP_FILE" >> $GITHUB_ENV
+
+      - name: Upload to Azure Blob Storage
+        run: |
+          CONTAINER_NAME="database-backups"
+          STORAGE_ACCOUNT=$(az storage account list \
+            --resource-group rg-proteinlens \
+            --query "[?starts_with(name, 'stproteinlens')].name" -o tsv | head -1)
+          
+          echo "📤 Uploading to Azure Storage: $STORAGE_ACCOUNT/$CONTAINER_NAME"
+          
+          # Create container if it doesn't exist
+          az storage container create \
+            --name "$CONTAINER_NAME" \
+            --account-name "$STORAGE_ACCOUNT" \
+            --auth-mode login \
+            --only-show-errors || true
+          
+          # Upload backup
+          az storage blob upload \
+            --account-name "$STORAGE_ACCOUNT" \
+            --container-name "$CONTAINER_NAME" \
+            --name "$BACKUP_FILE" \
+            --file "$BACKUP_FILE" \
+            --auth-mode login \
+            --overwrite
+          
+          echo "✅ Backup uploaded successfully"
+
+      - name: Clean up old backups
+        run: |
+          CONTAINER_NAME="database-backups"
+          RETENTION_DAYS=${{ github.event.inputs.retention_days || '30' }}
+          STORAGE_ACCOUNT=$(az storage account list \
+            --resource-group rg-proteinlens \
+            --query "[?starts_with(name, 'stproteinlens')].name" -o tsv | head -1)
+          
+          echo "🧹 Cleaning backups older than $RETENTION_DAYS days..."
+          
+          CUTOFF_DATE=$(date -d "$RETENTION_DAYS days ago" +%Y-%m-%d)
+          
+          az storage blob list \
+            --account-name "$STORAGE_ACCOUNT" \
+            --container-name "$CONTAINER_NAME" \
+            --auth-mode login \
+            --query "[?properties.creationTime < '$CUTOFF_DATE'].name" -o tsv | \
+          while read -r blob; do
+            if [ -n "$blob" ]; then
+              echo "  Deleting: $blob"
+              az storage blob delete \
+                --account-name "$STORAGE_ACCOUNT" \
+                --container-name "$CONTAINER_NAME" \
+                --name "$blob" \
+                --auth-mode login \
+                --only-show-errors
+            fi
+          done
+          
+          echo "✅ Cleanup completed"
+
+      - name: Backup summary
+        if: always()
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📊 Backup Summary"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "File: $BACKUP_FILE"
+          echo "Timestamp: $(date)"
+          echo "Retention: ${{ github.event.inputs.retention_days || '30' }} days"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
