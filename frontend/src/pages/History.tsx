@@ -10,7 +10,8 @@ import { useAuth } from '@/contexts/AuthProvider'
 import { FriendlyError } from '@/components/ui/FriendlyError'
 import { emptyStates } from '@/utils/friendlyErrors'
 import { migrateMeals } from '@/services/authService'
-import { isToday, parseISO } from 'date-fns'
+import { isToday, parseISO, startOfWeek, endOfWeek, addWeeks, format, isWithinInterval } from 'date-fns'
+import { Button } from '@/components/ui/Button'
 
 export function History() {
   const { user } = useAuth()
@@ -34,8 +35,58 @@ export function History() {
   }, [user?.id])
   
   const { data: meals = [], isLoading, error, refetch } = useMeals(userId)
-  const { days, averageProtein } = useWeeklyTrend(meals)
   const [selectedMeal, setSelectedMeal] = useState<any>(null)
+  
+  // Week pagination state - 0 = current week, -1 = last week, etc.
+  const [weekOffset, setWeekOffset] = useState(0)
+  
+  // Calculate the selected week's start and end dates
+  const { weekStart, weekEnd, weekLabel } = useMemo(() => {
+    const today = new Date()
+    const targetDate = addWeeks(today, weekOffset)
+    const start = startOfWeek(targetDate, { weekStartsOn: 1 }) // Monday
+    const end = endOfWeek(targetDate, { weekStartsOn: 1 }) // Sunday
+    
+    const startStr = format(start, 'MMM d')
+    const endStr = format(end, 'MMM d, yyyy')
+    const label = weekOffset === 0 ? 'This Week' : 
+                  weekOffset === -1 ? 'Last Week' : 
+                  `${startStr} - ${endStr}`
+    
+    return { weekStart: start, weekEnd: end, weekLabel: label }
+  }, [weekOffset])
+  
+  // Filter meals by selected week
+  const weekMeals = useMemo(() => {
+    return meals.filter(meal => {
+      try {
+        const mealDate = typeof meal.uploadedAt === 'string' 
+          ? parseISO(meal.uploadedAt) 
+          : new Date(meal.uploadedAt)
+        return isWithinInterval(mealDate, { start: weekStart, end: weekEnd })
+      } catch {
+        return false
+      }
+    })
+  }, [meals, weekStart, weekEnd])
+  
+  // Calculate if there are meals in previous weeks (for navigation)
+  const hasOlderMeals = useMemo(() => {
+    const prevWeekStart = addWeeks(weekStart, -1)
+    return meals.some(meal => {
+      try {
+        const mealDate = typeof meal.uploadedAt === 'string' 
+          ? parseISO(meal.uploadedAt) 
+          : new Date(meal.uploadedAt)
+        return mealDate < weekStart
+      } catch {
+        return false
+      }
+    })
+  }, [meals, weekStart])
+  
+  // Weekly trend for selected week
+  const weeklyTrend = useWeeklyTrend(weekMeals)
 
   // Calculate today's total protein intake
   const todayProtein = useMemo(() => {
@@ -187,20 +238,88 @@ export function History() {
         </div>
       )}
 
-      {/* Weekly Trend Chart */}
+      {/* Week Navigation */}
       {meals.length > 0 && (
-        <div className="mb-8">
-          <WeeklyTrendChart days={days} averageProtein={averageProtein} />
+        <div className="mb-6">
+          <div className="flex items-center justify-between bg-card border border-border rounded-lg p-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setWeekOffset(prev => prev - 1)}
+              disabled={!hasOlderMeals}
+              className="flex items-center gap-1"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              <span className="hidden sm:inline">Older</span>
+            </Button>
+            
+            <div className="text-center">
+              <h3 className="font-semibold text-foreground">{weekLabel}</h3>
+              <p className="text-xs text-muted-foreground">
+                {format(weekStart, 'MMM d')} - {format(weekEnd, 'MMM d')}
+              </p>
+            </div>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setWeekOffset(prev => prev + 1)}
+              disabled={weekOffset >= 0}
+              className="flex items-center gap-1"
+            >
+              <span className="hidden sm:inline">Newer</span>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Button>
+          </div>
         </div>
       )}
 
-      {/* Meal List */}
+      {/* Weekly Trend Chart - for selected week */}
       {meals.length > 0 && (
-        <MealHistoryList 
-          meals={meals} 
-          onMealClick={handleMealClick}
-          onMealDelete={handleMealDelete}
-        />
+        <div className="mb-8">
+          <WeeklyTrendChart days={weeklyTrend.days} averageProtein={weeklyTrend.averageProtein} />
+        </div>
+      )}
+
+      {/* Week Summary */}
+      {meals.length > 0 && (
+        <div className="mb-4 flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            {weekMeals.length} meal{weekMeals.length !== 1 ? 's' : ''} this week
+          </p>
+          <p className="text-sm font-medium">
+            {weekMeals.reduce((sum, m) => sum + (m.analysis?.totalProtein || 0), 0)}g total protein
+          </p>
+        </div>
+      )}
+
+      {/* Meal List - filtered by week */}
+      {meals.length > 0 && (
+        weekMeals.length > 0 ? (
+          <MealHistoryList 
+            meals={weekMeals} 
+            onMealClick={handleMealClick}
+            onMealDelete={handleMealDelete}
+          />
+        ) : (
+          <div className="bg-card border border-border rounded-lg p-8 text-center">
+            <p className="text-muted-foreground">No meals recorded this week</p>
+            {weekOffset < 0 && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setWeekOffset(0)}
+                className="mt-4"
+              >
+                Go to current week
+              </Button>
+            )}
+          </div>
+        )
       )}
 
       {/* Meal Detail Modal */}
