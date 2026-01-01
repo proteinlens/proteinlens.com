@@ -206,6 +206,11 @@ export function useProteinCalculator(): [ProteinCalculatorState, ProteinCalculat
           multiplierUsed: result.multiplierUsed,
         });
         saveLocalProteinProfile(localProfile);
+        
+        // Broadcast goal change to update header and other components
+        window.dispatchEvent(new CustomEvent('proteinlens:goal-changed', { 
+          detail: result.proteinTargetG 
+        }));
       }
 
       setState((s) => ({
@@ -248,6 +253,11 @@ export function useProteinCalculator(): [ProteinCalculatorState, ProteinCalculat
         result: response.target,
         hasServerProfile: true,
         isSaving: false,
+      }));
+      
+      // Broadcast goal change to update header and other components
+      window.dispatchEvent(new CustomEvent('proteinlens:goal-changed', { 
+        detail: response.target.proteinTargetG 
       }));
     } catch (error) {
       console.error('Failed to save protein profile:', error);
