@@ -3,7 +3,7 @@ CREATE TABLE "DietStyle" (
     "id" UUID NOT NULL DEFAULT gen_random_uuid(),
     "slug" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "description" TEXT,
+    "description" TEXT NOT NULL,
     "netCarbCapG" INTEGER NOT NULL DEFAULT 100,
     "fatTargetPercent" INTEGER NOT NULL DEFAULT 30,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
