@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { format, startOfDay, subDays } from 'date-fns'
+import { format, startOfDay, addDays, startOfWeek } from 'date-fns'
 
 export interface DayData {
   date: string
@@ -15,14 +15,23 @@ export interface WeeklyTrendData {
   lowestDay: DayData | null
 }
 
-export function useWeeklyTrend(meals: any[] = []): WeeklyTrendData {
+/**
+ * Generate weekly trend data for meals
+ * @param meals - Array of meal objects
+ * @param weekStartDate - Optional start date for the week (defaults to current week's Monday)
+ */
+export function useWeeklyTrend(meals: any[] = [], weekStartDate?: Date): WeeklyTrendData {
   return useMemo(() => {
-    const today = startOfDay(new Date())
+    // Use provided week start or default to current week's Monday
+    const weekStart = weekStartDate 
+      ? startOfDay(weekStartDate)
+      : startOfWeek(new Date(), { weekStartsOn: 1 }) // Monday
+    
     const days: DayData[] = []
 
-    // Generate 7 days (today - 6 days)
-    for (let i = 6; i >= 0; i--) {
-      const date = subDays(today, i)
+    // Generate 7 days starting from week start (Mon-Sun)
+    for (let i = 0; i < 7; i++) {
+      const date = addDays(weekStart, i)
       const dateString = format(date, 'yyyy-MM-dd')
       const dayLabel = format(date, 'EEE') // Mon, Tue, etc.
 
@@ -66,5 +75,5 @@ export function useWeeklyTrend(meals: any[] = []): WeeklyTrendData {
       highestDay,
       lowestDay,
     }
-  }, [meals])
+  }, [meals, weekStartDate?.getTime()])
 }

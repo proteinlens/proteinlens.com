@@ -72,7 +72,6 @@ export function History() {
   
   // Calculate if there are meals in previous weeks (for navigation)
   const hasOlderMeals = useMemo(() => {
-    const prevWeekStart = addWeeks(weekStart, -1)
     return meals.some(meal => {
       try {
         const mealDate = typeof meal.uploadedAt === 'string' 
@@ -85,8 +84,8 @@ export function History() {
     })
   }, [meals, weekStart])
   
-  // Weekly trend for selected week
-  const weeklyTrend = useWeeklyTrend(weekMeals)
+  // Weekly trend for selected week - pass weekStart to show correct days
+  const weeklyTrend = useWeeklyTrend(weekMeals, weekStart)
 
   // Calculate today's total protein intake
   const todayProtein = useMemo(() => {
