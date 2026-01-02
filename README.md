@@ -19,7 +19,9 @@
 - 🌙 **Dark Mode** - Easy on the eyes, day or night
 - 🔗 **Shareable Meals** - Get unique URLs to share meal scans with friends (Feature 017)
 - 🥗 **Diet Profiles** - Select from Keto, Paleo, Vegan, or Balanced diet styles (Feature 017)
-- 📈 **Macro Breakdown** - View daily fat/protein/carb percentages for goal-focused diets (Feature 017)
+- 📈 **Macro Breakdown** - View protein, carbs, and fat for every meal with calorie percentages (Feature 001)
+- 🎯 **Daily Tracking** - See aggregated daily macro totals and track your nutrition goals (Feature 001)
+- 📥 **Export Data** - Download your meal history with complete macro information as JSON (Feature 001)
 - ⚡ **Pro Tips** - AI-generated nutrition tips persist with each meal (Feature 017)
 
 ## 📋 Shareable Meals & Diet Profiles
@@ -42,6 +44,28 @@
 - 🗂️ [Data Model & Relationships](specs/017-shareable-meals-diets/data-model.md)
 - 📊 [Architecture & Technical Decisions](specs/017-shareable-meals-diets/research.md)
 
+---
+
+## 🍖 Macro Ingredients Analysis
+
+**Feature 001** enables comprehensive macronutrient tracking for every meal:
+
+### Key Capabilities
+
+- **Complete Macro Analysis**: AI extracts protein, carbs, and fat for each food item
+- **Meal-Level Breakdown**: See macro totals and calorie percentages (P/C/F split)
+- **Daily Aggregation**: Track daily macro totals with visual summaries
+- **Export Functionality**: Download meal history with complete macro data as JSON
+- **4-4-9 Calculation**: Accurate calorie totals (4 cal/g protein & carbs, 9 cal/g fat)
+- **Backward Compatible**: Legacy meals display protein-only gracefully
+
+### Quick Links
+
+- 📚 [Feature 001 Quickstart Guide](specs/001-macro-ingredients-analysis/quickstart.md)
+- 🎯 [User Stories](specs/001-macro-ingredients-analysis/spec.md)
+- 📊 [API Documentation](docs/API-MACRO-TRACKING.md)
+- 🗂️ [Data Model](specs/001-macro-ingredients-analysis/data-model.md)
+
 ### Example API Usage
 
 ```bash
@@ -53,9 +77,21 @@ curl -X PATCH https://api.proteinlens.com/api/me/diet-style \
   -H "Authorization: Bearer $TOKEN" \
   -d '{"dietStyleId": "550e8400-e29b-41d4-a716-446655440000"}'
 
-# View daily macro breakdown
+# Analyze meal with full macro breakdown
+curl -X POST https://api.proteinlens.com/api/meals/analyze \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"blobName": "meal-123.jpg"}'
+# Returns: totalProtein, totalCarbs, totalFat, foods with macros
+
+# View daily macro summary
 curl https://api.proteinlens.com/api/meals/daily-summary \
   -H "Authorization: Bearer $TOKEN"
+# Returns: daily totals, percentages, calorie breakdown
+
+# Export meal data with macros
+curl https://api.proteinlens.com/api/meals/export?startDate=2026-01-01&endDate=2026-01-31 \
+  -H "Authorization: Bearer $TOKEN"
+# Returns: JSON file with all meals and complete macro data
 
 # Share a meal (public URL with OG tags)
 https://www.proteinlens.com/meal/abc12xyz
@@ -250,12 +286,14 @@ cd frontend && npm run build
 |--------|----------|-------------|
 | `GET` | `/api/health` | Health check |
 | `POST` | `/api/upload-url` | Get SAS URL for photo upload |
-| `POST` | `/api/meals/analyze` | Analyze meal photo |
-| `GET` | `/api/meals` | Get meal history |
+| `POST` | `/api/meals/analyze` | Analyze meal photo (returns protein, carbs, fat) |
+| `GET` | `/api/meals` | Get meal history with macro data |
+| `GET` | `/api/meals/daily-summary` | Get daily macro aggregation |
+| `GET` | `/api/meals/export` | Export meals with macros as JSON |
 | `GET` | `/api/billing/plans` | Get subscription plans |
 | `POST` | `/api/billing/checkout` | Create Stripe checkout |
 
-See the [Authentication](#-authentication) section for auth-specific endpoints.
+See the [Authentication](#-authentication) section for auth-specific endpoints and the [API Documentation](docs/API-MACRO-TRACKING.md) for detailed macro tracking API reference.
 =======
 ## 📊 Observability
 
