@@ -297,7 +297,7 @@ export function SharedMealPage() {
   const mealData = meal; // Type assertion for clarity
   
   return (
-    <div className="min-h-screen bg-background">
+    <>
       {/* SEO Meta Tags and Performance Optimization */}
       <Helmet>
         <title>{`${mealData.totalProtein || 0}g Protein Meal - ProteinLens`}</title>
@@ -315,24 +315,8 @@ export function SharedMealPage() {
         <link rel="preconnect" href={API_BASE_URL} crossOrigin="anonymous" />
       </Helmet>
 
-      {/* Header */}
-      <header className="sticky top-0 z-40 backdrop-blur-xl bg-background/80 border-b border-border">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <span className="text-xl">🥩</span>
-            <span className="font-bold text-lg text-foreground">ProteinLens</span>
-          </Link>
-          <Link
-            to="/"
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium text-sm hover:bg-primary/90 transition-colors"
-          >
-            Scan Your Meal
-          </Link>
-        </div>
-      </header>
-
       {/* Main Content */}
-      <main className="max-w-2xl mx-auto px-4 py-6">
+      <div className="max-w-2xl mx-auto px-4 py-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -468,8 +452,8 @@ export function SharedMealPage() {
             </p>
           </div>
         </motion.div>
-      </main>
-    </div>
+      </div>
+    </>
   );
 }
 
