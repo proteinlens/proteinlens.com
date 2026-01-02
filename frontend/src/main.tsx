@@ -27,3 +27,4 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <App />
   </React.StrictMode>,
 )
+// Deploy trigger: Fri Jan  2 18:02:57 CET 2026
