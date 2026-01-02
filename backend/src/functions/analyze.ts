@@ -289,6 +289,18 @@ export async function analyzeMeal(request: HttpRequest, context: InvocationConte
 
     const durationMs = Date.now() - startTime;
     
+    // Log comprehensive analysis summary
+    Logger.info('Meal analysis request completed', {
+      requestId,
+      mealAnalysisId,
+      userId,
+      wasCached,
+      durationMs,
+      foodCount: aiResponse.foods.length,
+      confidence: aiResponse.confidence,
+      macrosAvailable: !!(aiResponse.totalCarbs !== undefined && aiResponse.totalFat !== undefined),
+    });
+    
     // T033: Track analysis completed event
     trackEvent('proteinlens.analysis.completed', {
       correlationId: traceContext.correlationId,
@@ -300,6 +312,8 @@ export async function analyzeMeal(request: HttpRequest, context: InvocationConte
     }, {
       durationMs,
       totalProtein: aiResponse.totalProtein,
+      totalCarbs: aiResponse.totalCarbs || 0,
+      totalFat: aiResponse.totalFat || 0,
     });
     
     // Track analysis count metric
@@ -309,6 +323,7 @@ export async function analyzeMeal(request: HttpRequest, context: InvocationConte
       properties: {
         wasCached: String(wasCached),
         userId,
+        hasMacros: String(!!(aiResponse.totalCarbs !== undefined && aiResponse.totalFat !== undefined)),
       },
     });
 

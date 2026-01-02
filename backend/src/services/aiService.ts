@@ -152,6 +152,23 @@ Guidelines:
         total: data.usage.total_tokens || 0,
       } : undefined;
 
+      // Calculate cost (GPT-4 Vision pricing: $0.01/1K prompt, $0.03/1K completion)
+      const costData = tokenUsage ? {
+        promptCost: (tokenUsage.prompt / 1000) * 0.01,
+        completionCost: (tokenUsage.completion / 1000) * 0.03,
+        totalCost: ((tokenUsage.prompt / 1000) * 0.01) + ((tokenUsage.completion / 1000) * 0.03),
+      } : null;
+
+      Logger.info('Token usage tracked', {
+        requestId,
+        promptTokens: tokenUsage?.prompt,
+        completionTokens: tokenUsage?.completion,
+        totalTokens: tokenUsage?.total,
+        promptCost: costData?.promptCost.toFixed(6),
+        completionCost: costData?.completionCost.toFixed(6),
+        totalCost: costData?.totalCost.toFixed(6),
+      });
+
       // Parse and validate JSON response
       let parsedResponse;
       try {
@@ -195,9 +212,18 @@ Guidelines:
         requestId,
         foodCount: validation.data.foods.length,
         totalProtein: validation.data.totalProtein,
+        totalCarbs: validation.data.totalCarbs,
+        totalFat: validation.data.totalFat,
         confidence: validation.data.confidence,
         durationMs,
-        ...(tokenUsage && { tokenUsage: tokenUsage.total }),
+        ...(tokenUsage && { 
+          totalTokens: tokenUsage.total,
+          promptTokens: tokenUsage.prompt,
+          completionTokens: tokenUsage.completion,
+        }),
+        ...(costData && {
+          costUSD: costData.totalCost.toFixed(6),
+        }),
       });
 
       return validation.data;
