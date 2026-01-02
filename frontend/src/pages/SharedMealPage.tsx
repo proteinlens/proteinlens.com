@@ -91,10 +91,14 @@ async function fetchPublicMeal(shareId: string): Promise<PublicMealData> {
 }
 
 export function SharedMealPage() {
+  console.log('[SharedMealPage] Component rendering - START');
+  
   const { shareId } = useParams<{ shareId: string }>();
   const [loadingState, setLoadingState] = useState<LoadingState>('loading');
   const [meal, setMeal] = useState<PublicMealData | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  console.log('[SharedMealPage] Component rendering - shareId:', shareId);
 
   useEffect(() => {
     if (!shareId) {
