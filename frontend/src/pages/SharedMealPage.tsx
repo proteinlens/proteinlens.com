@@ -6,13 +6,11 @@
  * Shows meal analysis results without requiring login.
  * Optimized for fast loading with caching and prefetching.
  */
-console.log('[SharedMealPage] MODULE LOADING - imports starting');
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import { Skeleton } from '../components/Skeleton';
-console.log('[SharedMealPage] MODULE LOADED - all imports successful');
 
 interface FoodItem {
   name: string;
@@ -93,14 +91,10 @@ async function fetchPublicMeal(shareId: string): Promise<PublicMealData> {
 }
 
 export function SharedMealPage() {
-  console.log('[SharedMealPage] Component rendering - START');
-  
   const { shareId } = useParams<{ shareId: string }>();
   const [loadingState, setLoadingState] = useState<LoadingState>('loading');
   const [meal, setMeal] = useState<PublicMealData | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  console.log('[SharedMealPage] Component rendering - shareId:', shareId);
 
   useEffect(() => {
     if (!shareId) {
@@ -113,6 +107,13 @@ export function SharedMealPage() {
     fetchPublicMeal(shareId)
       .then((data) => {
         console.log('[SharedMealPage] Fetch success, setting meal:', data);
+        // Validate data before setting state
+        if (!data || typeof data.totalProtein !== 'number') {
+          console.error('[SharedMealPage] Invalid meal data received:', data);
+          setError('Invalid meal data');
+          setLoadingState('error');
+          return;
+        }
         setMeal(data);
         setLoadingState('success');
       })
@@ -263,7 +264,7 @@ export function SharedMealPage() {
   }
 
   // Error state
-  if (loadingState === 'error' || !meal) {
+  if (loadingState === 'error') {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Helmet>
@@ -286,22 +287,30 @@ export function SharedMealPage() {
     );
   }
 
-  // Success state - show the meal (loadingState === 'success' and meal is defined)
+  // Success state - show the meal (MUST have both success state AND meal data)
+  if (loadingState !== 'success' || !meal) {
+    // Fallback: should never reach here, but safety guard
+    return null;
+  }
+
+  // At this point, TypeScript knows meal is not null, but add runtime safety
+  const mealData = meal; // Type assertion for clarity
+  
   return (
     <div className="min-h-screen bg-background">
       {/* SEO Meta Tags and Performance Optimization */}
       <Helmet>
-        <title>{meal.totalProtein}g Protein Meal - ProteinLens</title>
+        <title>{`${mealData.totalProtein || 0}g Protein Meal - ProteinLens`}</title>
         <meta 
           name="description" 
-          content={`This meal contains ${meal.totalProtein}g of protein from ${meal.foods.length} foods. Analyzed by ProteinLens AI.`} 
+          content={`This meal contains ${mealData.totalProtein || 0}g of protein from ${mealData.foods?.length || 0} foods. Analyzed by ProteinLens AI.`} 
         />
-        <meta property="og:title" content={`${meal.totalProtein}g Protein Meal - ProteinLens`} />
-        <meta property="og:description" content={`Analyzed meal with ${meal.totalProtein}g protein and ${meal.foods.length} foods`} />
-        <meta property="og:image" content={meal.imageUrl} />
+        <meta property="og:title" content={`${mealData.totalProtein || 0}g Protein Meal - ProteinLens`} />
+        <meta property="og:description" content={`Analyzed meal with ${mealData.totalProtein || 0}g protein and ${mealData.foods?.length || 0} foods`} />
+        <meta property="og:image" content={mealData.imageUrl || ''} />
         
         {/* Performance: Preload critical resources */}
-        <link rel="preload" as="image" href={meal.imageUrl} />
+        <link rel="preload" as="image" href={mealData.imageUrl || ''} />
         <link rel="dns-prefetch" href={API_BASE_URL} />
         <link rel="preconnect" href={API_BASE_URL} crossOrigin="anonymous" />
       </Helmet>
@@ -333,7 +342,7 @@ export function SharedMealPage() {
           {/* Meal Image */}
           <div className="relative aspect-video bg-muted">
             <img
-              src={meal.imageUrl}
+              src={mealData.imageUrl}
               alt="Shared meal"
               className="w-full h-full object-cover"
               loading="eager"
@@ -341,7 +350,7 @@ export function SharedMealPage() {
             {/* Calories Badge */}
             <div className="absolute top-4 left-4">
               <div className="px-3 py-1.5 rounded-full bg-primary/90 backdrop-blur-sm text-primary-foreground font-bold text-lg shadow-lg">
-                {meal.totalCalories} cal
+                {mealData.totalCalories} cal
               </div>
             </div>
             {/* Confidence Badge */}
@@ -363,7 +372,7 @@ export function SharedMealPage() {
             <div>
               <h2 className="text-lg font-semibold text-foreground mb-3">Food Items</h2>
               <div className="space-y-2">
-                {meal.foods.map((food, index) => (
+                {mealData.foods.map((food, index) => (
                   <div
                     key={index}
                     className="py-3 px-4 bg-muted/50 rounded-xl"
@@ -389,42 +398,42 @@ export function SharedMealPage() {
             <div className="p-4 bg-primary/10 rounded-xl border border-primary/20">
               <div className="flex items-center justify-between mb-3">
                 <span className="font-semibold text-foreground">Total</span>
-                <span className="text-2xl font-bold text-primary">{meal.totalCalories} cal</span>
+                <span className="text-2xl font-bold text-primary">{mealData.totalCalories} cal</span>
               </div>
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <div className="text-sm text-muted-foreground">Protein</div>
-                  <div className="text-lg font-bold text-foreground">{meal.totalProtein}g</div>
+                  <div className="text-lg font-bold text-foreground">{mealData.totalProtein}g</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Carbs</div>
-                  <div className="text-lg font-bold text-foreground">{meal.totalCarbs}g</div>
+                  <div className="text-lg font-bold text-foreground">{mealData.totalCarbs}g</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Fat</div>
-                  <div className="text-lg font-bold text-foreground">{meal.totalFat}g</div>
+                  <div className="text-lg font-bold text-foreground">{mealData.totalFat}g</div>
                 </div>
               </div>
             </div>
 
             {/* Pro Tip / Notes */}
-            {meal.proTip && (
+            {mealData.proTip && (
               <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
                 <div className="flex items-start gap-3">
                   <span className="text-xl">💡</span>
                   <div>
                     <div className="font-medium text-amber-400 mb-1">Pro Tip</div>
-                    <p className="text-sm text-muted-foreground">{meal.proTip}</p>
+                    <p className="text-sm text-muted-foreground">{mealData.proTip}</p>
                   </div>
                 </div>
               </div>
             )}
 
             {/* Diet Style Badge */}
-            {meal.dietStyleAtScan && (
+            {mealData.dietStyleAtScan && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>🍽️</span>
-                <span>Diet: {meal.dietStyleAtScan.name}</span>
+                <span>Diet: {mealData.dietStyleAtScan.name}</span>
               </div>
             )}
           </div>
