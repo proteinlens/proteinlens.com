@@ -137,6 +137,14 @@ Guidelines:
         throw new AIAnalysisError('No response content from AI model');
       }
 
+      // Log raw AI response for debugging macro issues
+      Logger.info('Raw AI response received', { 
+        requestId,
+        responsePreview: aiResponseText.substring(0, 500),
+        hasCarbs: aiResponseText.includes('carbs'),
+        hasFat: aiResponseText.includes('fat'),
+      });
+
       // T075: Extract token usage for telemetry
       const tokenUsage = data.usage ? {
         prompt: data.usage.prompt_tokens || 0,
@@ -156,8 +164,22 @@ Guidelines:
       const validation = AIAnalysisResponseSchema.safeParse(parsedResponse);
       if (!validation.success) {
         const errors = validation.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+        Logger.warn('AI response validation failed', {
+          requestId,
+          errors,
+          parsed: JSON.stringify(parsedResponse).substring(0, 200),
+        });
         throw new SchemaValidationError(errors);
       }
+
+      // Log parsed response for debugging
+      Logger.info('AI response validated successfully', {
+        requestId,
+        totalProtein: validation.data.totalProtein,
+        totalCarbs: validation.data.totalCarbs,
+        totalFat: validation.data.totalFat,
+        foodCount: validation.data.foods.length,
+      });
 
       // T075: Track successful AI call
       const durationMs = Date.now() - startTime;
