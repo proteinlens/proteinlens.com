@@ -23,6 +23,18 @@ export const AnalysisResults: React.FC<AnalysisResultsProps> = ({
   onDelete,
   onCorrectionsSaved,
 }) => {
+  // DEBUG: Log received analysis result
+  React.useEffect(() => {
+    console.log('🔍 AnalysisResults received:', {
+      totalProtein: result.totalProtein,
+      totalCarbs: result.totalCarbs,
+      totalFat: result.totalFat,
+      hasCarbs: result.totalCarbs !== undefined,
+      hasFat: result.totalFat !== undefined,
+      fullResult: result,
+    });
+  }, [result]);
+
   // T060: Toggle edit mode
   const [isEditing, setIsEditing] = useState(false);
   const [currentResult, setCurrentResult] = useState(result);
