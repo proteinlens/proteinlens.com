@@ -16,6 +16,9 @@ interface FoodItem {
   name: string;
   portion: string;
   protein: number;
+  carbs: number;
+  fat: number;
+  calories: number;
 }
 
 interface PublicMealData {
@@ -23,6 +26,9 @@ interface PublicMealData {
   uploadedAt: string;
   imageUrl: string;
   totalProtein: number;
+  totalCarbs: number;
+  totalFat: number;
+  totalCalories: number;
   confidence: 'high' | 'medium' | 'low';
   foods: FoodItem[];
   proTip?: string;
@@ -312,10 +318,10 @@ export function SharedMealPage() {
               className="w-full h-full object-cover"
               loading="eager"
             />
-            {/* Protein Badge */}
+            {/* Calories Badge */}
             <div className="absolute top-4 left-4">
               <div className="px-3 py-1.5 rounded-full bg-primary/90 backdrop-blur-sm text-primary-foreground font-bold text-lg shadow-lg">
-                {meal.totalProtein}g protein
+                {meal.totalCalories} cal
               </div>
             </div>
             {/* Confidence Badge */}
@@ -340,22 +346,45 @@ export function SharedMealPage() {
                 {meal.foods.map((food, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between py-3 px-4 bg-muted/50 rounded-xl"
+                    className="py-3 px-4 bg-muted/50 rounded-xl"
                   >
-                    <div>
-                      <div className="font-medium text-foreground">{food.name}</div>
-                      <div className="text-sm text-muted-foreground">{food.portion}</div>
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <div className="font-medium text-foreground">{food.name}</div>
+                        <div className="text-sm text-muted-foreground">{food.portion}</div>
+                      </div>
+                      <div className="font-semibold text-primary">{food.calories} cal</div>
                     </div>
-                    <div className="font-semibold text-primary">{food.protein}g</div>
+                    <div className="flex gap-4 text-sm">
+                      <span className="text-muted-foreground">P: <span className="font-medium text-foreground">{food.protein}g</span></span>
+                      <span className="text-muted-foreground">C: <span className="font-medium text-foreground">{food.carbs}g</span></span>
+                      <span className="text-muted-foreground">F: <span className="font-medium text-foreground">{food.fat}g</span></span>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Total */}
-            <div className="flex items-center justify-between py-3 px-4 bg-primary/10 rounded-xl border border-primary/20">
-              <span className="font-semibold text-foreground">Total Protein</span>
-              <span className="text-2xl font-bold text-primary">{meal.totalProtein}g</span>
+            {/* Total Macros */}
+            <div className="p-4 bg-primary/10 rounded-xl border border-primary/20">
+              <div className="flex items-center justify-between mb-3">
+                <span className="font-semibold text-foreground">Total</span>
+                <span className="text-2xl font-bold text-primary">{meal.totalCalories} cal</span>
+              </div>
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <div className="text-sm text-muted-foreground">Protein</div>
+                  <div className="text-lg font-bold text-foreground">{meal.totalProtein}g</div>
+                </div>
+                <div>
+                  <div className="text-sm text-muted-foreground">Carbs</div>
+                  <div className="text-lg font-bold text-foreground">{meal.totalCarbs}g</div>
+                </div>
+                <div>
+                  <div className="text-sm text-muted-foreground">Fat</div>
+                  <div className="text-lg font-bold text-foreground">{meal.totalFat}g</div>
+                </div>
+              </div>
             </div>
 
             {/* Pro Tip / Notes */}

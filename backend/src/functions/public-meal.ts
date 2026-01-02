@@ -19,6 +19,8 @@ interface Food {
   name: string;
   portion: string;
   protein: number | { toNumber: () => number };
+  carbs?: number | { toNumber: () => number } | null;
+  fat?: number | { toNumber: () => number } | null;
 }
 
 interface DietStyleSnapshot {
@@ -107,22 +109,41 @@ export async function getPublicMeal(
       mealId: meal.id,
     });
 
+    // Calculate total macros from all foods
+    const foods = (meal.foods as Food[]).map((food) => {
+      const protein = typeof food.protein === 'number' ? food.protein : Number(food.protein);
+      const carbs = food.carbs ? (typeof food.carbs === 'number' ? food.carbs : Number(food.carbs)) : 0;
+      const fat = food.fat ? (typeof food.fat === 'number' ? food.fat : Number(food.fat)) : 0;
+      const calories = Math.round((protein * 4) + (carbs * 4) + (fat * 9));
+      
+      return {
+        name: food.name,
+        portion: food.portion,
+        protein,
+        carbs,
+        fat,
+        calories,
+      };
+    });
+
+    const totalProtein = typeof meal.totalProtein === 'number' ? meal.totalProtein : Number(meal.totalProtein);
+    const totalCarbs = foods.reduce((sum, food) => sum + food.carbs, 0);
+    const totalFat = foods.reduce((sum, food) => sum + food.fat, 0);
+    const totalCalories = foods.reduce((sum, food) => sum + food.calories, 0);
+
     // Transform to API response format
     const response = {
       meal: {
         shareId: meal.shareId,
         uploadedAt: meal.createdAt.toISOString(),
         imageUrl,
-        totalProtein: typeof meal.totalProtein === 'number' 
-          ? meal.totalProtein 
-          : Number(meal.totalProtein),
+        totalProtein,
+        totalCarbs,
+        totalFat,
+        totalCalories,
         confidence: meal.confidence,
         proTip: meal.notes, // Pro Tip (notes field renamed for API clarity)
-        foods: (meal.foods as Food[]).map((food) => ({
-          name: food.name,
-          portion: food.portion,
-          protein: typeof food.protein === 'number' ? food.protein : Number(food.protein),
-        })),
+        foods,
         dietStyleAtScan: meal.dietStyleAtScan
           ? {
               slug: meal.dietStyleAtScan.slug,
