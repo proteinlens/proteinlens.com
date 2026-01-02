@@ -15,12 +15,16 @@ interface FoodItem {
 }
 
 interface AnalysisResult {
-  mealAnalysisId: string
-  foods: FoodItem[]
-  totalProtein: number
-  confidence: 'high' | 'medium' | 'low'
-  notes?: string
-  dietFeedback?: string // Feature 017: Diet-specific feedback
+  mealAnalysisId: string;
+  foods: FoodItem[];
+  totalProtein: number;
+  totalCarbs?: number;
+  totalFat?: number;
+  confidence: 'high' | 'medium' | 'low';
+  notes?: string;
+  dietFeedback?: string; // Feature 017: Diet-specific feedback
+  shareUrl?: string;
+  shareId?: string;
 }
 
 type UploadState = 'idle' | 'selected' | 'uploading' | 'analyzing' | 'done' | 'error' | 'demo'
@@ -159,6 +163,14 @@ export function HomePage() {
       setResult(analysisResponse)
       setUploadState('done')
       setRetryCount(0) // Reset retry count on success
+      
+      // Auto-navigate to shareable link if available
+      if (analysisResponse.shareUrl) {
+        // Wait a moment for state to settle, then navigate
+        setTimeout(() => {
+          navigate(analysisResponse.shareUrl!)
+        }, 500)
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Analysis failed'
       setError(errorMessage)
