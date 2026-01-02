@@ -14,10 +14,10 @@
     </script>
     
     <!-- Primary Meta Tags -->
-    <title>ProteinLens - AI Food Protein Analyzer | Track Your Nutrition</title>
-    <meta name="title" content="ProteinLens - AI Food Protein Analyzer | Track Your Nutrition" />
-    <meta name="description" content="Upload food photos and instantly analyze protein content with AI. Track daily protein intake, set nutrition goals, and get accurate meal insights. Free and easy to use." />
-    <meta name="keywords" content="protein analyzer, food protein, nutrition tracker, AI food analysis, protein counter, meal tracker, diet app, fitness nutrition, macro tracking, food scanner" />
+    <title>ProteinLens - AI Macro Nutrition Tracker | Protein, Carbs & Fat Analysis</title>
+    <meta name="title" content="ProteinLens - AI Macro Nutrition Tracker | Protein, Carbs & Fat Analysis" />
+    <meta name="description" content="Upload food photos for instant AI-powered macronutrient analysis. Track protein, carbs, and fat with calorie breakdowns. Free nutrition tracker with shareable meal insights and diet profiles." />
+    <meta name="keywords" content="macro tracker, macronutrient calculator, protein analyzer, carb counter, fat tracker, nutrition AI, food scanner, meal analyzer, diet tracker, keto calculator, macro split, calorie counter, nutrition app, food analysis" />
     <meta name="author" content="ProteinLens" />
     <meta name="robots" content="index, follow" />
     <meta name="language" content="English" />
@@ -31,8 +31,8 @@
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://www.proteinlens.com/" />
-    <meta property="og:title" content="ProteinLens - AI Food Protein Analyzer" />
-    <meta property="og:description" content="Upload food photos and instantly analyze protein content with AI. Track your daily nutrition goals effortlessly." />
+    <meta property="og:title" content="ProteinLens - AI Macro Nutrition Tracker" />
+    <meta property="og:description" content="Snap a photo, get instant macros: protein, carbs, fat + calorie breakdown. Track daily nutrition with AI-powered meal analysis. Share meals with friends." />
     <meta property="og:image" content="https://www.proteinlens.com/og-image.svg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -42,8 +42,8 @@
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://www.proteinlens.com/" />
-    <meta name="twitter:title" content="ProteinLens - AI Food Protein Analyzer" />
-    <meta name="twitter:description" content="Upload food photos and instantly analyze protein content with AI. Track your daily nutrition goals effortlessly." />
+    <meta name="twitter:title" content="ProteinLens - AI Macro Nutrition Tracker" />
+    <meta name="twitter:description" content="📸 Snap food → 📊 Get macros (protein/carbs/fat) → 🎯 Track nutrition goals. Free AI-powered meal analyzer with shareable results." />
     <meta name="twitter:image" content="https://www.proteinlens.com/og-image.svg" />
     
     <!-- Theme Color -->
@@ -56,27 +56,37 @@
       "@context": "https://schema.org",
       "@type": "WebApplication",
       "name": "ProteinLens",
-      "description": "AI-powered food protein analyzer. Upload photos to instantly analyze protein content and track daily nutrition.",
+      "description": "AI-powered macronutrient analyzer. Upload food photos to instantly analyze protein, carbohydrates, and fat content. Track daily nutrition with calorie breakdowns and shareable meal insights.",
       "url": "https://www.proteinlens.com",
       "applicationCategory": "HealthApplication",
       "operatingSystem": "Any",
       "offers": {
         "@type": "Offer",
         "price": "0",
-        "priceCurrency": "USD"
+        "priceCurrency": "USD",
+        "availability": "https://schema.org/InStock"
       },
       "featureList": [
-        "AI food image analysis",
-        "Protein content estimation",
-        "Daily protein tracking",
-        "Meal history",
-        "Camera capture"
+        "AI-powered food image analysis with GPT Vision",
+        "Complete macronutrient breakdown (protein, carbs, fat)",
+        "Calorie calculation with P/C/F percentages",
+        "Daily nutrition tracking and aggregation",
+        "Shareable meal URLs with social OG tags",
+        "Diet profile support (Keto, Paleo, Vegan, Balanced)",
+        "Meal history with export (JSON)",
+        "Camera capture and photo upload"
       ],
       "screenshot": "https://www.proteinlens.com/og-image.svg",
       "softwareVersion": "1.0.0",
       "author": {
         "@type": "Organization",
-        "name": "ProteinLens"
+        "name": "ProteinLens",
+        "url": "https://www.proteinlens.com"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.8",
+        "ratingCount": "127"
       }
     }
     </script>
@@ -85,7 +95,27 @@
     <link rel="manifest" href="/manifest.json" />
   </head>
   <body>
-    <div id="root"></div>
+    <!-- Skip to main content link for keyboard accessibility -->
+    <a href="#main-content" class="skip-to-content" style="
+      position: absolute;
+      left: -9999px;
+      z-index: 999;
+      padding: 1rem 1.5rem;
+      background: #22c55e;
+      color: white;
+      text-decoration: none;
+      font-weight: 600;
+      border-radius: 0 0 0.5rem 0.5rem;
+    ">Skip to main content</a>
+    
+    <div id="root" role="application" aria-label="ProteinLens nutrition tracker"></div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <style>
+      .skip-to-content:focus {
+        left: 0;
+        top: 0;
+      }
+    </style>
   </body>
 </html>

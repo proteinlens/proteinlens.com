@@ -1,7 +1,7 @@
 {
-  "name": "ProteinLens - AI Food Protein Analyzer",
+  "name": "ProteinLens - AI Macro Nutrition Tracker",
   "short_name": "ProteinLens",
-  "description": "Upload food photos and instantly analyze protein content with AI. Track daily protein intake and reach your nutrition goals.",
+  "description": "Snap food photos for instant AI macro analysis (protein, carbs, fat). Track daily nutrition, share meals, and reach your diet goals.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

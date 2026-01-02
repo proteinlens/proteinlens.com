@@ -1,14 +1,42 @@
 # ProteinLens robots.txt
 User-agent: *
 Allow: /
+Allow: /meal/*
 
 # Disallow private/authenticated areas
 Disallow: /history
 Disallow: /settings
 Disallow: /billing/
+Disallow: /api/*
 
 # Sitemap
 Sitemap: https://www.proteinlens.com/sitemap.xml
+
+# Social media crawlers for shareable meal OG tags
+User-agent: facebookexternalhit
+Allow: /meal/*
+
+User-agent: Twitterbot
+Allow: /meal/*
+
+User-agent: LinkedInBot
+Allow: /meal/*
+
+# Block AI training crawlers (respect user privacy)
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: Claude-Web
+Disallow: /
 
 # Crawl-delay for polite bots
 Crawl-delay: 1
