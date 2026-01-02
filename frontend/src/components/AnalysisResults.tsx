@@ -38,6 +38,12 @@ export const AnalysisResults: React.FC<AnalysisResultsProps> = ({
   // T060: Toggle edit mode
   const [isEditing, setIsEditing] = useState(false);
   const [currentResult, setCurrentResult] = useState(result);
+  
+  // Sync state when result prop changes
+  React.useEffect(() => {
+    setCurrentResult(result);
+  }, [result]);
+  
   // T069: Delete confirmation state
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
