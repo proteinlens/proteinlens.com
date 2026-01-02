@@ -3,9 +3,6 @@
 // Task: T027 - Daily summary display component
 
 import React, { useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle } from 'lucide-react';
 import { calculateMacroPercentages, calculateTotalCalories, formatMacroValue } from '@/utils/nutrition';
 import './DailySummary.css';
 
@@ -52,43 +49,43 @@ export const DailySummary: React.FC<DailySummaryProps> = ({ data, isLoading = fa
 
   if (isLoading) {
     return (
-      <Card className="daily-summary-card">
-        <CardHeader>
-          <CardTitle>Loading daily summary...</CardTitle>
-        </CardHeader>
-      </Card>
+      <div className="daily-summary-card">
+        <div className="daily-summary-header">
+          <h3 className="daily-summary-title">Loading daily summary...</h3>
+        </div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Alert variant="destructive" className="daily-summary-error">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
+      <div className="daily-summary-error alert-destructive">
+        <span className="alert-icon">⚠️</span>
+        <span>{error}</span>
+      </div>
     );
   }
 
   return (
-    <Card className="daily-summary-card">
-      <CardHeader className="daily-summary-header">
-        <CardTitle className="daily-summary-title">
+    <div className="daily-summary-card">
+      <div className="daily-summary-header">
+        <h3 className="daily-summary-title">
           {formattedDate}
-        </CardTitle>
+        </h3>
         <p className="daily-summary-meals">
           {data.meals} {data.meals === 1 ? 'meal' : 'meals'} tracked
         </p>
-      </CardHeader>
+      </div>
 
-      <CardContent className="daily-summary-content">
+      <div className="daily-summary-content">
         {/* Carb Warning Alert */}
         {data.carbWarning && data.carbLimit !== null && (
-          <Alert variant="warning" className="daily-summary-warning">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
+          <div className="daily-summary-warning alert-warning">
+            <span className="alert-icon">⚠️</span>
+            <span>
               You've exceeded your net carb limit of {data.carbLimit}g by {Math.round(data.macros.carbs - data.carbLimit)}g
-            </AlertDescription>
-          </Alert>
+            </span>
+          </div>
         )}
 
         {/* Macro totals section */}
@@ -151,8 +148,8 @@ export const DailySummary: React.FC<DailySummaryProps> = ({ data, isLoading = fa
             </div>
           )}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 

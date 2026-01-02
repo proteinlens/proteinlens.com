@@ -9,6 +9,23 @@ import { Logger } from '../utils/logger.js';
 import { mealService } from '../services/mealService.js';
 import { extractUserId } from '../middleware/quotaMiddleware.js';
 
+interface Food {
+  name: string;
+  portion: string;
+  protein: number | { toNumber: () => number };
+  carbs?: number | null | { toNumber: () => number };
+  fat?: number | null | { toNumber: () => number };
+}
+
+interface MealWithFoods {
+  id: string;
+  createdAt: Date;
+  totalProtein: { toNumber: () => number } | number;
+  confidence: string;
+  notes: string | null;
+  foods: Food[];
+}
+
 interface ExportFood {
   name: string;
   portion: string;
@@ -121,7 +138,7 @@ export async function exportMeals(request: HttpRequest, context: InvocationConte
     });
 
     // Get all meals for user (optionally filtered by date range)
-    const meals = await mealService.getUserMealAnalyses(userId, { limit: 500 });
+    const meals = await mealService.getUserMealAnalyses(userId, { limit: 500 }) as unknown as MealWithFoods[];
 
     // Filter by date range if provided
     let filteredMeals = meals;
@@ -134,29 +151,42 @@ export async function exportMeals(request: HttpRequest, context: InvocationConte
     }
 
     // Transform meals to export format
-    const exportMeals: ExportMeal[] = filteredMeals.map(meal => ({
-      id: meal.id,
-      date: meal.createdAt.toISOString().split('T')[0],
-      timestamp: meal.createdAt.toISOString(),
-      totalProtein: Number(meal.totalProtein),
-      totalCarbs: meal.foods.reduce((sum, f) => sum + (Number(f.carbs) || 0), 0) || undefined,
-      totalFat: meal.foods.reduce((sum, f) => sum + (Number(f.fat) || 0), 0) || undefined,
-      totalCalories: (() => {
-        const protein = Number(meal.totalProtein);
-        const carbs = meal.foods.reduce((sum, f) => sum + (Number(f.carbs) || 0), 0);
-        const fat = meal.foods.reduce((sum, f) => sum + (Number(f.fat) || 0), 0);
-        return (protein * 4) + (carbs * 4) + (fat * 9);
-      })(),
-      confidence: meal.confidence,
-      foods: meal.foods.map(f => ({
-        name: f.name,
-        portion: f.portion,
-        protein: Number(f.protein),
-        carbs: f.carbs ? Number(f.carbs) : null,
-        fat: f.fat ? Number(f.fat) : null,
-      })),
-      notes: meal.notes ?? undefined,
-    }));
+    const exportMeals: ExportMeal[] = filteredMeals.map(meal => {
+      const proteinValue = typeof meal.totalProtein === 'number' ? meal.totalProtein : meal.totalProtein.toNumber();
+      const totalCarbs = meal.foods.reduce((sum: number, f: Food) => {
+        const carbs = typeof f.carbs === 'object' && f.carbs !== null ? f.carbs.toNumber() : (f.carbs || 0);
+        return sum + carbs;
+      }, 0);
+      const totalFat = meal.foods.reduce((sum: number, f: Food) => {
+        const fat = typeof f.fat === 'object' && f.fat !== null ? f.fat.toNumber() : (f.fat || 0);
+        return sum + fat;
+      }, 0);
+      const totalCalories = (proteinValue * 4) + (totalCarbs * 4) + (totalFat * 9);
+
+      return {
+        id: meal.id,
+        date: meal.createdAt.toISOString().split('T')[0],
+        timestamp: meal.createdAt.toISOString(),
+        totalProtein: proteinValue,
+        totalCarbs: totalCarbs || undefined,
+        totalFat: totalFat || undefined,
+        totalCalories,
+        confidence: meal.confidence,
+        foods: meal.foods.map((f: Food) => {
+          const protein = typeof f.protein === 'number' ? f.protein : f.protein.toNumber();
+          const carbs = f.carbs ? (typeof f.carbs === 'object' ? f.carbs.toNumber() : f.carbs) : null;
+          const fat = f.fat ? (typeof f.fat === 'object' ? f.fat.toNumber() : f.fat) : null;
+          return {
+            name: f.name,
+            portion: f.portion,
+            protein,
+            carbs,
+            fat,
+          };
+        }),
+        notes: meal.notes ?? undefined,
+      };
+    });
 
     // Calculate summary statistics
     const totalProtein = exportMeals.reduce((sum, m) => sum + m.totalProtein, 0);

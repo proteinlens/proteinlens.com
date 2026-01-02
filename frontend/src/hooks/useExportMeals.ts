@@ -3,7 +3,7 @@
 // Task: T035 - Export data API integration
 
 import { useMutation } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthProvider';
 
 interface ExportMealsRequest {
   startDate?: string; // YYYY-MM-DD

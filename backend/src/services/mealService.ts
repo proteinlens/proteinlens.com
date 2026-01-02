@@ -469,10 +469,12 @@ class MealService {
     for (const meal of meals) {
       totalProtein += Number(meal.totalProtein) || 0;
       
-      // Estimate carbs and fat from food items
+      // Sum up actual carbs and fat from food items (if available)
       for (const food of meal.foods) {
-        totalCarbs += this.estimateCarbsFromFood(food.name, food.portion);
-        totalFat += this.estimateFatFromFood(food.name, food.portion);
+        const carbsValue = food.carbs ? (typeof food.carbs === 'object' && 'toNumber' in food.carbs ? food.carbs.toNumber() : Number(food.carbs)) : 0;
+        const fatValue = food.fat ? (typeof food.fat === 'object' && 'toNumber' in food.fat ? food.fat.toNumber() : Number(food.fat)) : 0;
+        totalCarbs += carbsValue;
+        totalFat += fatValue;
       }
     }
 

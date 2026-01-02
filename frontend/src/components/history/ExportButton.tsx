@@ -5,14 +5,12 @@
 import React, { useState } from 'react';
 import { useExportMeals, downloadExportedData } from '@/hooks/useExportMeals';
 import { Button } from '@/components/ui/Button';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Download, AlertTriangle, CheckCircle } from 'lucide-react';
 import './ExportButton.css';
 
 interface ExportButtonProps {
   startDate?: string; // YYYY-MM-DD
   endDate?: string;   // YYYY-MM-DD
-  variant?: 'default' | 'secondary' | 'outline';
+  variant?: 'primary' | 'secondary' | 'outline';
   size?: 'sm' | 'md' | 'lg';
   showText?: boolean;
 }
@@ -64,7 +62,7 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
         disabled={exportMealsMutation.isPending}
         className="export-button"
       >
-        <Download className="w-4 h-4" />
+        <span>📥</span>
         {showText && <span>Export Data</span>}
       </Button>
 
@@ -102,12 +100,10 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
             </div>
 
             {localStartDate && localEndDate && new Date(localStartDate) > new Date(localEndDate) && (
-              <Alert variant="warning">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
-                  Start date must be before end date
-                </AlertDescription>
-              </Alert>
+              <div className="alert-warning">
+                <span className="alert-icon">⚠️</span>
+                <span>Start date must be before end date</span>
+              </div>
             )}
 
             <div className="export-date-actions">
@@ -115,7 +111,7 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
                 onClick={handleExport}
                 disabled={
                   exportMealsMutation.isPending ||
-                  (localStartDate && localEndDate && new Date(localStartDate) > new Date(localEndDate))
+                  Boolean(localStartDate && localEndDate && new Date(localStartDate) > new Date(localEndDate))
                 }
                 className="export-confirm-btn"
               >
@@ -135,26 +131,24 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
             </div>
 
             {exportMealsMutation.error && (
-              <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertDescription>
+              <div className="alert-destructive">
+                <span className="alert-icon">⚠️</span>
+                <span>
                   {exportMealsMutation.error instanceof Error
                     ? exportMealsMutation.error.message
                     : 'Failed to export meals'}
-                </AlertDescription>
-              </Alert>
+                </span>
+              </div>
             )}
           </div>
         </div>
       )}
 
       {exportSuccess && (
-        <Alert variant="default" className="export-success-alert">
-          <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800">
-            Meals exported successfully! Check your downloads folder.
-          </AlertDescription>
-        </Alert>
+        <div className="export-success-alert">
+          <span className="alert-icon">✓</span>
+          <span>Meals exported successfully! Check your downloads folder.</span>
+        </div>
       )}
     </div>
   );
