@@ -37,6 +37,8 @@ export interface AnalysisResponse {
   confidence: 'high' | 'medium' | 'low';
   notes?: string;
   dietFeedback?: string; // Feature 017: Diet-specific feedback based on user's diet style
+  shareUrl?: string;      // Shareable meal link
+  shareId?: string;       // Meal share ID
   blobName: string;
   requestId: string;
 }
