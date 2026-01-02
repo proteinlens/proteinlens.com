@@ -257,6 +257,10 @@ export function SharedMealPage() {
   }
 
   // Success state - show the meal
+  if (!meal) {
+    return null; // Safety check
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* SEO Meta Tags and Performance Optimization */}
