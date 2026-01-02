@@ -106,6 +106,33 @@ export function DashboardPage() {
             variant="success"
           />
           <MetricCard
+            title="Email Verified"
+            value={metrics?.users.emailVerified ?? 0}
+            icon={
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            }
+            variant="success"
+          />
+          <MetricCard
+            title="Email Unverified"
+            value={metrics?.users.emailUnverified ?? 0}
+            icon={
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            }
+            variant="warning"
+          />
+            icon={
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            }
+            variant="success"
+          />
+          <MetricCard
             title="Suspended"
             value={metrics?.users.suspended ?? 0}
             icon={
@@ -229,7 +256,54 @@ export function DashboardPage() {
         </div>
       </section>
 
-      {/* Quick Links */}
+      {/* Token Usage Metrics */}
+      <section>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-8 h-8 bg-cyan-100 rounded-lg flex items-center justify-center">
+            <svg className="w-4 h-4 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </div>
+          <h2 className="text-lg font-semibold text-gray-900">AI Token Usage & Costs</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
+          <MetricCard
+            title="Total Tokens"
+            value={`${(metrics?.tokenUsage.totalTokens ?? 0).toLocaleString()}`}
+            icon={
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            }
+          />
+          <MetricCard
+            title="This Month Cost"
+            value={`$${(metrics?.tokenUsage.thisMonthCostUSD ?? 0).toFixed(2)}`}
+            icon={
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            }
+            variant="warning"
+          />
+          <MetricCard
+            title="Total Cost (Est.)"
+            value={`$${(metrics?.tokenUsage.estimatedCostUSD ?? 0).toFixed(2)}`}
+            icon={
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+            }
+          />
+        </div>
+        <div className="mt-4 p-4 bg-cyan-50 border border-cyan-100 rounded-lg">
+          <p className="text-sm text-cyan-900">
+            <strong>Token Breakdown:</strong> {`${(metrics?.tokenUsage.totalPromptTokens ?? 0).toLocaleString()}`} prompt tokens • {`${(metrics?.tokenUsage.totalCompletionTokens ?? 0).toLocaleString()}`} completion tokens • Avg {metrics?.tokenUsage.averageTokensPerAnalysis ?? 0} tokens per analysis
+          </p>
+        </div>
+      </section>
+
+      
       <section>
         <div className="flex items-center gap-3 mb-4">
           <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">

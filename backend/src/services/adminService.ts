@@ -354,6 +354,7 @@ export async function getMetrics(adminContext: AdminContext): Promise<MetricsRes
     totalUsers,
     suspendedUsers,
     newUsersThisMonth,
+    emailVerifiedUsers,
     planCounts,
     statusCounts,
     totalUsage,
@@ -362,6 +363,7 @@ export async function getMetrics(adminContext: AdminContext): Promise<MetricsRes
     prisma.user.count(),
     prisma.user.count({ where: { suspended: true } }),
     prisma.user.count({ where: { createdAt: { gte: startOfMonth } } }),
+    prisma.user.count({ where: { emailVerified: true } }),
     prisma.user.groupBy({
       by: ['plan'],
       _count: { plan: true },
@@ -393,12 +395,26 @@ export async function getMetrics(adminContext: AdminContext): Promise<MetricsRes
     details: { action: 'view_metrics' },
   });
 
+  // Calculate token usage metrics (estimate from meal analysis count)
+  // Average GPT-4 Vision: ~1,500 tokens per analysis
+  // Cost: $0.01/1K prompt + $0.03/1K completion ≈ $0.021 per analysis
+  const avgTokensPerAnalysis = 1500;
+  const costPerAnalysis = 0.021;
+  
+  const totalTokens = totalUsage * avgTokensPerAnalysis;
+  const totalPromptTokens = Math.round(totalTokens * 0.8); // ~80% prompt, 20% completion
+  const totalCompletionTokens = Math.round(totalTokens * 0.2);
+  const estimatedCostUSD = totalUsage * costPerAnalysis;
+  const thisMonthCostUSD = usageThisMonth * costPerAnalysis;
+
   return {
     users: {
       total: totalUsers,
       active: totalUsers - suspendedUsers,
       suspended: suspendedUsers,
       newThisMonth: newUsersThisMonth,
+      emailVerified: emailVerifiedUsers,
+      emailUnverified: totalUsers - emailVerifiedUsers,
     },
     subscriptions: {
       free: planMap['FREE'] || 0,
@@ -411,6 +427,14 @@ export async function getMetrics(adminContext: AdminContext): Promise<MetricsRes
       totalAnalyses: totalUsage,
       analysesThisMonth: usageThisMonth,
       averagePerUser: totalUsers > 0 ? Math.round(totalUsage / totalUsers) : 0,
+    },
+    tokenUsage: {
+      totalTokens,
+      totalPromptTokens,
+      totalCompletionTokens,
+      averageTokensPerAnalysis,
+      estimatedCostUSD: Math.round(estimatedCostUSD * 100) / 100,
+      thisMonthCostUSD: Math.round(thisMonthCostUSD * 100) / 100,
     },
   };
 }

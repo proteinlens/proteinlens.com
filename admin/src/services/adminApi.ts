@@ -230,6 +230,8 @@ export interface MetricsResponse {
     active: number;
     suspended: number;
     newThisMonth: number;
+    emailVerified: number;
+    emailUnverified: number;
   };
   subscriptions: {
     free: number;
@@ -242,6 +244,14 @@ export interface MetricsResponse {
     totalAnalyses: number;
     analysesThisMonth: number;
     averagePerUser: number;
+  };
+  tokenUsage: {
+    totalTokens: number;
+    totalPromptTokens: number;
+    totalCompletionTokens: number;
+    averageTokensPerAnalysis: number;
+    estimatedCostUSD: number;
+    thisMonthCostUSD: number;
   };
 }
 
