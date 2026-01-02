@@ -334,7 +334,7 @@ export function HomePage() {
           <>
             {!isAuthenticated && (
               <button 
-                onClick={() => navigate('/signup?returnTo=/history')} 
+                onClick={() => navigate('/login?returnTo=/history')} 
                 className="w-full py-4 px-6 bg-gradient-to-r from-primary to-accent text-primary-foreground border-none rounded-xl text-base font-semibold cursor-pointer shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02] transition-all mb-3"
               >
                 💾 Save to My History
