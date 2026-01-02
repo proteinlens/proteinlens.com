@@ -20,6 +20,7 @@ interface AnalysisResult {
   totalProtein: number;
   totalCarbs?: number;
   totalFat?: number;
+  totalCalories?: number;
   confidence: 'high' | 'medium' | 'low';
   notes?: string;
   dietFeedback?: string; // Feature 017: Diet-specific feedback
@@ -335,6 +336,48 @@ export function HomePage() {
         <p className="text-xs text-muted-foreground mb-6 text-center">
           ✨ Estimates are approximate—portion sizes and preparation can affect actual values
         </p>
+        
+        {/* Share Card - Feature 017 (only show for real analysis, not demo) */}
+        {!isDemo && result.shareId && (
+          <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-800 rounded-2xl p-5 mb-6">
+            <h3 className="text-sm font-semibold text-foreground mb-3">📤 Share This Meal</h3>
+            
+            {/* Share preview */}
+            <div className="bg-white dark:bg-secondary rounded-xl p-3 mb-4 border border-border">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-xl font-bold text-foreground">{result.totalProtein}g</div>
+                  <div className="text-xs text-muted-foreground">protein</div>
+                  {result.totalCarbs !== undefined && (
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {Math.round((result.totalProtein * 4 + result.totalCarbs * 4 + (result.totalFat || 0) * 9))} cal
+                    </div>
+                  )}
+                  <div className="text-xs text-muted-foreground text-orange-600 dark:text-orange-400 mt-1">estimated</div>
+                </div>
+                <div className="text-3xl">🍽️</div>
+              </div>
+            </div>
+            
+            {/* Copy link button */}
+            <button
+              onClick={() => {
+                const shareUrl = `${window.location.origin}/meal/${result.shareId}`;
+                navigator.clipboard.writeText(shareUrl);
+                // Show toast notification
+                const btn = event?.currentTarget as HTMLButtonElement;
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Copied!';
+                setTimeout(() => {
+                  btn.textContent = originalText;
+                }, 2000);
+              }}
+              className="w-full py-3 px-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl text-sm font-semibold hover:shadow-lg hover:shadow-purple-500/30 transition-all flex items-center justify-center gap-2"
+            >
+              🔗 Copy Share Link
+            </button>
+          </div>
+        )}
         
         {/* Action buttons */}
         {isDemo ? (

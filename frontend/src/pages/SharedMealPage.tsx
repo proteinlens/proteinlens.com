@@ -406,34 +406,35 @@ export function SharedMealPage() {
           </div>
         </motion.div>
 
-        {/* CTA Section */}
+        {/* CTA Section - Feature 017 Viral Loop */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.2 }}
-          className="mt-8 text-center"
+          className="mt-8"
         >
-          <div className="bg-card border border-border rounded-2xl p-6">
-            <h2 className="text-xl font-bold text-foreground mb-2">
-              Track Your Protein Intake
+          <div className="bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20 rounded-2xl p-6">
+            <h2 className="text-lg font-bold text-foreground mb-2 text-center">
+              Try This on Your Meal
             </h2>
-            <p className="text-muted-foreground mb-4">
-              Snap a photo of any meal and get instant AI-powered protein analysis.
-              Free, no signup required!
+            <p className="text-muted-foreground mb-4 text-center text-sm">
+              Get instant protein analysis for any meal. Free, no signup required!
             </p>
             <Link
               to="/"
-              className="inline-flex items-center justify-center w-full px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold text-lg hover:bg-primary/90 transition-colors"
+              className="block w-full px-6 py-3 bg-primary text-primary-foreground rounded-xl font-bold text-base hover:bg-primary/90 transition-colors text-center"
             >
-              📸 Analyze Your Meal
+              📸 Scan Your Meal
             </Link>
           </div>
-        </motion.div>
 
-        {/* Attribution */}
-        <div className="mt-6 text-center text-sm text-muted-foreground">
-          <p>Analyzed by <Link to="/" className="text-primary hover:underline">ProteinLens</Link> AI</p>
-        </div>
+          {/* Watermark - Strava style */}
+          <div className="text-center mt-6 pt-4 border-t border-border">
+            <p className="text-xs text-muted-foreground">
+              Analyzed with <span className="font-semibold text-foreground">ProteinLens</span> 🥩
+            </p>
+          </div>
+        </motion.div>
       </main>
     </div>
   );
