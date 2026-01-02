@@ -70,14 +70,37 @@ class MealService {
       },
     });
 
+    // Verify meal was created with correct fields
+    if (!mealAnalysis.shareId) {
+      Logger.error('CRITICAL: Meal created without shareId', new Error('Meal created without shareId'), {
+        requestId,
+        mealAnalysisId: mealAnalysis.id,
+        expectedShareId: shareId,
+        actualShareId: mealAnalysis.shareId,
+      });
+    }
+    
+    if (!mealAnalysis.isPublic) {
+      Logger.error('CRITICAL: Meal created with isPublic=false', new Error('Meal created with isPublic=false'), {
+        requestId,
+        mealAnalysisId: mealAnalysis.id,
+        isPublic: mealAnalysis.isPublic,
+      });
+    }
+
     Logger.info('Meal analysis created successfully', {
       requestId,
       mealAnalysisId: mealAnalysis.id,
-      shareId,
+      shareId: mealAnalysis.shareId,
+      isPublic: mealAnalysis.isPublic,
       foodCount: aiResponse.foods.length,
     });
 
-    return { id: mealAnalysis.id, shareId, shareUrl };
+    return { 
+      id: mealAnalysis.id, 
+      shareId: mealAnalysis.shareId || shareId, // Use database value if available, fallback to local
+      shareUrl: mealAnalysis.shareId ? getShareUrl(mealAnalysis.shareId) : shareUrl 
+    };
   }
 
   /**
@@ -147,14 +170,37 @@ class MealService {
       },
     });
 
+    // Verify meal was created with correct fields
+    if (!mealAnalysis.shareId) {
+      Logger.error('CRITICAL: Cached meal created without shareId', new Error('Cached meal created without shareId'), {
+        requestId,
+        mealAnalysisId: mealAnalysis.id,
+        expectedShareId: shareId,
+        actualShareId: mealAnalysis.shareId,
+      });
+    }
+    
+    if (!mealAnalysis.isPublic) {
+      Logger.error('CRITICAL: Cached meal created with isPublic=false', new Error('Cached meal created with isPublic=false'), {
+        requestId,
+        mealAnalysisId: mealAnalysis.id,
+        isPublic: mealAnalysis.isPublic,
+      });
+    }
+
     Logger.info('Meal analysis created from cache', {
       requestId,
       mealAnalysisId: mealAnalysis.id,
-      shareId,
+      shareId: mealAnalysis.shareId,
+      isPublic: mealAnalysis.isPublic,
       cachedFromId: cachedMealId,
     });
 
-    return { id: mealAnalysis.id, shareId, shareUrl };
+    return { 
+      id: mealAnalysis.id, 
+      shareId: mealAnalysis.shareId || shareId, // Use database value if available, fallback to local
+      shareUrl: mealAnalysis.shareId ? getShareUrl(mealAnalysis.shareId) : shareUrl 
+    };
   }
 
   /**
@@ -320,6 +366,27 @@ class MealService {
   async getPublicMealByShareId(shareId: string): Promise<MealAnalysis | null> {
     Logger.info('Querying public meal by shareId', { shareId });
     
+    // First, check if the meal exists at all (regardless of isPublic status)
+    const allMeals = await prisma.mealAnalysis.findFirst({
+      where: { shareId },
+      select: { id: true, isPublic: true, userId: true, createdAt: true }
+    });
+
+    if (allMeals) {
+      Logger.info('Meal found with shareId', {
+        shareId,
+        mealId: allMeals.id,
+        isPublic: allMeals.isPublic,
+        createdAt: allMeals.createdAt.toISOString(),
+      });
+      
+      if (!allMeals.isPublic) {
+        Logger.info('Meal is private and cannot be shared', { shareId, mealId: allMeals.id });
+      }
+    } else {
+      Logger.warn('No meal found with shareId', { shareId });
+    }
+    
     const meal = await prisma.mealAnalysis.findFirst({
       where: { 
         shareId, 
@@ -338,6 +405,33 @@ class MealService {
         },
       },
     });
+    
+    if (meal && !meal.shareId) {
+      // CRITICAL: Meal exists but shareId is NULL
+      // This shouldn't happen but if it does, generate one now
+      Logger.error('CRITICAL: Public meal found but has NULL shareId', new Error('Meal has NULL shareId'), {
+        mealId: meal.id,
+      });
+      
+      // Generate a shareId for this meal to prevent future lookups from failing
+      const newShareId = generateShareId();
+      try {
+        await prisma.mealAnalysis.update({
+          where: { id: meal.id },
+          data: { shareId: newShareId }
+        });
+        
+        Logger.info('Assigned shareId to meal that was missing one', {
+          mealId: meal.id,
+          assignedShareId: newShareId,
+        });
+        
+        // Update the meal object to reflect the new shareId
+        meal.shareId = newShareId;
+      } catch (error) {
+        Logger.error('Failed to assign shareId to meal', error instanceof Error ? error : new Error(String(error)), { mealId: meal.id });
+      }
+    }
     
     Logger.info('Public meal query result', { 
       shareId, 
@@ -584,6 +678,71 @@ class MealService {
     
     // Default
     return 5;
+  }
+
+  /**
+   * Regenerate missing shareIds for meals created before Feature 017
+   * This is a maintenance function to fix meals that don't have shareIds
+   */
+  async regenerateMissingShareIds(): Promise<{ fixed: number; failed: number }> {
+    Logger.info('Starting shareId regeneration for meals without shareIds');
+    
+    const mealsWithoutShareId = await prisma.mealAnalysis.findMany({
+      where: {
+        shareId: null
+      },
+      select: {
+        id: true,
+        userId: true,
+        createdAt: true
+      },
+      take: 100, // Process in batches to avoid overwhelming the database
+    });
+
+    let fixed = 0;
+    let failed = 0;
+
+    for (const meal of mealsWithoutShareId) {
+      try {
+        const shareId = generateShareId();
+        
+        // Check if this shareId is already in use (extremely unlikely but possible)
+        const existing = await prisma.mealAnalysis.findFirst({
+          where: { shareId }
+        });
+        
+        if (existing) {
+          Logger.warn('Generated shareId already exists, retrying', { mealId: meal.id, shareId });
+          failed++;
+          continue;
+        }
+
+        await prisma.mealAnalysis.update({
+          where: { id: meal.id },
+          data: {
+            shareId,
+            isPublic: true, // Ensure public flag is set
+          }
+        });
+
+        Logger.info('Regenerated shareId for meal', {
+          mealId: meal.id,
+          userId: meal.userId,
+          newShareId: shareId,
+        });
+
+        fixed++;
+      } catch (error) {
+        Logger.error('Failed to regenerate shareId for meal', error as Error, {
+          mealId: meal.id,
+        });
+        failed++;
+      }
+    }
+
+    Logger.info('ShareId regeneration complete', { fixed, failed, totalProcessed: mealsWithoutShareId.length });
+    
+    return { fixed, failed };
   }
 }
 

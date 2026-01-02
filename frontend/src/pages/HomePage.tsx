@@ -1,9 +1,9 @@
 import React, { useCallback, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import imageCompression from 'browser-image-compression'
 import { apiClient } from '@/services/apiClient'
 import { FriendlyError } from '@/components/ui/FriendlyError'
 import { FunLoading } from '@/components/ui/FunLoading'
+import { Skeleton } from '@/components/Skeleton'
 import { getRandomMessage, successMessages } from '@/utils/friendlyErrors'
 import { useAuth } from '@/contexts/AuthProvider'
 import { getRandomDemoMeal, DEFAULT_PROTEIN_GOAL, type DemoMeal } from '@/data/demoMeals'
@@ -78,21 +78,21 @@ export function HomePage() {
     setPreviewUrl(URL.createObjectURL(file))
   }, [])
 
-  const handleDrag = (e: React.DragEvent) => {
+  const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
     setIsDragActive(e.type === 'dragenter' || e.type === 'dragover')
-  }
+  }, [])
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
     setIsDragActive(false)
     if (e.dataTransfer.files?.[0]) handleFileSelected(e.dataTransfer.files[0])
-  }
+  }, [handleFileSelected])
 
   // Demo scan - shows example results without uploading
-  const handleDemoScan = () => {
+  const handleDemoScan = useCallback(() => {
     const demo = getRandomDemoMeal()
     setDemoMeal(demo)
     setPreviewUrl(demo.imageUrl)
@@ -104,9 +104,9 @@ export function HomePage() {
       notes: demo.notes,
     })
     setUploadState('demo')
-  }
+  }, [])
 
-  const handleAnalyze = async (isRetry = false) => {
+  const handleAnalyze = useCallback(async (isRetry = false) => {
     if (!selectedFile) return
     try {
       setUploadState('uploading')
@@ -121,6 +121,8 @@ export function HomePage() {
       // Compress large images (common on mobile)
       if (selectedFile.size > 1024 * 1024) {
         try {
+          // Dynamically import for better code splitting
+          const { default: imageCompression } = await import('browser-image-compression')
           const compressed = await imageCompression(selectedFile, { 
             maxSizeMB: 0.8, 
             maxWidthOrHeight: 1920, 
@@ -192,9 +194,9 @@ export function HomePage() {
         setTimeout(() => handleAnalyze(true), delay)
       }
     }
-  }
+  }, [selectedFile, retryCount, navigate])
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     setSelectedFile(null)
     setPreviewUrl(null)
     setUploadState('idle')
@@ -205,7 +207,7 @@ export function HomePage() {
     setProgressText('')
     setRetryCount(0)
     if (fileInputRef.current) fileInputRef.current.value = ''
-  }
+  }, [])
 
   // Calculate progress percentage
   const getProgressPercentage = (mealProtein: number) => {
@@ -401,7 +403,7 @@ export function HomePage() {
     )
   }
 
-  // Main landing/idle state
+  // Main landing/idle state with skeleton loading
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 text-center">
       {/* Hero section - Clear value proposition */}
@@ -531,6 +533,40 @@ export function HomePage() {
       />
     </div>
   )
+
+  // Skeleton loading state - shown during initial page load
+  const SkeletonLoading = () => (
+    <div className="max-w-2xl mx-auto px-4 py-8 text-center">
+      {/* Hero skeleton */}
+      <div className="mb-8">
+        <Skeleton className="h-14 w-3/4 mx-auto mb-4 rounded-lg" />
+        <Skeleton className="h-10 w-1/2 mx-auto mb-4 rounded-lg" />
+        <Skeleton className="h-6 w-full max-w-md mx-auto rounded-lg" />
+      </div>
+
+      {/* Steps skeleton */}
+      <div className="flex justify-center items-center gap-2 md:gap-4 mb-8">
+        <Skeleton className="w-12 h-12 rounded-full" />
+        <Skeleton className="w-6 h-6 rounded" />
+        <Skeleton className="w-12 h-12 rounded-full" />
+        <Skeleton className="w-6 h-6 rounded" />
+        <Skeleton className="w-12 h-12 rounded-full" />
+      </div>
+
+      {/* Upload area skeleton */}
+      <Skeleton className="h-48 rounded-2xl mb-4" />
+      
+      {/* Demo button skeleton */}
+      <Skeleton className="h-6 w-1/3 mx-auto mb-6 rounded-lg" />
+      
+      {/* Info badge skeleton */}
+      <Skeleton className="h-10 w-1/2 mx-auto rounded-full mb-4" />
+      
+      {/* Footer skeleton */}
+      <Skeleton className="h-5 w-3/4 mx-auto mt-6 rounded-lg" />
+    </div>
+  )
 }
 
-export default HomePage
+// Memoize component to prevent unnecessary re-renders from parent updates
+export default React.memo(HomePage)

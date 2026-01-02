@@ -4,11 +4,13 @@
  * 
  * This page renders when someone clicks a shared meal URL.
  * Shows meal analysis results without requiring login.
+ * Optimized for fast loading with caching and prefetching.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
+import { Skeleton } from '../components/Skeleton';
 
 interface FoodItem {
   name: string;
@@ -33,25 +35,39 @@ interface PublicMealData {
 
 type LoadingState = 'loading' | 'success' | 'error' | 'not-found' | 'private';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.proteinlens.com';
 const API_PATH = `${API_BASE_URL}/api`;
 
 async function fetchPublicMeal(shareId: string): Promise<PublicMealData> {
-  const response = await fetch(`${API_PATH}/meals/${shareId}/public`);
-  
-  if (response.status === 404) {
-    throw new Error('not-found');
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+  try {
+    const response = await fetch(`${API_PATH}/meals/${shareId}/public`, {
+      signal: controller.signal,
+      headers: {
+        'Accept': 'application/json',
+        'Accept-Encoding': 'gzip, deflate, br', // Enable compression
+      },
+    });
+    
+    if (response.status === 404) {
+      throw new Error('not-found');
+    }
+    
+    if (response.status === 403) {
+      throw new Error('private');
+    }
+    
+    if (!response.ok) {
+      throw new Error('error');
+    }
+    
+    const data = await response.json();
+    return data;
+  } finally {
+    clearTimeout(timeout);
   }
-  
-  if (response.status === 403) {
-    throw new Error('private');
-  }
-  
-  if (!response.ok) {
-    throw new Error('error');
-  }
-  
-  return response.json();
 }
 
 export function SharedMealPage() {
@@ -122,14 +138,48 @@ export function SharedMealPage() {
     });
   };
 
-  // Loading state
+  // Loading state - Show skeleton for faster perceived load
   if (loadingState === 'loading') {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
-          <p className="text-muted-foreground">Loading shared meal...</p>
-        </div>
+      <div className="min-h-screen bg-background">
+        <header className="sticky top-0 z-40 backdrop-blur-xl bg-background/80 border-b border-border">
+          <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🥩</span>
+              <span className="font-bold text-lg text-foreground">ProteinLens</span>
+            </div>
+            <Skeleton width={140} height={40} borderRadius="8px" />
+          </div>
+        </header>
+
+        <main className="max-w-2xl mx-auto px-4 py-8">
+          {/* Meal Image Skeleton */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="bg-card border border-border rounded-2xl overflow-hidden shadow-lg"
+          >
+            <Skeleton width="100%" height={320} borderRadius="0" className="w-full" />
+            
+            {/* Protein Badge Skeleton */}
+            <div className="absolute top-4 left-4">
+              <Skeleton width={140} height={32} borderRadius="20px" />
+            </div>
+          </motion.div>
+
+          {/* Content Skeleton */}
+          <div className="mt-6 space-y-4">
+            <Skeleton width="100%" height={24} />
+            <Skeleton width="80%" height={24} />
+            <Skeleton width="100%" height={200} />
+          </div>
+
+          {/* Loading text */}
+          <div className="text-center mt-8">
+            <p className="text-muted-foreground">Loading shared meal...</p>
+          </div>
+        </main>
       </div>
     );
   }
@@ -209,13 +259,21 @@ export function SharedMealPage() {
   // Success state - show the meal
   return (
     <div className="min-h-screen bg-background">
-      {/* SEO Meta Tags */}
+      {/* SEO Meta Tags and Performance Optimization */}
       <Helmet>
         <title>{meal.totalProtein}g Protein Meal - ProteinLens</title>
         <meta 
           name="description" 
           content={`This meal contains ${meal.totalProtein}g of protein from ${meal.foods.length} foods. Analyzed by ProteinLens AI.`} 
         />
+        <meta property="og:title" content={`${meal.totalProtein}g Protein Meal - ProteinLens`} />
+        <meta property="og:description" content={`Analyzed meal with ${meal.totalProtein}g protein and ${meal.foods.length} foods`} />
+        <meta property="og:image" content={meal.imageUrl} />
+        
+        {/* Performance: Preload critical resources */}
+        <link rel="preload" as="image" href={meal.imageUrl} />
+        <link rel="dns-prefetch" href={API_BASE_URL} />
+        <link rel="preconnect" href={API_BASE_URL} crossOrigin="anonymous" />
       </Helmet>
 
       {/* Header */}
@@ -352,4 +410,4 @@ export function SharedMealPage() {
   );
 }
 
-export default SharedMealPage;
+export default React.memo(SharedMealPage);

@@ -135,9 +135,15 @@ export async function getPublicMeal(
     return {
       status: 200,
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json; charset=utf-8',
         'X-Request-ID': requestId,
-        'Cache-Control': 'public, max-age=300', // Cache for 5 minutes
+        // Aggressive caching since meals never change
+        'Cache-Control': 'public, max-age=31536000, immutable', // 1 year - meals are immutable
+        'ETag': `"${shareId}"`, // Use shareId as ETag for client-side caching
+        'Vary': 'Accept-Encoding',
+        // Security headers
+        'X-Content-Type-Options': 'nosniff',
+        'X-Frame-Options': 'SAMEORIGIN',
       },
       jsonBody: response,
     };

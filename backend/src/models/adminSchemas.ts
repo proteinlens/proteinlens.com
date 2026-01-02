@@ -182,6 +182,8 @@ export const MetricsResponseSchema = z.object({
     active: z.number(),
     suspended: z.number(),
     newThisMonth: z.number(),
+    emailVerified: z.number(),
+    emailUnverified: z.number(),
   }),
   subscriptions: z.object({
     free: z.number(),
@@ -194,6 +196,14 @@ export const MetricsResponseSchema = z.object({
     totalAnalyses: z.number(),
     analysesThisMonth: z.number(),
     averagePerUser: z.number(),
+  }),
+  tokenUsage: z.object({
+    totalTokens: z.number(),
+    totalPromptTokens: z.number(),
+    totalCompletionTokens: z.number(),
+    averageTokensPerAnalysis: z.number(),
+    estimatedCostUSD: z.number(),
+    thisMonthCostUSD: z.number(),
   }),
 });
 

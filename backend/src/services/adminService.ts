@@ -432,7 +432,7 @@ export async function getMetrics(adminContext: AdminContext): Promise<MetricsRes
       totalTokens,
       totalPromptTokens,
       totalCompletionTokens,
-      averageTokensPerAnalysis,
+      averageTokensPerAnalysis: avgTokensPerAnalysis,
       estimatedCostUSD: Math.round(estimatedCostUSD * 100) / 100,
       thisMonthCostUSD: Math.round(thisMonthCostUSD * 100) / 100,
     },
