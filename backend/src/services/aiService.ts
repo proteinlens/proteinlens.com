@@ -22,24 +22,39 @@ class AIService {
     
     const startTime = Date.now();
     
-    const prompt = `Analyze this meal image and identify all visible food items with their macronutrient content. 
-Return a JSON object with this exact structure:
+    const prompt = `You are a professional nutritionist analyzing food photos. Analyze this meal image and:
+
+1. Identify all visible food items
+2. Estimate portion sizes
+3. Return complete macronutrient data: PROTEIN, CARBOHYDRATES, and FAT (all in grams)
+
+CRITICAL: You MUST provide protein, carbs, and fat for every food item.
+If you cannot estimate carbs or fat reliably, provide your best educated estimate.
+
+Return ONLY valid JSON in this exact structure (no markdown, no extra text):
 {
-  "foods": [{"name": "food name", "portion": "portion size", "protein": number, "carbs": number, "fat": number}],
-  "totalProtein": number,
-  "totalCarbs": number,
-  "totalFat": number,
-  "confidence": "high" | "medium" | "low",
-  "notes": "optional additional observations"
+  "foods": [
+    {
+      "name": "specific food name",
+      "portion": "estimated portion size (e.g., 150g, 1 cup)",
+      "protein": number_in_grams,
+      "carbs": number_in_grams,
+      "fat": number_in_grams
+    }
+  ],
+  "totalProtein": sum_of_all_protein,
+  "totalCarbs": sum_of_all_carbs,
+  "totalFat": sum_of_all_fat,
+  "confidence": "high" or "medium" or "low",
+  "notes": "optional observations"
 }
 
 Guidelines:
-- Be specific with food names (e.g., "Grilled Chicken Breast" not just "Chicken")
-- Estimate portion sizes (e.g., "200g", "1 cup", "3 oz")
-- Return macronutrient values in grams per item: protein, carbohydrates, and fat
-- Confidence: high (clear image, recognizable foods), medium (some items unclear), low (poor image quality or unidentifiable)
-- If carbs or fat cannot be estimated reliably, return best estimate with "low" or "medium" confidence
-- Return empty foods array if no food is visible`;
+- Food names: specific (e.g., "Grilled Salmon Fillet" not just "Fish")
+- Portions: realistic estimates (e.g., "200g salmon", "1 cup rice", "2 tbsp olive oil")
+- Macros: protein, carbohydrates (including fiber), and fat in grams
+- Confidence: high (clear, recognizable), medium (some items unclear), low (blurry, unidentifiable)
+- If image has no food, return: {"foods": [], "totalProtein": 0, "totalCarbs": 0, "totalFat": 0, "confidence": "high", "notes": "No food visible"}`;
 
     const requestBody = {
       messages: [
