@@ -19,14 +19,13 @@ interface FoodItem {
 }
 
 interface PublicMealData {
-  id: string;
   shareId: string;
-  timestamp: string;
+  uploadedAt: string;
   imageUrl: string;
   totalProtein: number;
   confidence: 'high' | 'medium' | 'low';
   foods: FoodItem[];
-  notes?: string;
+  proTip?: string;
   dietStyleAtScan?: {
     name: string;
     slug: string;
@@ -63,8 +62,9 @@ async function fetchPublicMeal(shareId: string): Promise<PublicMealData> {
       throw new Error('error');
     }
     
-    const data = await response.json();
-    return data;
+    const result = await response.json();
+    // API returns { meal: {...} }, extract the meal object
+    return result.meal || result;
   } finally {
     clearTimeout(timeout);
   }
@@ -326,7 +326,7 @@ export function SharedMealPage() {
           <div className="p-6 space-y-6">
             {/* Timestamp */}
             <div className="text-sm text-muted-foreground">
-              Scanned on {formatDate(meal.timestamp)}
+              Scanned on {formatDate(meal.uploadedAt)}
             </div>
 
             {/* Foods List */}
@@ -355,13 +355,13 @@ export function SharedMealPage() {
             </div>
 
             {/* Pro Tip / Notes */}
-            {meal.notes && (
+            {meal.proTip && (
               <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
                 <div className="flex items-start gap-3">
                   <span className="text-xl">💡</span>
                   <div>
                     <div className="font-medium text-amber-400 mb-1">Pro Tip</div>
-                    <p className="text-sm text-muted-foreground">{meal.notes}</p>
+                    <p className="text-sm text-muted-foreground">{meal.proTip}</p>
                   </div>
                 </div>
               </div>
