@@ -22,11 +22,13 @@ class AIService {
     
     const startTime = Date.now();
     
-    const prompt = `Analyze this meal image and identify all visible food items with their protein content. 
+    const prompt = `Analyze this meal image and identify all visible food items with their macronutrient content. 
 Return a JSON object with this exact structure:
 {
-  "foods": [{"name": "food name", "portion": "portion size", "protein": number}],
+  "foods": [{"name": "food name", "portion": "portion size", "protein": number, "carbs": number, "fat": number}],
   "totalProtein": number,
+  "totalCarbs": number,
+  "totalFat": number,
   "confidence": "high" | "medium" | "low",
   "notes": "optional additional observations"
 }
@@ -34,8 +36,9 @@ Return a JSON object with this exact structure:
 Guidelines:
 - Be specific with food names (e.g., "Grilled Chicken Breast" not just "Chicken")
 - Estimate portion sizes (e.g., "200g", "1 cup", "3 oz")
-- Protein values in grams per item
+- Return macronutrient values in grams per item: protein, carbohydrates, and fat
 - Confidence: high (clear image, recognizable foods), medium (some items unclear), low (poor image quality or unidentifiable)
+- If carbs or fat cannot be estimated reliably, return best estimate with "low" or "medium" confidence
 - Return empty foods array if no food is visible`;
 
     const requestBody = {

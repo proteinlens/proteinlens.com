@@ -7,6 +7,7 @@ import { MealHistoryList } from '@/components/history/MealHistoryList'
 import { MealDetailModal } from '@/components/history/MealDetailModal'
 import { ProteinTargetCard } from '@/components/history/ProteinTargetCard'
 import { MacroSplitDisplay } from '@/components/meal/MacroSplitDisplay'
+import { ExportButton } from '@/components/history/ExportButton'
 import { getUserId, setUserId } from '@/utils/userId'
 import { useAuth } from '@/contexts/AuthProvider'
 import { FriendlyError } from '@/components/ui/FriendlyError'
@@ -218,7 +219,10 @@ export function History() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 pb-24 md:pb-8">
-      <h1 className="text-2xl md:text-3xl font-bold mb-6">📊 Meal History</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl md:text-3xl font-bold">📊 Meal History</h1>
+        <ExportButton showText={true} size="md" />
+      </div>
 
       {/* Protein Target Progress Card */}
       <div className="mb-6">

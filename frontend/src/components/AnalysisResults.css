@@ -100,6 +100,8 @@
   border: 1px solid #e5e7eb;
   border-radius: 0.5rem;
   transition: background-color 0.2s;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .food-item:hover {
@@ -110,6 +112,7 @@
   display: flex;
   flex-direction: column;
   flex: 1;
+  min-width: 200px;
 }
 
 .food-name {
@@ -124,11 +127,33 @@
   font-size: 0.9rem;
 }
 
-.food-protein {
-  font-size: 1.3rem;
-  font-weight: bold;
-  color: #10b981;
-  margin-left: 1rem;
+/* NEW - macro ingredients analysis: food macros display */
+.food-macros {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.food-macro {
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.375rem;
+  color: white;
+}
+
+.protein-macro {
+  background-color: #10b981;
+}
+
+.carbs-macro {
+  background-color: #3b82f6;
+}
+
+.fat-macro {
+  background-color: #f59e0b;
 }
 
 /* AI notes */
@@ -342,3 +367,98 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* NEW - macro ingredients analysis: macros grid display */
+.total-macros {
+  margin: 2rem 0;
+}
+
+.macros-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.macro-card {
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  text-align: center;
+  color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.protein-card {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.carbs-card {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+}
+
+.fat-card {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.macro-value {
+  font-size: 2.5rem;
+  font-weight: bold;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.macro-label {
+  font-size: 1.1rem;
+  opacity: 0.95;
+  font-weight: 600;
+}
+
+.macro-breakdown {
+  background-color: #f3f4f6;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  text-align: center;
+}
+
+.calories {
+  font-size: 1.5rem;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.calories strong {
+  color: #dc2626;
+  font-weight: bold;
+}
+
+.percentages {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.percentage {
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.protein-pct {
+  color: #10b981;
+}
+
+.carbs-pct {
+  color: #3b82f6;
+}
+
+.fat-pct {
+  color: #f59e0b;
+}
+
+.legacy-note {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin-top: 0.75rem;
+  font-style: italic;
+}
+

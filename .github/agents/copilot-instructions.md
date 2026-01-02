@@ -34,6 +34,8 @@ Auto-generated from all feature plans. Last updated: 2025-12-22
 - PostgreSQL (user profiles/targets), localStorage (anonymous users) (015-protein-target-calculator)
 - TypeScript 5.x, Node.js 20+ + React 18, Vite, Azure Functions v4, Prisma ORM (016-goal-sync)
 - PostgreSQL (via Prisma), localStorage for anonymous users (016-goal-sync)
+- TypeScript 5.x (Node.js 20+ backend, React 19 frontend) (001-macro-ingredients-analysis)
+- PostgreSQL (Azure Database for PostgreSQL Flexible Server) via Prisma (001-macro-ingredients-analysis)
 
 - TypeScript 5.3+ / Node.js 20 + Azure Functions v4, Prisma 5.8+, Stripe SDK, React 18, Vite 5 (002-saas-billing)
 
@@ -53,9 +55,9 @@ npm test && npm run lint
 TypeScript 5.3+ / Node.js 20: Follow standard conventions
 
 ## Recent Changes
+- 001-macro-ingredients-analysis: Added TypeScript 5.x (Node.js 20+ backend, React 19 frontend)
 - 017-shareable-meals-diets: Added [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
 - 016-goal-sync: Added TypeScript 5.x, Node.js 20+ + React 18, Vite, Azure Functions v4, Prisma ORM
-- 015-protein-target-calculator: Added TypeScript 5.x (Node 20+) + Azure Functions v4, Prisma ORM, React 18, TanStack Query, Tailwind CSS, Zod
 
 
 <!-- MANUAL ADDITIONS START -->

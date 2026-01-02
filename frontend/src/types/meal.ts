@@ -4,6 +4,8 @@ export interface FoodItem {
   name: string
   portion: string
   proteinGrams: number
+  carbsGrams?: number      // NEW - macro ingredients analysis (optional for legacy meals)
+  fatGrams?: number        // NEW - macro ingredients analysis (optional for legacy meals)
   confidence: number // 0-100
   aiDetected: boolean
   isEdited: boolean
@@ -12,6 +14,8 @@ export interface FoodItem {
 export interface MealAnalysis {
   foods: FoodItem[]
   totalProtein: number
+  totalCarbs?: number      // NEW - macro ingredients analysis (optional for legacy meals)
+  totalFat?: number        // NEW - macro ingredients analysis (optional for legacy meals)
   totalCalories?: number
   macros?: {
     carbs: number

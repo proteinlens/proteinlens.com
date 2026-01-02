@@ -24,12 +24,16 @@ export interface FoodItem {
   name: string;
   portion: string;
   protein: number;
+  carbs?: number;    // NEW - macro ingredients analysis
+  fat?: number;      // NEW - macro ingredients analysis
 }
 
 export interface AnalysisResponse {
   mealAnalysisId: string;
   foods: FoodItem[];
   totalProtein: number;
+  totalCarbs?: number;    // NEW - macro ingredients analysis
+  totalFat?: number;      // NEW - macro ingredients analysis
   confidence: 'high' | 'medium' | 'low';
   notes?: string;
   dietFeedback?: string; // Feature 017: Diet-specific feedback based on user's diet style
@@ -44,6 +48,8 @@ export interface MealHistoryItem {
   imageUrl: string;
   analysis: {
     totalProtein: number;
+    totalCarbs?: number;    // NEW - macro ingredients analysis
+    totalFat?: number;      // NEW - macro ingredients analysis
     confidence: 'high' | 'medium' | 'low';
     foods: FoodItem[];
     notes?: string;
