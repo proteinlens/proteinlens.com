@@ -147,6 +147,30 @@
   background: #4f46e5;
 }
 
+.pricing-card--coach {
+  border-color: #f59e0b;
+  background: linear-gradient(180deg, #fffbf0 0%, #ffffff 100%);
+}
+
+.pricing-card--coach .pricing-card__badge {
+  background: #f59e0b;
+}
+
+.pricing-card__custom {
+  font-size: 20px;
+  font-weight: 700;
+  color: #f59e0b;
+}
+
+.pricing-card__button--coach {
+  background: #f59e0b;
+  color: white;
+}
+
+.pricing-card__button--coach:hover:not(:disabled) {
+  background: #d97706;
+}
+
 .pricing-card__button:disabled {
   opacity: 0.6;
   cursor: not-allowed;

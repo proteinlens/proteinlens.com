@@ -175,6 +175,36 @@ export const PricingPage: React.FC = () => {
             loading={checkoutLoading}
           />
         )}
+        {/* Coach Plan */}
+        <div className="pricing-card pricing-card--coach">
+          <div className="pricing-card__badge">Custom</div>
+          
+          <div className="pricing-card__header">
+            <h3 className="pricing-card__name">Coach Plan</h3>
+            <div className="pricing-card__price">
+              <span className="pricing-card__custom">Price on Request</span>
+            </div>
+            <div className="pricing-card__billed">
+              Personalized nutrition coaching
+            </div>
+          </div>
+
+          <ul className="pricing-card__features">
+            <li className="feature--highlight">✨ Everything in Pro</li>
+            <li className="feature--highlight">✨ 1-on-1 coaching calls</li>
+            <li className="feature--highlight">✨ Custom meal plans</li>
+            <li className="feature--highlight">✨ Weekly check-ins</li>
+            <li className="feature--highlight">✨ Priority support</li>
+            <li>✓ Progress tracking</li>
+          </ul>
+
+          <button
+            className="pricing-card__button pricing-card__button--coach"
+            onClick={() => window.open('mailto:hello@proteinlens.com?subject=Coach%20Plan%20Inquiry', '_blank')}
+          >
+            📧 Contact Us
+          </button>
+        </div>
       </div>
 
       {/* Upgrade CTA Section */}
