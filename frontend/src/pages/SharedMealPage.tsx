@@ -6,11 +6,13 @@
  * Shows meal analysis results without requiring login.
  * Optimized for fast loading with caching and prefetching.
  */
+console.log('[SharedMealPage] MODULE LOADING - imports starting');
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import { Skeleton } from '../components/Skeleton';
+console.log('[SharedMealPage] MODULE LOADED - all imports successful');
 
 interface FoodItem {
   name: string;
@@ -462,4 +464,5 @@ export function SharedMealPage() {
   );
 }
 
-export default React.memo(SharedMealPage);
+console.log('[SharedMealPage] Exporting component');
+export default SharedMealPage;
