@@ -165,7 +165,7 @@ export function HomePage() {
       setRetryCount(0) // Reset retry count on success
       
       // Auto-navigate to shareable link if available
-      if (analysisResponse.shareUrl) {
+      if (analysisResponse.shareUrl && analysisResponse.shareUrl !== 'null' && !analysisResponse.shareUrl.includes('/null')) {
         // Wait a moment for state to settle, then navigate
         setTimeout(() => {
           navigate(analysisResponse.shareUrl!)
