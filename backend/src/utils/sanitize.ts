@@ -104,6 +104,62 @@ export function sanitizeProteinValue(input: unknown): number | null {
 }
 
 /**
+ * Sanitize and validate a carbohydrate value
+ * Returns the value clamped to valid range, or null if invalid
+ * NEW - macro ingredients analysis
+ */
+export function sanitizeCarbsValue(input: unknown): number | null {
+  // Handle string input
+  let value: number;
+  if (typeof input === 'string') {
+    value = parseFloat(input);
+  } else if (typeof input === 'number') {
+    value = input;
+  } else {
+    return null;
+  }
+
+  // Check for valid number
+  if (!Number.isFinite(value)) {
+    return null;
+  }
+
+  // Clamp to reasonable range (0-500g carbs per item)
+  const MIN_CARBS = 0;
+  const MAX_CARBS = 500;
+  
+  return Math.max(MIN_CARBS, Math.min(MAX_CARBS, Math.round(value * 10) / 10));
+}
+
+/**
+ * Sanitize and validate a fat value
+ * Returns the value clamped to valid range, or null if invalid
+ * NEW - macro ingredients analysis
+ */
+export function sanitizeFatValue(input: unknown): number | null {
+  // Handle string input
+  let value: number;
+  if (typeof input === 'string') {
+    value = parseFloat(input);
+  } else if (typeof input === 'number') {
+    value = input;
+  } else {
+    return null;
+  }
+
+  // Check for valid number
+  if (!Number.isFinite(value)) {
+    return null;
+  }
+
+  // Clamp to reasonable range (0-300g fat per item)
+  const MIN_FAT = 0;
+  const MAX_FAT = 300;
+  
+  return Math.max(MIN_FAT, Math.min(MAX_FAT, Math.round(value * 10) / 10));
+}
+
+/**
  * Sanitize user notes/comments
  */
 export function sanitizeNotes(input: string, maxLength: number = 500): string {

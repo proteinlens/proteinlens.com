@@ -17,6 +17,8 @@ interface Food {
   name: string;
   portion: string;
   protein: number | { toNumber: () => number };
+  carbs?: number | null | { toNumber: () => number };
+  fat?: number | null | { toNumber: () => number };
 }
 
 interface DietStyleSnapshot {
@@ -130,6 +132,8 @@ export async function getMeals(request: HttpRequest, context: InvocationContext)
           name: food.name,
           portion: food.portion,
           protein: typeof food.protein === 'number' ? food.protein : Number(food.protein),
+          carbs: food.carbs ? (typeof food.carbs === 'number' ? food.carbs : Number(food.carbs)) : null,
+          fat: food.fat ? (typeof food.fat === 'number' ? food.fat : Number(food.fat)) : null,
         })),
         aiModel: meal.aiModel,
         requestId: meal.requestId,

@@ -7,6 +7,7 @@
 import React, { useState } from 'react';
 import { AnalysisResponse, MealCorrections, apiClient } from '../services/apiClient';
 import { MealEditor } from './MealEditor';
+import { calculateMacroPercentages, calculateTotalCalories } from '../utils/nutrition';
 import './AnalysisResults.css';
 
 export interface AnalysisResultsProps {
@@ -94,10 +95,72 @@ export const AnalysisResults: React.FC<AnalysisResultsProps> = ({
         </div>
       )}
 
-      {/* T046: Total protein display */}
-      <div className="total-protein">
-        <div className="protein-value">{currentResult.totalProtein}g</div>
-        <div className="protein-label">Total Protein</div>
+      {/* T046: Total macronutrient display */}
+      <div className="total-macros">
+        {/* NEW - macro ingredients analysis: display all macros */}
+        {currentResult.totalCarbs !== undefined && currentResult.totalFat !== undefined ? (
+          <>
+            <div className="macros-grid" role="region" aria-label="Meal macronutrient breakdown">
+              <div className="macro-card protein-card" role="article" aria-label="Protein content">
+                <div className="macro-value" aria-label={`${currentResult.totalProtein.toFixed(1)} grams of protein`}>
+                  {currentResult.totalProtein.toFixed(1)}g
+                </div>
+                <div className="macro-label">Protein</div>
+              </div>
+              <div className="macro-card carbs-card" role="article" aria-label="Carbohydrates content">
+                <div className="macro-value" aria-label={`${currentResult.totalCarbs.toFixed(1)} grams of carbohydrates`}>
+                  {currentResult.totalCarbs.toFixed(1)}g
+                </div>
+                <div className="macro-label">Carbs</div>
+              </div>
+              <div className="macro-card fat-card" role="article" aria-label="Fat content">
+                <div className="macro-value" aria-label={`${currentResult.totalFat.toFixed(1)} grams of fat`}>
+                  {currentResult.totalFat.toFixed(1)}g
+                </div>
+                <div className="macro-label">Fat</div>
+              </div>
+            </div>
+            
+            {/* Macro percentages and calories */}
+            {(() => {
+              const percentages = calculateMacroPercentages(
+                currentResult.totalProtein,
+                currentResult.totalCarbs,
+                currentResult.totalFat
+              );
+              const totalCals = calculateTotalCalories(
+                currentResult.totalProtein,
+                currentResult.totalCarbs,
+                currentResult.totalFat
+              );
+              return percentages ? (
+                <div className="macro-breakdown" role="complementary" aria-label="Calorie breakdown">
+                  <div className="calories" aria-label={`${totalCals} total calories`}>
+                    <strong>{totalCals}</strong> calories
+                  </div>
+                  <div className="percentages" role="list" aria-label="Macronutrient percentages">
+                    <span className="percentage protein-pct" role="listitem" aria-label={`${percentages.protein} percent of calories from protein`}>
+                      {percentages.protein}% protein
+                    </span>
+                    <span className="percentage carbs-pct" role="listitem" aria-label={`${percentages.carbs} percent of calories from carbohydrates`}>
+                      {percentages.carbs}% carbs
+                    </span>
+                    <span className="percentage fat-pct" role="listitem" aria-label={`${percentages.fat} percent of calories from fat`}>
+                      {percentages.fat}% fat
+                    </span>
+                  </div>
+                </div>
+              ) : null;
+            })()}
+          </>
+        ) : (
+          /* Legacy meal display - protein only */
+          <div className="total-protein">
+            <div className="protein-value">{currentResult.totalProtein.toFixed(1)}g</div>
+            <div className="protein-label">Total Protein</div>
+            <div className="legacy-note">Macro data unavailable for this meal</div>
+          </div>
+        )}
       </div>
 
       {/* T045: Confidence indicator */}
@@ -123,7 +186,21 @@ export const AnalysisResults: React.FC<AnalysisResultsProps> = ({
                   <span className="food-name">{food.name}</span>
                   <span className="food-portion">{food.portion}</span>
                 </div>
-                <span className="food-protein">{food.protein}g</span>
+                <div className="food-macros">
+                  <span className="food-macro protein-macro" title="Protein">
+                    P: {food.protein ? food.protein.toFixed(1) : 'N/A'}g
+                  </span>
+                  {food.carbs !== undefined && food.carbs !== null && (
+                    <span className="food-macro carbs-macro" title="Carbohydrates">
+                      C: {food.carbs.toFixed(1)}g
+                    </span>
+                  )}
+                  {food.fat !== undefined && food.fat !== null && (
+                    <span className="food-macro fat-macro" title="Fat">
+                      F: {food.fat.toFixed(1)}g
+                    </span>
+                  )}
+                </div>
               </li>
             ))}
           </ul>

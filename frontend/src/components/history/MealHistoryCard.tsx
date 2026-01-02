@@ -13,10 +13,16 @@ interface MealHistoryCardProps {
 }
 
 export function MealHistoryCard({ mealId, meal, onClick, onDelete }: MealHistoryCardProps) {
-  const totalProtein = meal.analysis?.totalProtein || 0
-  const foodCount = meal.analysis?.foods?.length || 0
-  const timestamp = new Date(meal.uploadedAt)
+  const totalProtein = meal.analysis?.totalProtein || meal.totalProtein || 0
+  const foods = meal.analysis?.foods || meal.foods || []
+  const foodCount = foods.length
+  const timestamp = new Date(meal.uploadedAt || meal.timestamp)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  
+  // Calculate macro totals
+  const totalCarbs = foods.reduce((sum: number, f: any) => sum + (f.carbs || 0), 0)
+  const totalFat = foods.reduce((sum: number, f: any) => sum + (f.fat || 0), 0)
+  const hasMacroData = totalCarbs > 0 || totalFat > 0
   
   const deleteHook = useDeleteMeal()
   const cardVariants = getCardVariants()
@@ -91,14 +97,41 @@ export function MealHistoryCard({ mealId, meal, onClick, onDelete }: MealHistory
                 🗑️
               </Button>
 
-              {/* Protein Badge */}
+              {/* Macro Badge */}
               <div className="text-right">
-                <p className="text-2xl md:text-3xl font-bold text-primary">
-                  {totalProtein}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  grams
-                </p>
+                {hasMacroData ? (
+                  <>
+                    <div className="flex gap-2">
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-green-600 dark:text-green-400">
+                          {totalProtein.toFixed(0)}g
+                        </p>
+                        <p className="text-xs text-muted-foreground">P</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                          {totalCarbs.toFixed(0)}g
+                        </p>
+                        <p className="text-xs text-muted-foreground">C</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-amber-600 dark:text-amber-400">
+                          {totalFat.toFixed(0)}g
+                        </p>
+                        <p className="text-xs text-muted-foreground">F</p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-2xl md:text-3xl font-bold text-primary">
+                      {totalProtein.toFixed(0)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      grams
+                    </p>
+                  </>
+                )}
               </div>
             </div>
           </div>

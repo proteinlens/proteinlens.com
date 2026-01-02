@@ -1,0 +1,164 @@
+/* Export Button Component Styles */
+/* Feature: 001-macro-ingredients-analysis, User Story 3 */
+/* Task: T036 - Export button styling */
+
+.export-button-container {
+  position: relative;
+  display: inline-block;
+}
+
+.export-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.export-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.export-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Date Picker Dropdown */
+.export-date-picker {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  z-index: 50;
+  min-width: 320px;
+}
+
+.export-date-form {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.export-date-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 16px 0;
+}
+
+.export-date-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.export-date-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.export-date-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #4b5563;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.export-date-input {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.2s ease;
+}
+
+.export-date-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.export-date-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.export-confirm-btn,
+.export-cancel-btn {
+  flex: 1;
+}
+
+/* Success Alert */
+.export-success-alert {
+  margin-top: 16px;
+  background-color: #f0fdf4;
+  border-color: #86efac;
+}
+
+.export-success-alert svg {
+  color: #22c55e;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .export-date-picker {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    right: auto;
+    transform: translate(-50%, -50%);
+    min-width: calc(100% - 32px);
+    max-width: 90vw;
+    margin-top: 0;
+  }
+
+  .export-date-form {
+    border-radius: 12px;
+  }
+
+  .export-date-inputs {
+    gap: 12px;
+  }
+
+  .export-date-actions {
+    flex-direction: column;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .export-date-form {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .export-date-title {
+    color: #f3f4f6;
+  }
+
+  .export-date-label {
+    color: #9ca3af;
+  }
+
+  .export-date-input {
+    background: #111827;
+    border-color: #4b5563;
+    color: #f3f4f6;
+  }
+
+  .export-date-input:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+  }
+}

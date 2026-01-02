@@ -59,6 +59,8 @@ class MealService {
             name: food.name,
             portion: food.portion,
             protein: food.protein,
+            carbs: food.carbs,      // NEW - macro ingredients analysis
+            fat: food.fat,          // NEW - macro ingredients analysis
             displayOrder: index,
           })),
         },
@@ -134,6 +136,8 @@ class MealService {
             name: food.name,
             portion: food.portion,
             protein: food.protein,
+            carbs: food.carbs,
+            fat: food.fat,
             displayOrder: index,
           })),
         },

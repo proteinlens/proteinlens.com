@@ -8,6 +8,8 @@ export const FoodItemSchema = z.object({
   name: z.string().min(1).max(200),
   portion: z.string().min(1).max(100),
   protein: z.number().nonnegative().max(999.99),
+  carbs: z.number().nonnegative().max(999.99),    // NEW - macro ingredients analysis
+  fat: z.number().nonnegative().max(999.99),      // NEW - macro ingredients analysis
 });
 
 export type FoodItem = z.infer<typeof FoodItemSchema>;
@@ -16,6 +18,8 @@ export type FoodItem = z.infer<typeof FoodItemSchema>;
 export const AIAnalysisResponseSchema = z.object({
   foods: z.array(FoodItemSchema).min(0).max(50),
   totalProtein: z.number().nonnegative().max(9999.99),
+  totalCarbs: z.number().nonnegative().max(9999.99),      // NEW - macro ingredients analysis
+  totalFat: z.number().nonnegative().max(9999.99),        // NEW - macro ingredients analysis
   confidence: z.enum(['high', 'medium', 'low']),
   notes: z.string().optional(),
 });
@@ -46,6 +50,8 @@ export const UpdateMealRequestSchema = z.object({
       name: z.string().min(1).max(200),
       portion: z.string().min(1).max(100),
       protein: z.number().nonnegative().max(999.99),
+      carbs: z.number().nonnegative().max(999.99).optional(),        // NEW - macro ingredients analysis
+      fat: z.number().nonnegative().max(999.99).optional(),          // NEW - macro ingredients analysis
     })
   ),
   notes: z.string().optional(),

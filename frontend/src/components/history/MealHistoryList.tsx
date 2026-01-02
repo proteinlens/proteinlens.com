@@ -86,9 +86,23 @@ export function MealHistoryList({ meals, onMealClick, onMealDelete }: MealHistor
               {getDateLabel(date)}
             </h3>
             {groupedMeals[date].length > 0 && (
-              <p className="text-xs text-muted-foreground mt-1">
-                {groupedMeals[date].reduce((sum, m) => sum + (m.analysis?.totalProtein || 0), 0)}g total protein
-              </p>
+              <div className="text-xs text-muted-foreground mt-1 space-y-1">
+                <p>
+                  {groupedMeals[date].reduce((sum, m) => sum + (m.analysis?.totalProtein || m.totalProtein || 0), 0).toFixed(1)}g protein
+                </p>
+                {/* Show carbs and fat if available */}
+                {groupedMeals[date].some(m => m.analysis?.foods?.some((f: any) => f.carbs !== null) || m.foods?.some((f: any) => f.carbs !== null)) && (
+                  <p>
+                    {groupedMeals[date].reduce((sum, m) => {
+                      const foods = m.analysis?.foods || m.foods || [];
+                      return sum + foods.reduce((s: number, f: any) => s + (f.carbs || 0), 0);
+                    }, 0).toFixed(1)}g carbs, {groupedMeals[date].reduce((sum, m) => {
+                      const foods = m.analysis?.foods || m.foods || [];
+                      return sum + foods.reduce((s: number, f: any) => s + (f.fat || 0), 0);
+                    }, 0).toFixed(1)}g fat
+                  </p>
+                )}
+              </div>
             )}
           </div>
 

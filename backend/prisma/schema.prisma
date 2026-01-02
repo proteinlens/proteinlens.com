@@ -481,6 +481,8 @@ model Food {
   name            String        @db.VarChar(200)
   portion         String        @db.VarChar(100)
   protein         Decimal       @db.Decimal(6, 2)
+  carbs           Decimal?      @db.Decimal(6, 2)  // NEW - nullable for legacy data
+  fat             Decimal?      @db.Decimal(6, 2)  // NEW - nullable for legacy data
   
   // Order for display
   displayOrder    Int           @default(0)
