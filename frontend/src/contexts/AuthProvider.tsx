@@ -216,6 +216,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       setIsLoading(true);
       
+      // Public routes that don't require authentication
+      const publicRoutes = ['/login', '/signup', '/signup-legacy', '/terms', '/privacy', '/verify-email', '/resend-verification', '/reset-password', '/invite/', '/meal/'];
+      const isPublicRoute = publicRoutes.some(route => window.location.pathname.startsWith(route));
+      
+      // Skip token refresh on public routes (security: don't make unnecessary auth calls)
+      if (isPublicRoute) {
+        setIsLoading(false);
+        return;
+      }
+      
       // Check for OAuth callback parameters
       const params = new URLSearchParams(window.location.search);
       const accessToken = params.get('accessToken');
