@@ -48,6 +48,7 @@ async function fetchPublicMeal(shareId: string): Promise<PublicMealData> {
   const timeout = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
   try {
+    console.log('[SharedMealPage] Fetching meal:', shareId);
     const response = await fetch(`${API_PATH}/meals/${shareId}/public`, {
       signal: controller.signal,
       headers: {
@@ -56,21 +57,34 @@ async function fetchPublicMeal(shareId: string): Promise<PublicMealData> {
       },
     });
     
+    console.log('[SharedMealPage] Response status:', response.status);
+    
     if (response.status === 404) {
+      console.log('[SharedMealPage] Meal not found');
       throw new Error('not-found');
     }
     
     if (response.status === 403) {
+      console.log('[SharedMealPage] Meal is private');
       throw new Error('private');
     }
     
     if (!response.ok) {
+      console.error('[SharedMealPage] Response not ok:', response.status, response.statusText);
       throw new Error('error');
     }
     
     const result = await response.json();
+    console.log('[SharedMealPage] Response data:', result);
+    
     // API returns { meal: {...} }, extract the meal object
-    return result.meal || result;
+    const meal = result.meal || result;
+    console.log('[SharedMealPage] Extracted meal:', meal);
+    
+    return meal;
+  } catch (error) {
+    console.error('[SharedMealPage] Fetch error:', error);
+    throw error;
   } finally {
     clearTimeout(timeout);
   }
@@ -84,16 +98,20 @@ export function SharedMealPage() {
 
   useEffect(() => {
     if (!shareId) {
+      console.log('[SharedMealPage] No shareId provided');
       setLoadingState('not-found');
       return;
     }
 
+    console.log('[SharedMealPage] Starting fetch for shareId:', shareId);
     fetchPublicMeal(shareId)
       .then((data) => {
+        console.log('[SharedMealPage] Fetch success, setting meal:', data);
         setMeal(data);
         setLoadingState('success');
       })
       .catch((err) => {
+        console.error('[SharedMealPage] Fetch catch:', err.message, err);
         if (err.message === 'not-found') {
           setLoadingState('not-found');
         } else if (err.message === 'private') {
