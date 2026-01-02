@@ -83,11 +83,11 @@ export class AuthError extends Error {
 // Token Storage
 // ─────────────────────────────────────────────────────────────────────────────
 
-// SECURITY: Access tokens should be stored in memory only (not localStorage)
+// SECURITY: Access tokens are stored in memory only (not localStorage)
 // to protect against XSS attacks. The refresh token is stored in an HttpOnly
 // cookie that can't be accessed by JavaScript.
 
-// Legacy storage keys (for backward compatibility during migration)
+// Legacy storage keys (cleanup only - no longer used for storage)
 const ACCESS_TOKEN_KEY = 'proteinlens_access_token';
 const REFRESH_TOKEN_KEY = 'proteinlens_refresh_token';
 const TOKEN_EXPIRY_KEY = 'proteinlens_token_expiry';
@@ -99,8 +99,16 @@ let csrfToken: string | null = null;
 let inMemoryAccessToken: string | null = null;
 let inMemoryTokenExpiry: number | null = null;
 
+// Clean up any legacy tokens from localStorage on module load (security measure)
+if (typeof window !== 'undefined') {
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
+  localStorage.removeItem(TOKEN_EXPIRY_KEY);
+}
+
 /**
  * Store tokens - access token in memory, refresh token handled via HttpOnly cookie
+ * SECURITY: Never store tokens in localStorage to prevent XSS attacks
  */
 export function storeTokens(tokens: TokenPair & { csrfToken?: string }): void {
   // Store access token in memory only (per Constitution XI - XSS protection)
@@ -112,35 +120,21 @@ export function storeTokens(tokens: TokenPair & { csrfToken?: string }): void {
     csrfToken = tokens.csrfToken;
   }
   
-  // Legacy: Also store in localStorage for backward compatibility during migration
-  // TODO: Remove localStorage storage once fully migrated to cookie-based auth
-  localStorage.setItem(ACCESS_TOKEN_KEY, tokens.accessToken);
-  localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken);
-  localStorage.setItem(TOKEN_EXPIRY_KEY, String(Date.now() + tokens.expiresIn * 1000));
+  // Refresh token is stored by backend in HttpOnly cookie (secure, not accessible to JS)
 }
 
 export function getStoredAccessToken(): string | null {
-  // Prefer in-memory token if available
-  if (inMemoryAccessToken) {
-    return inMemoryAccessToken;
-  }
-  // Fall back to localStorage for backward compatibility
-  return localStorage.getItem(ACCESS_TOKEN_KEY);
+  return inMemoryAccessToken;
 }
 
 export function getStoredRefreshToken(): string | null {
-  // Legacy: refresh tokens are now stored in HttpOnly cookies
-  // This function is for backward compatibility
-  return localStorage.getItem(REFRESH_TOKEN_KEY);
+  // Refresh tokens are now stored in HttpOnly cookies by the backend
+  // They are never accessible to JavaScript (XSS protection)
+  return null;
 }
 
 export function getTokenExpiry(): number | null {
-  // Prefer in-memory expiry if available
-  if (inMemoryTokenExpiry) {
-    return inMemoryTokenExpiry;
-  }
-  const expiry = localStorage.getItem(TOKEN_EXPIRY_KEY);
-  return expiry ? parseInt(expiry, 10) : null;
+  return inMemoryTokenExpiry;
 }
 
 export function isTokenExpired(): boolean {
@@ -156,10 +150,7 @@ export function clearTokens(): void {
   inMemoryTokenExpiry = null;
   csrfToken = null;
   
-  // Clear legacy localStorage tokens
-  localStorage.removeItem(ACCESS_TOKEN_KEY);
-  localStorage.removeItem(REFRESH_TOKEN_KEY);
-  localStorage.removeItem(TOKEN_EXPIRY_KEY);
+  // Note: HttpOnly refresh token cookie is cleared by backend on logout
 }
 
 /**
