@@ -318,7 +318,9 @@ class MealService {
    * Returns null if meal doesn't exist or is private
    */
   async getPublicMealByShareId(shareId: string): Promise<MealAnalysis | null> {
-    return prisma.mealAnalysis.findFirst({
+    Logger.info('Querying public meal by shareId', { shareId });
+    
+    const meal = await prisma.mealAnalysis.findFirst({
       where: { 
         shareId, 
         isPublic: true 
@@ -336,6 +338,15 @@ class MealService {
         },
       },
     });
+    
+    Logger.info('Public meal query result', { 
+      shareId, 
+      found: !!meal,
+      mealId: meal?.id,
+      isPublic: meal?.isPublic,
+    });
+    
+    return meal;
   }
 
   /**
