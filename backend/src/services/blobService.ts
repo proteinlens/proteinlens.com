@@ -37,11 +37,11 @@ class BlobService {
   }
 
   /**
-   * Validate file type - JPEG, PNG, HEIC only
+   * Validate file type - JPEG, PNG, HEIC, WebP
    * Constitution Principle VI: Cost Controls
    */
   validateFileType(contentType: string): void {
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/heic'];
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/heic', 'image/webp'];
     if (!allowedTypes.includes(contentType.toLowerCase())) {
       throw new UnsupportedFileTypeError(contentType);
     }
