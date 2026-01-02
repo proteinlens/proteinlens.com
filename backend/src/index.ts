@@ -54,3 +54,7 @@ import './functions/admin-meals';
 // Feature 015: Protein Calculator
 import './functions/protein-calculator';
 import './functions/admin-protein';
+
+// Feature 017: Shareable Meal Scans & Diet Style Profiles
+import './functions/public-meal';
+import './functions/get-daily-summary';
