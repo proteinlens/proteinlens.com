@@ -3,7 +3,6 @@
 // Displays macronutrient values and percentages in a responsive grid
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface MacroBreakdownProps {
   protein: number;
@@ -28,32 +27,30 @@ export const MacroBreakdown: React.FC<MacroBreakdownProps> = ({
 }) => {
   if (isLegacy || carbs === undefined || fat === undefined) {
     return (
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="text-lg">Macronutrient Breakdown</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-medium">Protein</span>
-              <span className="text-sm">{protein.toFixed(1)}g</span>
-            </div>
-            <p className="text-xs text-gray-500">Macro data unavailable for this meal</p>
+      <div className="w-full border rounded-lg p-4 bg-white shadow-sm">
+        <div className="mb-3">
+          <h3 className="text-lg font-semibold">Macronutrient Breakdown</h3>
+        </div>
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium">Protein</span>
+            <span className="text-sm">{protein.toFixed(1)}g</span>
           </div>
-        </CardContent>
-      </Card>
+          <p className="text-xs text-gray-500">Macro data unavailable for this meal</p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="text-lg">Macronutrient Breakdown</CardTitle>
+    <div className="w-full border rounded-lg bg-white shadow-sm">
+      <div className="p-4">
+        <h3 className="text-lg font-semibold">Macronutrient Breakdown</h3>
         {totalCalories && (
           <p className="text-sm text-gray-600">Total: {totalCalories} calories</p>
         )}
-      </CardHeader>
-      <CardContent>
+      </div>
+      <div className="p-4">
         <div className="grid grid-cols-3 gap-4">
           {/* Protein */}
           <div className="flex flex-col items-center p-3 bg-orange-50 rounded-lg">
@@ -100,8 +97,8 @@ export const MacroBreakdown: React.FC<MacroBreakdownProps> = ({
             </p>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 

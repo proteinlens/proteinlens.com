@@ -3,7 +3,7 @@
 // Task: T029 - Daily summary API integration
 
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthProvider';
 
 interface DailySummaryData {
   date: string;

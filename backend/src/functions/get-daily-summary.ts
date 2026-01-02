@@ -98,6 +98,7 @@ export async function getDailySummary(request: HttpRequest, context: InvocationC
       },
     };
   }
+}
 
 // Register function with HTTP trigger
 app.http('getDailySummary', {
