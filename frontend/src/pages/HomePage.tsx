@@ -6,7 +6,7 @@ import { FunLoading } from '@/components/ui/FunLoading'
 import { Skeleton } from '@/components/Skeleton'
 import { getRandomMessage, successMessages } from '@/utils/friendlyErrors'
 import { useAuth } from '@/contexts/AuthProvider'
-import { getRandomDemoMeal, DEFAULT_PROTEIN_GOAL, type DemoMeal } from '@/data/demoMeals'
+import { getRandomDemoMeal, demoMeals, DEFAULT_PROTEIN_GOAL, type DemoMeal } from '@/data/demoMeals'
 
 interface FoodItem {
   name: string
@@ -95,6 +95,20 @@ export function HomePage() {
   // Demo scan - shows example results without uploading
   const handleDemoScan = useCallback(() => {
     const demo = getRandomDemoMeal()
+    setDemoMeal(demo)
+    setPreviewUrl(demo.imageUrl)
+    setResult({
+      mealAnalysisId: `demo-${demo.id}`,
+      foods: demo.foods,
+      totalProtein: demo.totalProtein,
+      confidence: demo.confidence,
+      notes: demo.notes,
+    })
+    setUploadState('demo')
+  }, [])
+
+  // Demo scan with specific meal
+  const handleDemoMealClick = useCallback((demo: DemoMeal) => {
     setDemoMeal(demo)
     setPreviewUrl(demo.imageUrl)
     setResult({
@@ -539,12 +553,38 @@ export function HomePage() {
             <p className="text-muted-foreground">Drag & drop or click to upload</p>
           </div>
 
+          {/* Demo Meals Gallery */}
+          <div className="mb-6">
+            <p className="text-sm font-medium text-muted-foreground mb-3">Try these examples:</p>
+            <div className="grid grid-cols-3 gap-3">
+              {demoMeals.map((meal) => (
+                <button
+                  key={meal.id}
+                  onClick={() => handleDemoMealClick(meal)}
+                  className="relative rounded-lg overflow-hidden group cursor-pointer transition-transform hover:scale-105"
+                >
+                  <img 
+                    src={meal.imageUrl} 
+                    alt={meal.name}
+                    className="w-full h-20 object-cover rounded-lg"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors rounded-lg flex items-center justify-center">
+                    <span className="text-white opacity-0 group-hover:opacity-100 font-medium text-xs transition-opacity">
+                      {meal.totalProtein}g
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1 text-center truncate">{meal.name}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Secondary CTA - Demo scan */}
           <button
             onClick={handleDemoScan}
             className="text-emerald-700 hover:text-emerald-800 text-sm font-medium mb-6 underline decoration-emerald-400 hover:decoration-emerald-600 transition-colors"
           >
-            See an example (no photo needed)
+            Or see a random example
           </button>
 
           {/* No account needed message */}
