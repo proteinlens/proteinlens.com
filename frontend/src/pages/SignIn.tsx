@@ -177,7 +177,7 @@ export function SignIn() {
           </form>
 
           {/* Social login divider */}
-          <div className="relative my-6">
+          <div className="relative my-6 hidden">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-border" />
             </div>
@@ -186,8 +186,8 @@ export function SignIn() {
             </div>
           </div>
 
-          {/* Social login buttons */}
-          <div className="flex gap-3">
+          {/* Social login buttons - Not implemented yet */}
+          <div className="flex gap-3 hidden">
             <button
               type="button"
               onClick={() => handleSocialLogin('google')}

@@ -81,7 +81,7 @@ export const UsageCounter: React.FC<UsageCounterProps> = ({
       )}
 
       {isEmpty && (
-        <a href="/pricing" className="usage-counter__upgrade">
+        <a href="/pricing" className="usage-counter__upgrade hidden">
           Upgrade to Pro
         </a>
       )}
