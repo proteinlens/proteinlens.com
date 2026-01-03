@@ -101,7 +101,7 @@ export function SharedMealPage() {
 
   const handleSaveMeal = useCallback(async () => {
     if (!isAuthenticated) {
-      window.location.href = '/signin';
+      window.location.href = '/login';
       return;
     }
     
@@ -435,7 +435,7 @@ export function SharedMealPage() {
                 {savingMeal ? '⏳ Saving...' : '💾 Save Meal'}
               </button>
               <Link
-                to="/signin"
+                to="/login"
                 className="px-4 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors text-center"
               >
                 🔐 Login
