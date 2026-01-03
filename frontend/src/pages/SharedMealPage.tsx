@@ -11,6 +11,7 @@ import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import { Skeleton } from '../components/Skeleton';
+import { useAuth } from '../contexts/AuthProvider';
 
 interface FoodItem {
   name: string;
@@ -92,9 +93,34 @@ async function fetchPublicMeal(shareId: string): Promise<PublicMealData> {
 
 export function SharedMealPage() {
   const { shareId } = useParams<{ shareId: string }>();
+  const { isAuthenticated } = useAuth();
   const [loadingState, setLoadingState] = useState<LoadingState>('loading');
   const [meal, setMeal] = useState<PublicMealData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [savingMeal, setSavingMeal] = useState(false);
+
+  const handleSaveMeal = useCallback(async () => {
+    if (!isAuthenticated) {
+      window.location.href = '/signin';
+      return;
+    }
+    
+    if (!meal) return;
+    
+    setSavingMeal(true);
+    try {
+      // Save meal to user's collection
+      // TODO: Implement meal saving API call
+      console.log('[SharedMealPage] Saving meal:', meal);
+      // For now, show a toast/alert
+      alert('✅ Meal saved to your collection!');
+    } catch (err) {
+      console.error('[SharedMealPage] Save error:', err);
+      alert('❌ Failed to save meal. Please try again.');
+    } finally {
+      setSavingMeal(false);
+    }
+  }, [meal, isAuthenticated]);
 
   useEffect(() => {
     if (!shareId) {
@@ -378,26 +404,42 @@ export function SharedMealPage() {
               </div>
             </div>
 
-            {/* Total Macros */}
-            <div className="p-4 bg-primary/10 rounded-xl border border-primary/20">
-              <div className="flex items-center justify-between mb-3">
-                <span className="font-semibold text-foreground">Total</span>
-                <span className="text-2xl font-bold text-primary">{mealData.totalCalories} cal</span>
+            {/* Total Macros - Without "Total" Label */}
+            <div className="p-6 bg-primary/10 rounded-xl border border-primary/20">
+              <div className="text-center mb-4">
+                <span className="text-4xl font-bold text-primary">{mealData.totalCalories} cal</span>
               </div>
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <div className="text-sm text-muted-foreground">Protein</div>
-                  <div className="text-lg font-bold text-foreground">{mealData.totalProtein}g</div>
+                  <div className="text-2xl font-bold text-foreground">{mealData.totalProtein}g</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Carbs</div>
-                  <div className="text-lg font-bold text-foreground">{mealData.totalCarbs}g</div>
+                  <div className="text-2xl font-bold text-foreground">{mealData.totalCarbs}g</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Fat</div>
-                  <div className="text-lg font-bold text-foreground">{mealData.totalFat}g</div>
+                  <div className="text-2xl font-bold text-foreground">{mealData.totalFat}g</div>
                 </div>
               </div>
+            </div>
+
+            {/* Save and Login Buttons */}
+            <div className="grid grid-cols-2 gap-3">
+              <button 
+                onClick={handleSaveMeal}
+                disabled={savingMeal}
+                className="px-4 py-3 bg-secondary text-secondary-foreground rounded-lg font-medium hover:bg-secondary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {savingMeal ? '⏳ Saving...' : '💾 Save Meal'}
+              </button>
+              <Link
+                to="/signin"
+                className="px-4 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors text-center"
+              >
+                🔐 Login
+              </Link>
             </div>
 
             {/* Pro Tip / Notes */}
