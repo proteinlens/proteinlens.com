@@ -110,7 +110,7 @@ export interface SubscriptionEventData {
  * Constants for billing
  */
 export const BILLING_CONSTANTS = {
-  FREE_SCANS_PER_WEEK: 1000, // POC: extended quota
+  FREE_SCANS_PER_WEEK: 5,
   FREE_HISTORY_DAYS: 7,
   ROLLING_WINDOW_DAYS: 7,
   GRACE_PERIOD_DAYS: 5,
