@@ -1,9 +1,11 @@
 // Quota middleware for enforcing scan limits
 // Feature: 002-saas-billing, User Story 3
 // T085: Added structured logging for quota enforcement
+// Updated: Anonymous user quota tracking (3 scans)
 
 import { HttpRequest, HttpResponseInit } from '@azure/functions';
 import { canPerformScan } from '../services/usageService';
+import { canAnonymousScan } from '../services/anonymousQuotaService';
 import { Logger } from '../utils/logger';
 
 /**
@@ -37,12 +39,69 @@ export async function checkQuota(userId: string): Promise<QuotaCheckResult> {
 
 /**
  * Enforce weekly quota for scan operations
+ * Handles both authenticated users and anonymous users
  * Returns a 429 response if quota exceeded
  * T085: Added structured logging
- * @param userId - User identifier
+ * @param userId - User identifier (null for anonymous)
+ * @param request - HTTP request (for extracting IP for anonymous users)
  * @returns null if allowed, HttpResponseInit if blocked
  */
-export async function enforceWeeklyQuota(userId: string): Promise<HttpResponseInit | null> {
+export async function enforceWeeklyQuota(userId: string | null, request: HttpRequest): Promise<HttpResponseInit | null> {
+  // Handle anonymous users (IP-based quota)
+  if (!userId) {
+    const ipAddress = extractClientIp(request);
+    if (!ipAddress) {
+      Logger.warn('Could not determine client IP for anonymous quota check');
+      // Allow the request if we can't determine IP (fail open)
+      return null;
+    }
+
+    const anonymousQuota = await canAnonymousScan(ipAddress);
+
+    Logger.info('Anonymous quota check performed', {
+      ipAddress: maskIp(ipAddress),
+      scansUsed: anonymousQuota.scansUsed,
+      scansLimit: anonymousQuota.scansLimit,
+      scansRemaining: anonymousQuota.scansRemaining,
+      allowed: anonymousQuota.canScan,
+    });
+
+    if (!anonymousQuota.canScan) {
+      Logger.warn('Anonymous quota exceeded - scan blocked', {
+        ipAddress: maskIp(ipAddress),
+        scansUsed: anonymousQuota.scansUsed,
+        scansLimit: anonymousQuota.scansLimit,
+      });
+
+      return {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Quota-Used': anonymousQuota.scansUsed.toString(),
+          'X-Quota-Limit': anonymousQuota.scansLimit.toString(),
+          'X-Quota-Remaining': '0',
+        },
+        jsonBody: {
+          error: 'Quota exceeded',
+          message: anonymousQuota.reason || `You've used all ${anonymousQuota.scansLimit} free scans.`,
+          quota: {
+            used: anonymousQuota.scansUsed,
+            limit: anonymousQuota.scansLimit,
+            remaining: 0,
+            plan: 'ANONYMOUS',
+          },
+          signup: {
+            message: `Create a free account to get 20 scans per week!`,
+            url: '/signup',
+          },
+        },
+      };
+    }
+
+    return null; // Anonymous quota check passed
+  }
+
+  // Handle authenticated users (existing logic)
   const quotaCheck = await checkQuota(userId);
 
   // T085: Structured logging for quota enforcement
@@ -156,4 +215,44 @@ export async function requirePro(userId: string): Promise<HttpResponseInit | nul
  */
 export function getHistoryDaysLimit(plan: 'FREE' | 'PRO'): number | null {
   return plan === 'PRO' ? null : 7;
+}
+
+/**
+ * Extract client IP address from request
+ * Checks various headers used by proxies and Azure Functions
+ */
+export function extractClientIp(request: HttpRequest): string | null {
+  // Check X-Forwarded-For (most common)
+  const xForwardedFor = request.headers.get('x-forwarded-for');
+  if (xForwardedFor) {
+    // Take the first IP in the chain
+    return xForwardedFor.split(',')[0].trim();
+  }
+
+  // Check X-Real-IP
+  const xRealIp = request.headers.get('x-real-ip');
+  if (xRealIp) {
+    return xRealIp.trim();
+  }
+
+  // Check X-Azure-ClientIP (Azure-specific)
+  const azureClientIp = request.headers.get('x-azure-clientip');
+  if (azureClientIp) {
+    return azureClientIp.trim();
+  }
+
+  return null;
+}
+
+/**
+ * Mask IP address for logging (privacy)
+ * Example: 192.168.1.100 -> 192.168.x.x
+ */
+function maskIp(ip: string): string {
+  const parts = ip.split('.');
+  if (parts.length === 4) {
+    return `${parts[0]}.${parts[1]}.x.x`;
+  }
+  // IPv6 or other format - just mask last part
+  return ip.substring(0, ip.length / 2) + 'xxx';
 }

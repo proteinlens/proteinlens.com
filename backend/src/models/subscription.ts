@@ -110,7 +110,8 @@ export interface SubscriptionEventData {
  * Constants for billing
  */
 export const BILLING_CONSTANTS = {
-  FREE_SCANS_PER_WEEK: 5,
+  ANONYMOUS_SCANS_LIMIT: 3,      // Anonymous users get 3 scans before signup prompt
+  FREE_SCANS_PER_WEEK: 20,       // Free plan gets 20 scans per week (generous to encourage adoption)
   FREE_HISTORY_DAYS: 7,
   ROLLING_WINDOW_DAYS: 7,
   GRACE_PERIOD_DAYS: 5,

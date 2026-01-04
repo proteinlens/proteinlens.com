@@ -404,6 +404,20 @@ model Usage {
 }
 
 // ===========================================
+// Anonymous Usage Tracking (for non-authenticated users)
+// ===========================================
+
+model AnonymousUsage {
+  id        String   @id @default(uuid())
+  ipAddress String   @db.VarChar(45)  // IPv4 or IPv6
+  mealId    String?  @db.VarChar(255) // Reference to MealAnalysis.id
+  
+  createdAt DateTime @default(now())
+  
+  @@index([ipAddress, createdAt])
+}
+
+// ===========================================
 // Subscription Event Audit Log (Feature 002)
 // ===========================================
 

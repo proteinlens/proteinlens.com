@@ -30,7 +30,7 @@ export type AIAnalysisResponse = z.infer<typeof AIAnalysisResponseSchema>;
 export const UploadUrlRequestSchema = z.object({
   fileName: z.string().min(1).max(255),
   fileSize: z.number().positive().max(8 * 1024 * 1024), // 8MB max
-  contentType: z.enum(['image/jpeg', 'image/png', 'image/heic']),
+  contentType: z.enum(['image/jpeg', 'image/png', 'image/heic', 'image/webp']),
 });
 
 export type UploadUrlRequest = z.infer<typeof UploadUrlRequestSchema>;

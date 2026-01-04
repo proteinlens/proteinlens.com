@@ -1,5 +1,6 @@
 /* Usage Counter Styles */
 /* Feature: 002-saas-billing */
+/* Updated: Enhanced with engaging messages and anonymous user support */
 
 .usage-counter {
   display: flex;
@@ -10,6 +11,7 @@
   border: 1px solid #e5e7eb;
   border-radius: 10px;
   min-width: 180px;
+  transition: all 0.3s ease;
 }
 
 .usage-counter--compact {
@@ -22,12 +24,34 @@
 
 .usage-counter--low {
   border-color: #fbbf24;
-  background: #fffbeb;
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  animation: pulse-low 2s ease-in-out infinite;
+}
+
+@keyframes pulse-low {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4); }
+  50% { transform: scale(1.02); box-shadow: 0 0 0 4px rgba(251, 191, 36, 0); }
 }
 
 .usage-counter--empty {
   border-color: #ef4444;
-  background: #fef2f2;
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  animation: pulse-empty 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-empty {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  50% { transform: scale(1.03); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+}
+
+.usage-counter--anonymous {
+  border: 2px dashed #a78bfa;
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+}
+
+.usage-counter--anonymous.usage-counter--low {
+  border-color: #a78bfa;
+  background: linear-gradient(135deg, #faf5ff 0%, #ede9fe 100%);
 }
 
 .usage-counter--pro {
@@ -38,6 +62,7 @@
 .usage-counter__loading {
   color: #9ca3af;
   font-size: 13px;
+  font-weight: 500;
 }
 
 .usage-counter__badge {
@@ -52,8 +77,31 @@
 
 .usage-counter__info {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 6px;
+}
+
+.usage-counter__message {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.4;
+}
+
+.usage-counter--compact .usage-counter__message {
+  font-size: 13px;
+}
+
+.usage-counter--low .usage-counter__message {
+  color: #d97706;
+}
+
+.usage-counter--empty .usage-counter__message {
+  color: #dc2626;
+}
+
+.usage-counter--anonymous .usage-counter__message {
+  color: #7c3aed;
 }
 
 .usage-counter__count {
@@ -80,46 +128,81 @@
 }
 
 .usage-counter__bar {
-  height: 6px;
+  height: 8px;
   background: #e5e7eb;
-  border-radius: 3px;
+  border-radius: 4px;
   overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .usage-counter__fill {
   height: 100%;
-  background: #22c55e;
-  border-radius: 3px;
-  transition: width 0.3s ease;
+  background: linear-gradient(90deg, #22c55e 0%, #34d399 100%);
+  border-radius: 4px;
+  transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
 }
 
 .usage-counter--low .usage-counter__fill {
-  background: #fbbf24;
+  background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%);
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.5);
 }
 
 .usage-counter--empty .usage-counter__fill {
-  background: #ef4444;
+  background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+}
+
+.usage-counter--anonymous .usage-counter__fill {
+  background: linear-gradient(90deg, #a78bfa 0%, #8b5cf6 100%);
+  box-shadow: 0 0 8px rgba(167, 139, 250, 0.5);
 }
 
 .usage-counter__reset {
   font-size: 11px;
   color: #9ca3af;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.usage-counter--anonymous .usage-counter__reset {
+  color: #7c3aed;
+  font-weight: 600;
 }
 
 .usage-counter__upgrade {
   display: inline-block;
-  margin-top: 4px;
-  padding: 6px 12px;
-  background: #6366f1;
+  margin-top: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   color: white;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   text-decoration: none;
   text-align: center;
-  transition: background 0.2s;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
 
 .usage-counter__upgrade:hover {
-  background: #4f46e5;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+}
+
+.usage-counter__upgrade:active {
+  transform: translateY(0);
+}
+
+.usage-counter--anonymous .usage-counter__upgrade {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+.usage-counter__text {
+  font-size: 14px;
+  color: #4f46e5;
+  font-weight: 600;
 }

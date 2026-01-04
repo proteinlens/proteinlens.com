@@ -16,8 +16,9 @@ import { mealService } from '../services/mealService.js';
 import { dietService, DietStyle } from '../services/dietService.js';
 import { AnalyzeRequestSchema, AIAnalysisResponse } from '../models/schemas.js';
 import { ValidationError, BlobNotFoundError } from '../utils/errors.js';
-import { enforceWeeklyQuota, extractUserId } from '../middleware/quotaMiddleware.js';
+import { enforceWeeklyQuota, extractUserId, extractClientIp } from '../middleware/quotaMiddleware.js';
 import { recordUsage, UsageType } from '../services/usageService.js';
+import { recordAnonymousScan } from '../services/anonymousQuotaService.js';
 import { correlationMiddleware } from '../middleware/correlationMiddleware.js';
 import { trackEvent, trackMetric, trackException, setTraceContext } from '../utils/telemetry.js';
 import { getPrismaClient } from '../utils/prisma.js';
@@ -159,13 +160,13 @@ export async function analyzeMeal(request: HttpRequest, context: InvocationConte
 
     const { blobName } = validation.data;
 
-    // Extract userId from blob path or auth header
-    const userId = extractUserId(request, blobName) || extractUserIdFromBlobName(blobName);
+    // Extract userId from blob path or auth header (null for anonymous users)
+    const userId = extractUserId(request, blobName) || extractUserIdFromBlobName(blobName) || null;
 
-    // T031: Check quota before proceeding with analysis
-    const quotaBlock = await enforceWeeklyQuota(userId);
+    // T031: Check quota before proceeding with analysis (handles both authenticated and anonymous)
+    const quotaBlock = await enforceWeeklyQuota(userId, request);
     if (quotaBlock) {
-      Logger.info('Scan blocked - quota exceeded', { requestId, userId });
+      Logger.info('Scan blocked - quota exceeded', { requestId, userId: userId || 'anonymous' });
       return {
         ...quotaBlock,
         headers: {
@@ -280,11 +281,21 @@ export async function analyzeMeal(request: HttpRequest, context: InvocationConte
 
     // T033: Record usage after successful analysis
     try {
-      await recordUsage(userId, UsageType.MEAL_ANALYSIS, mealAnalysisId);
-      Logger.info('Usage recorded', { requestId, userId, mealAnalysisId });
+      if (userId) {
+        // Authenticated user - record to Usage table
+        await recordUsage(userId, UsageType.MEAL_ANALYSIS, mealAnalysisId);
+        Logger.info('Usage recorded', { requestId, userId, mealAnalysisId });
+      } else {
+        // Anonymous user - record to AnonymousUsage table
+        const ipAddress = extractClientIp(request);
+        if (ipAddress) {
+          await recordAnonymousScan(ipAddress, mealAnalysisId);
+          Logger.info('Anonymous usage recorded', { requestId, ipAddress: ipAddress.split('.').slice(0, 2).join('.') + '.x.x', mealAnalysisId });
+        }
+      }
     } catch (usageError) {
       // Log but don't fail the request if usage recording fails
-      Logger.error('Failed to record usage', usageError as Error, { requestId, userId });
+      Logger.error('Failed to record usage', usageError as Error, { requestId, userId: userId || 'anonymous' });
     }
 
     const durationMs = Date.now() - startTime;

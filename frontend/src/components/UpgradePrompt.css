@@ -60,68 +60,120 @@
   background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
 }
 
-.upgrade-prompt__confetti {
-  font-size: 48px;
+.upgrade-prompt__icon-success {
+  font-size: 56px;
   margin-bottom: 12px;
   display: block;
-  animation: bounce 1s ease infinite;
+  animation: bounce 1.5s ease infinite;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
 }
 
 @keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-12px) scale(1.05); }
 }
 
 .upgrade-prompt__title {
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 800;
   color: white;
   margin: 0 0 8px 0;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  line-height: 1.2;
 }
 
 .upgrade-prompt__subtitle {
-  font-size: 15px;
-  color: rgba(255, 255, 255, 0.9);
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.95);
   margin: 0;
   font-weight: 500;
+  line-height: 1.4;
 }
 
 /* Progress Section */
 .upgrade-prompt__progress {
-  padding: 20px 24px;
+  padding: 24px 24px 20px;
   background: white;
   border-bottom: 1px solid #e5e7eb;
 }
 
 .upgrade-prompt__progress-bar {
-  height: 12px;
+  height: 14px;
   background: #e5e7eb;
-  border-radius: 6px;
+  border-radius: 8px;
   overflow: hidden;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
 }
 
 .upgrade-prompt__progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
-  border-radius: 6px;
-  animation: fillProgress 0.8s ease-out;
+  background: linear-gradient(90deg, #10b981 0%, #34d399 50%, #10b981 100%);
+  background-size: 200% 100%;
+  border-radius: 8px;
+  animation: fillProgress 0.8s ease-out, shimmer 2s ease-in-out infinite;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
 }
 
 @keyframes fillProgress {
   from { width: 0; }
 }
 
-.upgrade-prompt__progress-text {
-  font-size: 13px;
-  color: #6b7280;
-  margin: 0;
+@keyframes shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
-.upgrade-prompt__progress-text strong {
+.upgrade-prompt__progress-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.upgrade-prompt__progress-complete {
   color: #10b981;
   font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Problem/Opportunity Section */
+.upgrade-prompt__problem {
+  padding: 24px;
+  background: linear-gradient(180deg, #fffbeb 0%, #fef3c7 100%);
+  border-bottom: 1px solid #fcd34d;
+  text-align: center;
+}
+
+.upgrade-prompt__problem p {
+  margin: 0;
+  font-size: 15px;
+  color: #78350f;
+  line-height: 1.6;
+}
+
+.upgrade-prompt__problem strong {
+  color: #92400e;
+  font-weight: 700;
+}
+
+.upgrade-prompt__highlight {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 800;
+  font-size: 16px;
+  display: inline-block;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
 }
 
 /* Reset Timer */
@@ -146,21 +198,22 @@
   font-weight: 500;
 }
 
-/* Content */
-.upgrade-prompt__content {
-  padding: 24px;
-}
-
 /* Value Proposition */
 .upgrade-prompt__value {
-  margin-bottom: 20px;
+  padding: 24px;
+  background: white;
 }
 
-.upgrade-prompt__value-title {
-  font-size: 16px;
-  font-weight: 700;
+.upgrade-prompt__value-heading {
+  font-size: 20px;
+  font-weight: 800;
   color: #1f2937;
-  margin: 0 0 16px 0;
+  margin: 0 0 20px 0;
+  text-align: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .upgrade-prompt__features {
@@ -172,42 +225,65 @@
 
 .upgrade-prompt__feature {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px;
-  background: #f9fafb;
-  border-radius: 10px;
-  transition: transform 0.2s, box-shadow 0.2s;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 14px;
+  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .upgrade-prompt__feature:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  border-color: #d1d5db;
+  background: white;
 }
 
 .upgrade-prompt__feature-icon {
-  font-size: 22px;
+  font-size: 26px;
   flex-shrink: 0;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
 }
 
-.upgrade-prompt__feature-text {
-  font-size: 13px;
-  font-weight: 600;
-  color: #374151;
+.upgrade-prompt__feature div {
+  flex: 1;
+}
+
+.upgrade-prompt__feature strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2937;
   line-height: 1.3;
+  margin-bottom: 2px;
+}
+
+.upgrade-prompt__feature p {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.4;
 }
 
 /* Pricing Card */
 .upgrade-prompt__pricing {
+  padding: 0 24px 24px;
+  background: white;
+}
+
+.upgrade-prompt__price-card {
   background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
   border: 2px solid #6366f1;
   border-radius: 16px;
-  padding: 20px;
-  margin-bottom: 16px;
+  padding: 24px 20px 20px;
   position: relative;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.15);
 }
 
-.upgrade-prompt__badge {
+.upgrade-prompt__price-badge {
   position: absolute;
   top: -12px;
   left: 50%;
@@ -216,102 +292,153 @@
   color: white;
   font-size: 11px;
   font-weight: 700;
-  padding: 4px 12px;
+  padding: 5px 16px;
   border-radius: 20px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
-}
-
-.upgrade-prompt__price {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 4px;
-  margin-bottom: 4px;
+  letter-spacing: 0.8px;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.5);
 }
 
 .upgrade-prompt__price-amount {
-  font-size: 36px;
-  font-weight: 800;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.upgrade-prompt__price-currency {
+  font-size: 24px;
+  font-weight: 700;
   color: #4f46e5;
 }
 
+.upgrade-prompt__price-value {
+  font-size: 48px;
+  font-weight: 900;
+  color: #4f46e5;
+  line-height: 1;
+}
+
 .upgrade-prompt__price-period {
-  font-size: 14px;
+  font-size: 18px;
   color: #6366f1;
-  font-weight: 500;
+  font-weight: 600;
+  margin-left: 4px;
 }
 
 .upgrade-prompt__price-note {
-  font-size: 12px;
+  font-size: 13px;
   color: #6b7280;
   margin: 0;
+  font-weight: 500;
 }
 
 /* Social Proof */
-.upgrade-prompt__social {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 20px;
+.upgrade-prompt__social-proof {
+  padding: 0 24px 20px;
+  text-align: center;
+  background: white;
 }
 
-.upgrade-prompt__stars {
-  color: #fbbf24;
-  font-size: 14px;
-  letter-spacing: 2px;
-}
-
-.upgrade-prompt__social-text {
-  font-size: 12px;
-  color: #6b7280;
+.upgrade-prompt__social-proof p {
   margin: 0;
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 500;
+  letter-spacing: 0.3px;
 }
 
 /* Actions */
 .upgrade-prompt__actions {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+  padding: 0 24px 20px;
+  background: white;
 }
 
 .upgrade-prompt__button {
   padding: 16px 24px;
-  border-radius: 12px;
-  font-size: 15px;
+  border-radius: 14px;
+  font-size: 16px;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   border: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.upgrade-prompt__button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(45deg, 
+    transparent 25%, 
+    rgba(255, 255, 255, 0.3) 50%, 
+    transparent 75%);
+  background-size: 250% 250%;
+  animation: shimmerButton 3s linear infinite;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.upgrade-prompt__button:hover::before {
+  opacity: 1;
+}
+
+@keyframes shimmerButton {
+  0% { background-position: -100% 0; }
+  100% { background-position: 200% 0; }
 }
 
 .upgrade-prompt__button--primary {
   background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   color: white;
-  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+  font-size: 17px;
+  letter-spacing: 0.3px;
 }
 
 .upgrade-prompt__button--primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(99, 102, 241, 0.5);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(99, 102, 241, 0.5);
 }
 
 .upgrade-prompt__button--primary:active {
-  transform: translateY(0);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
 }
 
 .upgrade-prompt__button--secondary {
   background: transparent;
-  color: #9ca3af;
-  font-size: 13px;
-  font-weight: 500;
-  padding: 12px;
+  color: #6366f1;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 14px 24px;
+  border: 2px solid #e0e7ff;
+  background: linear-gradient(135deg, #f8faff 0%, #eef2ff 100%);
 }
 
 .upgrade-prompt__button--secondary:hover {
+  border-color: #c7d2fe;
+  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+}
+
+.upgrade-prompt__button--ghost {
+  background: transparent;
+  color: #9ca3af;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 12px 16px;
+}
+
+.upgrade-prompt__button--ghost:hover {
   color: #6b7280;
+  background: #f9fafb;
 }
 
 /* Guarantee */
@@ -319,20 +446,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid #e5e7eb;
-}
-
-.upgrade-prompt__guarantee-icon {
-  font-size: 16px;
-}
-
-.upgrade-prompt__guarantee-text {
-  font-size: 12px;
+  gap: 8px;
+  padding: 16px 24px 24px;
+  background: white;
+  font-size: 13px;
   color: #6b7280;
-  margin: 0;
+  font-weight: 500;
+  border-bottom-left-radius: 24px;
+  border-bottom-right-radius: 24px;
+}
+
+.upgrade-prompt__guarantee span {
+  font-size: 16px;
 }
 
 /* Responsive */
@@ -340,34 +465,108 @@
   .upgrade-prompt {
     margin: 10px;
     border-radius: 20px;
+    max-width: 100%;
   }
 
   .upgrade-prompt__hero {
-    padding: 24px 20px;
+    padding: 28px 20px 24px;
+  }
+
+  .upgrade-prompt__icon-success {
+    font-size: 48px;
   }
 
   .upgrade-prompt__title {
-    font-size: 22px;
+    font-size: 24px;
   }
 
-  .upgrade-prompt__confetti {
-    font-size: 40px;
+  .upgrade-prompt__subtitle {
+    font-size: 15px;
   }
 
-  .upgrade-prompt__content {
+  .upgrade-prompt__problem {
     padding: 20px;
+  }
+
+  .upgrade-prompt__problem p {
+    font-size: 14px;
+  }
+
+  .upgrade-prompt__value {
+    padding: 20px;
+  }
+
+  .upgrade-prompt__value-heading {
+    font-size: 18px;
+    margin-bottom: 16px;
   }
 
   .upgrade-prompt__features {
     grid-template-columns: 1fr;
-    gap: 8px;
+    gap: 10px;
   }
 
   .upgrade-prompt__feature {
-    padding: 10px 12px;
+    padding: 14px 12px;
   }
 
-  .upgrade-prompt__price-amount {
-    font-size: 32px;
+  .upgrade-prompt__feature-icon {
+    font-size: 24px;
+  }
+
+  .upgrade-prompt__feature strong {
+    font-size: 13px;
+  }
+
+  .upgrade-prompt__feature p {
+    font-size: 11px;
+  }
+
+  .upgrade-prompt__pricing {
+    padding: 0 20px 20px;
+  }
+
+  .upgrade-prompt__price-card {
+    padding: 20px 16px 16px;
+  }
+
+  .upgrade-prompt__price-value {
+    font-size: 42px;
+  }
+
+  .upgrade-prompt__price-period {
+    font-size: 16px;
+  }
+
+  .upgrade-prompt__actions {
+    padding: 0 20px 16px;
+    gap: 10px;
+  }
+
+  .upgrade-prompt__button {
+    padding: 14px 20px;
+    font-size: 15px;
+  }
+
+  .upgrade-prompt__button--primary {
+    font-size: 16px;
+  }
+
+  .upgrade-prompt__guarantee {
+    padding: 14px 20px 20px;
+    font-size: 12px;
   }
 }
+
+/* Animation for backdrop */
+@media (prefers-reduced-motion: reduce) {
+  .upgrade-prompt__backdrop,
+  .upgrade-prompt,
+  .upgrade-prompt__icon-success,
+  .upgrade-prompt__progress-fill,
+  .upgrade-prompt__highlight,
+  .upgrade-prompt__button::before {
+    animation: none;
+  }
+}
+

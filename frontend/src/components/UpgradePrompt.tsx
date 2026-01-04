@@ -4,6 +4,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import './UpgradePrompt.css';
 
 interface UpgradePromptProps {
@@ -20,6 +21,7 @@ export const UpgradePrompt: React.FC<UpgradePromptProps> = ({
   scansLimit = 5,
 }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [timeUntilReset, setTimeUntilReset] = useState('');
 
   // Calculate time until quota resets (7 days from now, roughly)
@@ -38,7 +40,18 @@ export const UpgradePrompt: React.FC<UpgradePromptProps> = ({
   }
 
   const handleUpgrade = () => {
-    navigate('/pricing');
+    if (!user) {
+      // Not logged in - direct to signup
+      navigate('/signup');
+    } else {
+      // Logged in - go to pricing
+      navigate('/pricing');
+    }
+    onClose();
+  };
+
+  const handleLogin = () => {
+    navigate('/login');
     onClose();
   };
 
@@ -54,36 +67,53 @@ export const UpgradePrompt: React.FC<UpgradePromptProps> = ({
         
         {/* Hero Section */}
         <div className="upgrade-prompt__hero">
-          <div className="upgrade-prompt__icon-success">🎉</div>
-          <h2 className="upgrade-prompt__title">You're Crushing Your Protein Goals!</h2>
+          <div className="upgrade-prompt__icon-success">�</div>
+          <h2 className="upgrade-prompt__title">
+            {user ? "You're On Fire! 🔥" : "Ready to Level Up? 💪"}
+          </h2>
           <p className="upgrade-prompt__subtitle">
-            You've used all <strong>{scansUsed} free scans</strong> this week — that's amazing dedication!
+            {user 
+              ? `You've crushed all ${scansUsed} free scans this week!`
+              : "You've discovered the power of ProteinLens!"
+            }
           </p>
         </div>
 
         {/* Progress visualization */}
-        <div className="upgrade-prompt__progress">
-          <div className="upgrade-prompt__progress-bar">
-            <div className="upgrade-prompt__progress-fill" style={{ width: '100%' }}></div>
+        {user && (
+          <div className="upgrade-prompt__progress">
+            <div className="upgrade-prompt__progress-bar">
+              <div className="upgrade-prompt__progress-fill" style={{ width: '100%' }}></div>
+            </div>
+            <div className="upgrade-prompt__progress-labels">
+              <span>0 scans</span>
+              <span className="upgrade-prompt__progress-complete">✓ {scansLimit}/{scansLimit} complete!</span>
+            </div>
           </div>
-          <div className="upgrade-prompt__progress-labels">
-            <span>0 scans</span>
-            <span className="upgrade-prompt__progress-complete">✓ {scansLimit} scans complete!</span>
-          </div>
-        </div>
+        )}
 
-        {/* The Problem */}
+        {/* The Problem/Opportunity */}
         <div className="upgrade-prompt__problem">
-          <p>
-            <strong>Want to keep tracking?</strong> Free scans reset in ~{timeUntilReset}...
-            <br />
-            Or unlock <span className="highlight">unlimited scans</span> right now! 👇
-          </p>
+          {user ? (
+            <p>
+              <strong>Keep the momentum going!</strong> Free scans reset in ~{timeUntilReset}...
+              <br />
+              Or unlock <span className="upgrade-prompt__highlight">unlimited tracking</span> right now! 👇
+            </p>
+          ) : (
+            <p>
+              <strong>Create your free account</strong> to fully embrace the platform and:
+              <br />
+              <span className="upgrade-prompt__highlight">Track your nutrition journey like a pro! 🚀</span>
+            </p>
+          )}
         </div>
 
         {/* Value Proposition */}
         <div className="upgrade-prompt__value">
-          <h3>🚀 Go Pro & Never Stop Tracking</h3>
+          <h3 className="upgrade-prompt__value-heading">
+            {user ? "🚀 Go Pro & Never Stop Tracking" : "✨ What You'll Get"}
+          </h3>
           
           <div className="upgrade-prompt__features">
             <div className="upgrade-prompt__feature">
@@ -97,14 +127,14 @@ export const UpgradePrompt: React.FC<UpgradePromptProps> = ({
               <span className="upgrade-prompt__feature-icon">📊</span>
               <div>
                 <strong>Full History</strong>
-                <p>See your protein trends over time</p>
+                <p>Track your protein trends over time</p>
               </div>
             </div>
             <div className="upgrade-prompt__feature">
               <span className="upgrade-prompt__feature-icon">📤</span>
               <div>
                 <strong>Export Data</strong>
-                <p>Download your meal history anytime</p>
+                <p>Download your meal history</p>
               </div>
             </div>
             <div className="upgrade-prompt__feature">
@@ -114,21 +144,41 @@ export const UpgradePrompt: React.FC<UpgradePromptProps> = ({
                 <p>Faster AI processing</p>
               </div>
             </div>
+            {!user && (
+              <>
+                <div className="upgrade-prompt__feature">
+                  <span className="upgrade-prompt__feature-icon">🔐</span>
+                  <div>
+                    <strong>Secure Account</strong>
+                    <p>Your data, protected</p>
+                  </div>
+                </div>
+                <div className="upgrade-prompt__feature">
+                  <span className="upgrade-prompt__feature-icon">🎯</span>
+                  <div>
+                    <strong>Set Goals</strong>
+                    <p>Personalized tracking</p>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
         {/* Pricing */}
-        <div className="upgrade-prompt__pricing">
-          <div className="upgrade-prompt__price-card">
-            <div className="upgrade-prompt__price-badge">Most Popular</div>
-            <div className="upgrade-prompt__price-amount">
-              <span className="upgrade-prompt__price-currency">€</span>
-              <span className="upgrade-prompt__price-value">9</span>
-              <span className="upgrade-prompt__price-period">.99/mo</span>
+        {user && (
+          <div className="upgrade-prompt__pricing">
+            <div className="upgrade-prompt__price-card">
+              <div className="upgrade-prompt__price-badge">Most Popular</div>
+              <div className="upgrade-prompt__price-amount">
+                <span className="upgrade-prompt__price-currency">€</span>
+                <span className="upgrade-prompt__price-value">9</span>
+                <span className="upgrade-prompt__price-period">.99/mo</span>
+              </div>
+              <p className="upgrade-prompt__price-note">Cancel anytime • Billed monthly</p>
             </div>
-            <p className="upgrade-prompt__price-note">Cancel anytime • Billed monthly</p>
           </div>
-        </div>
+        )}
 
         {/* Social Proof */}
         <div className="upgrade-prompt__social-proof">
@@ -137,23 +187,56 @@ export const UpgradePrompt: React.FC<UpgradePromptProps> = ({
 
         {/* CTA Buttons */}
         <div className="upgrade-prompt__actions">
-          <button 
-            className="upgrade-prompt__button upgrade-prompt__button--primary"
-            onClick={handleUpgrade}
-          >
-            🚀 Upgrade to Pro Now
-          </button>
-          <button 
-            className="upgrade-prompt__button upgrade-prompt__button--ghost"
-            onClick={onClose}
-          >
-            I'll wait {timeUntilReset} for free scans
-          </button>
+          {user ? (
+            <>
+              <button 
+                className="upgrade-prompt__button upgrade-prompt__button--primary"
+                onClick={handleUpgrade}
+              >
+                🚀 Upgrade to Pro Now
+              </button>
+              <button 
+                className="upgrade-prompt__button upgrade-prompt__button--ghost"
+                onClick={onClose}
+              >
+                I'll wait {timeUntilReset} for free scans
+              </button>
+            </>
+          ) : (
+            <>
+              <button 
+                className="upgrade-prompt__button upgrade-prompt__button--primary"
+                onClick={handleUpgrade}
+              >
+                🎯 Create Free Account
+              </button>
+              <button 
+                className="upgrade-prompt__button upgrade-prompt__button--secondary"
+                onClick={handleLogin}
+              >
+                Already have an account? Sign in
+              </button>
+              <button 
+                className="upgrade-prompt__button upgrade-prompt__button--ghost"
+                onClick={onClose}
+              >
+                Maybe later
+              </button>
+            </>
+          )}
         </div>
 
         {/* Guarantee */}
         <div className="upgrade-prompt__guarantee">
-          <span>🔒</span> 30-day money-back guarantee • Secure payment
+          {user ? (
+            <>
+              <span>🔒</span> 30-day money-back guarantee • Secure payment
+            </>
+          ) : (
+            <>
+              <span>🔒</span> Free forever plan • No credit card required
+            </>
+          )}
         </div>
       </div>
     </div>
