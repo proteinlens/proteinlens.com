@@ -17,7 +17,7 @@ export async function getAnonymousScanCount(ipAddress: string): Promise<number> 
   const windowStart = new Date();
   windowStart.setDate(windowStart.getDate() - ROLLING_WINDOW_DAYS);
 
-  const count = await prisma.anonymousUsage.count({
+  const count = await (prisma as any).anonymousUsage.count({
     where: {
       ipAddress,
       createdAt: {
@@ -70,7 +70,7 @@ export async function recordAnonymousScan(
   ipAddress: string,
   mealId?: string
 ): Promise<void> {
-  await prisma.anonymousUsage.create({
+  await (prisma as any).anonymousUsage.create({
     data: {
       ipAddress,
       mealId,

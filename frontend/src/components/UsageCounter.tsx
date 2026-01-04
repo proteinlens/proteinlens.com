@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { UsageStats } from '../services/billingApi';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthProvider';
 import ProBadge from './ProBadge';
 import './UsageCounter.css';
 
@@ -34,8 +34,8 @@ export const UsageCounter: React.FC<UsageCounterProps> = ({
     return null;
   }
 
-  // Check if this is an anonymous user
-  const isAnonymous = usage.plan === 'ANONYMOUS' || (!user && usage.scansLimit === 3);
+  // Check if this is an anonymous user (plan will be FREE but limit is 3)
+  const isAnonymous = !user && usage.scansLimit === 3;
 
   // T065: Pro users see Pro badge instead of scan counter
   if (usage.scansRemaining === -1 || usage.plan === 'PRO') {

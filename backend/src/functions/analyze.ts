@@ -180,15 +180,17 @@ export async function analyzeMeal(request: HttpRequest, context: InvocationConte
     const blobHash = await blobService.calculateBlobHash(blobName);
     const cachedAnalysis = await mealService.getMealAnalysisByBlobHash(blobHash);
 
-    // Feature 017 T032: Get user's diet style for snapshot
+    // Feature 017 T032: Get user's diet style for snapshot (only for authenticated users)
     let userDietStyle: DietStyle | null = null;
     try {
-      const prisma = getPrismaClient();
-      const userWithDiet = await prisma.user.findUnique({
-        where: { id: userId },
-        include: { dietStyle: true },
-      });
-      userDietStyle = userWithDiet?.dietStyle as DietStyle | null;
+      if (userId) {
+        const prisma = getPrismaClient();
+        const userWithDiet = await prisma.user.findUnique({
+          where: { id: userId },
+          include: { dietStyle: true },
+        });
+        userDietStyle = userWithDiet?.dietStyle || null;
+      }
     } catch (dietError) {
       Logger.warn('Failed to get user diet style for snapshot', { requestId, error: (dietError as Error).message });
     }
@@ -213,7 +215,7 @@ export async function analyzeMeal(request: HttpRequest, context: InvocationConte
       // Create new meal record referencing cached analysis
       // Feature 017: Now returns shareId and shareUrl, snapshots dietStyleAtScanId
       const result = await mealService.createMealAnalysisFromCache(
-        userId,
+        userId || 'anonymous',
         blobName,
         blobService.getBlobUrl(blobName),
         requestId,
@@ -246,7 +248,7 @@ export async function analyzeMeal(request: HttpRequest, context: InvocationConte
       // Persist meal analysis to database with hash for future cache lookups
       // Feature 017: Now returns shareId and shareUrl, snapshots dietStyleAtScanId
       const result = await mealService.createMealAnalysis(
-        userId,
+        userId || 'anonymous',
         blobName,
         blobUrlWithoutSas,
         requestId,
@@ -304,7 +306,7 @@ export async function analyzeMeal(request: HttpRequest, context: InvocationConte
     Logger.info('Meal analysis request completed', {
       requestId,
       mealAnalysisId,
-      userId,
+      userId: userId || 'anonymous',
       wasCached,
       durationMs,
       foodCount: aiResponse.foods.length,
@@ -333,7 +335,7 @@ export async function analyzeMeal(request: HttpRequest, context: InvocationConte
       value: 1,
       properties: {
         wasCached: String(wasCached),
-        userId,
+        userId: userId || 'anonymous',
         hasMacros: String(!!(aiResponse.totalCarbs !== undefined && aiResponse.totalFat !== undefined)),
       },
     });
