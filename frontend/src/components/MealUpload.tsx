@@ -7,6 +7,7 @@ import React, { useRef, useState } from 'react';
 import { useMealUpload } from '../hooks/useMealUpload';
 import { AnalysisResults } from './AnalysisResults';
 import { UpgradePrompt } from './UpgradePrompt';
+import { QuotaBanner } from './QuotaBanner';
 import './MealUpload.css';
 
 export const MealUpload: React.FC = () => {
@@ -288,6 +289,16 @@ export const MealUpload: React.FC = () => {
 
       {/* Error display */}
       {renderError()}
+
+      {/* Quota Banner - Show when approaching or at quota limit */}
+      {quotaInfo && quotaInfo.remaining <= 1 && !isQuotaExceeded && (
+        <QuotaBanner
+          scansRemaining={quotaInfo.remaining}
+          scansLimit={quotaInfo.limit}
+          plan={quotaInfo.plan}
+          onDismiss={() => {}}
+        />
+      )}
 
       {/* Usage tips */}
       {!selectedFile && !error && (
