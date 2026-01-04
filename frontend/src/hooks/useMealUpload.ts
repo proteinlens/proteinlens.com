@@ -131,6 +131,12 @@ export function useMealUpload(): UseMealUploadResult {
 
       console.log('Analysis complete:', analysisResponse);
 
+      // Extract quota info from successful response
+      if (analysisResponse.quota) {
+        setQuotaInfo(analysisResponse.quota);
+        console.log('Quota updated:', analysisResponse.quota);
+      }
+
       // Step 4: Update state with results
       setAnalysisResult(analysisResponse);
       setIsAnalyzing(false);

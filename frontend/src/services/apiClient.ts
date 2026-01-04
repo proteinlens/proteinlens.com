@@ -41,6 +41,12 @@ export interface AnalysisResponse {
   shareId?: string;       // Meal share ID
   blobName: string;
   requestId: string;
+  quota?: {
+    used: number;
+    limit: number;
+    remaining: number;
+    plan: string;
+  };
 }
 
 export interface MealHistoryItem {

@@ -16,7 +16,7 @@ import { mealService } from '../services/mealService.js';
 import { dietService, DietStyle } from '../services/dietService.js';
 import { AnalyzeRequestSchema, AIAnalysisResponse } from '../models/schemas.js';
 import { ValidationError, BlobNotFoundError } from '../utils/errors.js';
-import { enforceWeeklyQuota, extractUserId, extractClientIp } from '../middleware/quotaMiddleware.js';
+import { enforceWeeklyQuota, extractUserId, extractClientIp, getQuotaInfo } from '../middleware/quotaMiddleware.js';
 import { recordUsage, UsageType } from '../services/usageService.js';
 import { recordAnonymousScan } from '../services/anonymousQuotaService.js';
 import { correlationMiddleware } from '../middleware/correlationMiddleware.js';
@@ -340,12 +340,20 @@ export async function analyzeMeal(request: HttpRequest, context: InvocationConte
       },
     });
 
+    // Get current quota info for response
+    const quotaInfo = await getQuotaInfo(userId, request);
+
     return addResponseHeaders({
       status: 200,
       headers: {
         'Content-Type': 'application/json',
         'X-Request-ID': requestId,
         ...(wasCached && { 'X-Cache-Hit': 'true' }),
+        ...(quotaInfo && {
+          'X-Quota-Used': quotaInfo.used.toString(),
+          'X-Quota-Limit': quotaInfo.limit.toString(),
+          'X-Quota-Remaining': quotaInfo.remaining.toString(),
+        }),
       },
       jsonBody: {
         mealAnalysisId,
@@ -359,6 +367,8 @@ export async function analyzeMeal(request: HttpRequest, context: InvocationConte
           : null,
         blobName,
         requestId,
+        // Include quota info in response body so frontend always has current quota
+        quota: quotaInfo,
       },
     });
 

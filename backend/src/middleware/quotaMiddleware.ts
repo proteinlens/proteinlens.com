@@ -38,6 +38,39 @@ export async function checkQuota(userId: string): Promise<QuotaCheckResult> {
 }
 
 /**
+ * Get current quota info for a user (authenticated or anonymous)
+ * Returns quota information to be included in API responses
+ * @param userId - User identifier (null for anonymous)
+ * @param request - HTTP request (for extracting IP for anonymous users)
+ * @returns Quota info object suitable for API responses
+ */
+export async function getQuotaInfo(userId: string | null, request: HttpRequest): Promise<any> {
+  if (!userId) {
+    // Anonymous user
+    const ipAddress = extractClientIp(request);
+    if (!ipAddress) {
+      return null;
+    }
+    const quota = await canAnonymousScan(ipAddress);
+    return {
+      used: quota.scansUsed,
+      limit: quota.scansLimit,
+      remaining: quota.scansRemaining,
+      plan: 'ANONYMOUS',
+    };
+  }
+
+  // Authenticated user
+  const quota = await checkQuota(userId);
+  return {
+    used: quota.scansUsed,
+    limit: quota.scansLimit,
+    remaining: quota.scansRemaining,
+    plan: quota.plan,
+  };
+}
+
+/**
  * Enforce weekly quota for scan operations
  * Handles both authenticated users and anonymous users
  * Returns a 429 response if quota exceeded
