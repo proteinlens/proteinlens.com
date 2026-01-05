@@ -80,7 +80,7 @@ export async function getQuotaInfo(userId: string | null, request: HttpRequest):
     const quota = await canAnonymousScan(ipAddress);
     Logger.debug('Anonymous quota info retrieved', {
       ipAddress: maskIp(ipAddress),
-      userId: userId || 'none',
+      userId: userId ?? 'none',
       scansUsed: quota.scansUsed,
       scansLimit: quota.scansLimit,
       scansRemaining: quota.scansRemaining,
