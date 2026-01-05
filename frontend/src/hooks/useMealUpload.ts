@@ -160,17 +160,25 @@ export function useMealUpload(): UseMealUploadResult {
 
     } catch (err) {
       console.error('Upload/analysis failed:', err);
+      console.log('Error type check:', {
+        isApiRequestError: err instanceof ApiRequestError,
+        status: (err as any)?.status,
+        message: (err as any)?.message,
+      });
       
       // Check for quota exceeded (429)
       if (err instanceof ApiRequestError && err.status === 429) {
+        console.log('🚫 Quota exceeded detected! Setting isQuotaExceeded=true');
         setIsQuotaExceeded(true);
         if (err.quota) {
           setQuotaInfo(err.quota);
+          console.log('📊 Quota info:', err.quota);
         }
         setError('Quota exceeded');
       } else if (err instanceof ApiRequestError) {
         // Map API error codes to user-friendly messages
         const message = err.message;
+        console.log('📍 ApiRequestError with status:', err.status);
         if (err.status >= 500) {
           setError('Our servers are temporarily busy. Please try again in a moment.');
         } else if (err.status === 400) {
