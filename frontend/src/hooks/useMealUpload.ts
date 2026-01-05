@@ -142,11 +142,15 @@ export function useMealUpload(): UseMealUploadResult {
       }
 
       // Refresh usage in header to show updated quota count
+      console.log('Calling refreshUsage()...');
       try {
+        const startTime = performance.now();
         await refreshUsage();
-        console.log('Usage refreshed in header');
+        const duration = performance.now() - startTime;
+        console.log(`✅ Usage refreshed in header (${duration.toFixed(2)}ms)`);
       } catch (err) {
-        console.warn('Failed to refresh usage:', err);
+        console.error('❌ Failed to refresh usage:', err);
+        throw err; // Re-throw so we know about failures
       }
 
       // Step 4: Update state with results

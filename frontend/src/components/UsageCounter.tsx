@@ -22,6 +22,8 @@ export const UsageCounter: React.FC<UsageCounterProps> = ({
 }) => {
   const { user } = useAuth();
 
+  console.log('UsageCounter rendered:', { usage, loading, compact });
+
   if (loading) {
     return (
       <div className={`usage-counter ${compact ? 'usage-counter--compact' : ''}`}>

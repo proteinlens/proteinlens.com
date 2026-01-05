@@ -25,6 +25,7 @@ export function useUsage(userId: string | null, autoRefresh = true): UseUsageRes
 
   const refresh = useCallback(async () => {
     if (!userId) {
+      console.warn('useUsage: refresh called but no userId');
       setUsage(null);
       return;
     }
@@ -33,11 +34,13 @@ export function useUsage(userId: string | null, autoRefresh = true): UseUsageRes
     setError(null);
 
     try {
+      console.log('useUsage: fetching usage data...');
       const data = await getUsage();
+      console.log('useUsage: usage data received:', data);
       setUsage(data);
     } catch (err) {
       setError('Failed to fetch usage data');
-      console.error('Usage fetch error:', err);
+      console.error('useUsage: fetch error:', err);
     } finally {
       setLoading(false);
     }
