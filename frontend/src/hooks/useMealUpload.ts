@@ -174,7 +174,8 @@ export function useMealUpload(): UseMealUploadResult {
           setQuotaInfo(err.quota);
           console.log('📊 Quota info:', err.quota);
         }
-        setError('Quota exceeded');
+        // Don't set error message - let renderError() use isQuotaExceeded instead
+        setError(null);
       } else if (err instanceof ApiRequestError) {
         // Map API error codes to user-friendly messages
         const message = err.message;

@@ -121,21 +121,36 @@ export const MealUpload: React.FC = () => {
         <div className="error-card error-card--quota">
           <div className="error-card__icon">🚀</div>
           <h3 className="error-card__title">You're a Scanning Machine!</h3>
-          <p className="error-card__subtitle">You've maxed out your free scans for this week</p>
+          <p className="error-card__subtitle">You've hit your free scan limit for this week</p>
           
-          <div className="error-card__tips">
-            <div className="error-card__tip">✨ <strong>Create a free account</strong> for 20 scans per week</div>
-            <div className="error-card__tip">🔥 <strong>Go Pro</strong> for unlimited scans</div>
-            <div className="error-card__tip">⏰ Your scans reset in ~7 days (rolling window)</div>
+          <div className="error-card__message" style={{
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            border: '2px solid #3b82f6',
+            borderRadius: '8px',
+            padding: '16px',
+            marginBottom: '16px',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '15px' }}>
+              💡 <strong>Here's what you can do:</strong>
+            </div>
+            <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
+              📝 Create a <strong>FREE account</strong> → 20 scans/week<br/>
+              ⭐ <strong>Upgrade to Pro</strong> → Unlimited scans
+            </div>
           </div>
 
-          <div className="error-card__actions">
+          <div className="error-card__actions" style={{ gap: '10px', display: 'flex', flexDirection: 'column' }}>
             <button onClick={() => window.location.href = '/signup'} className="error-card__btn error-card__btn--primary">
-              Create Free Account
+              📝 Create FREE Account → 20 Scans/Week
             </button>
             <button onClick={() => window.location.href = '/pricing'} className="error-card__btn error-card__btn--secondary">
-              Go Pro
+              ⭐ Upgrade to Pro → Unlimited
             </button>
+          </div>
+          
+          <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#f0f9ff', borderRadius: '6px', fontSize: '13px', color: '#0c4a6e' }}>
+            📊 <strong>Your quota:</strong> 3 scans/week as guest | Resets in ~7 days
           </div>
         </div>
       );
