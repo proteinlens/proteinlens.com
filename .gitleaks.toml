@@ -35,6 +35,12 @@ regexes = [
   '''eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+''',
 ]
 
+# Specific findings to ignore by fingerprint
+stopwords = [
+  # FIX-DATABASE-CONNECTION.md Key Vault reference (documentation)
+  "b8f97b6748ff8b4bb2559ef2d3d65721d0fd55b6:FIX-DATABASE-CONNECTION.md:generic-api-key:86",
+]
+
 # Specific commits to ignore (historical false positives)
 commits = [
   "10ec47b9156dc574e82b8d227400624418ce6251",
@@ -73,6 +79,13 @@ description = "Generic API key - with allowlist for test files"
     # Local dev settings backups
     '''.*\.bak$''',
     '''backend/local\.settings\.json\.bak$''',
+    # Documentation with example commands
+    '''FIX-DATABASE-CONNECTION\.md$''',
+  ]
+  
+  # Specific stopwords for known false positives
+  stopwords = [
+    "Open Key Vault:",
   ]
 
 # Allow example Slack webhook URLs in documentation and example files
