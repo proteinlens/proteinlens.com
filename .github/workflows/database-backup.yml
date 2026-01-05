@@ -45,7 +45,7 @@ jobs:
           echo "🔄 Fetching DATABASE_URL from Function App..."
           DATABASE_URL_RAW=$(az functionapp config appsettings list \
             --name func-proteinlens \
-            --resource-group rg-proteinlens \
+            --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
             --query "[?name=='DATABASE_URL'].value" -o tsv)
           
           if [[ "$DATABASE_URL_RAW" == @Microsoft.KeyVault* ]]; then
@@ -101,8 +101,23 @@ jobs:
         run: |
           CONTAINER_NAME="database-backups"
           STORAGE_ACCOUNT=$(az storage account list \
-            --resource-group rg-proteinlens \
+            --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
             --query "[?starts_with(name, 'stproteinlens')].name" -o tsv | head -1)
+          
+          # Create storage account if it doesn't exist
+          if [ -z "$STORAGE_ACCOUNT" ]; then
+            echo "📦 Creating new storage account for backups..."
+            STORAGE_ACCOUNT="stproteinlensbackup"
+            az storage account create \
+              --name "$STORAGE_ACCOUNT" \
+              --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
+              --location ${{ vars.AZURE_LOCATION }} \
+              --sku Standard_LRS \
+              --kind StorageV2 \
+              --allow-blob-public-access false \
+              --min-tls-version TLS1_2
+            echo "✅ Storage account created: $STORAGE_ACCOUNT"
+          fi
           
           echo "📤 Uploading to Azure Storage: $STORAGE_ACCOUNT/$CONTAINER_NAME"
           
@@ -129,8 +144,14 @@ jobs:
           CONTAINER_NAME="database-backups"
           RETENTION_DAYS=${{ github.event.inputs.retention_days || '30' }}
           STORAGE_ACCOUNT=$(az storage account list \
-            --resource-group rg-proteinlens \
+            --resource-group ${{ vars.AZURE_RESOURCE_GROUP }} \
             --query "[?starts_with(name, 'stproteinlens')].name" -o tsv | head -1)
+          
+          # Skip cleanup if storage account doesn't exist (first run)
+          if [ -z "$STORAGE_ACCOUNT" ]; then
+            echo "⚠️ No storage account found, skipping cleanup"
+            exit 0
+          fi
           
           echo "🧹 Cleaning backups older than $RETENTION_DAYS days..."
           
