@@ -44,14 +44,11 @@ type LoadingState = 'loading' | 'success' | 'error' | 'not-found' | 'private';
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://api.proteinlens.com';
 const API_PATH = `${API_BASE_URL}/api`;
 
-async function fetchPublicMeal(shareId: string): Promise<PublicMealData> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 30000); // 30 second timeout (increased from 10s)
-
+async function fetchPublicMeal(shareId: string, signal?: AbortSignal): Promise<PublicMealData> {
   try {
     console.log('[SharedMealPage] Fetching meal:', shareId);
     const response = await fetch(`${API_PATH}/meals/${shareId}/public`, {
-      signal: controller.signal,
+      signal, // Use the signal passed from the component
       headers: {
         'Accept': 'application/json',
         'Accept-Encoding': 'gzip, deflate, br', // Enable compression
@@ -86,15 +83,13 @@ async function fetchPublicMeal(shareId: string): Promise<PublicMealData> {
   } catch (error: any) {
     console.error('[SharedMealPage] Fetch error:', error);
     
-    // Handle AbortError specifically
+    // Ignore AbortError when component unmounts - this is expected
     if (error.name === 'AbortError') {
-      console.error('[SharedMealPage] Request timed out after 30 seconds');
-      throw new Error('timeout');
+      console.log('[SharedMealPage] Request was cancelled (component unmounted or timeout)');
+      throw error; // Re-throw but it will be caught and ignored in the effect cleanup
     }
     
     throw error;
-  } finally {
-    clearTimeout(timeout);
   }
 }
 
@@ -136,9 +131,23 @@ export function SharedMealPage() {
       return;
     }
 
+    // Create AbortController for this effect
+    const controller = new AbortController();
+    let timeoutId: NodeJS.Timeout | null = null;
+
     console.log('[SharedMealPage] Starting fetch for shareId:', shareId);
-    fetchPublicMeal(shareId)
+    
+    // Set a timeout to abort if request takes too long
+    timeoutId = setTimeout(() => {
+      console.log('[SharedMealPage] Request taking too long, aborting...');
+      controller.abort();
+    }, 30000); // 30 seconds
+
+    fetchPublicMeal(shareId, controller.signal)
       .then((data) => {
+        // Clear timeout on success
+        if (timeoutId) clearTimeout(timeoutId);
+        
         console.log('[SharedMealPage] Fetch success, setting meal:', data);
         // Validate data before setting state
         if (!data || typeof data.totalProtein !== 'number') {
@@ -151,19 +160,32 @@ export function SharedMealPage() {
         setLoadingState('success');
       })
       .catch((err) => {
+        // Clear timeout on error
+        if (timeoutId) clearTimeout(timeoutId);
+        
+        // Ignore AbortError if it's just from component unmount
+        if (err.name === 'AbortError') {
+          console.log('[SharedMealPage] Request cancelled - likely component unmounted');
+          return; // Don't update state if component unmounted
+        }
+        
         console.error('[SharedMealPage] Fetch catch:', err.message, err);
         if (err.message === 'not-found') {
           setLoadingState('not-found');
         } else if (err.message === 'private') {
           setLoadingState('private');
-        } else if (err.message === 'timeout') {
-          setError('Request timed out. The server might be slow to respond. Please try again.');
-          setLoadingState('error');
         } else {
           setError(err.message || 'An unexpected error occurred');
           setLoadingState('error');
         }
       });
+
+    // Cleanup: abort the request if component unmounts
+    return () => {
+      console.log('[SharedMealPage] Cleaning up - aborting any pending requests');
+      if (timeoutId) clearTimeout(timeoutId);
+      controller.abort();
+    };
   }, [shareId]);
 
   const getConfidenceColor = (confidence: string) => {
