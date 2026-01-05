@@ -297,20 +297,23 @@ export function extractClientIp(request: HttpRequest): string | null {
   // Check X-Forwarded-For (most common)
   const xForwardedFor = request.headers.get('x-forwarded-for');
   if (xForwardedFor) {
-    // Take the first IP in the chain
-    return xForwardedFor.split(',')[0].trim();
+    // Take the first IP in the chain and strip port if present
+    const ip = xForwardedFor.split(',')[0].trim();
+    return ip.split(':')[0]; // Remove port number (e.g., "192.168.1.1:5000" -> "192.168.1.1")
   }
 
   // Check X-Real-IP
   const xRealIp = request.headers.get('x-real-ip');
   if (xRealIp) {
-    return xRealIp.trim();
+    const ip = xRealIp.trim();
+    return ip.split(':')[0]; // Remove port number
   }
 
   // Check X-Azure-ClientIP (Azure-specific)
   const azureClientIp = request.headers.get('x-azure-clientip');
   if (azureClientIp) {
-    return azureClientIp.trim();
+    const ip = azureClientIp.trim();
+    return ip.split(':')[0]; // Remove port number
   }
 
   return null;
