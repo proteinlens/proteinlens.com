@@ -24,7 +24,7 @@ export async function isUserRegistered(userId: string): Promise<boolean> {
     });
     return !!user;
   } catch (error) {
-    Logger.warn('Failed to check if user is registered', { userId, error: (error as Error).message });
+    Logger.warn('Failed to check if user is registered', { userId: userId ?? 'none', error: (error as Error).message });
     return false;
   }
 }
@@ -73,7 +73,7 @@ export async function getQuotaInfo(userId: string | null, request: HttpRequest):
     // Anonymous user (no userId or userId not in database)
     const ipAddress = extractClientIp(request);
     if (!ipAddress) {
-      Logger.warn('Could not extract client IP for anonymous quota', { userId });
+      Logger.warn('Could not extract client IP for anonymous quota', { userId: userId ?? 'none' });
       return null;
     }
     
