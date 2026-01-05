@@ -67,14 +67,14 @@ export const UpgradePrompt: React.FC<UpgradePromptProps> = ({
         
         {/* Hero Section */}
         <div className="upgrade-prompt__hero">
-          <div className="upgrade-prompt__icon-success">�</div>
+          <div className="upgrade-prompt__icon-success">✨</div>
           <h2 className="upgrade-prompt__title">
-            {user ? "You're On Fire! 🔥" : "Ready to Level Up? 💪"}
+            {user ? "🎯 You're a Tracking Champion!" : "🚀 Level Up Your Game!"}
           </h2>
           <p className="upgrade-prompt__subtitle">
             {user 
-              ? `You've crushed all ${scansUsed} free scans this week!`
-              : "You've discovered the power of ProteinLens!"
+              ? `You've maxed out your ${scansLimit} free scans for the week!`
+              : "You've unlocked the power of nutrition tracking. Ready to go unlimited?"
             }
           </p>
         </div>
@@ -96,15 +96,15 @@ export const UpgradePrompt: React.FC<UpgradePromptProps> = ({
         <div className="upgrade-prompt__problem">
           {user ? (
             <p>
-              <strong>Keep the momentum going!</strong> Free scans reset in ~{timeUntilReset}...
+              <strong>Stay in the game!</strong> Your scans reset in ~{timeUntilReset}, but why wait?
               <br />
-              Or unlock <span className="upgrade-prompt__highlight">unlimited tracking</span> right now! 👇
+              <span className="upgrade-prompt__highlight">Go Pro and track your nutrition every single day! 🎯</span>
             </p>
           ) : (
             <p>
-              <strong>Create your free account</strong> to fully embrace the platform and:
+              <strong>Create your free account</strong> to access:
               <br />
-              <span className="upgrade-prompt__highlight">Track your nutrition journey like a pro! 🚀</span>
+              <span className="upgrade-prompt__highlight">20 free scans per week + full nutrition tracking! 💪</span>
             </p>
           )}
         </div>
@@ -112,7 +112,7 @@ export const UpgradePrompt: React.FC<UpgradePromptProps> = ({
         {/* Value Proposition */}
         <div className="upgrade-prompt__value">
           <h3 className="upgrade-prompt__value-heading">
-            {user ? "🚀 Go Pro & Never Stop Tracking" : "✨ What You'll Get"}
+            {user ? "� Go Pro & Own Your Nutrition" : "⚡ Unlock These Features"}
           </h3>
           
           <div className="upgrade-prompt__features">

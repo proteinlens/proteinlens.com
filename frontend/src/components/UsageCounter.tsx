@@ -63,19 +63,19 @@ export const UsageCounter: React.FC<UsageCounterProps> = ({
   const getMessage = () => {
     if (isAnonymous) {
       if (isEmpty) {
-        return "🎯 Ready to level up?";
+        return "🚀 You're a scanning machine! Ready to unlock unlimited?";
       }
       if (isLow) {
-        return `⚡ ${usage.scansRemaining} scan${usage.scansRemaining === 1 ? '' : 's'} left! Try it out!`;
+        return `⚡ ${usage.scansRemaining} scan${usage.scansRemaining === 1 ? '' : 's'} left! Make it count!`;
       }
       return `👋 ${usage.scansRemaining}/${usage.scansLimit} free scans`;
     } else {
       // Free plan
       if (isEmpty) {
-        return "🚀 Time to upgrade?";
+        return "🎯 Maxed out this week! Go Pro for unlimited";
       }
       if (isLow) {
-        return `⚡ ${usage.scansRemaining} scan${usage.scansRemaining === 1 ? '' : 's'} left this week`;
+        return `⚡ ${usage.scansRemaining} scan${usage.scansRemaining === 1 ? '' : 's'} left this week!`;
       }
       return `🎯 ${usage.scansRemaining}/${usage.scansLimit} scans left`;
     }
@@ -84,8 +84,8 @@ export const UsageCounter: React.FC<UsageCounterProps> = ({
   const getResetMessage = () => {
     if (isAnonymous) {
       return isEmpty 
-        ? '💪 Sign up for 20 scans/week!' 
-        : 'Create account for 20/week';
+        ? '✨ Create a free account for 20 scans/week' 
+        : 'Free account = 20/week';
     }
     return isEmpty 
       ? 'Resets in rolling 7 days' 
