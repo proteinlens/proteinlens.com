@@ -16,7 +16,7 @@ import { mealService } from '../services/mealService.js';
 import { dietService, DietStyle } from '../services/dietService.js';
 import { AnalyzeRequestSchema, AIAnalysisResponse } from '../models/schemas.js';
 import { ValidationError, BlobNotFoundError } from '../utils/errors.js';
-import { enforceWeeklyQuota, extractUserId, extractClientIp, getQuotaInfo } from '../middleware/quotaMiddleware.js';
+import { enforceWeeklyQuota, extractUserId, extractClientIp, getQuotaInfo, isUserRegistered } from '../middleware/quotaMiddleware.js';
 import { recordUsage, UsageType } from '../services/usageService.js';
 import { recordAnonymousScan } from '../services/anonymousQuotaService.js';
 import { correlationMiddleware } from '../middleware/correlationMiddleware.js';
@@ -283,12 +283,15 @@ export async function analyzeMeal(request: HttpRequest, context: InvocationConte
 
     // T033: Record usage after successful analysis
     try {
-      if (userId) {
+      // Check if userId is actually a registered user (not just localStorage ID)
+      const isRegistered = userId ? await isUserRegistered(userId) : false;
+      
+      if (userId && isRegistered) {
         // Authenticated user - record to Usage table
         await recordUsage(userId, UsageType.MEAL_ANALYSIS, mealAnalysisId);
         Logger.info('Usage recorded', { requestId, userId, mealAnalysisId });
       } else {
-        // Anonymous user - record to AnonymousUsage table
+        // Anonymous user (no userId or userId not in DB) - record to AnonymousUsage table
         const ipAddress = extractClientIp(request);
         if (ipAddress) {
           await recordAnonymousScan(ipAddress, mealAnalysisId);

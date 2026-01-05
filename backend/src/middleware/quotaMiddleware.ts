@@ -14,7 +14,7 @@ import { getPrismaClient } from '../utils/prisma';
  * @param userId - User identifier to check
  * @returns true if user exists in database, false otherwise
  */
-async function isRegisteredUser(userId: string): Promise<boolean> {
+export async function isUserRegistered(userId: string): Promise<boolean> {
   try {
     const prisma = getPrismaClient();
     const user = await prisma.user.findUnique({
@@ -66,7 +66,7 @@ export async function checkQuota(userId: string): Promise<QuotaCheckResult> {
  */
 export async function getQuotaInfo(userId: string | null, request: HttpRequest): Promise<any> {
   // Check if userId is actually a registered user
-  const isRegistered = userId ? await isRegisteredUser(userId) : false;
+  const isRegistered = userId ? await isUserRegistered(userId) : false;
   
   if (!userId || !isRegistered) {
     // Anonymous user (no userId or userId not in database)
@@ -104,7 +104,7 @@ export async function getQuotaInfo(userId: string | null, request: HttpRequest):
  */
 export async function enforceWeeklyQuota(userId: string | null, request: HttpRequest): Promise<HttpResponseInit | null> {
   // Check if userId is actually a registered user
-  const isRegistered = userId ? await isRegisteredUser(userId) : false;
+  const isRegistered = userId ? await isUserRegistered(userId) : false;
   
   // Handle anonymous users (IP-based quota)
   if (!userId || !isRegistered) {
