@@ -149,8 +149,8 @@ export function useMealUpload(): UseMealUploadResult {
         const duration = performance.now() - startTime;
         console.log(`✅ Usage refreshed in header (${duration.toFixed(2)}ms)`);
       } catch (err) {
-        console.error('❌ Failed to refresh usage:', err);
-        throw err; // Re-throw so we know about failures
+        console.warn('⚠️ Failed to refresh usage (non-blocking):', err);
+        // Don't re-throw - refreshing usage is not critical for the main flow
       }
 
       // Step 4: Update state with results
