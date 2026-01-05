@@ -23,7 +23,7 @@ import { useGoal } from './hooks/useGoal';
 import { useProteinGap } from './hooks/useProteinGap';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider, useAuth } from './contexts/AuthProvider';
-import { UsageProvider } from './contexts/UsageContext';
+import { UsageProvider, useSharedUsage } from './contexts/UsageContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { BottomNav } from './components/layout/BottomNav';
 import { Footer } from './components/layout/Footer';
@@ -55,10 +55,10 @@ const SharedMealPage = lazy(() => import('./pages/SharedMealPage'));
 const Navigation: React.FC = () => {
   const location = useLocation();
   
-  // Use persistent user ID from storage
-  const userId = getUserId();
-  const { usage, loading } = useUsage(userId);
+  // Get shared usage state from context (single instance used across app)
+  const { usage, loading } = useSharedUsage();
   const { goal } = useGoal();
+  const userId = getUserId();
   const proteinGap = useProteinGap({ userId, dailyGoalGrams: goal });
   
   const navItems = [

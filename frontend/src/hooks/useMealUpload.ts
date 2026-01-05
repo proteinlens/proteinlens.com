@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { apiClient, AnalysisResponse, ApiRequestError } from '../services/apiClient';
 import { compressImage, shouldCompress, formatFileSize } from '../utils/imageCompression';
-import { useRefreshUsage } from '../contexts/UsageContext';
+import { useSharedUsage } from '../contexts/UsageContext';
 
 // T073: File validation constants
 const MAX_FILE_SIZE_MB = 10;
@@ -60,8 +60,8 @@ export function useMealUpload(): UseMealUploadResult {
   const [isQuotaExceeded, setIsQuotaExceeded] = useState(false);
   const [quotaInfo, setQuotaInfo] = useState<QuotaInfo | null>(null);
 
-  // Get refresh function to update usage counter after successful analysis
-  const { refresh: refreshUsage } = useRefreshUsage();
+  // Get refresh function from shared usage context to update header after scan
+  const { refresh: refreshUsage } = useSharedUsage();
 
   const uploadMeal = async (file: File): Promise<void> => {
     try {
