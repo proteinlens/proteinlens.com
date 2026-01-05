@@ -11,6 +11,7 @@ import { getPrismaClient } from '../utils/prisma';
 
 /**
  * Check if a userId corresponds to a registered user in the database
+ * Exported for use in analyze.ts to verify user registration before recording usage
  * @param userId - User identifier to check
  * @returns true if user exists in database, false otherwise
  */
