@@ -7,6 +7,26 @@ import { HttpRequest, HttpResponseInit } from '@azure/functions';
 import { canPerformScan } from '../services/usageService';
 import { canAnonymousScan } from '../services/anonymousQuotaService';
 import { Logger } from '../utils/logger';
+import { getPrismaClient } from '../utils/prisma';
+
+/**
+ * Check if a userId corresponds to a registered user in the database
+ * @param userId - User identifier to check
+ * @returns true if user exists in database, false otherwise
+ */
+async function isRegisteredUser(userId: string): Promise<boolean> {
+  try {
+    const prisma = getPrismaClient();
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true },
+    });
+    return !!user;
+  } catch (error) {
+    Logger.warn('Failed to check if user is registered', { userId, error: (error as Error).message });
+    return false;
+  }
+}
 
 /**
  * Result of quota check
@@ -45,8 +65,11 @@ export async function checkQuota(userId: string): Promise<QuotaCheckResult> {
  * @returns Quota info object suitable for API responses
  */
 export async function getQuotaInfo(userId: string | null, request: HttpRequest): Promise<any> {
-  if (!userId) {
-    // Anonymous user
+  // Check if userId is actually a registered user
+  const isRegistered = userId ? await isRegisteredUser(userId) : false;
+  
+  if (!userId || !isRegistered) {
+    // Anonymous user (no userId or userId not in database)
     const ipAddress = extractClientIp(request);
     if (!ipAddress) {
       return null;
@@ -80,8 +103,11 @@ export async function getQuotaInfo(userId: string | null, request: HttpRequest):
  * @returns null if allowed, HttpResponseInit if blocked
  */
 export async function enforceWeeklyQuota(userId: string | null, request: HttpRequest): Promise<HttpResponseInit | null> {
+  // Check if userId is actually a registered user
+  const isRegistered = userId ? await isRegisteredUser(userId) : false;
+  
   // Handle anonymous users (IP-based quota)
-  if (!userId) {
+  if (!userId || !isRegistered) {
     const ipAddress = extractClientIp(request);
     if (!ipAddress) {
       Logger.warn('Could not determine client IP for anonymous quota check');
@@ -93,6 +119,8 @@ export async function enforceWeeklyQuota(userId: string | null, request: HttpReq
 
     Logger.info('Anonymous quota check performed', {
       ipAddress: maskIp(ipAddress),
+      userId: userId || 'none',
+      isRegistered,
       scansUsed: anonymousQuota.scansUsed,
       scansLimit: anonymousQuota.scansLimit,
       scansRemaining: anonymousQuota.scansRemaining,
