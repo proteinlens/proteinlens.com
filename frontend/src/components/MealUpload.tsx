@@ -115,8 +115,34 @@ export const MealUpload: React.FC = () => {
 
   // T043: Error handling UI - Beautiful engaging error states
   const renderError = () => {
-    // Don't show inline error for quota exceeded - UpgradePrompt modal handles it
-    if (!error || isQuotaExceeded) {
+    // Handle quota exceeded separately with clear messaging
+    if (isQuotaExceeded) {
+      return (
+        <div className="error-card error-card--quota">
+          <div className="error-card__icon">🚀</div>
+          <h3 className="error-card__title">You're a Scanning Machine!</h3>
+          <p className="error-card__subtitle">You've maxed out your free scans for this week</p>
+          
+          <div className="error-card__tips">
+            <div className="error-card__tip">✨ <strong>Create a free account</strong> for 20 scans per week</div>
+            <div className="error-card__tip">🔥 <strong>Go Pro</strong> for unlimited scans</div>
+            <div className="error-card__tip">⏰ Your scans reset in ~7 days (rolling window)</div>
+          </div>
+
+          <div className="error-card__actions">
+            <button onClick={() => window.location.href = '/signup'} className="error-card__btn error-card__btn--primary">
+              Create Free Account
+            </button>
+            <button onClick={() => window.location.href = '/pricing'} className="error-card__btn error-card__btn--secondary">
+              Go Pro
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Don't show other errors if there's no specific error message
+    if (!error) {
       return null;
     }
 
