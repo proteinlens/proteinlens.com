@@ -20,6 +20,10 @@ paths = [
   # Backup files with local dev settings
   '''.*\.bak$''',
   '''backend/local\.settings\.json\.bak$''',
+  # Documentation files (may contain example keys/tokens)
+  '''FIX-.*\.md$''',
+  '''.*-FIX\.md$''',
+  '''.*-TROUBLESHOOTING\.md$''',
 ]
 
 # Ignore specific patterns that are false positives
