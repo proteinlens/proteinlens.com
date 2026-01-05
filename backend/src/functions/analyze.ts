@@ -286,16 +286,29 @@ export async function analyzeMeal(request: HttpRequest, context: InvocationConte
       // Check if userId is actually a registered user (not just localStorage ID)
       const isRegistered = userId ? await isUserRegistered(userId) : false;
       
+      Logger.info('Recording usage', {
+        requestId,
+        userId: userId || 'anonymous',
+        isRegistered,
+        mealAnalysisId,
+      });
+      
       if (userId && isRegistered) {
         // Authenticated user - record to Usage table
         await recordUsage(userId, UsageType.MEAL_ANALYSIS, mealAnalysisId);
-        Logger.info('Usage recorded', { requestId, userId, mealAnalysisId });
+        Logger.info('Usage recorded to Usage table', { requestId, userId, mealAnalysisId });
       } else {
         // Anonymous user (no userId or userId not in DB) - record to AnonymousUsage table
         const ipAddress = extractClientIp(request);
         if (ipAddress) {
           await recordAnonymousScan(ipAddress, mealAnalysisId);
-          Logger.info('Anonymous usage recorded', { requestId, ipAddress: ipAddress.split('.').slice(0, 2).join('.') + '.x.x', mealAnalysisId });
+          Logger.info('Usage recorded to AnonymousUsage table', { 
+            requestId, 
+            ipAddress: ipAddress.split('.').slice(0, 2).join('.') + '.x.x',
+            mealAnalysisId,
+          });
+        } else {
+          Logger.warn('Could not determine IP for anonymous usage recording', { requestId });
         }
       }
     } catch (usageError) {

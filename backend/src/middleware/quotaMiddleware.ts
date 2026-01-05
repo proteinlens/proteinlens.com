@@ -73,9 +73,19 @@ export async function getQuotaInfo(userId: string | null, request: HttpRequest):
     // Anonymous user (no userId or userId not in database)
     const ipAddress = extractClientIp(request);
     if (!ipAddress) {
+      Logger.warn('Could not extract client IP for anonymous quota', { userId });
       return null;
     }
+    
     const quota = await canAnonymousScan(ipAddress);
+    Logger.debug('Anonymous quota info retrieved', {
+      ipAddress: maskIp(ipAddress),
+      userId: userId || 'none',
+      scansUsed: quota.scansUsed,
+      scansLimit: quota.scansLimit,
+      scansRemaining: quota.scansRemaining,
+    });
+    
     return {
       used: quota.scansUsed,
       limit: quota.scansLimit,
