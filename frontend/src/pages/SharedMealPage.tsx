@@ -46,7 +46,7 @@ const API_PATH = `${API_BASE_URL}/api`;
 
 async function fetchPublicMeal(shareId: string): Promise<PublicMealData> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+  const timeout = setTimeout(() => controller.abort(), 30000); // 30 second timeout (increased from 10s)
 
   try {
     console.log('[SharedMealPage] Fetching meal:', shareId);
@@ -83,8 +83,15 @@ async function fetchPublicMeal(shareId: string): Promise<PublicMealData> {
     console.log('[SharedMealPage] Extracted meal:', meal);
     
     return meal;
-  } catch (error) {
+  } catch (error: any) {
     console.error('[SharedMealPage] Fetch error:', error);
+    
+    // Handle AbortError specifically
+    if (error.name === 'AbortError') {
+      console.error('[SharedMealPage] Request timed out after 30 seconds');
+      throw new Error('timeout');
+    }
+    
     throw error;
   } finally {
     clearTimeout(timeout);
@@ -149,8 +156,11 @@ export function SharedMealPage() {
           setLoadingState('not-found');
         } else if (err.message === 'private') {
           setLoadingState('private');
+        } else if (err.message === 'timeout') {
+          setError('Request timed out. The server might be slow to respond. Please try again.');
+          setLoadingState('error');
         } else {
-          setError(err.message);
+          setError(err.message || 'An unexpected error occurred');
           setLoadingState('error');
         }
       });
