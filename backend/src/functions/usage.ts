@@ -3,11 +3,11 @@
 
 import { app, HttpRequest, HttpResponseInit, InvocationContext } from '@azure/functions';
 import { getUsageStats } from '../services/usageService';
-import { extractUserId } from '../middleware/quotaMiddleware';
+import { extractUserId, extractClientIp, getQuotaInfo } from '../middleware/quotaMiddleware';
 
 /**
  * GET /api/billing/usage
- * Returns current scan usage for the authenticated user
+ * Returns current scan usage for the authenticated or anonymous user
  */
 async function getUsage(
   request: HttpRequest,
@@ -16,22 +16,49 @@ async function getUsage(
   context.log('GET /api/billing/usage - Fetching user usage');
 
   try {
-    // Extract user ID from request
+    // Extract user ID from request (may be null for anonymous)
     const userId = extractUserId(request);
     
-    if (!userId) {
+    // Get quota info (handles both registered and anonymous users)
+    const quotaInfo = await getQuotaInfo(userId, request);
+    
+    if (!quotaInfo) {
+      // Couldn't determine quota (no userId and no IP)
       return {
-        status: 401,
+        status: 400,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          error: 'Unauthorized',
-          message: 'User ID required. Please include x-user-id header.',
+          error: 'Bad Request',
+          message: 'Could not determine quota information.',
         }),
       };
     }
 
-    // Get usage statistics
-    const stats = await getUsageStats(userId);
+    // For anonymous users, return simplified stats
+    if (quotaInfo.plan === 'ANONYMOUS') {
+      return {
+        status: 200,
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Quota-Used': quotaInfo.used.toString(),
+          'X-Quota-Limit': quotaInfo.limit.toString(),
+          'X-Quota-Remaining': quotaInfo.remaining.toString(),
+        },
+        body: JSON.stringify({
+          plan: 'ANONYMOUS',
+          scansUsed: quotaInfo.used,
+          scansRemaining: quotaInfo.remaining,
+          scansLimit: quotaInfo.limit,
+          periodStart: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
+          periodEnd: new Date().toISOString(), // now
+          daysUntilReset: null,
+          isUnlimited: false,
+        }),
+      };
+    }
+
+    // For registered users, get full stats
+    const stats = await getUsageStats(userId!);
 
     // Calculate days until quota reset (for Free users)
     const periodEndDate = new Date(stats.periodEnd);
