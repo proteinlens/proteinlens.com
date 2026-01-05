@@ -23,6 +23,7 @@ import { useGoal } from './hooks/useGoal';
 import { useProteinGap } from './hooks/useProteinGap';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { AuthProvider, useAuth } from './contexts/AuthProvider';
+import { UsageProvider } from './contexts/UsageContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { BottomNav } from './components/layout/BottomNav';
 import { Footer } from './components/layout/Footer';
@@ -188,7 +189,8 @@ function App() {
         <QueryClientProvider client={queryClient}>
           <ThemeProvider>
             <AuthProvider>
-              <BrowserRouter>
+              <UsageProvider>
+                <BrowserRouter>
                 <div className="app flex flex-col min-h-screen bg-background text-foreground">
                   <Navigation />
                   <PageContainer>
@@ -236,7 +238,8 @@ function App() {
                 <BottomNav />
               </div>
             </BrowserRouter>
-          </AuthProvider>
+              </UsageProvider>
+            </AuthProvider>
         </ThemeProvider>
       </QueryClientProvider>
       </HelmetProvider>

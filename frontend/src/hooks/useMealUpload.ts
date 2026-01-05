@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import { apiClient, AnalysisResponse, ApiRequestError } from '../services/apiClient';
 import { compressImage, shouldCompress, formatFileSize } from '../utils/imageCompression';
+import { useRefreshUsage } from '../contexts/UsageContext';
 
 // T073: File validation constants
 const MAX_FILE_SIZE_MB = 10;
@@ -58,6 +59,9 @@ export function useMealUpload(): UseMealUploadResult {
   const [progress, setProgress] = useState<'idle' | 'compressing' | 'uploading' | 'analyzing' | 'complete' | 'error'>('idle');
   const [isQuotaExceeded, setIsQuotaExceeded] = useState(false);
   const [quotaInfo, setQuotaInfo] = useState<QuotaInfo | null>(null);
+
+  // Get refresh function to update usage counter after successful analysis
+  const { refresh: refreshUsage } = useRefreshUsage();
 
   const uploadMeal = async (file: File): Promise<void> => {
     try {
@@ -135,6 +139,14 @@ export function useMealUpload(): UseMealUploadResult {
       if (analysisResponse.quota) {
         setQuotaInfo(analysisResponse.quota);
         console.log('Quota updated:', analysisResponse.quota);
+      }
+
+      // Refresh usage in header to show updated quota count
+      try {
+        await refreshUsage();
+        console.log('Usage refreshed in header');
+      } catch (err) {
+        console.warn('Failed to refresh usage:', err);
       }
 
       // Step 4: Update state with results
