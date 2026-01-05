@@ -43,6 +43,8 @@ commits = [
   "262017caa7b6600f22987c8166cef157fd3beb64",
   # local.settings.json.bak with dev API key
   "432a8676e6d134f870323da1742c3a5332e6e756",
+  # FIX-DATABASE-CONNECTION.md with Key Vault reference (removed in 372bd5d)
+  "b8f97b6748ff8b4bb2559ef2d3d65721d0fd55b6",
 ]
 
 # Rules to modify or disable
