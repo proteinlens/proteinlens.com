@@ -44,6 +44,20 @@ export const getRandomMessage = (messages: Array<{ text: string; emoji: string }
 export const categorizeError = (error: string): 'network' | 'server' | 'quota' | 'image' | 'database' | 'unknown' => {
   const lowerError = error.toLowerCase()
   
+  // Quota errors (429) - CHECK FIRST as these are common
+  if (lowerError.includes('429') || 
+      lowerError.includes('quota') || 
+      lowerError.includes('rate limit') ||
+      lowerError.includes('too many') ||
+      lowerError.includes('free scans') ||
+      lowerError.includes('scan limit') ||
+      lowerError.includes('used all') ||
+      lowerError.includes('limit reached') ||
+      lowerError.includes('upgrade') ||
+      lowerError.includes('go pro')) {
+    return 'quota'
+  }
+  
   // Database/Prisma errors
   if (lowerError.includes('prisma') || 
       lowerError.includes('database') || 
@@ -72,14 +86,6 @@ export const categorizeError = (error: string): 'network' | 'server' | 'quota' |
       lowerError.includes('internal server') ||
       lowerError.includes('temporarily')) {
     return 'server'
-  }
-  
-  // Quota errors (429)
-  if (lowerError.includes('429') || 
-      lowerError.includes('quota') || 
-      lowerError.includes('rate limit') ||
-      lowerError.includes('too many')) {
-    return 'quota'
   }
   
   // Image errors
@@ -143,15 +149,15 @@ export const getFriendlyError = (error: string): FriendlyError => {
     
     case 'quota':
       return {
-        icon: '🎉',
-        title: "Wow, you're on fire!",
-        subtitle: "You've used all your free scans for today",
+        icon: '🚀',
+        title: "You're a Scanning Machine!",
+        subtitle: "You've maxed out your 3 free scans this week",
         tips: [
-          "⭐ Upgrade to Pro for unlimited scans",
-          "🆓 Free scans reset tomorrow",
-          "📊 Pro users get detailed insights too!",
+          "✨ Create FREE account → 20 scans/week",
+          "⭐ Upgrade to Pro → Unlimited scans",
+          "⏰ Guest quota resets in ~7 days",
         ],
-        retryText: "Upgrade to Pro",
+        retryText: "Create FREE Account",
         color: 'purple',
       }
     
