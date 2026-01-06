@@ -160,41 +160,54 @@ export function useMealUpload(): UseMealUploadResult {
 
     } catch (err) {
       console.error('Upload/analysis failed:', err);
-      console.log('Error type check:', {
-        isApiRequestError: err instanceof ApiRequestError,
-        status: (err as any)?.status,
-        message: (err as any)?.message,
+      
+      // Get error details - handle any error type
+      const errorStatus = (err as any)?.status;
+      const errorMessage = (err as any)?.message || (err as Error)?.message || '';
+      const errorQuota = (err as any)?.quota;
+      
+      console.log('🔍 Error details:', {
+        status: errorStatus,
+        message: errorMessage,
+        hasQuota: !!errorQuota,
+        errorName: (err as any)?.name,
       });
       
-      // Check for quota exceeded (429)
-      if (err instanceof ApiRequestError && err.status === 429) {
-        console.log('🚫 Quota exceeded detected! Setting isQuotaExceeded=true');
+      // CRITICAL: Check for quota exceeded (429) - check status directly, not instanceof
+      if (errorStatus === 429 || errorMessage.includes('Quota exceeded') || errorMessage.includes('quota')) {
+        console.log('🚫 QUOTA EXCEEDED! Setting isQuotaExceeded=true');
         setIsQuotaExceeded(true);
-        if (err.quota) {
-          setQuotaInfo(err.quota);
-          console.log('📊 Quota info:', err.quota);
+        if (errorQuota) {
+          setQuotaInfo(errorQuota);
+          console.log('📊 Quota info:', errorQuota);
         }
-        // Don't set error message - let renderError() use isQuotaExceeded instead
+        // CRITICAL: Set error to null so renderError() shows quota message, not generic error
         setError(null);
-      } else if (err instanceof ApiRequestError) {
-        // Map API error codes to user-friendly messages
-        const message = err.message;
-        console.log('📍 ApiRequestError with status:', err.status);
-        if (err.status >= 500) {
+        setIsUploading(false);
+        setIsAnalyzing(false);
+        setIsCompressing(false);
+        setProgress('error');
+        return; // Exit early - don't fall through to other error handlers
+      }
+      
+      // Handle other API errors
+      if (errorStatus) {
+        console.log('📍 API Error with status:', errorStatus);
+        if (errorStatus >= 500) {
           setError('Our servers are temporarily busy. Please try again in a moment.');
-        } else if (err.status === 400) {
-          setError(message || 'Invalid image. Please try a different photo.');
-        } else if (message.includes('timeout') || message.includes('network')) {
+        } else if (errorStatus === 400) {
+          setError(errorMessage || 'Invalid image. Please try a different photo.');
+        } else if (errorMessage.includes('timeout') || errorMessage.includes('network')) {
           setError('Network error. Please check your connection and try again.');
         } else {
-          setError(message || 'Analysis failed. Please try again.');
+          setError(errorMessage || 'Analysis failed. Please try again.');
         }
       } else {
-        const message = (err as Error).message || '';
-        if (message.includes('fetch') || message.includes('network') || message.includes('Failed to fetch')) {
+        // Non-API errors (network issues, etc.)
+        if (errorMessage.includes('fetch') || errorMessage.includes('network') || errorMessage.includes('Failed to fetch')) {
           setError('Network error. Please check your connection and try again.');
         } else {
-          setError(message || 'An unexpected error occurred. Please try again.');
+          setError(errorMessage || 'An unexpected error occurred. Please try again.');
         }
       }
       
