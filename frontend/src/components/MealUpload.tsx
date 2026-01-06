@@ -115,42 +115,97 @@ export const MealUpload: React.FC = () => {
 
   // T043: Error handling UI - Beautiful engaging error states
   const renderError = () => {
-    // Handle quota exceeded separately with clear messaging
+    // CRITICAL: Handle quota exceeded FIRST - never show generic error when quota hit
     if (isQuotaExceeded) {
       return (
-        <div className="error-card error-card--quota">
-          <div className="error-card__icon">🚀</div>
-          <h3 className="error-card__title">You're a Scanning Machine!</h3>
-          <p className="error-card__subtitle">You've hit your free scan limit for this week</p>
+        <div className="error-card error-card--quota" style={{
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: 'white',
+          padding: '32px 24px',
+          borderRadius: '16px',
+          boxShadow: '0 20px 40px rgba(102, 126, 234, 0.3)',
+          textAlign: 'center',
+          maxWidth: '500px',
+          margin: '24px auto'
+        }}>
+          <div style={{ fontSize: '64px', marginBottom: '16px' }}>🚀</div>
+          <h3 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '12px', color: 'white' }}>
+            You're a Scanning Machine!
+          </h3>
+          <p style={{ fontSize: '16px', opacity: 0.95, marginBottom: '24px', color: 'white' }}>
+            You've maxed out your 3 free scans this week
+          </p>
           
-          <div className="error-card__message" style={{
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-            border: '2px solid #3b82f6',
-            borderRadius: '8px',
-            padding: '16px',
-            marginBottom: '16px',
-            textAlign: 'center'
+          <div style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.15)',
+            backdropFilter: 'blur(10px)',
+            border: '2px solid rgba(255, 255, 255, 0.3)',
+            borderRadius: '12px',
+            padding: '20px',
+            marginBottom: '24px'
           }}>
-            <div style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '15px' }}>
-              💡 <strong>Here's what you can do:</strong>
+            <div style={{ fontWeight: '600', marginBottom: '12px', fontSize: '18px' }}>
+              💡 Keep tracking your nutrition:
             </div>
-            <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
-              📝 Create a <strong>FREE account</strong> → 20 scans/week<br/>
-              ⭐ <strong>Upgrade to Pro</strong> → Unlimited scans
+            <div style={{ fontSize: '15px', lineHeight: '1.8' }}>
+              <div style={{ marginBottom: '8px' }}>
+                ✨ <strong>FREE Account</strong> → Get 20 scans/week
+              </div>
+              <div>
+                ⭐ <strong>Pro Plan</strong> → Unlimited scans + advanced features
+              </div>
             </div>
           </div>
 
-          <div className="error-card__actions" style={{ gap: '10px', display: 'flex', flexDirection: 'column' }}>
-            <button onClick={() => window.location.href = '/signup'} className="error-card__btn error-card__btn--primary">
-              📝 Create FREE Account → 20 Scans/Week
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <button 
+              onClick={() => window.location.href = '/signup'} 
+              style={{
+                backgroundColor: 'white',
+                color: '#667eea',
+                border: 'none',
+                padding: '16px 24px',
+                borderRadius: '12px',
+                fontSize: '16px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                transition: 'transform 0.2s'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+              onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            >
+              ✨ Create FREE Account (20 scans/week)
             </button>
-            <button onClick={() => window.location.href = '/pricing'} className="error-card__btn error-card__btn--secondary">
-              ⭐ Upgrade to Pro → Unlimited
+            <button 
+              onClick={() => window.location.href = '/pricing'}
+              style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                color: 'white',
+                border: '2px solid white',
+                padding: '14px 24px',
+                borderRadius: '12px',
+                fontSize: '15px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'transform 0.2s'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+              onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            >
+              ⭐ Upgrade to Pro (Unlimited)
             </button>
           </div>
           
-          <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#f0f9ff', borderRadius: '6px', fontSize: '13px', color: '#0c4a6e' }}>
-            📊 <strong>Your quota:</strong> 3 scans/week as guest | Resets in ~7 days
+          <div style={{ 
+            marginTop: '20px', 
+            padding: '12px', 
+            backgroundColor: 'rgba(255, 255, 255, 0.1)', 
+            borderRadius: '8px', 
+            fontSize: '13px',
+            opacity: 0.9
+          }}>
+            ⏰ Your quota resets in ~7 days
           </div>
         </div>
       );
