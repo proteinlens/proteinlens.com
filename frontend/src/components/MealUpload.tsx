@@ -216,6 +216,62 @@ export const MealUpload: React.FC = () => {
       return null;
     }
 
+    // FALLBACK: If error message mentions quota, show quota UI even if isQuotaExceeded wasn't set
+    const isQuotaError = error.toLowerCase().includes('quota') || 
+                         error.includes('429') ||
+                         error.includes('free scans');
+    
+    if (isQuotaError) {
+      // Show the same quota exceeded UI
+      return (
+        <div style={{
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: 'white',
+          padding: '32px 24px',
+          borderRadius: '16px',
+          boxShadow: '0 20px 40px rgba(102, 126, 234, 0.3)',
+          textAlign: 'center',
+          maxWidth: '500px',
+          margin: '24px auto'
+        }}>
+          <div style={{ fontSize: '64px', marginBottom: '16px' }}>🚀</div>
+          <h3 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '12px', color: 'white' }}>
+            You're a Scanning Machine!
+          </h3>
+          <p style={{ fontSize: '16px', opacity: 0.95, marginBottom: '24px', color: 'white' }}>
+            You've maxed out your 3 free scans this week
+          </p>
+          
+          <div style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.15)',
+            border: '2px solid rgba(255, 255, 255, 0.3)',
+            borderRadius: '12px',
+            padding: '20px',
+            marginBottom: '24px'
+          }}>
+            <div style={{ fontWeight: '600', marginBottom: '12px', fontSize: '18px' }}>
+              💡 Keep tracking your nutrition:
+            </div>
+            <div style={{ fontSize: '15px', lineHeight: '1.8' }}>
+              <div style={{ marginBottom: '8px' }}>✨ <strong>FREE Account</strong> → Get 20 scans/week</div>
+              <div>⭐ <strong>Pro Plan</strong> → Unlimited scans</div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <button onClick={() => window.location.href = '/signup'} 
+              style={{ backgroundColor: 'white', color: '#667eea', border: 'none', padding: '16px 24px', borderRadius: '12px', fontSize: '16px', fontWeight: '600', cursor: 'pointer' }}>
+              ✨ Create FREE Account (20 scans/week)
+            </button>
+            <button onClick={() => window.location.href = '/pricing'}
+              style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)', color: 'white', border: '2px solid white', padding: '14px 24px', borderRadius: '12px', fontSize: '15px', fontWeight: '600', cursor: 'pointer' }}>
+              ⭐ Upgrade to Pro (Unlimited)
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     // Categorize errors for better UX
     const isNetworkError = error.includes('Network') || 
                            error.includes('fetch') || 
