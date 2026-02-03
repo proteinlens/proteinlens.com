@@ -13,6 +13,15 @@
       gtag('config', 'G-5K18VJR440');
     </script>
     
+    <!-- Microsoft Clarity -->
+    <script type="text/javascript">
+      (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+      })(window, document, "clarity", "script", "v5mt05wdbg");
+    </script>
+    
     <!-- Primary Meta Tags -->
     <title>ProteinLens - AI Macro Nutrition Tracker | Protein, Carbs & Fat Analysis</title>
     <meta name="title" content="ProteinLens - AI Macro Nutrition Tracker | Protein, Carbs & Fat Analysis" />
@@ -113,6 +122,9 @@
     ">Skip to main content</a>
     
     <div id="root" role="application" aria-label="ProteinLens nutrition tracker"></div>
+    <!-- Prerender entry for SEO (vite-prerender-plugin) -->
+    <script type="module" prerender src="/src/prerender.tsx"></script>
+    <!-- Client app entry -->
     <script type="module" src="/src/main.tsx"></script>
     
     <style>

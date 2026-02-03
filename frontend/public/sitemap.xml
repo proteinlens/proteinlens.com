@@ -1,49 +1,105 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- ========== Core Marketing Pages ========== -->
+  
   <!-- Homepage -->
   <url>
     <loc>https://www.proteinlens.com/</loc>
-    <lastmod>2026-01-02</lastmod>
+    <lastmod>2026-02-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+  </url>
+  
+  <!-- How It Works -->
+  <url>
+    <loc>https://www.proteinlens.com/how-it-works</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <!-- Features -->
+  <url>
+    <loc>https://www.proteinlens.com/features</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <!-- About -->
+  <url>
+    <loc>https://www.proteinlens.com/about</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
   
   <!-- Pricing Page -->
   <url>
     <loc>https://www.proteinlens.com/pricing</loc>
-    <lastmod>2026-01-02</lastmod>
+    <lastmod>2026-02-03</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   
-  <!-- Login Page -->
+  <!-- ========== Calculator Pages (High SEO Value) ========== -->
+  
+  <!-- Protein Calculator -->
   <url>
-    <loc>https://www.proteinlens.com/login</loc>
-    <lastmod>2026-01-02</lastmod>
+    <loc>https://www.proteinlens.com/protein-calculator</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <!-- Macro Calculator -->
+  <url>
+    <loc>https://www.proteinlens.com/macro-calculator</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <!-- TDEE Calculator -->
+  <url>
+    <loc>https://www.proteinlens.com/tdee-calculator</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <!-- Calorie Calculator -->
+  <url>
+    <loc>https://www.proteinlens.com/calorie-calculator</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- ========== Guides & Content ========== -->
+  
+  <!-- Guides Index -->
+  <url>
+    <loc>https://www.proteinlens.com/guides</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Methodology -->
+  <url>
+    <loc>https://www.proteinlens.com/methodology</loc>
+    <lastmod>2026-02-03</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   
-  <!-- Signup Page -->
-  <url>
-    <loc>https://www.proteinlens.com/signup</loc>
-    <lastmod>2026-01-02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  
-  <!-- Reset Password Page -->
-  <url>
-    <loc>https://www.proteinlens.com/reset-password</loc>
-    <lastmod>2026-01-02</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.3</priority>
-  </url>
+  <!-- ========== Trust & Legal Pages ========== -->
   
   <!-- Privacy Policy -->
   <url>
     <loc>https://www.proteinlens.com/privacy</loc>
-    <lastmod>2026-01-02</lastmod>
+    <lastmod>2026-02-03</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>
@@ -51,7 +107,7 @@
   <!-- Terms of Service -->
   <url>
     <loc>https://www.proteinlens.com/terms</loc>
-    <lastmod>2026-01-02</lastmod>
+    <lastmod>2026-02-03</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>

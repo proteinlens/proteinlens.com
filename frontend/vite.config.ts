@@ -1,9 +1,23 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import { vitePrerenderPlugin } from 'vite-prerender-plugin';
+import { PUBLIC_ROUTES } from './src/seo/seoConfig';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    // Build-time prerendering for SEO
+    // Generates static HTML for all public routes at build time
+    ...vitePrerenderPlugin({
+      // The element to render into (must match index.html)
+      renderTarget: '#root',
+      // Entry point for prerendering (exports prerender function)
+      prerenderEntry: './src/prerender.tsx',
+      // Routes to prerender (from seoConfig.ts)
+      additionalPrerenderRoutes: PUBLIC_ROUTES,
+    }),
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

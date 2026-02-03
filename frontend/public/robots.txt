@@ -1,26 +1,56 @@
-# ProteinLens robots.txt
-User-agent: *
-Allow: /
-Allow: /meal/*
+# ProteinLens - AI Macro Nutrition Tracker
+# https://www.proteinlens.com
 
-# Disallow private/authenticated areas
+User-agent: *
+
+# Public marketing & content pages (ALLOW)
+Allow: /
+Allow: /pricing
+Allow: /protein-calculator
+Allow: /macro-calculator
+Allow: /tdee-calculator
+Allow: /calorie-calculator
+Allow: /how-it-works
+Allow: /features
+Allow: /about
+Allow: /guides
+Allow: /guides/
+Allow: /methodology
+Allow: /privacy
+Allow: /terms
+
+# Shareable meal pages (ALLOW)
+Allow: /meal/
+
+# Auth pages (DISALLOW - no SEO value)
+Disallow: /login
+Disallow: /signup
+Disallow: /signup-legacy
+Disallow: /reset-password
+Disallow: /verify-email
+Disallow: /resend-verification
+Disallow: /invite/
+
+# User-specific pages (DISALLOW - behind auth)
 Disallow: /history
 Disallow: /settings
 Disallow: /billing/
-Disallow: /api/*
 
-# Sitemap
+# API endpoints (DISALLOW)
+Disallow: /api/
+
+# Sitemap location
 Sitemap: https://www.proteinlens.com/sitemap.xml
 
-# Social media crawlers for shareable meal OG tags
+# Social media crawlers - full access for OG tags
 User-agent: facebookexternalhit
-Allow: /meal/*
+Allow: /
 
 User-agent: Twitterbot
-Allow: /meal/*
+Allow: /
 
 User-agent: LinkedInBot
-Allow: /meal/*
+Allow: /
 
 # Block AI training crawlers (respect user privacy)
 User-agent: GPTBot
@@ -36,6 +66,9 @@ User-agent: anthropic-ai
 Disallow: /
 
 User-agent: Claude-Web
+Disallow: /
+
+User-agent: Google-Extended
 Disallow: /
 
 # Crawl-delay for polite bots
