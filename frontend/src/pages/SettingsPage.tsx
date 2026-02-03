@@ -3,7 +3,7 @@
 // T071: Settings page with billing section
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useUsage } from '../hooks/useUsage';
 import { useAuth } from '../contexts/AuthProvider';
 import { redirectToPortal } from '../services/billingApi';
@@ -296,6 +296,61 @@ export const SettingsPage: React.FC = () => {
               </div>
             </div>
           )}
+        </section>
+
+        {/* About & Resources Section - Visible on mobile */}
+        <section className="settings-section md:hidden">
+          <h2 className="settings-section__title">
+            <span className="settings-section__icon">ℹ️</span>
+            About & Resources
+          </h2>
+          <div className="settings-links">
+            <Link to="/about" className="settings-links__item">
+              <span className="settings-links__icon">👋</span>
+              <span className="settings-links__text">About ProteinLens</span>
+              <span className="settings-links__arrow">›</span>
+            </Link>
+            <Link to="/blog" className="settings-links__item">
+              <span className="settings-links__icon">📝</span>
+              <span className="settings-links__text">Blog</span>
+              <span className="settings-links__arrow">›</span>
+            </Link>
+            <Link to="/how-it-works" className="settings-links__item">
+              <span className="settings-links__icon">🔍</span>
+              <span className="settings-links__text">How It Works</span>
+              <span className="settings-links__arrow">›</span>
+            </Link>
+            <Link to="/methodology" className="settings-links__item">
+              <span className="settings-links__icon">🧪</span>
+              <span className="settings-links__text">Methodology</span>
+              <span className="settings-links__arrow">›</span>
+            </Link>
+            <Link to="/guides" className="settings-links__item">
+              <span className="settings-links__icon">📚</span>
+              <span className="settings-links__text">Guides</span>
+              <span className="settings-links__arrow">›</span>
+            </Link>
+            <Link to="/features" className="settings-links__item">
+              <span className="settings-links__icon">✨</span>
+              <span className="settings-links__text">Features</span>
+              <span className="settings-links__arrow">›</span>
+            </Link>
+            <Link to="/pricing" className="settings-links__item">
+              <span className="settings-links__icon">💰</span>
+              <span className="settings-links__text">Pricing</span>
+              <span className="settings-links__arrow">›</span>
+            </Link>
+            <Link to="/privacy" className="settings-links__item">
+              <span className="settings-links__icon">🔒</span>
+              <span className="settings-links__text">Privacy Policy</span>
+              <span className="settings-links__arrow">›</span>
+            </Link>
+            <Link to="/terms" className="settings-links__item">
+              <span className="settings-links__icon">📜</span>
+              <span className="settings-links__text">Terms of Service</span>
+              <span className="settings-links__arrow">›</span>
+            </Link>
+          </div>
         </section>
       </div>
     </div>

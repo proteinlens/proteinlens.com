@@ -381,3 +381,46 @@
     gap: 0.25rem;
   }
 }
+
+/* About & Resources Links */
+.settings-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.settings-links__item {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  text-decoration: none;
+  color: inherit;
+  border-bottom: 1px solid var(--border);
+  transition: background-color 0.2s ease;
+}
+
+.settings-links__item:first-child {
+  border-top: 1px solid var(--border);
+}
+
+.settings-links__item:hover {
+  background-color: var(--muted);
+}
+
+.settings-links__icon {
+  font-size: 1.25rem;
+  margin-right: 1rem;
+  flex-shrink: 0;
+}
+
+.settings-links__text {
+  flex: 1;
+  font-size: 1rem;
+  color: var(--foreground);
+}
+
+.settings-links__arrow {
+  color: var(--muted-foreground);
+  font-size: 1.25rem;
+  font-weight: 300;
+}
