@@ -55,7 +55,7 @@ export default function MethodologyPage() {
             <section className="bg-card border border-border rounded-2xl p-6 mb-8">
               <h2 className="text-xl font-bold text-foreground mb-4">Overview</h2>
               <p className="text-muted-foreground leading-relaxed">
-                ProteinLens uses computer vision and large language models (specifically GPT-4 Vision) to 
+                ProteinLens uses AI, computer vision and large language models to 
                 analyze food photos and estimate macronutrient content. This document explains our approach, 
                 data sources, accuracy expectations, and known limitations.
               </p>
@@ -69,7 +69,7 @@ export default function MethodologyPage() {
                   <span className="font-bold text-primary">1.</span>
                   <div>
                     <strong className="text-foreground">Image Analysis:</strong> Your food photo is sent to 
-                    GPT-4 Vision, which identifies individual food items in the image.
+                    AI Vision, which identifies individual food items in the image.
                   </div>
                 </li>
                 <li className="flex gap-3">

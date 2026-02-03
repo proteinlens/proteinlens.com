@@ -94,6 +94,134 @@
     <priority>0.6</priority>
   </url>
   
+  <!-- ========== Blog Posts ========== -->
+  
+  <!-- Blog Index -->
+  <url>
+    <loc>https://www.proteinlens.com/blog</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- AI Photo Tracking Posts -->
+  <url>
+    <loc>https://www.proteinlens.com/blog/how-to-track-macros-from-photo</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.proteinlens.com/blog/photo-macro-tracking-vs-barcode-scanning</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.proteinlens.com/blog/best-lighting-angles-food-photo-macros</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.proteinlens.com/blog/estimate-portion-sizes-from-photos</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.proteinlens.com/blog/common-ai-food-scan-mistakes</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.proteinlens.com/blog/track-restaurant-meals-unknown-ingredients</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <!-- Protein Goals Posts -->
+  <url>
+    <loc>https://www.proteinlens.com/blog/how-much-protein-per-day</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.proteinlens.com/blog/protein-for-fat-loss</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.proteinlens.com/blog/protein-for-muscle-gain</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.proteinlens.com/blog/high-protein-breakfast-ideas</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Macro Basics Posts -->
+  <url>
+    <loc>https://www.proteinlens.com/blog/what-are-macros</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.proteinlens.com/blog/how-to-calculate-macros-weight-loss</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.proteinlens.com/blog/calories-vs-macros</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <!-- TDEE & Calories Posts -->
+  <url>
+    <loc>https://www.proteinlens.com/blog/what-is-tdee</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.proteinlens.com/blog/weight-loss-plateau-reasons</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Real-Life Tracking Posts -->
+  <url>
+    <loc>https://www.proteinlens.com/blog/track-macros-without-food-scale</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.proteinlens.com/blog/track-macros-eating-out</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.proteinlens.com/blog/macro-tracking-busy-people</loc>
+    <lastmod>2026-02-03</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
   <!-- ========== Trust & Legal Pages ========== -->
   
   <!-- Privacy Policy -->

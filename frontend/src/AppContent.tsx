@@ -57,6 +57,9 @@ const CalorieCalculatorPage = lazy(() => import('./pages/CalorieCalculatorPage')
 // SEO: Guides pages (Phase 3)
 const GuidesIndexPage = lazy(() => import('./pages/GuidesIndexPage'));
 const MethodologyPage = lazy(() => import('./pages/MethodologyPage'));
+// SEO: Blog pages (Phase 4)
+const BlogIndexPage = lazy(() => import('./pages/BlogIndexPage'));
+const BlogPostPage = lazy(() => import('./pages/BlogPostPage'));
 
 // Navigation component with usage counter
 const Navigation: React.FC<{ isPrerender?: boolean }> = ({ isPrerender }) => {
@@ -240,6 +243,10 @@ export const AppContent: React.FC<AppContentProps> = ({ isPrerender = false }) =
                   {/* SEO: Guides pages */}
                   <Route path="/guides" element={<GuidesIndexPage />} />
                   <Route path="/methodology" element={<MethodologyPage />} />
+                  
+                  {/* SEO: Blog pages */}
+                  <Route path="/blog" element={<BlogIndexPage />} />
+                  <Route path="/blog/:slug" element={<BlogPostPage />} />
                   
                   {/* Auth routes - noindex */}
                   <Route path="/login" element={<SignIn />} />

@@ -236,6 +236,22 @@ const seoData: Record<string, PageSEO> = {
     },
   },
 
+  '/blog': {
+    title: `Nutrition Blog - Macro Tracking, Protein & Weight Loss Tips${BRAND_SUFFIX}`,
+    description: 'Expert nutrition advice on macro tracking, protein intake, TDEE, weight loss, and AI food tracking. Practical tips for better nutrition habits.',
+    canonical: `${BASE_URL}/blog`,
+    keywords: 'macro tracking blog, protein tips, nutrition advice, weight loss tips, TDEE guide, calorie tracking blog',
+    ogType: 'website',
+    jsonLd: {
+      '@context': 'https://schema.org',
+      '@type': 'Blog',
+      name: 'ProteinLens Nutrition Blog',
+      description: 'Expert nutrition advice on macro tracking, protein intake, and AI-powered food tracking',
+      url: `${BASE_URL}/blog`,
+      publisher: organizationSchema,
+    },
+  },
+
   // 404 page (noindex)
   '/404': {
     title: `Page Not Found${BRAND_SUFFIX}`,
@@ -278,6 +294,26 @@ export const PUBLIC_ROUTES = [
   '/calorie-calculator',
   '/guides',
   '/methodology',
+  '/blog',
+  // Blog posts - these will be prerendered
+  '/blog/how-to-track-macros-from-photo',
+  '/blog/photo-macro-tracking-vs-barcode-scanning',
+  '/blog/best-lighting-angles-food-photo-macros',
+  '/blog/estimate-portion-sizes-from-photos',
+  '/blog/common-ai-food-scan-mistakes',
+  '/blog/track-restaurant-meals-unknown-ingredients',
+  '/blog/how-much-protein-per-day',
+  '/blog/protein-for-fat-loss',
+  '/blog/protein-for-muscle-gain',
+  '/blog/high-protein-breakfast-ideas',
+  '/blog/what-are-macros',
+  '/blog/how-to-calculate-macros-weight-loss',
+  '/blog/calories-vs-macros',
+  '/blog/what-is-tdee',
+  '/blog/weight-loss-plateau-reasons',
+  '/blog/track-macros-without-food-scale',
+  '/blog/track-macros-eating-out',
+  '/blog/macro-tracking-busy-people',
   '/404',
 ];
 
