@@ -30,6 +30,7 @@ import WeightLossPlateau from '@/content/blog/posts/weight-loss-plateau-reasons'
 import TrackMacrosWithoutScale from '@/content/blog/posts/track-macros-without-food-scale';
 import TrackMacrosEatingOut from '@/content/blog/posts/track-macros-eating-out';
 import MacroTrackingBusyPeople from '@/content/blog/posts/macro-tracking-busy-people';
+import ProteinLensVsMyFitnessPal from '@/content/blog/posts/proteinlens-vs-myfitnesspal';
 
 // Map slugs to content components
 const postContentMap: Record<string, React.ComponentType> = {
@@ -51,6 +52,7 @@ const postContentMap: Record<string, React.ComponentType> = {
   'track-macros-without-food-scale': TrackMacrosWithoutScale,
   'track-macros-eating-out': TrackMacrosEatingOut,
   'macro-tracking-busy-people': MacroTrackingBusyPeople,
+  'proteinlens-vs-myfitnesspal': ProteinLensVsMyFitnessPal,
 };
 
 export default function BlogPostPage() {

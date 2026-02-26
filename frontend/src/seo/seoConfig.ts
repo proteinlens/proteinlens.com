@@ -323,6 +323,7 @@ export const PUBLIC_ROUTES = [
   '/blog/track-macros-without-food-scale',
   '/blog/track-macros-eating-out',
   '/blog/macro-tracking-busy-people',
+  '/blog/proteinlens-vs-myfitnesspal',
   '/404',
 ];
 
