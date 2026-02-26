@@ -1,5 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { SEOHead, generateOrganizationSchema, generateWebApplicationSchema } from '@/components/seo/SEOHead'
 import { apiClient } from '@/services/apiClient'
 import { FriendlyError } from '@/components/ui/FriendlyError'
 import { FunLoading } from '@/components/ui/FunLoading'
@@ -463,6 +464,19 @@ export function HomePage() {
   // Main landing/idle state with skeleton loading
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 text-center">
+      <SEOHead
+        title="ProteinLens - AI Macro Nutrition Tracker | Protein, Carbs & Fat Analysis"
+        description="Snap a photo of your meal and instantly get protein, carbs, and fat breakdown. AI-powered macro tracking — no logging, no guessing."
+        canonical="https://www.proteinlens.com/"
+        keywords="macro tracker, protein tracker, AI nutrition tracker, food photo analysis, macro counting app, protein counting app"
+        structuredData={{
+          '@context': 'https://schema.org',
+          '@graph': [
+            generateOrganizationSchema(),
+            generateWebApplicationSchema(),
+          ],
+        }}
+      />
       {/* Hero section - Clear value proposition */}
       <div className="mb-8">
         <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4 leading-tight">

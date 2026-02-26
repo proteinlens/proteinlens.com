@@ -7,6 +7,7 @@ import { getPlans, PlansResponse, redirectToCheckout } from '../services/billing
 import { PricingCard } from '../components/PricingCard';
 import { FriendlyError } from '../components/ui/FriendlyError';
 import { useAuth } from '../contexts/AuthProvider';
+import { SEOHead } from '../components/seo/SEOHead';
 import './PricingPage.css';
 
 export const PricingPage: React.FC = () => {
@@ -135,6 +136,12 @@ export const PricingPage: React.FC = () => {
 
   return (
     <div className="pricing-page">
+      <SEOHead
+        title="Pricing - ProteinLens Pro"
+        description="Start tracking macros for free. Upgrade to Pro for unlimited AI meal scans, advanced macro tracking, and diet profiles. Monthly or annual plans."
+        canonical="https://www.proteinlens.com/pricing"
+        keywords="protein tracker pricing, macro tracker app price, nutrition tracker subscription"
+      />
       <header className="pricing-page__header">
         <h1>💪 Power Up Your Protein Tracking</h1>
         <p>Simple pricing, powerful features. Pick what works for you!</p>
