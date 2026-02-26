@@ -211,6 +211,18 @@ export const blogPosts: BlogPost[] = [
     updatedAt: '2026-02-03',
     readingTime: 8,
   },
+  // === Comparison / Alternatives (High Intent, Bottom of Funnel) ===
+  {
+    slug: 'proteinlens-vs-myfitnesspal',
+    title: 'ProteinLens vs MyFitnessPal — Which Macro Tracker Is Better in 2026?',
+    description: 'Honest comparison of ProteinLens AI photo tracking vs MyFitnessPal manual entry. Features, accuracy, pricing, and who should use what.',
+    keywords: 'proteinlens vs myfitnesspal, myfitnesspal alternative, best macro tracker 2026, AI food tracker vs myfitnesspal, photo macro tracker',
+    category: 'ai-tracking',
+    publishedAt: '2026-02-26',
+    updatedAt: '2026-02-26',
+    readingTime: 7,
+    featured: true,
+  },
 ];
 
 // Helper functions
