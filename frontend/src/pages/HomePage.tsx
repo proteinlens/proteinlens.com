@@ -479,37 +479,41 @@ export function HomePage() {
       />
       {/* Hero section - Clear value proposition */}
       <div className="mb-8">
-        <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4 leading-tight">
+        <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-4 leading-tight">
           Snap a meal photo.
           <br />
           <span className="text-primary">Get protein estimate.</span>
         </h1>
-        <p className="text-lg text-muted-foreground max-w-md mx-auto">
-          No logging, no guessing. AI-powered protein tracking in seconds.
+        <div className="flex items-center justify-center gap-2 mb-3">
+          <span className="text-yellow-500">⚡</span>
+          <span className="text-lg font-medium text-slate-700">No logging, no guessing.</span>
+        </div>
+        <p className="text-base text-slate-500 max-w-md mx-auto bg-slate-50 border border-slate-200 py-2 px-4 rounded-full inline-block">
+          AI-powered <strong className="text-slate-700">protein tracking</strong> in seconds.
         </p>
       </div>
 
       {/* 3-step visual how it works */}
       <div className="flex justify-center items-center gap-2 md:gap-4 mb-8 text-sm">
         <div className="flex flex-col items-center">
-          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-2">
+          <div className="w-14 h-14 bg-white border border-slate-200 shadow-sm rounded-2xl flex items-center justify-center mb-2">
             <span className="text-2xl">📸</span>
           </div>
-          <span className="text-muted-foreground">Snap photo</span>
+          <span className="text-slate-600 font-medium">Snap Photo</span>
         </div>
-        <span className="text-muted-foreground text-2xl">→</span>
+        <span className="text-primary text-2xl font-bold">→</span>
         <div className="flex flex-col items-center">
-          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-2">
+          <div className="w-14 h-14 bg-white border border-slate-200 shadow-sm rounded-2xl flex items-center justify-center mb-2">
             <span className="text-2xl">🤖</span>
           </div>
-          <span className="text-muted-foreground">AI analyzes</span>
+          <span className="text-slate-600 font-medium">AI Analyzes</span>
         </div>
-        <span className="text-muted-foreground text-2xl">→</span>
+        <span className="text-primary text-2xl font-bold">→</span>
         <div className="flex flex-col items-center">
-          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-2">
-            <span className="text-2xl">💪</span>
+          <div className="w-14 h-14 bg-white border border-slate-200 shadow-sm rounded-2xl flex items-center justify-center mb-2">
+            <span className="text-2xl">🔥</span>
           </div>
-          <span className="text-muted-foreground">Track progress</span>
+          <span className="text-slate-600 font-medium">Track Progress</span>
         </div>
       </div>
 
@@ -543,10 +547,10 @@ export function HomePage() {
         <>
           {/* Primary CTA - Scan a meal */}
           <div
-            className={`bg-card border-2 border-dashed rounded-2xl p-12 md:p-16 cursor-pointer transition-all mb-4 ${
+            className={`bg-white border-2 border-dashed rounded-2xl p-12 md:p-16 cursor-pointer transition-all mb-4 shadow-sm ${
               isDragActive 
-                ? 'border-primary bg-primary/5' 
-                : 'border-border hover:border-primary/50'
+                ? 'border-primary bg-emerald-50' 
+                : 'border-slate-200 hover:border-primary/50 hover:shadow-md'
             }`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
@@ -554,40 +558,39 @@ export function HomePage() {
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
           >
-            <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-5 transition-colors ${
+            <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-5 transition-colors ${
               isDragActive 
-                ? 'bg-primary/20 text-primary' 
-                : 'bg-primary/10 text-muted-foreground'
+                ? 'bg-emerald-100 text-primary' 
+                : 'bg-slate-50 text-slate-400'
             }`}>
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M12 12V4m0 0L8 8m4-4l4 4" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-foreground mb-2">📸 Scan a Meal</h3>
-            <p className="text-muted-foreground">Drag & drop or click to upload</p>
+            <h3 className="text-xl font-semibold text-slate-800 mb-1">📸 Scan a Meal</h3>
+            <p className="text-slate-500">Drag & drop or click to upload</p>
+            <p className="text-xs text-slate-400 mt-2">JPG, PNG, or WebP (Max 10MB)</p>
           </div>
 
           {/* Demo Meals Gallery */}
           <div className="mb-6">
-            <p className="text-sm font-medium text-muted-foreground mb-3">Try these examples:</p>
+            <p className="text-sm font-medium text-slate-500 mb-3">Try these examples:</p>
             <div className="grid grid-cols-3 gap-3">
               {demoMeals.map((meal) => (
                 <button
                   key={meal.id}
                   onClick={() => handleDemoMealClick(meal)}
-                  className="relative rounded-lg overflow-hidden group cursor-pointer transition-transform hover:scale-105"
+                  className="relative bg-white border border-slate-200 rounded-xl overflow-hidden group cursor-pointer transition-all hover:scale-105 hover:shadow-md shadow-sm"
                 >
                   <img 
                     src={meal.imageUrl} 
                     alt={meal.name}
-                    className="w-full h-20 object-cover rounded-lg"
+                    className="w-full h-20 object-cover"
                   />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors rounded-lg flex items-center justify-center">
-                    <span className="text-white opacity-0 group-hover:opacity-100 font-medium text-xs transition-opacity">
-                      {meal.totalProtein}g
-                    </span>
+                  <div className="p-2">
+                    <p className="text-xs text-slate-700 font-medium truncate">{meal.name}</p>
+                    <span className="text-xs font-bold text-primary">{meal.totalProtein}g</span>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1 text-center truncate">{meal.name}</p>
                 </button>
               ))}
             </div>
@@ -596,13 +599,13 @@ export function HomePage() {
           {/* Secondary CTA - Demo scan */}
           <button
             onClick={handleDemoScan}
-            className="text-emerald-700 hover:text-emerald-800 text-sm font-medium mb-6 underline decoration-emerald-400 hover:decoration-emerald-600 transition-colors"
+            className="text-slate-600 hover:text-primary text-sm font-medium mb-6 flex items-center gap-1.5 mx-auto transition-colors"
           >
-            Or see a random example
+            🔀 Random Example
           </button>
 
           {/* No account needed message */}
-          <p className="text-sm text-primary bg-primary/10 border border-primary/20 py-2.5 px-5 rounded-full inline-block mb-4">
+          <p className="text-sm text-primary font-medium bg-emerald-50 border border-emerald-200 py-2.5 px-5 rounded-full inline-block mb-4">
             ✨ No account needed for your first scan
           </p>
         </>
@@ -617,9 +620,25 @@ export function HomePage() {
         />
       )}
       
-      <p className="text-xs text-muted-foreground mt-6">
+      <p className="text-xs text-slate-400 mt-6">
         🔒 Privacy first • Photos processed securely • Results are estimates
       </p>
+
+      {/* Feature cards row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-8 mb-4">
+        {[
+          { icon: '🧠', title: 'AI-Powered', desc: 'Smart Analysis' },
+          { icon: '⚡', title: 'Instant Results', desc: 'Protein + Calories' },
+          { icon: '📊', title: 'Track Progress', desc: 'Daily Insights' },
+          { icon: '🔒', title: 'Private & Secure', desc: 'Photos Deleted' },
+        ].map((f) => (
+          <div key={f.title} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm text-center">
+            <span className="text-2xl">{f.icon}</span>
+            <p className="text-sm font-bold text-slate-800 mt-1">{f.title}</p>
+            <p className="text-xs text-slate-500">{f.desc}</p>
+          </div>
+        ))}
+      </div>
 
       <input
         ref={fileInputRef}
