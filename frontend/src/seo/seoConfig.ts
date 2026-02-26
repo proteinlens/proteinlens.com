@@ -269,11 +269,20 @@ export function getSeoForUrl(url: string): PageSEO {
   const path = url.split('?')[0].replace(/\/$/, '') || '/';
   
   // Return specific SEO data or default
-  return seoData[path] || {
-    title: `ProteinLens - AI Macro Nutrition Tracker`,
+  if (seoData[path]) {
+    return seoData[path];
+  }
+
+  // Blog posts should be indexed even without explicit SEO entries
+  const isBlogPost = path.startsWith('/blog/');
+
+  return {
+    title: isBlogPost
+      ? `${path.split('/').pop()?.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}${BRAND_SUFFIX}`
+      : `ProteinLens - AI Macro Nutrition Tracker`,
     description: 'AI-powered nutrition tracking. Upload food photos for instant macro analysis.',
     canonical: `${BASE_URL}${path}`,
-    noindex: true, // Unknown pages should not be indexed
+    noindex: !isBlogPost, // Blog posts should be indexed; unknown pages should not
   };
 }
 
