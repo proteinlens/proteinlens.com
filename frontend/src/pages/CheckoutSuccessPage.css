@@ -17,7 +17,7 @@
   width: 100%;
   text-align: center;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.1);
-  border: 2px solid #6366f1;
+  border: 2px solid #22c55e;
 }
 
 .checkout-success__icon {
@@ -36,7 +36,7 @@
   font-weight: 800;
   color: #1f2937;
   margin: 0 0 16px 0;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -81,7 +81,7 @@
 .checkout-success__actions .btn-primary {
   width: 100%;
   padding: 16px 32px;
-  background: #6366f1;
+  background: #22c55e;
   color: white;
   border: none;
   border-radius: 10px;
@@ -92,7 +92,7 @@
 }
 
 .checkout-success__actions .btn-primary:hover {
-  background: #4f46e5;
+  background: #16a34a;
 }
 
 .checkout-success__redirect {
