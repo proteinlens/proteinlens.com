@@ -209,7 +209,7 @@
 
 .error-card--default {
   background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 50%, #d8b4fe 100%);
-  border: 2px solid #a855f7;
+  border: 2px solid #059669;
   box-shadow: 0 10px 40px rgba(168, 85, 247, 0.2);
 }
 
@@ -279,7 +279,7 @@
 }
 
 .error-card__btn--primary {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
   color: white;
   box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
 }
@@ -390,10 +390,10 @@
 }
 
 .error-message--quota .btn-primary {
-  background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  background: linear-gradient(135deg, #15803d 0%, #22c55e 100%);
   margin-top: 1rem;
 }
 
 .error-message--quota .btn-primary:hover {
-  background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+  background: linear-gradient(135deg, #7c3aed 0%, #16a34a 100%);
 }

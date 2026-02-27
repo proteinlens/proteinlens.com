@@ -20,8 +20,8 @@
 }
 
 .pricing-card--pro {
-  border-color: #6366f1;
-  background: linear-gradient(180deg, #fafaff 0%, #ffffff 100%);
+  border-color: #22c55e;
+  background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 100%);
 }
 
 .pricing-card--current {
@@ -32,7 +32,7 @@
   position: absolute;
   top: -12px;
   right: 20px;
-  background: #6366f1;
+  background: #22c55e;
   color: white;
   padding: 4px 12px;
   border-radius: 20px;
@@ -53,7 +53,7 @@
 }
 
 .pricing-card--pro .pricing-card__name {
-  color: #6366f1;
+  color: #22c55e;
 }
 
 .pricing-card__price {
@@ -113,7 +113,7 @@
 }
 
 .feature--highlight {
-  color: #6366f1 !important;
+  color: #22c55e !important;
   font-weight: 600;
 }
 
@@ -139,12 +139,12 @@
 }
 
 .pricing-card__button--pro {
-  background: #6366f1;
+  background: #22c55e;
   color: white;
 }
 
 .pricing-card__button--pro:hover:not(:disabled) {
-  background: #4f46e5;
+  background: #16a34a;
 }
 
 .pricing-card--coach {

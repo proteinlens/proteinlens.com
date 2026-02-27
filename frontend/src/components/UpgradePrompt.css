@@ -276,7 +276,7 @@
 
 .upgrade-prompt__price-card {
   background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
-  border: 2px solid #6366f1;
+  border: 2px solid #22c55e;
   border-radius: 16px;
   padding: 24px 20px 20px;
   position: relative;
@@ -288,7 +288,7 @@
   top: -12px;
   left: 50%;
   transform: translateX(-50%);
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
   color: white;
   font-size: 11px;
   font-weight: 700;
@@ -310,19 +310,19 @@
 .upgrade-prompt__price-currency {
   font-size: 24px;
   font-weight: 700;
-  color: #4f46e5;
+  color: #16a34a;
 }
 
 .upgrade-prompt__price-value {
   font-size: 48px;
   font-weight: 900;
-  color: #4f46e5;
+  color: #16a34a;
   line-height: 1;
 }
 
 .upgrade-prompt__price-period {
   font-size: 18px;
-  color: #6366f1;
+  color: #22c55e;
   font-weight: 600;
   margin-left: 4px;
 }
@@ -394,7 +394,7 @@
 }
 
 .upgrade-prompt__button--primary {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
   color: white;
   box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
   font-size: 17px;
@@ -413,7 +413,7 @@
 
 .upgrade-prompt__button--secondary {
   background: transparent;
-  color: #6366f1;
+  color: #22c55e;
   font-size: 14px;
   font-weight: 600;
   padding: 14px 24px;

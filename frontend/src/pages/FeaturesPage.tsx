@@ -107,7 +107,7 @@ export default function FeaturesPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <span className="inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-medium mb-6">
+              <span className="inline-block px-4 py-2 bg-emerald-50 text-primary rounded-full text-sm font-medium mb-6">
                 ✨ Powerful & Simple
               </span>
               <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
@@ -142,7 +142,7 @@ export default function FeaturesPage() {
                       </span>
                     </div>
                   )}
-                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-2xl mb-4">
+                  <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-2xl mb-4">
                     {feature.icon}
                   </div>
                   <h2 className="text-lg font-bold text-foreground mb-2">
@@ -158,7 +158,7 @@ export default function FeaturesPage() {
         </section>
 
         {/* Comparison Section */}
-        <section className="py-16 px-4 bg-muted/30">
+        <section className="py-16 px-4 bg-slate-50">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-3xl font-bold text-foreground text-center mb-4">
               Photo Tracking vs. Manual Logging
@@ -168,7 +168,7 @@ export default function FeaturesPage() {
             </p>
             
             <div className="bg-card border border-border rounded-2xl overflow-hidden">
-              <div className="grid grid-cols-3 bg-muted/50 border-b border-border">
+              <div className="grid grid-cols-3 bg-slate-50 border-b border-border">
                 <div className="p-4 font-bold text-foreground">Feature</div>
                 <div className="p-4 font-bold text-primary text-center">ProteinLens</div>
                 <div className="p-4 font-bold text-muted-foreground text-center">Manual Apps</div>
@@ -193,7 +193,7 @@ export default function FeaturesPage() {
             <div className="bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20 rounded-2xl p-8 lg:p-12">
               <div className="flex flex-col lg:flex-row items-center gap-8">
                 <div className="flex-shrink-0">
-                  <div className="w-20 h-20 bg-primary/20 rounded-2xl flex items-center justify-center text-4xl">
+                  <div className="w-20 h-20 bg-emerald-100 rounded-2xl flex items-center justify-center text-4xl">
                     🎯
                   </div>
                 </div>

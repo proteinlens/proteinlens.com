@@ -70,7 +70,7 @@ export default function BlogIndexPage() {
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                   activeCategory === category
                     ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
                 {category === 'all' ? 'All Posts' : categoryLabels[category as BlogPost['category']]}
@@ -87,9 +87,9 @@ export default function BlogIndexPage() {
                   <Link
                     key={post.slug}
                     to={`/blog/${post.slug}`}
-                    className="block bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20 rounded-2xl p-6 hover:border-primary/40 transition-colors"
+                    className="block bg-white shadow-sm border border-primary/20 rounded-2xl p-6 hover:border-primary/40 transition-colors"
                   >
-                    <span className="inline-block px-2 py-1 bg-primary/20 text-primary text-xs font-medium rounded-full mb-3">
+                    <span className="inline-block px-2 py-1 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full mb-3">
                       Featured
                     </span>
                     <h3 className="text-lg font-bold text-foreground mb-2">{post.title}</h3>
@@ -156,7 +156,7 @@ export default function BlogIndexPage() {
           </section>
 
           {/* CTA */}
-          <div className="mt-12 text-center bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 rounded-2xl p-8">
+          <div className="mt-12 text-center bg-white shadow-sm border border-primary/20 rounded-2xl p-8">
             <h2 className="text-xl font-bold text-foreground mb-2">
               Ready to simplify your macro tracking?
             </h2>

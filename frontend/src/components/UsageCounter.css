@@ -55,7 +55,7 @@
 }
 
 .usage-counter--pro {
-  border-color: #6366f1;
+  border-color: #22c55e;
   background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
 }
 
@@ -66,7 +66,7 @@
 }
 
 .usage-counter__badge {
-  background: #6366f1;
+  background: #22c55e;
   color: white;
   padding: 2px 8px;
   border-radius: 12px;
@@ -154,7 +154,7 @@
 }
 
 .usage-counter--anonymous .usage-counter__fill {
-  background: linear-gradient(90deg, #a78bfa 0%, #8b5cf6 100%);
+  background: linear-gradient(90deg, #a78bfa 0%, #15803d 100%);
   box-shadow: 0 0 8px rgba(167, 139, 250, 0.5);
 }
 
@@ -176,7 +176,7 @@
   display: inline-block;
   margin-top: 6px;
   padding: 8px 16px;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  background: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
   color: white;
   border-radius: 8px;
   font-size: 13px;
@@ -188,7 +188,7 @@
 }
 
 .usage-counter__upgrade:hover {
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, #16a34a 0%, #7c3aed 100%);
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
 }
@@ -198,11 +198,11 @@
 }
 
 .usage-counter--anonymous .usage-counter__upgrade {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, #15803d 0%, #7c3aed 100%);
 }
 
 .usage-counter__text {
   font-size: 14px;
-  color: #4f46e5;
+  color: #16a34a;
   font-weight: 600;
 }

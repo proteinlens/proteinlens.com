@@ -105,11 +105,11 @@ export const PricingPage: React.FC = () => {
     return (
       <div className="pricing-page">
         <div className="pricing-page__loading">
-          <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-4xl animate-bounce">💰</span>
           </div>
-          <p className="text-lg font-medium text-foreground">Finding the best deals for you...</p>
-          <p className="text-sm text-muted-foreground mt-2">This won't take long! ⚡</p>
+          <p className="text-lg font-medium text-slate-800">Finding the best deals for you...</p>
+          <p className="text-sm text-slate-500 mt-2">This won't take long! ⚡</p>
         </div>
       </div>
     );
