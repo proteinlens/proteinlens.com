@@ -324,6 +324,8 @@ export const PUBLIC_ROUTES = [
   '/blog/track-macros-eating-out',
   '/blog/macro-tracking-busy-people',
   '/blog/proteinlens-vs-myfitnesspal',
+  '/blog/proteinlens-vs-cronometer',
+  '/blog/proteinlens-vs-lose-it',
   '/404',
 ];
 

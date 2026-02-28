@@ -223,6 +223,26 @@ export const blogPosts: BlogPost[] = [
     readingTime: 7,
     featured: true,
   },
+  {
+    slug: 'proteinlens-vs-cronometer',
+    title: 'ProteinLens vs Cronometer — Best Macro Tracker for 2026?',
+    description: 'Comparing ProteinLens AI photo tracking with Cronometer\'s detailed micronutrient database. Speed vs precision — which tracker fits your goals?',
+    keywords: 'proteinlens vs cronometer, cronometer alternative, best macro tracker 2026, AI macro tracker vs cronometer, fast nutrition tracker',
+    category: 'ai-tracking',
+    publishedAt: '2026-02-27',
+    updatedAt: '2026-02-27',
+    readingTime: 7,
+  },
+  {
+    slug: 'proteinlens-vs-lose-it',
+    title: 'ProteinLens vs Lose It! — Which Food Tracker Is Right for You?',
+    description: 'ProteinLens AI photo tracking vs Lose It! barcode scanning. Compare speed, accuracy, pricing, and which approach keeps you consistent.',
+    keywords: 'proteinlens vs lose it, lose it alternative, best food tracker 2026, AI food tracker vs lose it, photo macro tracker',
+    category: 'ai-tracking',
+    publishedAt: '2026-02-27',
+    updatedAt: '2026-02-27',
+    readingTime: 8,
+  },
 ];
 
 // Helper functions
