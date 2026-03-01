@@ -4,6 +4,7 @@
 // US5: Macro Split Display for diet users
 
 import React from 'react';
+import { formatMacro } from '@/utils/formatMacro';
 
 interface MacroSplitDisplayProps {
   macros: {
@@ -84,7 +85,7 @@ export function MacroSplitDisplay({
             <div className="w-3 h-3 rounded-full bg-blue-500"></div>
             <span className="text-xs text-muted-foreground">Protein</span>
           </div>
-          <div className="text-lg font-bold text-foreground">{macros.protein}g</div>
+          <div className="text-lg font-bold text-foreground">{formatMacro(macros.protein)}g</div>
           <div className="text-xs text-muted-foreground">{percentages.protein}%</div>
         </div>
         
@@ -94,7 +95,7 @@ export function MacroSplitDisplay({
             <span className="text-xs text-muted-foreground">Carbs</span>
           </div>
           <div className={`text-lg font-bold ${carbWarning ? 'text-red-500' : 'text-foreground'}`}>
-            {macros.carbs}g
+            {formatMacro(macros.carbs)}g
           </div>
           <div className="text-xs text-muted-foreground">
             {percentages.carbs}%
@@ -111,7 +112,7 @@ export function MacroSplitDisplay({
             <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
             <span className="text-xs text-muted-foreground">Fat</span>
           </div>
-          <div className="text-lg font-bold text-foreground">{macros.fat}g</div>
+          <div className="text-lg font-bold text-foreground">{formatMacro(macros.fat)}g</div>
           <div className="text-xs text-muted-foreground">{percentages.fat}%</div>
         </div>
       </div>
