@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { useDeleteMeal, useUpdateMealPrivacy } from '@/hooks/useMeal';
 import { ShareButton } from '@/components/meal/ShareButton';
 import { PrivacyToggle } from '@/components/meal/PrivacyToggle';
+import { formatMacro } from '@/utils/formatMacro';
 
 interface Food {
   name: string;
@@ -242,7 +243,7 @@ export function MealDetailModal({ meal, isOpen, onClose, onDelete, onPrivacyChan
                         </div>
                         <div className="text-right ml-4">
                           <span className="text-lg font-semibold text-primary">
-                            {food.protein}g
+                            {formatMacro(food.protein)}g
                           </span>
                         </div>
                       </li>

@@ -1,5 +1,6 @@
 import React from 'react'
 import type { Meal } from '@/types/meal'
+import { formatMacro } from '@/utils/formatMacro'
 
 interface MealSummaryCardProps {
   meal: Meal
@@ -46,19 +47,19 @@ export function MealSummaryCard({ meal }: MealSummaryCardProps) {
               <div>
                 <p className="text-xs text-muted-foreground mb-1">Carbs</p>
                 <p className="text-lg md:text-xl font-semibold">
-                  {meal.analysis.macros.carbs}g
+                  {formatMacro(meal.analysis.macros.carbs)}g
                 </p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground mb-1">Fat</p>
                 <p className="text-lg md:text-xl font-semibold">
-                  {meal.analysis.macros.fat}g
+                  {formatMacro(meal.analysis.macros.fat)}g
                 </p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground mb-1">Protein</p>
                 <p className="text-lg md:text-xl font-semibold">
-                  {meal.analysis.macros.protein}g
+                  {formatMacro(meal.analysis.macros.protein)}g
                 </p>
               </div>
             </div>

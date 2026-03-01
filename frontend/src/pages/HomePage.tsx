@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/Skeleton'
 import { getRandomMessage, successMessages } from '@/utils/friendlyErrors'
 import { useAuth } from '@/contexts/AuthProvider'
 import { getRandomDemoMeal, demoMeals, DEFAULT_PROTEIN_GOAL, type DemoMeal } from '@/data/demoMeals'
+import { formatMacro } from '@/utils/formatMacro'
 
 interface FoodItem {
   name: string
@@ -275,7 +276,7 @@ export function HomePage() {
           <div className="flex justify-between items-start mb-4">
             <div>
               <span className="block text-sm opacity-85">This meal</span>
-              <span className="block text-4xl font-bold">{result.totalProtein}g</span>
+              <span className="block text-4xl font-bold">{formatMacro(result.totalProtein)}g</span>
               <span className="block text-sm opacity-85 mt-1">of protein</span>
             </div>
             <span className="text-5xl">💪</span>
@@ -336,7 +337,7 @@ export function HomePage() {
                 <div className="font-medium text-foreground">{food.name}</div>
                 <div className="text-xs text-muted-foreground">{food.portion}</div>
               </div>
-              <div className="text-lg font-bold text-primary">{food.protein}g</div>
+              <div className="text-lg font-bold text-primary">{formatMacro(food.protein)}g</div>
             </div>
           ))}
         </div>
@@ -369,7 +370,7 @@ export function HomePage() {
             <div className="bg-white dark:bg-secondary rounded-xl p-3 mb-4 border border-border">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <div className="text-xl font-bold text-foreground">{result.totalProtein}g</div>
+                  <div className="text-xl font-bold text-foreground">{formatMacro(result.totalProtein)}g</div>
                   <div className="text-xs text-muted-foreground">protein</div>
                   {result.totalCarbs !== undefined && (
                     <div className="text-xs text-muted-foreground mt-1">

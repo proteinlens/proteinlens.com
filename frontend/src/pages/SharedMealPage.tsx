@@ -12,6 +12,7 @@ import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
 import { Skeleton } from '../components/Skeleton';
 import { useAuth } from '../contexts/AuthProvider';
+import { formatMacro } from '../utils/formatMacro';
 
 interface FoodItem {
   name: string;
@@ -392,7 +393,7 @@ export function SharedMealPage() {
             {/* Calories Badge */}
             <div className="absolute top-4 left-4">
               <div className="px-3 py-1.5 rounded-full bg-primary/90 backdrop-blur-sm text-primary-foreground font-bold text-lg shadow-lg">
-                {mealData.totalCalories} cal
+                {Math.round(mealData.totalCalories)} cal
               </div>
             </div>
             {/* Confidence Badge */}
@@ -424,12 +425,12 @@ export function SharedMealPage() {
                         <div className="font-medium text-foreground">{food.name}</div>
                         <div className="text-sm text-muted-foreground">{food.portion}</div>
                       </div>
-                      <div className="font-semibold text-primary">{food.calories} cal</div>
+                      <div className="font-semibold text-primary">{formatMacro(food.calories)} cal</div>
                     </div>
                     <div className="flex gap-4 text-sm">
-                      <span className="text-muted-foreground">P: <span className="font-medium text-foreground">{food.protein}g</span></span>
-                      <span className="text-muted-foreground">C: <span className="font-medium text-foreground">{food.carbs}g</span></span>
-                      <span className="text-muted-foreground">F: <span className="font-medium text-foreground">{food.fat}g</span></span>
+                      <span className="text-muted-foreground">P: <span className="font-medium text-foreground">{formatMacro(food.protein)}g</span></span>
+                      <span className="text-muted-foreground">C: <span className="font-medium text-foreground">{formatMacro(food.carbs)}g</span></span>
+                      <span className="text-muted-foreground">F: <span className="font-medium text-foreground">{formatMacro(food.fat)}g</span></span>
                     </div>
                   </div>
                 ))}
@@ -439,20 +440,20 @@ export function SharedMealPage() {
             {/* Total Macros - Without "Total" Label */}
             <div className="p-6 bg-primary/10 rounded-xl border border-primary/20">
               <div className="text-center mb-4">
-                <span className="text-4xl font-bold text-primary">{mealData.totalCalories} cal</span>
+                <span className="text-4xl font-bold text-primary">{Math.round(mealData.totalCalories)} cal</span>
               </div>
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <div className="text-sm text-muted-foreground">Protein</div>
-                  <div className="text-2xl font-bold text-foreground">{mealData.totalProtein}g</div>
+                  <div className="text-2xl font-bold text-foreground">{formatMacro(mealData.totalProtein)}g</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Carbs</div>
-                  <div className="text-2xl font-bold text-foreground">{mealData.totalCarbs}g</div>
+                  <div className="text-2xl font-bold text-foreground">{formatMacro(mealData.totalCarbs)}g</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Fat</div>
-                  <div className="text-2xl font-bold text-foreground">{mealData.totalFat}g</div>
+                  <div className="text-2xl font-bold text-foreground">{formatMacro(mealData.totalFat)}g</div>
                 </div>
               </div>
             </div>
