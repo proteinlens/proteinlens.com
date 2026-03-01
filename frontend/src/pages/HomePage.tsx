@@ -186,7 +186,15 @@ export function HomePage() {
       if (analysisResponse.shareUrl && analysisResponse.shareUrl !== 'null' && !analysisResponse.shareUrl.includes('/null')) {
         // Wait a moment for state to settle, then navigate
         setTimeout(() => {
-          navigate(analysisResponse.shareUrl!)
+          // Extract path from shareUrl — API may return full URL or relative path
+          let sharePath = analysisResponse.shareUrl!
+          try {
+            const url = new URL(sharePath)
+            sharePath = url.pathname
+          } catch {
+            // Already a relative path, use as-is
+          }
+          navigate(sharePath)
         }, 500)
       }
     } catch (err) {
