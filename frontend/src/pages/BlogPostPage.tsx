@@ -33,6 +33,9 @@ import MacroTrackingBusyPeople from '@/content/blog/posts/macro-tracking-busy-pe
 import ProteinLensVsMyFitnessPal from '@/content/blog/posts/proteinlens-vs-myfitnesspal';
 import ProteinLensVsCronometer from '@/content/blog/posts/proteinlens-vs-cronometer';
 import ProteinLensVsLoseIt from '@/content/blog/posts/proteinlens-vs-lose-it';
+import BestMacroTrackingApps2026 from '@/content/blog/posts/best-macro-tracking-apps-2026';
+import HowAiFoodScanningWorks from '@/content/blog/posts/how-ai-food-scanning-works';
+import WhyYouQuitMacroTracking from '@/content/blog/posts/why-you-quit-macro-tracking';
 
 // Map slugs to content components
 const postContentMap: Record<string, React.ComponentType> = {
@@ -57,6 +60,9 @@ const postContentMap: Record<string, React.ComponentType> = {
   'proteinlens-vs-myfitnesspal': ProteinLensVsMyFitnessPal,
   'proteinlens-vs-cronometer': ProteinLensVsCronometer,
   'proteinlens-vs-lose-it': ProteinLensVsLoseIt,
+  'best-macro-tracking-apps-2026': BestMacroTrackingApps2026,
+  'how-ai-food-scanning-works': HowAiFoodScanningWorks,
+  'why-you-quit-macro-tracking': WhyYouQuitMacroTracking,
 };
 
 export default function BlogPostPage() {
