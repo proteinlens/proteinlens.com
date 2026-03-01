@@ -243,6 +243,37 @@ export const blogPosts: BlogPost[] = [
     updatedAt: '2026-02-27',
     readingTime: 8,
   },
+  {
+    slug: 'best-macro-tracking-apps-2026',
+    title: 'Best Macro Tracking Apps 2026 — Top 7 Compared',
+    description: 'We tested the 7 best macro tracking apps of 2026 — from AI photo scanning to barcode trackers. Find out which fits your goals and lifestyle.',
+    keywords: 'best macro tracking app 2026, best nutrition tracker, macro counting app comparison, top food tracking apps, calorie counter app review',
+    category: 'ai-tracking',
+    publishedAt: '2026-03-01',
+    updatedAt: '2026-03-01',
+    readingTime: 10,
+    featured: true,
+  },
+  {
+    slug: 'how-ai-food-scanning-works',
+    title: 'How AI Food Scanning Actually Works — The Tech Behind ProteinLens',
+    description: 'Curious how AI identifies food from a photo and estimates macros? We break down the image recognition, portion estimation, and nutritional mapping behind it.',
+    keywords: 'how AI food scanning works, AI nutrition tracker technology, food image recognition, AI macro estimation, photo food tracking explained',
+    category: 'ai-tracking',
+    publishedAt: '2026-03-01',
+    updatedAt: '2026-03-01',
+    readingTime: 7,
+  },
+  {
+    slug: 'why-you-quit-macro-tracking',
+    title: 'Why You Keep Quitting Macro Tracking (And How to Fix It)',
+    description: 'Most people abandon macro tracking within a week. Here are the 6 real reasons why — and practical fixes that actually make tracking stick.',
+    keywords: 'why I quit macro tracking, macro tracking too hard, how to stick with macro tracking, food tracking motivation, easiest way to track macros',
+    category: 'macro-basics',
+    publishedAt: '2026-03-01',
+    updatedAt: '2026-03-01',
+    readingTime: 8,
+  },
 ];
 
 // Helper functions

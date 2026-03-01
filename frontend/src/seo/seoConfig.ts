@@ -326,6 +326,9 @@ export const PUBLIC_ROUTES = [
   '/blog/proteinlens-vs-myfitnesspal',
   '/blog/proteinlens-vs-cronometer',
   '/blog/proteinlens-vs-lose-it',
+  '/blog/best-macro-tracking-apps-2026',
+  '/blog/how-ai-food-scanning-works',
+  '/blog/why-you-quit-macro-tracking',
   '/404',
 ];
 
