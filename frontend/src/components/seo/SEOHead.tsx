@@ -27,7 +27,7 @@ export interface SEOHeadProps {
 const BASE_URL = 'https://www.proteinlens.com';
 const DEFAULT_OG_IMAGE = `${BASE_URL}/og-image.svg`;
 const SITE_NAME = 'ProteinLens';
-const BRAND_SUFFIX = ' | ProteinLens - AI Macro Nutrition Tracker';
+const BRAND_SUFFIX = ' | ProteinLens';
 
 export const SEOHead: React.FC<SEOHeadProps> = ({
   title,
@@ -41,7 +41,7 @@ export const SEOHead: React.FC<SEOHeadProps> = ({
   article,
 }) => {
   const fullTitle = title.includes('ProteinLens') ? title : `${title}${BRAND_SUFFIX}`;
-  const canonicalUrl = canonical || (typeof window !== 'undefined' ? window.location.href : BASE_URL);
+  const canonicalUrl = canonical || (typeof window !== 'undefined' ? `${BASE_URL}${window.location.pathname}` : BASE_URL);
   
   return (
     <Helmet>

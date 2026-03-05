@@ -103,8 +103,8 @@ const tdeeCalculatorFAQs = [
 // SEO data for all public routes
 const seoData: Record<string, PageSEO> = {
   '/': {
-    title: 'ProteinLens - AI Macro Nutrition Tracker | Protein, Carbs & Fat Analysis',
-    description: 'Upload food photos for instant AI-powered macronutrient analysis. Track protein, carbs, and fat with calorie breakdowns. Free nutrition tracker with shareable meal insights.',
+    title: 'ProteinLens — AI Macro Tracker | Snap & Track',
+    description: 'Snap a photo, get instant macro breakdowns. Track protein, carbs, fat and calories with AI. Free nutrition tracker.',
     canonical: BASE_URL,
     keywords: 'macro tracker, protein tracker, AI food scanner, nutrition app, calorie counter, macronutrient calculator',
     jsonLd: [webApplicationSchema, organizationSchema],
