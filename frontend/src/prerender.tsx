@@ -60,10 +60,17 @@ function getBlogContent(slug: string): string {
       <p>${post.description}</p>
       ${keywordText}
       <p>Published ${post.publishedAt} · ${post.readingTime} min read</p>
-      <p>ProteinLens is an AI-powered macro nutrition tracker. Snap a photo of your meal and get instant breakdowns of protein, carbs, fat, and calories. No manual searching, no barcode scanning — just point, shoot, and track.</p>
-      <p>Whether you're tracking macros for weight loss, muscle gain, or general health, ProteinLens makes it fast and easy. Try it free at <a href="https://www.proteinlens.com">proteinlens.com</a>.</p>
+      <h2>About This Article</h2>
+      <p>This article covers essential strategies and practical advice related to ${keywords.slice(0, 3).join(', ')}. Whether you are a beginner starting your nutrition journey or an experienced tracker looking for better tools, this guide provides actionable insights you can apply today.</p>
+      <h2>Why Macro Tracking Matters</h2>
+      <p>Tracking macronutrients — protein, carbohydrates, and fat — gives you a clearer picture of your nutrition than counting calories alone. Understanding your macro balance helps you make smarter food choices, optimize body composition, and reach your fitness goals faster. Research consistently shows that adequate protein intake supports muscle recovery, satiety, and metabolic health.</p>
+      <h2>How ProteinLens Makes It Easier</h2>
+      <p>ProteinLens is an AI-powered macro nutrition tracker. Snap a photo of your meal and get instant breakdowns of protein, carbs, fat, and calories. No manual searching through databases, no barcode scanning required — just point your camera, take a photo, and get your macros in seconds. The AI analyzes portion sizes, identifies individual food items, and calculates nutritional values automatically.</p>
+      <p>Whether you're tracking macros for weight loss, muscle gain, or general health, ProteinLens makes the process fast and frictionless. Start tracking for free at <a href="https://www.proteinlens.com">proteinlens.com</a>. No credit card required.</p>
       ${relatedHtml}
-      <p>Category: ${post.category.replace(/-/g, ' ')} · <a href="/blog">Browse all articles</a> · <a href="/pricing">View pricing</a></p>
+      <nav>
+        <p>Category: ${post.category.replace(/-/g, ' ')} · <a href="/blog">Browse all articles</a> · <a href="/pricing">View pricing</a> · <a href="/features">Features</a> · <a href="/how-it-works">How it works</a></p>
+      </nav>
     </article>
   `;
 }
@@ -88,12 +95,19 @@ export async function prerender(data: PrerenderData): Promise<PrerenderResult> {
       <div>
         <h1>${pageTitle}</h1>
         <p>${seo.description}</p>
-        <p>ProteinLens is an AI-powered macro nutrition tracker. Upload a food photo and get instant protein, carbs, fat, and calorie breakdowns. Free to try — no account required for your first scans.</p>
+        <h2>AI-Powered Macro Tracking</h2>
+        <p>ProteinLens uses advanced artificial intelligence to analyze food photos and provide instant macronutrient breakdowns. Simply take a photo of your meal, and our AI identifies the foods on your plate, estimates portion sizes, and calculates protein, carbohydrates, fat, and total calories. No manual database searches, no barcode scanning — just snap and track.</p>
+        <h2>Why Choose ProteinLens</h2>
+        <p>Traditional nutrition trackers require tedious manual entry or barcode scanning. ProteinLens eliminates that friction with AI photo analysis. Whether you are eating at home, at a restaurant, or on the go, tracking your macros takes seconds. Our users consistently report spending less time logging meals and more time enjoying their food while staying on track with their nutrition goals.</p>
+        <p>ProteinLens offers free calculators for protein needs, macro splits, TDEE, and daily calories. Combined with our blog covering macro tracking tips, protein strategies, and weight management advice, you have everything you need to succeed. Start tracking for free — no credit card required.</p>
         <nav>
           <a href="/features">Features</a> ·
           <a href="/pricing">Pricing</a> ·
           <a href="/blog">Blog</a> ·
-          <a href="/how-it-works">How It Works</a>
+          <a href="/how-it-works">How It Works</a> ·
+          <a href="/protein-calculator">Protein Calculator</a> ·
+          <a href="/macro-calculator">Macro Calculator</a> ·
+          <a href="/tdee-calculator">TDEE Calculator</a>
         </nav>
       </div>
     `;

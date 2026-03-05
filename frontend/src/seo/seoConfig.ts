@@ -106,7 +106,7 @@ const seoData: Record<string, PageSEO> = {
   '/': {
     title: 'ProteinLens — AI Macro Tracker | Snap & Track',
     description: 'Snap a photo, get instant macro breakdowns. Track protein, carbs, fat and calories with AI-powered nutrition tracking. Free to try.',
-    canonical: BASE_URL,
+    canonical: `${BASE_URL}/`,
     keywords: 'macro tracker, protein tracker, AI food scanner, nutrition app, calorie counter, macronutrient calculator',
     jsonLd: [webApplicationSchema, organizationSchema],
   },
@@ -164,7 +164,7 @@ const seoData: Record<string, PageSEO> = {
   },
 
   '/privacy': {
-    title: `Privacy Policy${BRAND_SUFFIX}`,
+    title: `Privacy Policy — Data & Security${BRAND_SUFFIX}`,
     description: 'ProteinLens privacy policy. Learn how we protect your data, handle meal photos, and respect your privacy.',
     canonical: `${BASE_URL}/privacy`,
     noindex: false, // Privacy pages should be indexable for trust
@@ -194,7 +194,7 @@ const seoData: Record<string, PageSEO> = {
   },
 
   '/tdee-calculator': {
-    title: `TDEE Calculator - Total Daily Energy Expenditure${BRAND_SUFFIX}`,
+    title: `TDEE Calculator — Daily Energy${BRAND_SUFFIX}`,
     description: 'Calculate your TDEE (Total Daily Energy Expenditure) to find how many calories you burn per day. Free TDEE calculator with activity multipliers.',
     canonical: `${BASE_URL}/tdee-calculator`,
     keywords: 'TDEE calculator, total daily energy expenditure, how many calories do I burn, calorie calculator, BMR calculator',
@@ -238,7 +238,7 @@ const seoData: Record<string, PageSEO> = {
   },
 
   '/blog': {
-    title: `Nutrition Blog - Macro Tracking, Protein & Weight Loss Tips${BRAND_SUFFIX}`,
+    title: `Macro & Nutrition Blog${BRAND_SUFFIX}`,
     description: 'Expert nutrition advice on macro tracking, protein intake, TDEE, weight loss, and AI food tracking. Practical tips for better nutrition habits.',
     canonical: `${BASE_URL}/blog`,
     keywords: 'macro tracking blog, protein tips, nutrition advice, weight loss tips, TDEE guide, calorie tracking blog',
@@ -281,8 +281,11 @@ export function getSeoForUrl(url: string): PageSEO {
     const slug = path.split('/').pop() || '';
     const post = blogPosts.find(p => p.slug === slug);
     if (post) {
+      // Keep title ≤ 60 chars: use suffix only if it fits
+      const withSuffix = `${post.title}${BRAND_SUFFIX}`;
+      const title = withSuffix.length <= 60 ? withSuffix : post.title;
       return {
-        title: `${post.title}${BRAND_SUFFIX}`,
+        title,
         description: post.description,
         canonical: `${BASE_URL}${path}`,
         keywords: post.keywords,
