@@ -114,7 +114,7 @@ export default function BlogPostPage() {
   return (
     <>
       <SEOHead
-        title={`${post.title} | ProteinLens Blog`}
+        title={post.title}
         description={post.description}
         canonical={`https://www.proteinlens.com/blog/${post.slug}`}
         keywords={post.keywords}

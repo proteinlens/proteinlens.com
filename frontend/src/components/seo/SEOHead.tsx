@@ -40,7 +40,9 @@ export const SEOHead: React.FC<SEOHeadProps> = ({
   structuredData,
   article,
 }) => {
-  const fullTitle = title.includes('ProteinLens') ? title : `${title}${BRAND_SUFFIX}`;
+    // Keep title ≤ 60 chars: use suffix only if it fits
+  const withSuffix = `${title}${BRAND_SUFFIX}`;
+  const fullTitle = title.includes('ProteinLens') ? title : (withSuffix.length <= 60 ? withSuffix : title);
   const canonicalUrl = canonical || (typeof window !== 'undefined' ? `${BASE_URL}${window.location.pathname}` : BASE_URL);
   
   return (
