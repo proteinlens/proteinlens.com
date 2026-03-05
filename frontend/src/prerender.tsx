@@ -103,6 +103,7 @@ export async function prerender(data: PrerenderData): Promise<PrerenderResult> {
         <p>ProteinLens offers free calculators for protein needs, macro splits, TDEE, and daily calories. Combined with our blog covering macro tracking tips, protein strategies, and weight management advice, you have everything you need to succeed. Start tracking for free — no credit card required.</p>
         <h2>Built for Real Life</h2>
         <p>Most macro trackers fail because they demand too much effort. ProteinLens was designed for people who want results without obsession. The AI handles the hard work of food identification, portion estimation, and nutritional calculation. You just eat, snap, and stay informed. Whether your goal is weight loss, muscle gain, athletic performance, or simply understanding what you eat, ProteinLens adapts to your needs and keeps things simple.</p>
+        <p>Join thousands of users who have simplified their nutrition tracking. Available on web and mobile, ProteinLens works anywhere you eat. Get started in seconds with no sign-up required for your first scans.</p>
         <nav>
           <a href="/features">Features</a> ·
           <a href="/pricing">Pricing</a> ·
@@ -158,6 +159,43 @@ export async function prerender(data: PrerenderData): Promise<PrerenderResult> {
         },
       });
     });
+  }
+
+  // Add BlogPosting schema for blog posts
+  if (isBlogPost) {
+    const post = blogPosts.find(p => p.slug === slug);
+    if (post) {
+      const blogSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'BlogPosting',
+        headline: post.title,
+        description: post.description,
+        datePublished: post.publishedAt,
+        dateModified: post.publishedAt,
+        author: {
+          '@type': 'Organization',
+          name: 'ProteinLens',
+          url: 'https://www.proteinlens.com',
+        },
+        publisher: {
+          '@type': 'Organization',
+          name: 'ProteinLens',
+          url: 'https://www.proteinlens.com',
+        },
+        mainEntityOfPage: {
+          '@type': 'WebPage',
+          '@id': seo.canonical,
+        },
+        keywords: post.keywords,
+      };
+      headElements.add({
+        type: 'script',
+        props: {
+          type: 'application/ld+json',
+          children: JSON.stringify(blogSchema),
+        },
+      });
+    }
   }
 
   return {
