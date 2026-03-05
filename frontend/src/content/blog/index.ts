@@ -22,7 +22,7 @@ export const blogPosts: BlogPost[] = [
   // === AI + Photo Tracking (High Intent, Unique Angle) ===
   {
     slug: 'how-to-track-macros-from-photo',
-    title: 'How to Track Macros from a Photo (And What Accuracy to Expect)',
+    title: 'Track Macros from a Photo: Accuracy Guide',
     description: 'Learn how AI photo macro tracking works, what accuracy you can realistically expect, and tips for getting the best results from food photo analysis.',
     keywords: 'track macros from photo, AI macro tracking, food photo analysis, macro tracking app, photo nutrition tracker',
     category: 'ai-tracking',
@@ -33,7 +33,7 @@ export const blogPosts: BlogPost[] = [
   },
   {
     slug: 'photo-macro-tracking-vs-barcode-scanning',
-    title: 'Photo Macro Tracking vs Barcode Scanning: Which Is Faster and More Accurate?',
+    title: 'Photo vs Barcode Tracking: Speed & Accuracy',
     description: 'Compare AI photo macro tracking to barcode scanning. Discover which method is faster, more accurate, and better suited for different meal types.',
     keywords: 'photo macro tracking, barcode scanning, macro tracking comparison, food tracking methods, AI vs barcode',
     category: 'ai-tracking',
@@ -43,7 +43,7 @@ export const blogPosts: BlogPost[] = [
   },
   {
     slug: 'best-lighting-angles-food-photo-macros',
-    title: 'The Best Lighting and Angles for Accurate Food Photo Macro Estimates',
+    title: 'Best Lighting & Angles for Food Photo Macros',
     description: 'Get more accurate macro estimates from food photos with these simple lighting and angle tips. Improve your AI food tracking results instantly.',
     keywords: 'food photo tips, macro tracking accuracy, food photography for tracking, AI food scan tips, better food photos',
     category: 'ai-tracking',
@@ -53,7 +53,7 @@ export const blogPosts: BlogPost[] = [
   },
   {
     slug: 'estimate-portion-sizes-from-photos',
-    title: 'How to Estimate Portion Sizes from Photos (Simple Visual Tricks)',
+    title: 'Estimate Portion Sizes from Photos (Visual Tricks)',
     description: 'Master portion estimation with visual comparison tricks. Learn to estimate serving sizes accurately using everyday objects and hand measurements.',
     keywords: 'estimate portion sizes, visual portion guide, portion size photos, serving size estimation, portion control',
     category: 'ai-tracking',
@@ -73,7 +73,7 @@ export const blogPosts: BlogPost[] = [
   },
   {
     slug: 'track-restaurant-meals-unknown-ingredients',
-    title: 'How to Track Restaurant Meals When You Don\'t Know the Ingredients',
+    title: 'Track Restaurant Meals with Unknown Ingredients',
     description: 'Track macros at restaurants without stressing over hidden ingredients. Practical strategies for eating out while staying on track with your goals.',
     keywords: 'track restaurant meals, macros eating out, restaurant macro tracking, dining out macros, unknown ingredients tracking',
     category: 'ai-tracking',
@@ -85,7 +85,7 @@ export const blogPosts: BlogPost[] = [
   // === Protein Goals (High Search Volume) ===
   {
     slug: 'how-much-protein-per-day',
-    title: 'How Much Protein Do I Need Per Day? (Simple Calculator + Examples)',
+    title: 'How Much Protein Per Day? Calculator + Examples',
     description: 'Calculate your daily protein needs based on your weight, activity level, and goals. Includes practical examples and a free calculator.',
     keywords: 'how much protein per day, daily protein intake, protein calculator, protein requirements, protein needs',
     category: 'protein-goals',
@@ -106,7 +106,7 @@ export const blogPosts: BlogPost[] = [
   },
   {
     slug: 'protein-for-muscle-gain',
-    title: 'Protein Per Day for Muscle Gain: Practical Targets by Bodyweight',
+    title: 'Protein for Muscle Gain: Targets by Bodyweight',
     description: 'Find your optimal protein intake for building muscle. Science-backed recommendations with practical targets based on your bodyweight.',
     keywords: 'protein for muscle gain, protein bodybuilding, muscle building protein, protein bulking, how much protein muscle',
     category: 'protein-goals',
@@ -128,7 +128,7 @@ export const blogPosts: BlogPost[] = [
   // === Macro Basics (Beginner Traffic) ===
   {
     slug: 'what-are-macros',
-    title: 'What Are Macros? (Protein, Carbs, Fat Explained with Examples)',
+    title: 'What Are Macros? Protein, Carbs & Fat Explained',
     description: 'Learn what macros are and why they matter. Simple explanations of protein, carbohydrates, and fat with real food examples.',
     keywords: 'what are macros, macronutrients explained, protein carbs fat, macro basics, macros for beginners',
     category: 'macro-basics',
@@ -183,7 +183,7 @@ export const blogPosts: BlogPost[] = [
   // === Real-Life Tracking (High Conversion) ===
   {
     slug: 'track-macros-without-food-scale',
-    title: 'How to Track Macros with No Food Scale (And Still Be Consistent)',
+    title: 'Track Macros Without a Food Scale (Stay Consistent)',
     description: 'Track macros accurately without weighing everything. Learn practical estimation methods that keep you consistent without obsessing.',
     keywords: 'track macros without scale, no food scale macros, estimate portions, macro tracking without weighing',
     category: 'real-life-tracking',
@@ -203,7 +203,7 @@ export const blogPosts: BlogPost[] = [
   },
   {
     slug: 'macro-tracking-busy-people',
-    title: 'Macro Tracking for Busy People: The 80/20 Approach That Works',
+    title: 'Macro Tracking for Busy People: The 80/20 Way',
     description: 'Too busy to track every gram? Learn the 80/20 approach to macro tracking that gets results without taking over your life.',
     keywords: 'macro tracking busy, simple macro tracking, easy macro counting, 80/20 macro tracking, quick macro tracking',
     category: 'real-life-tracking',
@@ -214,7 +214,7 @@ export const blogPosts: BlogPost[] = [
   // === Comparison / Alternatives (High Intent, Bottom of Funnel) ===
   {
     slug: 'proteinlens-vs-myfitnesspal',
-    title: 'ProteinLens vs MyFitnessPal — Which Macro Tracker Is Better in 2026?',
+    title: 'ProteinLens vs MyFitnessPal — 2026 Comparison',
     description: 'Honest comparison of ProteinLens AI photo tracking vs MyFitnessPal manual entry. Features, accuracy, pricing, and who should use what.',
     keywords: 'proteinlens vs myfitnesspal, myfitnesspal alternative, best macro tracker 2026, AI food tracker vs myfitnesspal, photo macro tracker',
     category: 'ai-tracking',
@@ -235,7 +235,7 @@ export const blogPosts: BlogPost[] = [
   },
   {
     slug: 'proteinlens-vs-lose-it',
-    title: 'ProteinLens vs Lose It! — Which Food Tracker Is Right for You?',
+    title: 'ProteinLens vs Lose It! — Which Tracker Wins?',
     description: 'ProteinLens AI photo tracking vs Lose It! barcode scanning. Compare speed, accuracy, pricing, and which approach keeps you consistent.',
     keywords: 'proteinlens vs lose it, lose it alternative, best food tracker 2026, AI food tracker vs lose it, photo macro tracker',
     category: 'ai-tracking',
@@ -256,7 +256,7 @@ export const blogPosts: BlogPost[] = [
   },
   {
     slug: 'how-ai-food-scanning-works',
-    title: 'How AI Food Scanning Actually Works — The Tech Behind ProteinLens',
+    title: 'How AI Food Scanning Works — Behind ProteinLens',
     description: 'Curious how AI identifies food from a photo and estimates macros? We break down the image recognition, portion estimation, and nutritional mapping behind it.',
     keywords: 'how AI food scanning works, AI nutrition tracker technology, food image recognition, AI macro estimation, photo food tracking explained',
     category: 'ai-tracking',

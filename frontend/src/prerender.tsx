@@ -99,7 +99,10 @@ export async function prerender(data: PrerenderData): Promise<PrerenderResult> {
         <p>ProteinLens uses advanced artificial intelligence to analyze food photos and provide instant macronutrient breakdowns. Simply take a photo of your meal, and our AI identifies the foods on your plate, estimates portion sizes, and calculates protein, carbohydrates, fat, and total calories. No manual database searches, no barcode scanning — just snap and track.</p>
         <h2>Why Choose ProteinLens</h2>
         <p>Traditional nutrition trackers require tedious manual entry or barcode scanning. ProteinLens eliminates that friction with AI photo analysis. Whether you are eating at home, at a restaurant, or on the go, tracking your macros takes seconds. Our users consistently report spending less time logging meals and more time enjoying their food while staying on track with their nutrition goals.</p>
+        <h2>Free Tools & Resources</h2>
         <p>ProteinLens offers free calculators for protein needs, macro splits, TDEE, and daily calories. Combined with our blog covering macro tracking tips, protein strategies, and weight management advice, you have everything you need to succeed. Start tracking for free — no credit card required.</p>
+        <h2>Built for Real Life</h2>
+        <p>Most macro trackers fail because they demand too much effort. ProteinLens was designed for people who want results without obsession. The AI handles the hard work of food identification, portion estimation, and nutritional calculation. You just eat, snap, and stay informed. Whether your goal is weight loss, muscle gain, athletic performance, or simply understanding what you eat, ProteinLens adapts to your needs and keeps things simple.</p>
         <nav>
           <a href="/features">Features</a> ·
           <a href="/pricing">Pricing</a> ·
