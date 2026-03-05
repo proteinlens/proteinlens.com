@@ -42,8 +42,16 @@ function getBlogContent(slug: string): string {
     .filter(p => p.slug !== slug && p.category === post.category)
     .slice(0, 3);
 
-  const relatedHtml = relatedPosts.length > 0
-    ? `<section><h2>Related Articles</h2><ul>${relatedPosts.map(p =>
+  // If fewer than 3 same-category posts, fill with other categories
+  const fillPosts = relatedPosts.length < 3
+    ? blogPosts
+        .filter(p => p.slug !== slug && p.category !== post.category && !relatedPosts.includes(p))
+        .slice(0, 3 - relatedPosts.length)
+    : [];
+  const allRelated = [...relatedPosts, ...fillPosts];
+
+  const relatedHtml = allRelated.length > 0
+    ? `<section><h2>Related Articles</h2><ul>${allRelated.map(p =>
         `<li><a href="/blog/${p.slug}">${p.title}</a> — ${p.description}</li>`
       ).join('')}</ul></section>`
     : '';
@@ -109,10 +117,28 @@ export async function prerender(data: PrerenderData): Promise<PrerenderResult> {
           <a href="/pricing">Pricing</a> ·
           <a href="/blog">Blog</a> ·
           <a href="/how-it-works">How It Works</a> ·
+          <a href="/about">About</a> ·
+          <a href="/methodology">Methodology</a> ·
+          <a href="/guides">Guides</a> ·
           <a href="/protein-calculator">Protein Calculator</a> ·
           <a href="/macro-calculator">Macro Calculator</a> ·
-          <a href="/tdee-calculator">TDEE Calculator</a>
+          <a href="/tdee-calculator">TDEE Calculator</a> ·
+          <a href="/calorie-calculator">Calorie Calculator</a> ·
+          <a href="/privacy">Privacy Policy</a> ·
+          <a href="/terms">Terms of Service</a>
         </nav>
+        <section>
+          <h2>Popular Articles</h2>
+          <ul>
+            <li><a href="/blog/proteinlens-vs-myfitnesspal">ProteinLens vs MyFitnessPal</a></li>
+            <li><a href="/blog/how-ai-food-scanning-works">How AI Food Scanning Works</a></li>
+            <li><a href="/blog/best-macro-tracking-apps-2026">Best Macro Tracking Apps 2026</a></li>
+            <li><a href="/blog/common-ai-food-scan-mistakes">Common AI Food Scan Mistakes</a></li>
+            <li><a href="/blog/proteinlens-vs-cronometer">ProteinLens vs Cronometer</a></li>
+            <li><a href="/blog/proteinlens-vs-lose-it">ProteinLens vs Lose It</a></li>
+            <li><a href="/blog/track-restaurant-meals-unknown-ingredients">Track Restaurant Meals</a></li>
+          </ul>
+        </section>
       </div>
     `;
   }
