@@ -7,7 +7,8 @@
 
 const BASE_URL = 'https://www.proteinlens.com';
 const DEFAULT_OG_IMAGE = `${BASE_URL}/og-image.svg`;
-const BRAND_SUFFIX = ' | ProteinLens - AI Macro Nutrition Tracker';
+import { blogPosts } from '../content/blog/index';
+const BRAND_SUFFIX = ' | ProteinLens';
 
 export interface PageSEO {
   title: string;
@@ -104,7 +105,7 @@ const tdeeCalculatorFAQs = [
 const seoData: Record<string, PageSEO> = {
   '/': {
     title: 'ProteinLens — AI Macro Tracker | Snap & Track',
-    description: 'Snap a photo, get instant macro breakdowns. Track protein, carbs, fat and calories with AI. Free nutrition tracker.',
+    description: 'Snap a photo, get instant macro breakdowns. Track protein, carbs, fat and calories with AI-powered nutrition tracking. Free to try.',
     canonical: BASE_URL,
     keywords: 'macro tracker, protein tracker, AI food scanner, nutrition app, calorie counter, macronutrient calculator',
     jsonLd: [webApplicationSchema, organizationSchema],
@@ -127,7 +128,7 @@ const seoData: Record<string, PageSEO> = {
   },
 
   '/about': {
-    title: `About ProteinLens - AI Macro Nutrition Tracker`,
+    title: `About ProteinLens — AI Macro Tracker`,
     description: 'ProteinLens is an AI-powered nutrition tracking app that analyzes food photos to provide instant macro breakdowns. Track protein, carbs & fat the easy way.',
     canonical: `${BASE_URL}/about`,
     keywords: 'ProteinLens, AI nutrition tracker, food photo analyzer, macro tracking app, about ProteinLens',
@@ -276,13 +277,27 @@ export function getSeoForUrl(url: string): PageSEO {
   // Blog posts should be indexed even without explicit SEO entries
   const isBlogPost = path.startsWith('/blog/');
 
+  if (isBlogPost) {
+    const slug = path.split('/').pop() || '';
+    const post = blogPosts.find(p => p.slug === slug);
+    if (post) {
+      return {
+        title: `${post.title}${BRAND_SUFFIX}`,
+        description: post.description,
+        canonical: `${BASE_URL}${path}`,
+        keywords: post.keywords,
+        noindex: false,
+      };
+    }
+  }
+
   return {
     title: isBlogPost
       ? `${path.split('/').pop()?.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}${BRAND_SUFFIX}`
-      : `ProteinLens - AI Macro Nutrition Tracker`,
-    description: 'AI-powered nutrition tracking. Upload food photos for instant macro analysis.',
+      : `ProteinLens — AI Macro Tracker`,
+    description: 'Snap a photo, get instant macro breakdowns. Track protein, carbs, fat and calories with AI-powered nutrition tracking.',
     canonical: `${BASE_URL}${path}`,
-    noindex: !isBlogPost, // Blog posts should be indexed; unknown pages should not
+    noindex: !isBlogPost,
   };
 }
 
