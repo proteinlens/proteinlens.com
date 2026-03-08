@@ -145,6 +145,7 @@ const seoData: Record<string, PageSEO> = {
       '@type': 'Product',
       name: 'ProteinLens Pro',
       description: 'Unlimited AI-powered macro tracking with priority analysis',
+      image: `${BASE_URL}/og-image.svg`,
       offers: [
         {
           '@type': 'Offer',
