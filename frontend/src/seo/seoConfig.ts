@@ -166,14 +166,14 @@ const seoData: Record<string, PageSEO> = {
 
   '/privacy': {
     title: `Privacy Policy — Data & Security${BRAND_SUFFIX}`,
-    description: 'ProteinLens privacy policy. Learn how we protect your data, handle meal photos, and respect your privacy.',
+    description: 'ProteinLens privacy policy. Learn how we collect, protect, and handle your data, meal photos, and personal information with transparency.',
     canonical: `${BASE_URL}/privacy`,
     noindex: false, // Privacy pages should be indexable for trust
   },
 
   '/terms': {
     title: `Terms of Service${BRAND_SUFFIX}`,
-    description: 'ProteinLens terms of service. Usage terms, limitations, and legal information for our AI nutrition tracking service.',
+    description: 'ProteinLens terms of service. Read the usage terms, limitations, and legal information for our AI-powered nutrition tracking service.',
     canonical: `${BASE_URL}/terms`,
     noindex: false,
   },
@@ -212,7 +212,7 @@ const seoData: Record<string, PageSEO> = {
 
   '/guides': {
     title: `Nutrition Guides - Macro Tracking Tips${BRAND_SUFFIX}`,
-    description: 'Learn macro tracking, protein targets, meal planning, and nutrition fundamentals. Free guides from ProteinLens.',
+    description: 'Learn macro tracking, protein targets, meal planning, and nutrition fundamentals. Free step-by-step guides and tips from ProteinLens.',
     canonical: `${BASE_URL}/guides`,
     keywords: 'nutrition guides, macro tracking tips, protein guide, how to track macros, nutrition education',
     jsonLd: {
