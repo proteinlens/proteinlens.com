@@ -1,15 +1,25 @@
 /**
- * Blog Post Page Component
+ * Blog Post Page — XDA-style reading experience
  * 
- * Dynamic blog post renderer with SEO optimization.
- * Loads content based on slug from URL params.
+ * Features:
+ * - Reading progress bar
+ * - Hero header with author, date, reading time
+ * - Sticky sidebar table of contents (desktop) / collapsible (mobile)
+ * - Mid-article CTA promotion
+ * - Related articles cards
+ * - Back to top button
+ * - @tailwindcss/typography for proper prose styling
  */
 
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { SEOHead } from '@/components/seo/SEOHead';
 import { getBlogPostBySlug, categoryLabels, blogPosts } from '@/content/blog';
+import { ReadingProgressBar } from '@/components/blog/ReadingProgressBar';
+import { TableOfContents } from '@/components/blog/TableOfContents';
+import { MidArticleCTA } from '@/components/blog/MidArticleCTA';
+import { BackToTop } from '@/components/blog/BackToTop';
 
 // Import all blog post content components
 import HowToTrackMacrosFromPhoto from '@/content/blog/posts/how-to-track-macros-from-photo';
@@ -65,24 +75,64 @@ const postContentMap: Record<string, React.ComponentType> = {
   'why-you-quit-macro-tracking': WhyYouQuitMacroTracking,
 };
 
+/**
+ * Injects a mid-article CTA after the 3rd <h2> in the rendered content.
+ */
+function ContentWithCTA({ PostContent }: { PostContent: React.ComponentType }) {
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!wrapperRef.current) return;
+    const headings = wrapperRef.current.querySelectorAll(':scope > h2');
+    // Insert CTA after the 3rd h2 (or 2nd if fewer)
+    const targetIdx = headings.length >= 3 ? 2 : headings.length >= 2 ? 1 : -1;
+    if (targetIdx < 0) return;
+    const target = headings[targetIdx];
+    // Find the next sibling that isn't an h2 to insert after the section content
+    let insertBefore = target.nextElementSibling;
+    // Walk past paragraph/list content until next h2 or end
+    while (insertBefore && insertBefore.tagName !== 'H2') {
+      insertBefore = insertBefore.nextElementSibling;
+    }
+    // Check if we already injected
+    if (wrapperRef.current.querySelector('[data-mid-cta]')) return;
+    const ctaContainer = document.createElement('div');
+    ctaContainer.setAttribute('data-mid-cta', 'true');
+    wrapperRef.current.insertBefore(ctaContainer, insertBefore);
+    // Render React into it
+    import('react-dom/client').then(({ createRoot }) => {
+      createRoot(ctaContainer).render(<MidArticleCTA />);
+    });
+  }, []);
+
+  return (
+    <div ref={wrapperRef} className="blog-content">
+      <PostContent />
+    </div>
+  );
+}
+
 export default function BlogPostPage() {
   const { slug } = useParams<{ slug: string }>();
-  
+  const contentRef = useRef<HTMLDivElement>(null);
+
   if (!slug) {
     return <Navigate to="/blog" replace />;
   }
-  
+
   const post = getBlogPostBySlug(slug);
   const PostContent = postContentMap[slug];
-  
+
   if (!post || !PostContent) {
     return <Navigate to="/blog" replace />;
   }
 
-  // Get related posts (same category, excluding current)
-  const relatedPosts = blogPosts
-    .filter(p => p.category === post.category && p.slug !== post.slug)
-    .slice(0, 3);
+  // Related posts: same category first, then cross-category fill
+  const sameCat = blogPosts.filter(p => p.category === post.category && p.slug !== post.slug).slice(0, 3);
+  const fill = sameCat.length < 3
+    ? blogPosts.filter(p => p.category !== post.category && p.slug !== post.slug).slice(0, 3 - sameCat.length)
+    : [];
+  const relatedPosts = [...sameCat, ...fill];
 
   const structuredData = {
     '@context': 'https://schema.org',
@@ -111,6 +161,18 @@ export default function BlogPostPage() {
     },
   };
 
+  const publishDate = new Date(post.publishedAt).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
+  const updateDate = new Date(post.updatedAt).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
   return (
     <>
       <SEOHead
@@ -120,96 +182,162 @@ export default function BlogPostPage() {
         keywords={post.keywords}
         structuredData={structuredData}
       />
+      <ReadingProgressBar />
+      <BackToTop />
 
-      <article className="min-h-screen py-8 px-4">
-        <div className="max-w-3xl mx-auto">
-          {/* Breadcrumb */}
-          <nav className="mb-6 text-sm text-muted-foreground">
-            <Link to="/blog" className="hover:text-primary transition-colors">Blog</Link>
-            <span className="mx-2">›</span>
-            <span>{categoryLabels[post.category]}</span>
-          </nav>
+      <article className="min-h-screen">
+        {/* ── Hero Header ── */}
+        <header className="bg-gradient-to-b from-primary-50 to-background border-b border-border">
+          <div className="max-w-3xl mx-auto px-4 pt-10 pb-8">
+            {/* Breadcrumb */}
+            <nav className="mb-5 text-sm text-muted-foreground flex items-center gap-1.5">
+              <Link to="/" className="hover:text-primary transition-colors">Home</Link>
+              <span>›</span>
+              <Link to="/blog" className="hover:text-primary transition-colors">Blog</Link>
+              <span>›</span>
+              <span className="text-foreground/70">{categoryLabels[post.category]}</span>
+            </nav>
 
-          {/* Header */}
-          <motion.header
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <span className="px-3 py-1 bg-primary/10 text-primary text-sm font-medium rounded-full">
-                {categoryLabels[post.category]}
-              </span>
-              <span className="text-sm text-muted-foreground">{post.readingTime} min read</span>
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4 leading-tight">
+            {/* Category badge */}
+            <span className="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-semibold rounded-full uppercase tracking-wide mb-4">
+              {categoryLabels[post.category]}
+            </span>
+
+            {/* Title */}
+            <motion.h1
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-3xl sm:text-4xl lg:text-[2.75rem] font-extrabold text-foreground leading-tight mb-4"
+            >
               {post.title}
-            </h1>
-            <p className="text-lg text-muted-foreground">
+            </motion.h1>
+
+            {/* Subtitle / description */}
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="text-lg text-muted-foreground leading-relaxed mb-6 max-w-2xl"
+            >
               {post.description}
-            </p>
-            <div className="mt-4 text-sm text-muted-foreground">
-              Updated {new Date(post.updatedAt).toLocaleDateString('en-US', { 
-                month: 'long', 
-                day: 'numeric', 
-                year: 'numeric' 
-              })}
-            </div>
-          </motion.header>
+            </motion.p>
 
-          {/* Content */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="prose prose-invert prose-lg max-w-none"
-          >
-            <PostContent />
-          </motion.div>
-
-          {/* CTA Box */}
-          <div className="mt-12 bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 rounded-2xl p-6 text-center">
-            <h2 className="text-xl font-bold text-foreground mb-2">
-              Track macros the easy way
-            </h2>
-            <p className="text-muted-foreground mb-4">
-              Snap a photo of your meal, get instant macros. No manual logging, no barcode scanning.
-            </p>
-            <Link
-              to="/"
-              className="inline-block px-6 py-3 bg-gradient-to-r from-primary to-accent text-primary-foreground font-bold rounded-xl hover:opacity-90 transition-opacity"
-            >
-              📸 Try ProteinLens Free
-            </Link>
-          </div>
-
-          {/* Related Posts */}
-          {relatedPosts.length > 0 && (
-            <section className="mt-12">
-              <h2 className="text-xl font-bold text-foreground mb-4">Related Articles</h2>
-              <div className="grid gap-4">
-                {relatedPosts.map((relatedPost) => (
-                  <Link
-                    key={relatedPost.slug}
-                    to={`/blog/${relatedPost.slug}`}
-                    className="block bg-card border border-border rounded-xl p-4 hover:border-primary/50 transition-colors"
-                  >
-                    <h3 className="font-semibold text-foreground mb-1">{relatedPost.title}</h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2">{relatedPost.description}</p>
-                  </Link>
-                ))}
+            {/* Meta row: author · date · reading time */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-xs font-bold">
+                  PL
+                </div>
+                <span className="font-medium text-foreground">ProteinLens Team</span>
               </div>
-            </section>
-          )}
+              <span className="hidden sm:inline text-border">·</span>
+              <time dateTime={post.publishedAt}>Published {publishDate}</time>
+              {post.publishedAt !== post.updatedAt && (
+                <>
+                  <span className="hidden sm:inline text-border">·</span>
+                  <span>Updated {updateDate}</span>
+                </>
+              )}
+              <span className="hidden sm:inline text-border">·</span>
+              <span>{post.readingTime} min read</span>
+            </div>
+          </div>
+        </header>
 
-          {/* Back to Blog */}
-          <div className="mt-8 text-center">
-            <Link
-              to="/blog"
-              className="text-primary hover:underline"
-            >
-              ← Back to all articles
-            </Link>
+        {/* ── Body: TOC sidebar + Content ── */}
+        <div className="max-w-7xl mx-auto px-4 py-10">
+          <div className="xl:grid xl:grid-cols-[1fr_240px] xl:gap-12">
+            {/* Main content column */}
+            <div className="max-w-3xl">
+              {/* Mobile TOC */}
+              <TableOfContents contentRef={contentRef} />
+
+              {/* Article content with typography */}
+              <motion.div
+                ref={contentRef}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.15 }}
+                className="
+                  prose prose-lg prose-slate max-w-none
+                  prose-headings:font-bold prose-headings:text-foreground prose-headings:scroll-mt-20
+                  prose-h2:text-2xl prose-h2:mt-12 prose-h2:mb-4 prose-h2:pb-2 prose-h2:border-b prose-h2:border-border
+                  prose-h3:text-lg prose-h3:mt-6 prose-h3:mb-2 prose-h3:text-muted-foreground prose-h3:font-semibold prose-h3:italic
+                  prose-p:text-foreground/90 prose-p:leading-[1.8] prose-p:mb-5
+                  prose-li:text-foreground/90 prose-li:leading-[1.7]
+                  prose-strong:text-foreground prose-strong:font-semibold
+                  prose-a:text-primary prose-a:no-underline hover:prose-a:underline
+                  prose-ul:my-4 prose-ol:my-4
+                  prose-img:rounded-xl prose-img:shadow-md
+                  prose-blockquote:border-l-primary prose-blockquote:bg-primary-50/30 prose-blockquote:rounded-r-lg prose-blockquote:py-1
+                "
+              >
+                <ContentWithCTA PostContent={PostContent} />
+              </motion.div>
+
+              {/* ── Bottom CTA ── */}
+              <div className="mt-14 bg-gradient-to-r from-primary-50 to-background border border-primary/20 rounded-2xl p-8 text-center">
+                <h2 className="text-2xl font-bold text-foreground mb-2">
+                  Track macros the easy way
+                </h2>
+                <p className="text-muted-foreground mb-5 max-w-md mx-auto">
+                  Snap a photo of your meal and get instant protein, carbs, fat &amp; calorie breakdowns. No manual logging.
+                </p>
+                <Link
+                  to="/"
+                  className="inline-flex items-center gap-2 px-7 py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary-700 transition-colors shadow-sm"
+                >
+                  📸 Try ProteinLens Free
+                </Link>
+              </div>
+
+              {/* ── Related Articles ── */}
+              {relatedPosts.length > 0 && (
+                <section className="mt-14">
+                  <h2 className="text-xl font-bold text-foreground mb-6">Related Articles</h2>
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {relatedPosts.map((rp) => (
+                      <Link
+                        key={rp.slug}
+                        to={`/blog/${rp.slug}`}
+                        className="group block bg-card border border-border rounded-xl overflow-hidden hover:border-primary/50 hover:shadow-md transition-all"
+                      >
+                        {/* Color accent top bar */}
+                        <div className="h-1 bg-primary/30 group-hover:bg-primary transition-colors" />
+                        <div className="p-5">
+                          <span className="inline-block px-2 py-0.5 bg-muted text-muted-foreground text-xs font-medium rounded-full mb-3">
+                            {categoryLabels[rp.category]}
+                          </span>
+                          <h3 className="font-semibold text-foreground mb-2 leading-snug group-hover:text-primary transition-colors">
+                            {rp.title}
+                          </h3>
+                          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                            {rp.description}
+                          </p>
+                          <div className="text-xs text-muted-foreground flex items-center gap-2">
+                            <span>{rp.readingTime} min read</span>
+                            <span>·</span>
+                            <span>{new Date(rp.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* Back to Blog */}
+              <div className="mt-10 text-center">
+                <Link to="/blog" className="text-primary hover:underline font-medium">
+                  ← Back to all articles
+                </Link>
+              </div>
+            </div>
+
+            {/* Desktop TOC sidebar */}
+            <aside className="hidden xl:block">
+              <TableOfContents contentRef={contentRef} />
+            </aside>
           </div>
         </div>
       </article>
