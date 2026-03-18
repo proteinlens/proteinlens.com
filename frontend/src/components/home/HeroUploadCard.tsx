@@ -1,7 +1,7 @@
 import React from 'react'
-import { cn } from '@/utils/cn'
 import { Button } from '@/components/ui/Button'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
+import { Camera, Cpu, Zap, Shield, Dumbbell } from 'lucide-react'
 
 interface HeroUploadCardProps {
   onUploadClick: () => void
@@ -9,96 +9,75 @@ interface HeroUploadCardProps {
 }
 
 export function HeroUploadCard({ onUploadClick, isLoading = false }: HeroUploadCardProps) {
+  const shouldReduceMotion = useReducedMotion()
+
+  // Respect prefers-reduced-motion: skip animations entirely
+  const anim = (delay = 0) =>
+    shouldReduceMotion
+      ? {}
+      : { initial: { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.45, delay } }
+
   return (
     <div className="w-full max-w-3xl mx-auto px-4 py-8 md:py-16">
-      {/* Hero Section with Gradient Background */}
-      <motion.div 
-        className="text-center mb-8 md:mb-12"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-      >
-        {/* Animated Logo */}
-        <motion.div 
-          className="inline-flex items-center justify-center w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-primary to-accent shadow-lg shadow-primary/30 mb-6"
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
-        >
-          <span className="text-4xl md:text-5xl">🍽️</span>
-        </motion.div>
-        
-        <motion.h1 
-          className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
+      {/* Hero Section */}
+      <motion.div className="text-center mb-8 md:mb-12" {...anim(0)}>
+        {/* Logo — SVG icon, not emoji */}
+        <div className="inline-flex items-center justify-center w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-primary to-accent shadow-lg shadow-primary/30 mb-6">
+          <Camera className="w-10 h-10 md:w-12 md:h-12 text-white" strokeWidth={1.8} />
+        </div>
+
+        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
           Know Your Protein
-        </motion.h1>
-        
-        <motion.p 
-          className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-xl mx-auto"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-        >
+        </h1>
+
+        <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-xl mx-auto">
           Snap a photo. Get instant protein insights powered by AI.
-        </motion.p>
-        
-        {/* Trust Elements with Icons */}
-        <motion.div 
-          className="flex flex-wrap justify-center gap-4 md:gap-6 mb-8"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-        >
+        </p>
+
+        {/* Trust Elements — SVG icons, not emojis */}
+        <div className="flex flex-wrap justify-center gap-4 md:gap-6 mb-8">
           <div className="flex items-center gap-2 bg-secondary/50 px-4 py-2 rounded-full">
-            <span className="text-xl">🤖</span>
+            <Cpu className="w-5 h-5 text-primary" />
             <span className="text-sm font-medium">AI-powered</span>
           </div>
           <div className="flex items-center gap-2 bg-secondary/50 px-4 py-2 rounded-full">
-            <span className="text-xl">⚡</span>
+            <Zap className="w-5 h-5 text-primary" />
             <span className="text-sm font-medium">Instant results</span>
           </div>
           <div className="flex items-center gap-2 bg-secondary/50 px-4 py-2 rounded-full">
-            <span className="text-xl">🔒</span>
+            <Shield className="w-5 h-5 text-primary" />
             <span className="text-sm font-medium">Privacy first</span>
           </div>
-        </motion.div>
+        </div>
       </motion.div>
 
-      {/* Example Results Preview Card */}
-      <motion.div 
+      {/* Example Results Preview Card — single entrance animation */}
+      <motion.div
         className="bg-gradient-to-br from-card to-secondary/30 border-2 border-border rounded-2xl p-6 md:p-8 mb-8 shadow-xl shadow-primary/10"
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
+        {...anim(0.15)}
       >
         <div className="flex items-center gap-2 mb-6">
-          <span className="text-2xl">✨</span>
+          <Zap className="w-6 h-6 text-primary" />
           <h2 className="text-lg font-semibold text-foreground">
             What you'll see
           </h2>
         </div>
-        
+
         <div className="space-y-4">
-          {/* Mock Result Cards */}
+          {/* Result Cards — no individual stagger animations */}
           {[
-            { name: 'Grilled Chicken Breast', portion: '100g portion', protein: '31g', confidence: 94, emoji: '🍗' },
-            { name: 'Brown Rice', portion: '1 cup cooked', protein: '5g', confidence: 87, emoji: '🍚' },
-            { name: 'Steamed Broccoli', portion: '1 cup', protein: '3g', confidence: 91, emoji: '🥦' },
-          ].map((item, index) => (
-            <motion.div 
+            { name: 'Grilled Chicken Breast', portion: '100g portion', protein: '31g', confidence: 94, icon: '🍗' },
+            { name: 'Brown Rice', portion: '1 cup cooked', protein: '5g', confidence: 87, icon: '🍚' },
+            { name: 'Steamed Broccoli', portion: '1 cup', protein: '3g', confidence: 91, icon: '🥦' },
+          ].map((item) => (
+            <div
               key={item.name}
-              className="bg-background rounded-xl border border-border/50 p-4 hover:shadow-md transition-shadow"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.7 + index * 0.1 }}
+              className="bg-background rounded-xl border border-border/50 p-4 hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-default"
             >
               <div className="flex justify-between items-start">
                 <div className="flex items-start gap-3">
-                  <span className="text-2xl">{item.emoji}</span>
+                  {/* Food emojis are decorative (content), not functional icons — acceptable */}
+                  <span className="text-2xl" role="img" aria-hidden="true">{item.icon}</span>
                   <div>
                     <h3 className="font-semibold text-foreground">{item.name}</h3>
                     <p className="text-sm text-muted-foreground">{item.portion}</p>
@@ -109,41 +88,32 @@ export function HeroUploadCard({ onUploadClick, isLoading = false }: HeroUploadC
                   <p className="text-xs text-muted-foreground">{item.confidence}% confidence</p>
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
 
           {/* Total */}
-          <motion.div 
-            className="flex items-center justify-between pt-4 border-t-2 border-primary/20"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1 }}
-          >
+          <div className="flex items-center justify-between pt-4 border-t-2 border-primary/20">
             <div className="flex items-center gap-2">
-              <span className="text-2xl">💪</span>
+              <Dumbbell className="w-6 h-6 text-primary" />
               <span className="text-lg font-semibold text-foreground">Total Protein</span>
             </div>
             <span className="text-3xl font-bold text-primary">39g</span>
-          </motion.div>
+          </div>
         </div>
       </motion.div>
 
       {/* Primary CTA */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.1 }}
-      >
+      <motion.div {...anim(0.25)}>
         <Button
           onClick={onUploadClick}
           disabled={isLoading}
           variant="primary"
           size="lg"
-          className="w-full min-h-[56px] text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 bg-gradient-to-r from-primary to-accent hover:from-accent hover:to-primary"
+          className="w-full min-h-[56px] text-lg font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 active:scale-[0.98] transition-all duration-200 bg-gradient-to-r from-primary to-accent hover:from-accent hover:to-primary cursor-pointer"
         >
           {isLoading ? (
             <span className="flex items-center gap-2">
-              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+              <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
@@ -151,7 +121,8 @@ export function HeroUploadCard({ onUploadClick, isLoading = false }: HeroUploadC
             </span>
           ) : (
             <span className="flex items-center gap-2">
-              📸 Upload Meal Photo
+              <Camera className="w-5 h-5" />
+              Upload Meal Photo
             </span>
           )}
         </Button>
@@ -164,13 +135,11 @@ export function HeroUploadCard({ onUploadClick, isLoading = false }: HeroUploadC
           <span>✓ No login required</span>
         </p>
       </motion.div>
-      
+
       {/* Stats Section */}
-      <motion.div 
+      <motion.div
         className="grid grid-cols-3 gap-4 mt-12 pt-8 border-t border-border"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.3 }}
+        {...anim(0.35)}
       >
         <div className="text-center">
           <p className="text-2xl md:text-3xl font-bold text-primary">10K+</p>

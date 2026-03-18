@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { HeroUploadCard } from '@/components/home/HeroUploadCard'
 import { UploadDropzone } from '@/components/upload/UploadDropzone'
 import { ImagePreview } from '@/components/upload/ImagePreview'
@@ -20,9 +20,10 @@ export function Home() {
   const [uploadError, setUploadError] = useState<string | null>(null)
   const { goal } = useGoal()
   const gap = useProteinGap({ userId: 'mock-user', dailyGoalGrams: goal })
+  const shouldReduceMotion = useReducedMotion()
   
-  const pageVariants = getPageVariants()
-  const pageTransition = getPageTransition()
+  const pageVariants = shouldReduceMotion ? {} : getPageVariants()
+  const pageTransition = shouldReduceMotion ? { duration: 0 } : getPageTransition()
 
   // Handle file selection (upload or replace)
   const handleFileSelected = async (file: File) => {

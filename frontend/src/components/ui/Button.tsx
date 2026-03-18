@@ -30,7 +30,7 @@ export function Button({
   }
   
   const sizeStyles = {
-    sm: 'h-9 px-4 text-sm',
+    sm: 'h-11 px-4 text-sm',      // min 44px touch target
     md: 'h-11 px-6 text-base',
     lg: 'h-12 px-8 text-lg'
   }

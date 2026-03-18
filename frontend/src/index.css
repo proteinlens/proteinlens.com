@@ -181,3 +181,43 @@ html {
   scroll-behavior: smooth;
 }
 
+/* ── UX Pro Max: Global Interaction Improvements ── */
+
+/* cursor-pointer on all interactive elements */
+button, [role="button"], a, select, summary, [tabindex]:not([tabindex="-1"]) {
+  cursor: pointer;
+}
+
+/* Active press feedback for buttons */
+button:active:not(:disabled), [role="button"]:active {
+  transform: scale(0.97);
+}
+
+/* Smooth transitions on all interactive elements */
+button, a, input, select, textarea {
+  transition-property: color, background-color, border-color, box-shadow, transform, opacity;
+  transition-duration: 200ms;
+  transition-timing-function: ease-out;
+}
+
+/* Respect prefers-reduced-motion globally */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Visible focus rings for keyboard navigation */
+:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+/* Remove default outline only when using mouse */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+

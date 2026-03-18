@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { SEOHead, generateOrganizationSchema, generateWebApplicationSchema } from '@/components/seo/SEOHead'
 import { apiClient } from '@/services/apiClient'
 import { FriendlyError } from '@/components/ui/FriendlyError'
+import { Camera, Cpu, Flame, Zap, BarChart3, Lock, Brain, Search, Shuffle, Sparkles, CameraIcon } from 'lucide-react'
 import { FunLoading } from '@/components/ui/FunLoading'
 import { Skeleton } from '@/components/Skeleton'
 import { getRandomMessage, successMessages } from '@/utils/friendlyErrors'
@@ -494,7 +495,7 @@ export function HomePage() {
           <span className="text-primary">Get protein estimate.</span>
         </h1>
         <div className="flex items-center justify-center gap-2 mb-3">
-          <span className="text-yellow-500">⚡</span>
+          <Zap className="w-5 h-5 text-yellow-500" />
           <span className="text-lg font-medium text-slate-700">No logging, no guessing.</span>
         </div>
         <p className="text-base text-slate-500 max-w-md mx-auto bg-slate-50 border border-slate-200 py-2 px-4 rounded-full inline-block">
@@ -506,21 +507,21 @@ export function HomePage() {
       <div className="flex justify-center items-center gap-2 md:gap-4 mb-8 text-sm">
         <div className="flex flex-col items-center">
           <div className="w-14 h-14 bg-white border border-slate-200 shadow-sm rounded-2xl flex items-center justify-center mb-2">
-            <span className="text-2xl">📸</span>
+            <Camera className="w-7 h-7 text-primary" />
           </div>
           <span className="text-slate-600 font-medium">Snap Photo</span>
         </div>
         <span className="text-primary text-2xl font-bold">→</span>
         <div className="flex flex-col items-center">
           <div className="w-14 h-14 bg-white border border-slate-200 shadow-sm rounded-2xl flex items-center justify-center mb-2">
-            <span className="text-2xl">🤖</span>
+            <Cpu className="w-7 h-7 text-primary" />
           </div>
           <span className="text-slate-600 font-medium">AI Analyzes</span>
         </div>
         <span className="text-primary text-2xl font-bold">→</span>
         <div className="flex flex-col items-center">
           <div className="w-14 h-14 bg-white border border-slate-200 shadow-sm rounded-2xl flex items-center justify-center mb-2">
-            <span className="text-2xl">🔥</span>
+            <Flame className="w-7 h-7 text-primary" />
           </div>
           <span className="text-slate-600 font-medium">Track Progress</span>
         </div>
@@ -542,14 +543,15 @@ export function HomePage() {
           
           {/* Capture tips */}
           <div className="bg-primary/5 border border-primary/20 rounded-xl p-3 mb-4 text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">📷 For best results:</span> Good lighting • Plate centered • All food visible
+            <span className="font-medium text-foreground">For best results:</span> Good lighting • Plate centered • All food visible
           </div>
           
           <button 
             onClick={() => handleAnalyze()} 
             className="w-full py-4 px-8 bg-gradient-to-r from-primary to-accent text-primary-foreground border-none rounded-xl text-lg font-semibold cursor-pointer shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:scale-[1.02] transition-all"
           >
-            🔍 Analyze Protein Content
+            <Search className="w-5 h-5 inline mr-1" />
+            Analyze Protein Content
           </button>
         </div>
       ) : (
@@ -576,7 +578,7 @@ export function HomePage() {
                 <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M12 12V4m0 0L8 8m4-4l4 4" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-slate-800 mb-1">📸 Scan a Meal</h3>
+            <h3 className="text-xl font-semibold text-slate-800 mb-1">Scan a Meal</h3>
             <p className="text-slate-500">Drag & drop or click to upload</p>
             <p className="text-xs text-slate-400 mt-2">JPG, PNG, or WebP (Max 10MB)</p>
           </div>
@@ -610,12 +612,13 @@ export function HomePage() {
             onClick={handleDemoScan}
             className="text-slate-600 hover:text-primary text-sm font-medium mb-6 flex items-center gap-1.5 mx-auto transition-colors"
           >
-            🔀 Random Example
+            <Shuffle className="w-4 h-4 inline mr-1" />
+            Random Example
           </button>
 
           {/* No account needed message */}
-          <p className="text-sm text-primary font-medium bg-emerald-50 border border-emerald-200 py-2.5 px-5 rounded-full inline-block mb-4">
-            ✨ No account needed for your first scan
+          <p className="text-sm text-primary font-medium bg-emerald-50 border border-emerald-200 py-2.5 px-5 rounded-full inline-flex items-center gap-1.5 mb-4">
+            <Sparkles className="w-4 h-4" /> No account needed for your first scan
           </p>
         </>
       )}
@@ -629,20 +632,20 @@ export function HomePage() {
         />
       )}
       
-      <p className="text-xs text-slate-400 mt-6">
-        🔒 Privacy first • Photos processed securely • Results are estimates
+      <p className="text-xs text-slate-400 mt-6 flex items-center justify-center gap-1">
+        <Lock className="w-3 h-3" /> Privacy first • Photos processed securely • Results are estimates
       </p>
 
       {/* Feature cards row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-8 mb-4">
         {[
-          { icon: '🧠', title: 'AI-Powered', desc: 'Smart Analysis' },
-          { icon: '⚡', title: 'Instant Results', desc: 'Protein + Calories' },
-          { icon: '📊', title: 'Track Progress', desc: 'Daily Insights' },
-          { icon: '🔒', title: 'Private & Secure', desc: 'Photos Deleted' },
+          { icon: Brain, title: 'AI-Powered', desc: 'Smart Analysis' },
+          { icon: Zap, title: 'Instant Results', desc: 'Protein + Calories' },
+          { icon: BarChart3, title: 'Track Progress', desc: 'Daily Insights' },
+          { icon: Lock, title: 'Private & Secure', desc: 'Photos Deleted' },
         ].map((f) => (
           <div key={f.title} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm text-center">
-            <span className="text-2xl">{f.icon}</span>
+            <f.icon className="w-7 h-7 text-primary mx-auto" />
             <p className="text-sm font-bold text-slate-800 mt-1">{f.title}</p>
             <p className="text-xs text-slate-500">{f.desc}</p>
           </div>
