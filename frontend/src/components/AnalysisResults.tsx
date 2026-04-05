@@ -109,7 +109,7 @@ export const AnalysisResults: React.FC<AnalysisResultsProps> = ({
       {/* Image thumbnail */}
       {imageUrl && (
         <div className="result-image">
-          <img src={imageUrl} alt="Analyzed meal" />
+          <img src={imageUrl} alt="Analyzed meal" loading="lazy" decoding="async" />
         </div>
       )}
 

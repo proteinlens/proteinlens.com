@@ -418,7 +418,7 @@ export const MealUpload: React.FC = () => {
       {/* Image preview */}
       {previewUrl && (
         <div className="preview-section">
-          <img src={previewUrl} alt="Meal preview" className="preview-image" />
+          <img src={previewUrl} alt="Meal preview" className="preview-image" loading="lazy" decoding="async" />
           <p className="file-info">
             {selectedFile?.name} ({(selectedFile!.size / 1024).toFixed(0)} KB)
           </p>
