@@ -271,7 +271,7 @@ export function HomePage() {
         </h1>
         
         {/* Meal image */}
-        {previewUrl && <img src={previewUrl} alt="Meal" className="w-full h-48 object-cover rounded-2xl mb-5" />}
+        {previewUrl && <img src={previewUrl} alt="Meal" className="w-full h-48 object-cover rounded-2xl mb-5" loading="lazy" decoding="async" />}
         
         {/* Progress toward goal - THE KEY "AHA" MOMENT */}
         <div className="bg-gradient-to-br from-primary to-accent text-white p-6 rounded-2xl mb-5">
@@ -532,7 +532,7 @@ export function HomePage() {
       {uploadState === 'selected' && previewUrl ? (
         <div className="mb-6">
           <div className="relative rounded-2xl overflow-hidden mb-3">
-            <img src={previewUrl} alt="Selected" className="w-full h-72 object-cover" />
+            <img src={previewUrl} alt="Selected" className="w-full h-72 object-cover" loading="eager" decoding="async" />
             <button 
               onClick={handleReset} 
               className="absolute top-3 right-3 w-9 h-9 bg-black/50 text-white border-none rounded-full text-lg cursor-pointer hover:bg-black/70 transition-colors"
@@ -598,6 +598,8 @@ export function HomePage() {
                     src={meal.imageUrl} 
                     alt={meal.name}
                     className="w-full h-20 object-cover"
+                    loading="lazy"
+                    decoding="async"
                   />
                   <div className="p-2">
                     <p className="text-xs text-slate-700 font-medium truncate">{meal.name}</p>
