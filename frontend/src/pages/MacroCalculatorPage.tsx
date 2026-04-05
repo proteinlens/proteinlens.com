@@ -9,6 +9,7 @@ import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { SEOHead, generateFAQSchema, generateWebApplicationSchema } from '@/components/seo/SEOHead';
+import { EmojiIcon } from '@/components/ui/EmojiIcon';
 
 type Goal = 'lose' | 'maintain' | 'gain';
 type Split = 'balanced' | 'lowCarb' | 'highProtein' | 'keto';
@@ -107,7 +108,7 @@ export default function MacroCalculatorPage() {
             className="text-center mb-8"
           >
             <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-2xl bg-primary/10">
-              <span className="text-3xl">🧮</span>
+              <EmojiIcon emoji="🧮" className="w-8 h-8 text-primary" />
             </div>
             <h1 className="text-3xl font-bold text-foreground">Macro Calculator</h1>
             <p className="text-muted-foreground mt-2">
@@ -213,7 +214,7 @@ export default function MacroCalculatorPage() {
           {/* Info Section */}
           <div className="space-y-4 mb-8">
             <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
-              <span className="text-lg">💡</span>
+              <EmojiIcon emoji="💡" className="w-5 h-5 text-primary" />
               <div>
                 <p className="font-medium text-foreground mb-1">About macro ratios</p>
                 <p className="text-sm text-muted-foreground">
@@ -243,7 +244,7 @@ export default function MacroCalculatorPage() {
               to="/protein-calculator"
               className="bg-card border border-border rounded-xl p-4 hover:border-primary/30 transition-colors"
             >
-              <span className="text-2xl">🎯</span>
+              <EmojiIcon emoji="🎯" className="w-6 h-6 text-primary" />
               <p className="font-medium text-foreground mt-2">Protein Calculator</p>
               <p className="text-xs text-muted-foreground">Daily protein needs</p>
             </Link>
@@ -251,7 +252,7 @@ export default function MacroCalculatorPage() {
               to="/tdee-calculator"
               className="bg-card border border-border rounded-xl p-4 hover:border-primary/30 transition-colors"
             >
-              <span className="text-2xl">🔥</span>
+              <EmojiIcon emoji="🔥" className="w-6 h-6 text-primary" />
               <p className="font-medium text-foreground mt-2">TDEE Calculator</p>
               <p className="text-xs text-muted-foreground">Daily calorie burn</p>
             </Link>

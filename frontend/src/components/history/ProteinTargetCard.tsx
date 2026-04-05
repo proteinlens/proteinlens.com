@@ -7,6 +7,7 @@
 import React, { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useProteinCalculator } from '@/hooks/useProteinCalculator';
+import { EmojiIcon } from '@/components/ui/EmojiIcon';
 
 interface ProteinTargetCardProps {
   /** Total protein consumed today (from meals) */
@@ -67,7 +68,7 @@ export function ProteinTargetCard({ todayProtein }: ProteinTargetCardProps) {
             <p className="font-semibold text-foreground">Set Your Protein Target</p>
             <p className="text-sm text-muted-foreground">Calculate your daily protein goal</p>
           </div>
-          <div className="text-3xl">🎯</div>
+          <EmojiIcon emoji="🎯" className="w-8 h-8 text-primary" />
         </div>
       </Link>
     );

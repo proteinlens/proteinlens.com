@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { SEOHead, generateOrganizationSchema, generateWebApplicationSchema } from '@/components/seo/SEOHead'
 import { apiClient } from '@/services/apiClient'
 import { FriendlyError } from '@/components/ui/FriendlyError'
-import { Camera, Cpu, Flame, Zap, BarChart3, Lock, Brain, Search, Shuffle, Sparkles, CameraIcon } from 'lucide-react'
+import { Camera, Cpu, Flame, Zap, BarChart3, Lock, Brain, Search, Shuffle, Sparkles, CameraIcon, UtensilsCrossed, Share2 } from 'lucide-react'
 import { FunLoading } from '@/components/ui/FunLoading'
 import { Skeleton } from '@/components/Skeleton'
 import { getRandomMessage, successMessages } from '@/utils/friendlyErrors'
 import { useAuth } from '@/contexts/AuthProvider'
 import { getRandomDemoMeal, demoMeals, DEFAULT_PROTEIN_GOAL, type DemoMeal } from '@/data/demoMeals'
 import { formatMacro } from '@/utils/formatMacro'
+import { EmojiIcon } from '@/components/ui/EmojiIcon';
 
 interface FoodItem {
   name: string
@@ -280,7 +281,7 @@ export function HomePage() {
               <span className="block text-4xl font-bold">{formatMacro(result.totalProtein)}g</span>
               <span className="block text-sm opacity-85 mt-1">of protein</span>
             </div>
-            <span className="text-5xl">💪</span>
+            <EmojiIcon emoji="💪" className="w-12 h-12 text-primary" />
           </div>
           
           {/* Daily progress bar */}
@@ -306,7 +307,7 @@ export function HomePage() {
               </>
             ) : (
               <div className="text-center py-2">
-                <p className="text-sm font-medium mb-2">📊 Track Your Daily Progress</p>
+                <p className="text-sm font-medium mb-2"><BarChart3 className="w-4 h-4 inline mr-1" /> Track Your Daily Progress</p>
                 <p className="text-xs opacity-85 mb-3">Log in to see how this meal fits into your daily protein goal</p>
                 <button
                   onClick={() => navigate('/login')}
@@ -322,7 +323,7 @@ export function HomePage() {
         {/* Foods breakdown */}
         <div className="bg-card border border-border rounded-2xl overflow-hidden mb-5">
           <div className="flex justify-between items-center p-4 border-b border-border">
-            <h2 className="text-sm font-semibold">🍽️ What We Found</h2>
+            <h2 className="text-sm font-semibold"><UtensilsCrossed className="w-4 h-4 inline mr-1" /> What We Found</h2>
             <span className={`text-xs px-2 py-1 rounded-full ${
               result.confidence === 'high' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
               result.confidence === 'medium' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
@@ -365,7 +366,7 @@ export function HomePage() {
         {/* Share Card - Feature 017 (only show for real analysis, not demo) */}
         {!isDemo && result.shareId && (
           <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border border-purple-200 dark:border-purple-800 rounded-2xl p-5 mb-6">
-            <h3 className="text-sm font-semibold text-foreground mb-3">📤 Share This Meal</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-3"><Share2 className="w-4 h-4 inline mr-1" /> Share This Meal</h3>
             
             {/* Share preview */}
             <div className="bg-white dark:bg-secondary rounded-xl p-3 mb-4 border border-border">
@@ -380,7 +381,7 @@ export function HomePage() {
                   )}
                   <div className="text-xs text-muted-foreground text-orange-600 dark:text-orange-400 mt-1">estimated</div>
                 </div>
-                <div className="text-3xl">🍽️</div>
+                <EmojiIcon emoji="🍽️" className="w-8 h-8 text-primary" />
               </div>
             </div>
             

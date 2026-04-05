@@ -10,6 +10,7 @@ import { FC, useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { SignupForm } from '../components/auth/SignupForm';
 import { useAuth } from '../contexts/AuthProvider';
+import { EmojiIcon } from '@/components/ui/EmojiIcon';
 
 interface InviteDetails {
   valid: boolean;
@@ -204,7 +205,7 @@ export const InviteSignupPage: FC = () => {
             className="mx-auto inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg shadow-blue-500/25"
             aria-hidden="true"
           >
-            <span className="text-3xl">🧬</span>
+            <EmojiIcon emoji="🧬" className="w-8 h-8 text-primary" />
           </div>
 
           <h1

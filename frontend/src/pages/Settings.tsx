@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthProvider';
 import { useMeals } from '@/hooks/useMeal';
 import { useDietStyles, useUpdateDietStyle } from '@/hooks/useDietStyles';
 import { getUserId } from '@/utils/userId';
+import { Target, Salad, Palette, User, HardDrive, Calculator } from 'lucide-react';
 
 export function Settings() {
   const navigate = useNavigate();
@@ -115,13 +116,13 @@ export function Settings() {
 
         {/* Goal Setting Section */}
         <section className="space-y-2">
-          <h2 className="text-lg font-semibold text-foreground">🎯 Nutrition Goals</h2>
+          <h2 className="text-lg font-semibold text-foreground"><Target className="w-5 h-5 inline mr-1" />Nutrition Goals</h2>
           <GoalInput />
           <Link 
             to="/protein-calculator"
             className="flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors mt-2"
           >
-            <span>🧮</span>
+            <Calculator className="w-4 h-4" />
             <span>Not sure? Use our Protein Calculator to find your personalized target</span>
             <span>→</span>
           </Link>
@@ -129,7 +130,7 @@ export function Settings() {
 
         {/* Diet Style Section - Feature 017 */}
         <section className="space-y-2">
-          <h2 className="text-lg font-semibold text-foreground">🥗 Diet Style</h2>
+          <h2 className="text-lg font-semibold text-foreground"><Salad className="w-5 h-5 inline mr-1" />Diet Style</h2>
           <p className="text-sm text-muted-foreground">
             Select your diet preference to get personalized feedback on your meals.
           </p>
@@ -185,13 +186,13 @@ export function Settings() {
 
         {/* Appearance Section */}
         <section className="space-y-2">
-          <h2 className="text-lg font-semibold text-foreground">🎨 Appearance</h2>
+          <h2 className="text-lg font-semibold text-foreground"><Palette className="w-5 h-5 inline mr-1" />Appearance</h2>
           <ThemeToggle />
         </section>
 
         {/* Account Section */}
         <section className="space-y-2">
-          <h2 className="text-lg font-semibold text-foreground">👤 Account</h2>
+          <h2 className="text-lg font-semibold text-foreground"><User className="w-5 h-5 inline mr-1" />Account</h2>
           <div className="bg-card border border-border rounded-lg p-6 space-y-4">
             <div>
               <p className="text-sm text-muted-foreground mb-1">Email</p>
@@ -239,7 +240,7 @@ export function Settings() {
 
         {/* Export Section */}
         <section className="space-y-2">
-          <h2 className="text-lg font-semibold text-foreground">💾 Your Data</h2>
+          <h2 className="text-lg font-semibold text-foreground"><HardDrive className="w-5 h-5 inline mr-1" />Your Data</h2>
           <div className="bg-card border border-border rounded-lg p-6 space-y-4">
             <p className="text-sm text-muted-foreground">
               Download your meal history - it's your data, take it anywhere! 

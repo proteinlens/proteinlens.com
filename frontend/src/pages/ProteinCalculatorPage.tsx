@@ -7,6 +7,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ProteinCalculator } from '@/components/protein';
+import { EmojiIcon } from '@/components/ui/EmojiIcon';
 
 export default function ProteinCalculatorPage() {
   return (
@@ -20,7 +21,7 @@ export default function ProteinCalculatorPage() {
       {/* Header */}
       <div className="text-center mb-8">
         <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-2xl bg-primary/10">
-          <span className="text-3xl">🎯</span>
+          <EmojiIcon emoji="🎯" className="w-8 h-8 text-primary" />
         </div>
         <h1 className="text-2xl font-bold text-foreground">
           Protein Calculator
@@ -38,7 +39,7 @@ export default function ProteinCalculatorPage() {
       {/* Info Section */}
       <div className="mt-8 space-y-4 text-sm text-muted-foreground">
         <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
-          <span className="text-lg">💡</span>
+          <EmojiIcon emoji="💡" className="w-5 h-5 text-primary" />
           <div>
             <p className="font-medium text-foreground mb-1">How it works</p>
             <p>
@@ -49,7 +50,7 @@ export default function ProteinCalculatorPage() {
         </div>
 
         <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
-          <span className="text-lg">📊</span>
+          <EmojiIcon emoji="📊" className="w-5 h-5 text-primary" />
           <div>
             <p className="font-medium text-foreground mb-1">Meal distribution</p>
             <p>
@@ -60,7 +61,7 @@ export default function ProteinCalculatorPage() {
         </div>
 
         <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg">
-          <span className="text-lg">✨</span>
+          <EmojiIcon emoji="✨" className="w-5 h-5 text-primary" />
           <div>
             <p className="font-medium text-foreground mb-1">Track your meals</p>
             <p>

@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { EmojiIcon } from '@/components/ui/EmojiIcon';
 
 export function Footer() {
   const currentYear = new Date().getFullYear()
@@ -11,7 +12,7 @@ export function Footer() {
           <div className="col-span-1 md:col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-3">
               <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
-                <span className="text-base">🍽️</span>
+                <EmojiIcon emoji="🍽️" className="w-4 h-4 text-primary" />
               </div>
               <span className="text-lg font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
                 ProteinLens

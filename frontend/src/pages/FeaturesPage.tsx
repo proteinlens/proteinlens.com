@@ -9,6 +9,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { SEOHead, generateWebApplicationSchema } from '@/components/seo/SEOHead';
+import { EmojiIcon } from '@/components/ui/EmojiIcon';
 
 const features = [
   {
@@ -142,8 +143,8 @@ export default function FeaturesPage() {
                       </span>
                     </div>
                   )}
-                  <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-2xl mb-4">
-                    {feature.icon}
+                  <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center mb-4">
+                    <EmojiIcon emoji={feature.icon} className="w-6 h-6 text-primary" />
                   </div>
                   <h2 className="text-lg font-bold text-foreground mb-2">
                     {feature.title}

@@ -8,6 +8,7 @@
 import { FC, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { resendVerificationEmail, AuthError } from '../services/authService';
+import { EmojiIcon } from '@/components/ui/EmojiIcon';
 
 export const ResendVerificationPage: FC = () => {
   const [searchParams] = useSearchParams();
@@ -43,7 +44,7 @@ export const ResendVerificationPage: FC = () => {
         {/* Header */}
         <header className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl mb-4 shadow-lg" aria-hidden="true">
-            <span className="text-3xl">📧</span>
+            <EmojiIcon emoji="📧" className="w-8 h-8 text-primary" />
           </div>
           <h1 id="resend-heading" className="text-2xl font-bold text-foreground mb-2">Resend Verification</h1>
           <p className="text-muted-foreground">We'll send you a new verification link</p>
@@ -53,7 +54,7 @@ export const ResendVerificationPage: FC = () => {
         {success && (
           <div role="status" className="mb-4 p-4 bg-green-500/10 border border-green-500/20 rounded-xl text-green-600 dark:text-green-400 text-sm">
             <div className="flex items-start gap-2">
-              <span aria-hidden="true">✅</span>
+              <EmojiIcon emoji="✅" className="w-5 h-5 text-primary" />
               <div>
                 <p className="font-medium">Verification email sent!</p>
                 <p className="mt-1">Please check your inbox and spam folder for the verification link.</p>
@@ -65,7 +66,7 @@ export const ResendVerificationPage: FC = () => {
         {/* Error Alert */}
         {error && (
           <div role="alert" className="mb-4 p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive text-sm flex items-start gap-2">
-            <span aria-hidden="true">⚠️</span>
+            <EmojiIcon emoji="⚠️" className="w-5 h-5 text-primary" />
             <span>{error}</span>
           </div>
         )}
@@ -103,7 +104,7 @@ export const ResendVerificationPage: FC = () => {
                 </>
               ) : (
                 <>
-                  <span aria-hidden="true">📬</span>
+                  <EmojiIcon emoji="📬" className="w-5 h-5 text-primary" />
                   <span>Resend Verification Email</span>
                 </>
               )}

@@ -9,6 +9,7 @@ import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { SEOHead, generateFAQSchema, generateWebApplicationSchema } from '@/components/seo/SEOHead';
+import { EmojiIcon } from '@/components/ui/EmojiIcon';
 
 type Gender = 'male' | 'female';
 type Unit = 'metric' | 'imperial';
@@ -109,7 +110,7 @@ export default function TDEECalculatorPage() {
             className="text-center mb-8"
           >
             <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-2xl bg-primary/10">
-              <span className="text-3xl">🔥</span>
+              <EmojiIcon emoji="🔥" className="w-8 h-8 text-primary" />
             </div>
             <h1 className="text-3xl font-bold text-foreground">TDEE Calculator</h1>
             <p className="text-muted-foreground mt-2">
@@ -274,7 +275,7 @@ export default function TDEECalculatorPage() {
 
           {/* Info */}
           <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg mb-8">
-            <span className="text-lg">💡</span>
+            <EmojiIcon emoji="💡" className="w-5 h-5 text-primary" />
             <div>
               <p className="font-medium text-foreground mb-1">Using the Mifflin-St Jeor Formula</p>
               <p className="text-sm text-muted-foreground">
@@ -304,7 +305,7 @@ export default function TDEECalculatorPage() {
               to="/macro-calculator"
               className="bg-card border border-border rounded-xl p-4 hover:border-primary/30 transition-colors"
             >
-              <span className="text-2xl">🧮</span>
+              <EmojiIcon emoji="🧮" className="w-6 h-6 text-primary" />
               <p className="font-medium text-foreground mt-2">Macro Calculator</p>
               <p className="text-xs text-muted-foreground">P/C/F split</p>
             </Link>
@@ -312,7 +313,7 @@ export default function TDEECalculatorPage() {
               to="/protein-calculator"
               className="bg-card border border-border rounded-xl p-4 hover:border-primary/30 transition-colors"
             >
-              <span className="text-2xl">🎯</span>
+              <EmojiIcon emoji="🎯" className="w-6 h-6 text-primary" />
               <p className="font-medium text-foreground mt-2">Protein Calculator</p>
               <p className="text-xs text-muted-foreground">Daily protein needs</p>
             </Link>

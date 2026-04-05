@@ -9,6 +9,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { SEOHead, generateOrganizationSchema } from '@/components/seo/SEOHead';
+import { EmojiIcon } from '@/components/ui/EmojiIcon';
 
 const values = [
   {
@@ -57,7 +58,7 @@ export default function AboutPage() {
               transition={{ duration: 0.5 }}
             >
               <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-primary to-accent rounded-2xl shadow-lg shadow-primary/25 mb-6">
-                <span className="text-4xl">🍽️</span>
+                <EmojiIcon emoji="🍽️" className="w-10 h-10 text-primary" />
               </div>
               <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
                 About ProteinLens
@@ -104,7 +105,7 @@ export default function AboutPage() {
           <div className="max-w-3xl mx-auto">
             <div className="bg-muted/50 border border-border rounded-xl p-6">
               <div className="flex items-start gap-4">
-                <span className="text-2xl">ℹ️</span>
+                <EmojiIcon emoji="ℹ️" className="w-6 h-6 text-primary" />
                 <div>
                   <h3 className="font-bold text-foreground mb-2">Not the Academic Project</h3>
                   <p className="text-sm text-muted-foreground">
@@ -134,8 +135,8 @@ export default function AboutPage() {
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                   className="bg-card border border-border rounded-xl p-6"
                 >
-                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-2xl mb-4">
-                    {value.icon}
+                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
+                    <EmojiIcon emoji={value.icon} className="w-6 h-6 text-primary" />
                   </div>
                   <h3 className="text-lg font-bold text-foreground mb-2">{value.title}</h3>
                   <p className="text-muted-foreground text-sm">{value.description}</p>
@@ -153,19 +154,19 @@ export default function AboutPage() {
             </h2>
             <div className="flex flex-wrap justify-center gap-4 mb-8">
               <div className="flex items-center gap-2 px-4 py-2 bg-muted rounded-full">
-                <span className="text-xl">📸</span>
+                <EmojiIcon emoji="📸" className="w-5 h-5 text-primary" />
                 <span className="text-sm font-medium">1. Snap a photo</span>
               </div>
               <div className="flex items-center gap-2 px-4 py-2 bg-muted rounded-full">
-                <span className="text-xl">🤖</span>
+                <EmojiIcon emoji="🤖" className="w-5 h-5 text-primary" />
                 <span className="text-sm font-medium">2. AI analyzes</span>
               </div>
               <div className="flex items-center gap-2 px-4 py-2 bg-muted rounded-full">
-                <span className="text-xl">📊</span>
+                <EmojiIcon emoji="📊" className="w-5 h-5 text-primary" />
                 <span className="text-sm font-medium">3. Get macros</span>
               </div>
               <div className="flex items-center gap-2 px-4 py-2 bg-muted rounded-full">
-                <span className="text-xl">🎯</span>
+                <EmojiIcon emoji="🎯" className="w-5 h-5 text-primary" />
                 <span className="text-sm font-medium">4. Track goals</span>
               </div>
             </div>

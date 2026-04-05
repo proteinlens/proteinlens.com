@@ -9,6 +9,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { SEOHead } from '@/components/seo/SEOHead';
+import { EmojiIcon } from '@/components/ui/EmojiIcon';
 
 const guides = [
   {
@@ -97,7 +98,7 @@ export default function GuidesIndexPage() {
             className="text-center mb-12"
           >
             <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-2xl bg-primary/10">
-              <span className="text-3xl">📚</span>
+              <EmojiIcon emoji="📚" className="w-8 h-8 text-primary" />
             </div>
             <h1 className="text-3xl font-bold text-foreground">Nutrition Guides</h1>
             <p className="text-muted-foreground mt-2 max-w-xl mx-auto">
