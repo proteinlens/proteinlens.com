@@ -10,10 +10,11 @@
 
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
+import { Camera, Target, Clock, Settings as SettingsIcon, UtensilsCrossed } from 'lucide-react';
 import { MealUpload } from './components/MealUpload';
-import { PricingPage } from './pages/PricingPage';
-import { CheckoutSuccessPage } from './pages/CheckoutSuccessPage';
-import HomePage from './pages/HomePage';
+const PricingPage = lazy(() => import('./pages/PricingPage').then(m => ({ default: m.PricingPage })));
+const CheckoutSuccessPage = lazy(() => import('./pages/CheckoutSuccessPage').then(m => ({ default: m.CheckoutSuccessPage })));
+const HomePage = lazy(() => import('./pages/HomePage'));
 import { UsageCounter } from './components/UsageCounter';
 import { useGoal } from './hooks/useGoal';
 import { useProteinGap } from './hooks/useProteinGap';
@@ -74,10 +75,10 @@ const Navigation: React.FC<{ isPrerender?: boolean }> = ({ isPrerender }) => {
   const proteinGap = useProteinGap({ userId, dailyGoalGrams: goal });
   
   const navItems = [
-    { path: '/', label: 'Scan', icon: '📸' },
-    { path: '/protein-calculator', label: 'Calculator', icon: '🎯' },
-    { path: '/history', label: 'History', icon: '📊' },
-    { path: '/settings', label: 'Settings', icon: '⚙️' },
+    { path: '/', label: 'Scan', icon: Camera },
+    { path: '/protein-calculator', label: 'Calculator', icon: Target },
+    { path: '/history', label: 'History', icon: Clock },
+    { path: '/settings', label: 'Settings', icon: SettingsIcon },
   ];
   
   return (
@@ -97,7 +98,7 @@ const Navigation: React.FC<{ isPrerender?: boolean }> = ({ isPrerender }) => {
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent rounded-xl blur-lg opacity-40 group-hover:opacity-60 transition-opacity" />
               <div className="relative w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-lg shadow-primary/25">
-                <span className="text-xl">🍽️</span>
+                <UtensilsCrossed className="w-5 h-5 text-white" />
               </div>
             </div>
             
@@ -139,7 +140,7 @@ const Navigation: React.FC<{ isPrerender?: boolean }> = ({ isPrerender }) => {
                     
                     {/* Content */}
                     <span className="relative flex items-center gap-1.5">
-                      <span className={isActive ? 'animate-bounce-subtle' : ''}>{item.icon}</span>
+                      <item.icon className={`w-4 h-4 ${isActive ? 'animate-bounce-subtle' : ''}`} />
                       <span>{item.label}</span>
                     </span>
                   </Link>
