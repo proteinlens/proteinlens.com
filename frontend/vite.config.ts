@@ -54,9 +54,39 @@ export default defineConfig({
     rollupOptions: {
       output: {
         // Split vendor code for better caching
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          // shadcn chunk removed - radix-ui dependencies not yet installed
+        manualChunks(id) {
+          // Core React runtime — changes rarely
+          if (id.includes('react-dom') || id.includes('react/') || id.includes('scheduler')) {
+            return 'vendor-react';
+          }
+          // Router — changes rarely
+          if (id.includes('react-router')) {
+            return 'vendor-router';
+          }
+          // Animation library — large, rarely changes
+          if (id.includes('framer-motion')) {
+            return 'vendor-motion';
+          }
+          // Data fetching
+          if (id.includes('@tanstack')) {
+            return 'vendor-query';
+          }
+          // Auth (MSAL) — large, rarely changes
+          if (id.includes('@azure/msal') || id.includes('msal-')) {
+            return 'vendor-auth';
+          }
+          // Charting (recharts + d3) — only used by History page
+          if (id.includes('recharts') || id.includes('d3-')) {
+            return 'vendor-charts';
+          }
+          // Icons — tree-shaken but still sizable
+          if (id.includes('lucide-react')) {
+            return 'vendor-icons';
+          }
+          // Image compression — only used on upload
+          if (id.includes('browser-image-compression')) {
+            return 'vendor-image';
+          }
         },
       },
     },
