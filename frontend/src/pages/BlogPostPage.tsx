@@ -9,9 +9,10 @@
  * - Related articles cards
  * - Back to top button
  * - @tailwindcss/typography for proper prose styling
+ * - Lazy-loaded blog post content (each post is its own chunk)
  */
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, Suspense, lazy } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { SEOHead } from '@/components/seo/SEOHead';
@@ -20,60 +21,52 @@ import { ReadingProgressBar } from '@/components/blog/ReadingProgressBar';
 import { TableOfContents } from '@/components/blog/TableOfContents';
 import { MidArticleCTA } from '@/components/blog/MidArticleCTA';
 import { BackToTop } from '@/components/blog/BackToTop';
+import { Skeleton } from '@/components/Skeleton';
 
-// Import all blog post content components
-import HowToTrackMacrosFromPhoto from '@/content/blog/posts/how-to-track-macros-from-photo';
-import PhotoMacroTrackingVsBarcodeScanning from '@/content/blog/posts/photo-macro-tracking-vs-barcode-scanning';
-import BestLightingAngles from '@/content/blog/posts/best-lighting-angles-food-photo-macros';
-import EstimatePortionSizes from '@/content/blog/posts/estimate-portion-sizes-from-photos';
-import CommonAIFoodScanMistakes from '@/content/blog/posts/common-ai-food-scan-mistakes';
-import TrackRestaurantMeals from '@/content/blog/posts/track-restaurant-meals-unknown-ingredients';
-import HowMuchProteinPerDay from '@/content/blog/posts/how-much-protein-per-day';
-import ProteinForFatLoss from '@/content/blog/posts/protein-for-fat-loss';
-import ProteinForMuscleGain from '@/content/blog/posts/protein-for-muscle-gain';
-import HighProteinBreakfastIdeas from '@/content/blog/posts/high-protein-breakfast-ideas';
-import WhatAreMacros from '@/content/blog/posts/what-are-macros';
-import HowToCalculateMacrosWeightLoss from '@/content/blog/posts/how-to-calculate-macros-weight-loss';
-import CaloriesVsMacros from '@/content/blog/posts/calories-vs-macros';
-import WhatIsTDEE from '@/content/blog/posts/what-is-tdee';
-import WeightLossPlateau from '@/content/blog/posts/weight-loss-plateau-reasons';
-import TrackMacrosWithoutScale from '@/content/blog/posts/track-macros-without-food-scale';
-import TrackMacrosEatingOut from '@/content/blog/posts/track-macros-eating-out';
-import MacroTrackingBusyPeople from '@/content/blog/posts/macro-tracking-busy-people';
-import ProteinLensVsMyFitnessPal from '@/content/blog/posts/proteinlens-vs-myfitnesspal';
-import ProteinLensVsCronometer from '@/content/blog/posts/proteinlens-vs-cronometer';
-import ProteinLensVsLoseIt from '@/content/blog/posts/proteinlens-vs-lose-it';
-import BestMacroTrackingApps2026 from '@/content/blog/posts/best-macro-tracking-apps-2026';
-import HowAiFoodScanningWorks from '@/content/blog/posts/how-ai-food-scanning-works';
-import WhyYouQuitMacroTracking from '@/content/blog/posts/why-you-quit-macro-tracking';
-
-// Map slugs to content components
-const postContentMap: Record<string, React.ComponentType> = {
-  'how-to-track-macros-from-photo': HowToTrackMacrosFromPhoto,
-  'photo-macro-tracking-vs-barcode-scanning': PhotoMacroTrackingVsBarcodeScanning,
-  'best-lighting-angles-food-photo-macros': BestLightingAngles,
-  'estimate-portion-sizes-from-photos': EstimatePortionSizes,
-  'common-ai-food-scan-mistakes': CommonAIFoodScanMistakes,
-  'track-restaurant-meals-unknown-ingredients': TrackRestaurantMeals,
-  'how-much-protein-per-day': HowMuchProteinPerDay,
-  'protein-for-fat-loss': ProteinForFatLoss,
-  'protein-for-muscle-gain': ProteinForMuscleGain,
-  'high-protein-breakfast-ideas': HighProteinBreakfastIdeas,
-  'what-are-macros': WhatAreMacros,
-  'how-to-calculate-macros-weight-loss': HowToCalculateMacrosWeightLoss,
-  'calories-vs-macros': CaloriesVsMacros,
-  'what-is-tdee': WhatIsTDEE,
-  'weight-loss-plateau-reasons': WeightLossPlateau,
-  'track-macros-without-food-scale': TrackMacrosWithoutScale,
-  'track-macros-eating-out': TrackMacrosEatingOut,
-  'macro-tracking-busy-people': MacroTrackingBusyPeople,
-  'proteinlens-vs-myfitnesspal': ProteinLensVsMyFitnessPal,
-  'proteinlens-vs-cronometer': ProteinLensVsCronometer,
-  'proteinlens-vs-lose-it': ProteinLensVsLoseIt,
-  'best-macro-tracking-apps-2026': BestMacroTrackingApps2026,
-  'how-ai-food-scanning-works': HowAiFoodScanningWorks,
-  'why-you-quit-macro-tracking': WhyYouQuitMacroTracking,
+// Lazy-load each blog post as its own chunk — only the visited post is downloaded
+const postContentMap: Record<string, React.LazyExoticComponent<React.ComponentType>> = {
+  'how-to-track-macros-from-photo': lazy(() => import('@/content/blog/posts/how-to-track-macros-from-photo')),
+  'photo-macro-tracking-vs-barcode-scanning': lazy(() => import('@/content/blog/posts/photo-macro-tracking-vs-barcode-scanning')),
+  'best-lighting-angles-food-photo-macros': lazy(() => import('@/content/blog/posts/best-lighting-angles-food-photo-macros')),
+  'estimate-portion-sizes-from-photos': lazy(() => import('@/content/blog/posts/estimate-portion-sizes-from-photos')),
+  'common-ai-food-scan-mistakes': lazy(() => import('@/content/blog/posts/common-ai-food-scan-mistakes')),
+  'track-restaurant-meals-unknown-ingredients': lazy(() => import('@/content/blog/posts/track-restaurant-meals-unknown-ingredients')),
+  'how-much-protein-per-day': lazy(() => import('@/content/blog/posts/how-much-protein-per-day')),
+  'protein-for-fat-loss': lazy(() => import('@/content/blog/posts/protein-for-fat-loss')),
+  'protein-for-muscle-gain': lazy(() => import('@/content/blog/posts/protein-for-muscle-gain')),
+  'high-protein-breakfast-ideas': lazy(() => import('@/content/blog/posts/high-protein-breakfast-ideas')),
+  'what-are-macros': lazy(() => import('@/content/blog/posts/what-are-macros')),
+  'how-to-calculate-macros-weight-loss': lazy(() => import('@/content/blog/posts/how-to-calculate-macros-weight-loss')),
+  'calories-vs-macros': lazy(() => import('@/content/blog/posts/calories-vs-macros')),
+  'what-is-tdee': lazy(() => import('@/content/blog/posts/what-is-tdee')),
+  'weight-loss-plateau-reasons': lazy(() => import('@/content/blog/posts/weight-loss-plateau-reasons')),
+  'track-macros-without-food-scale': lazy(() => import('@/content/blog/posts/track-macros-without-food-scale')),
+  'track-macros-eating-out': lazy(() => import('@/content/blog/posts/track-macros-eating-out')),
+  'macro-tracking-busy-people': lazy(() => import('@/content/blog/posts/macro-tracking-busy-people')),
+  'proteinlens-vs-myfitnesspal': lazy(() => import('@/content/blog/posts/proteinlens-vs-myfitnesspal')),
+  'proteinlens-vs-cronometer': lazy(() => import('@/content/blog/posts/proteinlens-vs-cronometer')),
+  'proteinlens-vs-lose-it': lazy(() => import('@/content/blog/posts/proteinlens-vs-lose-it')),
+  'best-macro-tracking-apps-2026': lazy(() => import('@/content/blog/posts/best-macro-tracking-apps-2026')),
+  'how-ai-food-scanning-works': lazy(() => import('@/content/blog/posts/how-ai-food-scanning-works')),
+  'why-you-quit-macro-tracking': lazy(() => import('@/content/blog/posts/why-you-quit-macro-tracking')),
 };
+
+/** Skeleton placeholder while blog post content loads */
+function BlogPostSkeleton() {
+  return (
+    <div className="space-y-4 animate-pulse">
+      <Skeleton className="h-8 w-3/4 rounded" />
+      <Skeleton className="h-4 w-full rounded" />
+      <Skeleton className="h-4 w-full rounded" />
+      <Skeleton className="h-4 w-5/6 rounded" />
+      <div className="h-6" />
+      <Skeleton className="h-6 w-2/3 rounded" />
+      <Skeleton className="h-4 w-full rounded" />
+      <Skeleton className="h-4 w-full rounded" />
+      <Skeleton className="h-4 w-4/5 rounded" />
+    </div>
+  );
+}
 
 /**
  * Injects a mid-article CTA after the 3rd <h2> in the rendered content.
@@ -107,7 +100,9 @@ function ContentWithCTA({ PostContent }: { PostContent: React.ComponentType }) {
 
   return (
     <div ref={wrapperRef} className="blog-content">
-      <PostContent />
+      <Suspense fallback={<BlogPostSkeleton />}>
+        <PostContent />
+      </Suspense>
     </div>
   );
 }
