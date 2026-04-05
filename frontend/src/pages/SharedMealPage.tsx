@@ -13,6 +13,7 @@ import { Helmet } from 'react-helmet-async';
 import { Skeleton } from '../components/Skeleton';
 import { useAuth } from '../contexts/AuthProvider';
 import { formatMacro } from '../utils/formatMacro';
+import { EmojiIcon } from '@/components/ui/EmojiIcon';
 
 interface FoodItem {
   name: string;
@@ -235,7 +236,7 @@ export function SharedMealPage() {
         <header className="sticky top-0 z-40 backdrop-blur-xl bg-background/80 border-b border-border">
           <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-xl">🥩</span>
+              <EmojiIcon emoji="🥩" className="w-5 h-5 text-primary" />
               <span className="font-bold text-lg text-foreground">ProteinLens</span>
             </div>
             <Skeleton width={140} height={40} borderRadius="8px" />
@@ -282,7 +283,7 @@ export function SharedMealPage() {
           <title>Meal Not Found - ProteinLens</title>
         </Helmet>
         <div className="text-center max-w-md">
-          <div className="text-6xl mb-4">🍽️</div>
+          <EmojiIcon emoji="🍽️" className="w-16 h-16 text-primary" />
           <h1 className="text-2xl font-bold text-foreground mb-2">Meal Not Found</h1>
           <p className="text-muted-foreground mb-6">
             This meal may have been deleted or the link might be incorrect.
@@ -306,7 +307,7 @@ export function SharedMealPage() {
           <title>Private Meal - ProteinLens</title>
         </Helmet>
         <div className="text-center max-w-md">
-          <div className="text-6xl mb-4">🔒</div>
+          <EmojiIcon emoji="🔒" className="w-16 h-16 text-primary" />
           <h1 className="text-2xl font-bold text-foreground mb-2">This Meal is Private</h1>
           <p className="text-muted-foreground mb-6">
             The owner has made this meal private. You can scan your own meals for free!
@@ -330,7 +331,7 @@ export function SharedMealPage() {
           <title>Error - ProteinLens</title>
         </Helmet>
         <div className="text-center max-w-md">
-          <div className="text-6xl mb-4">😵</div>
+          <EmojiIcon emoji="😵" className="w-16 h-16 text-primary" />
           <h1 className="text-2xl font-bold text-foreground mb-2">Something Went Wrong</h1>
           <p className="text-muted-foreground mb-6">
             {error || 'Failed to load the shared meal. Please try again later.'}
@@ -479,7 +480,7 @@ export function SharedMealPage() {
             {mealData.proTip && (
               <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
                 <div className="flex items-start gap-3">
-                  <span className="text-xl">💡</span>
+                  <EmojiIcon emoji="💡" className="w-5 h-5 text-primary" />
                   <div>
                     <div className="font-medium text-amber-400 mb-1">Pro Tip</div>
                     <p className="text-sm text-muted-foreground">{mealData.proTip}</p>

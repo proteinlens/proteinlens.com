@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { trackAuthEvent } from '../utils/telemetry';
 import { forgotPassword, resetPassword as resetPasswordApi, AuthError } from '../services/authService';
 import { API_ENDPOINTS } from '../config';
+import { EmojiIcon } from '@/components/ui/EmojiIcon';
 
 type PageMode = 'request' | 'reset';
 
@@ -86,7 +87,7 @@ export function ResetPassword() {
           {/* Header */}
           <header className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl mb-4 shadow-lg" aria-hidden="true">
-              <span className="text-3xl">🔑</span>
+              <EmojiIcon emoji="🔑" className="w-8 h-8 text-primary" />
             </div>
             <h1 id="reset-heading" className="text-2xl font-bold text-foreground mb-2">Reset Password</h1>
             <p className="text-muted-foreground">We'll send you a link to reset your password</p>
@@ -95,7 +96,7 @@ export function ResetPassword() {
           {/* Success Message */}
           {requestSuccess && (
             <div role="status" className="mb-4 p-4 bg-green-500/10 border border-green-500/20 rounded-xl text-green-600 dark:text-green-400 text-sm flex items-start gap-2">
-              <span aria-hidden="true">✅</span>
+              <EmojiIcon emoji="✅" className="w-5 h-5 text-primary" />
               <div>
                 <p>If an account exists with this email, you'll receive password reset instructions shortly.</p>
                 <p className="mt-2 text-muted-foreground">Check your spam folder if you don't see the email.</p>
@@ -106,7 +107,7 @@ export function ResetPassword() {
           {/* Error Alert */}
           {error && (
             <div role="alert" className="mb-4 p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive text-sm flex items-start gap-2">
-              <span aria-hidden="true">⚠️</span>
+              <EmojiIcon emoji="⚠️" className="w-5 h-5 text-primary" />
               <span>{error}</span>
             </div>
           )}
@@ -144,7 +145,7 @@ export function ResetPassword() {
                   </>
                 ) : (
                   <>
-                    <span aria-hidden="true">📧</span>
+                    <EmojiIcon emoji="📧" className="w-5 h-5 text-primary" />
                     <span>Send Reset Link</span>
                   </>
                 )}
@@ -178,7 +179,7 @@ export function ResetPassword() {
         {/* Header */}
         <header className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl mb-4 shadow-lg" aria-hidden="true">
-            <span className="text-3xl">🔐</span>
+            <EmojiIcon emoji="🔐" className="w-8 h-8 text-primary" />
           </div>
           <h1 id="reset-heading" className="text-2xl font-bold text-foreground mb-2">Set New Password</h1>
           <p className="text-muted-foreground">Choose a strong password for your account</p>
@@ -188,7 +189,7 @@ export function ResetPassword() {
         {resetSuccess && (
           <div role="status" className="mb-4 p-4 bg-green-500/10 border border-green-500/20 rounded-xl text-green-600 dark:text-green-400 text-sm">
             <div className="flex items-start gap-2">
-              <span aria-hidden="true">✅</span>
+              <EmojiIcon emoji="✅" className="w-5 h-5 text-primary" />
               <div>
                 <p className="font-medium">Password reset successful!</p>
                 <p className="mt-1">You can now sign in with your new password.</p>
@@ -206,7 +207,7 @@ export function ResetPassword() {
         {/* Error Alert */}
         {error && !resetSuccess && (
           <div role="alert" className="mb-4 p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive text-sm flex items-start gap-2">
-            <span aria-hidden="true">⚠️</span>
+            <EmojiIcon emoji="⚠️" className="w-5 h-5 text-primary" />
             <span>{error}</span>
           </div>
         )}
@@ -264,7 +265,7 @@ export function ResetPassword() {
                   </>
                 ) : (
                   <>
-                    <span aria-hidden="true">🔐</span>
+                    <EmojiIcon emoji="🔐" className="w-5 h-5 text-primary" />
                     <span>Reset Password</span>
                   </>
                 )}

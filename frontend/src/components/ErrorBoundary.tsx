@@ -8,6 +8,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { trackException, trackEvent } from '../utils/telemetry';
 import { SeverityLevel } from '@microsoft/applicationinsights-web';
+import { EmojiIcon } from '@/components/ui/EmojiIcon';
 
 interface Props {
   children: ReactNode;
@@ -79,7 +80,7 @@ export class ErrorBoundary extends Component<Props, State> {
         <div className="min-h-screen flex items-center justify-center bg-background p-4">
           <div className="max-w-md w-full text-center">
             <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
-              <span className="text-3xl">⚠️</span>
+              <EmojiIcon emoji="⚠️" className="w-8 h-8 text-primary" />
             </div>
             
             <h1 className="text-2xl font-bold text-foreground mb-2">

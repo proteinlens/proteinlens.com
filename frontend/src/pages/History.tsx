@@ -15,6 +15,7 @@ import { emptyStates } from '@/utils/friendlyErrors'
 import { migrateMeals } from '@/services/authService'
 import { isToday, parseISO, startOfWeek, endOfWeek, addWeeks, format, isWithinInterval } from 'date-fns'
 import { Button } from '@/components/ui/Button'
+import { BarChart3, RefreshCw } from 'lucide-react';
 
 export function History() {
   const { user } = useAuth()
@@ -174,7 +175,7 @@ export function History() {
       <div className="max-w-4xl mx-auto px-4 py-8">
         {isMigrating && (
           <div className="mb-4 p-4 bg-primary/10 border border-primary/20 rounded-lg text-center">
-            <span className="text-primary">🔄 Syncing your meals...</span>
+            <span className="text-primary flex items-center gap-1"><RefreshCw className="w-4 h-4 animate-spin" /> Syncing your meals...</span>
           </div>
         )}
         <div className="space-y-4">
@@ -220,7 +221,7 @@ export function History() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 pb-24 md:pb-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold">📊 Meal History</h1>
+        <h1 className="text-2xl md:text-3xl font-bold"><BarChart3 className="w-6 h-6 inline mr-2" />Meal History</h1>
         <ExportButton showText={true} size="md" />
       </div>
 

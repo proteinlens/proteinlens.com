@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { SignupForm } from '../components/auth/SignupForm';
 import { useAuth } from '../contexts/AuthProvider';
 import { API_ENDPOINTS } from '../config';
+import { EmojiIcon } from '@/components/ui/EmojiIcon';
 
 /**
  * Full-featured signup page.
@@ -68,7 +69,7 @@ export const SignupPage: FC = () => {
       <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">
         <div className="w-full max-w-md text-center">
           <div className="mx-auto inline-flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-            <span className="text-3xl">✉️</span>
+            <EmojiIcon emoji="✉️" className="w-8 h-8 text-primary" />
           </div>
           <h1 className="mt-6 text-2xl font-bold text-gray-900">Check your email</h1>
           <p className="mt-2 text-gray-600">
@@ -107,7 +108,7 @@ export const SignupPage: FC = () => {
             className="mx-auto inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 shadow-lg shadow-blue-500/25"
             aria-hidden="true"
           >
-            <span className="text-3xl">🧬</span>
+            <EmojiIcon emoji="🧬" className="w-8 h-8 text-primary" />
           </div>
 
           <h1
@@ -124,19 +125,19 @@ export const SignupPage: FC = () => {
         {/* Benefits */}
         <div className="grid grid-cols-2 gap-3">
           <div className="flex items-center gap-2 rounded-lg bg-white p-3 shadow-sm ring-1 ring-gray-900/5">
-            <span className="text-xl" aria-hidden="true">📸</span>
+            <EmojiIcon emoji="📸" className="w-5 h-5 text-primary" />
             <span className="text-sm font-medium text-gray-700">Unlimited meal scans</span>
           </div>
           <div className="flex items-center gap-2 rounded-lg bg-white p-3 shadow-sm ring-1 ring-gray-900/5">
-            <span className="text-xl" aria-hidden="true">📊</span>
+            <EmojiIcon emoji="📊" className="w-5 h-5 text-primary" />
             <span className="text-sm font-medium text-gray-700">Full meal history</span>
           </div>
           <div className="flex items-center gap-2 rounded-lg bg-white p-3 shadow-sm ring-1 ring-gray-900/5">
-            <span className="text-xl" aria-hidden="true">☁️</span>
+            <EmojiIcon emoji="☁️" className="w-5 h-5 text-primary" />
             <span className="text-sm font-medium text-gray-700">Sync across devices</span>
           </div>
           <div className="flex items-center gap-2 rounded-lg bg-white p-3 shadow-sm ring-1 ring-gray-900/5">
-            <span className="text-xl" aria-hidden="true">🎯</span>
+            <EmojiIcon emoji="🎯" className="w-5 h-5 text-primary" />
             <span className="text-sm font-medium text-gray-700">Track your goals</span>
           </div>
         </div>

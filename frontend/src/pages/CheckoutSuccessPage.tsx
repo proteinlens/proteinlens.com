@@ -4,6 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import './CheckoutSuccessPage.css';
+import { EmojiIcon } from '@/components/ui/EmojiIcon';
 
 export const CheckoutSuccessPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -42,15 +43,15 @@ export const CheckoutSuccessPage: React.FC = () => {
 
         <div className="checkout-success__features">
           <div className="feature-item">
-            <span className="feature-icon">✨</span>
+            <EmojiIcon emoji="✨" className="w-5 h-5 text-primary" />
             <span>Unlimited meal scans</span>
           </div>
           <div className="feature-item">
-            <span className="feature-icon">📊</span>
+            <EmojiIcon emoji="📊" className="w-5 h-5 text-primary" />
             <span>Full history forever</span>
           </div>
           <div className="feature-item">
-            <span className="feature-icon">📥</span>
+            <EmojiIcon emoji="📥" className="w-5 h-5 text-primary" />
             <span>Export your data</span>
           </div>
         </div>

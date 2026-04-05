@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthProvider';
+import { EmojiIcon } from '@/components/ui/EmojiIcon';
 
 interface VerifyEmailBannerProps {
   onResend?: () => void;
@@ -31,7 +32,7 @@ export function VerifyEmailBanner({ onResend }: VerifyEmailBannerProps) {
   return (
     <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4 mb-4">
       <div className="flex items-start gap-3">
-        <span className="text-xl">📧</span>
+        <EmojiIcon emoji="📧" className="w-5 h-5 text-primary" />
         <div className="flex-1">
           <h3 className="font-medium text-yellow-800 dark:text-yellow-200 text-sm">
             Verify your email

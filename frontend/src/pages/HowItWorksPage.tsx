@@ -9,6 +9,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { SEOHead, generateFAQSchema, generateWebApplicationSchema } from '@/components/seo/SEOHead';
+import { EmojiIcon } from '@/components/ui/EmojiIcon';
 
 const steps = [
   {
@@ -118,8 +119,8 @@ export default function HowItWorksPage() {
                   <div className="bg-card border border-border rounded-2xl p-8 h-full hover:border-primary/30 transition-colors">
                     <div className="flex items-start gap-4">
                       <div className="flex-shrink-0">
-                        <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center text-2xl">
-                          {step.icon}
+                        <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center">
+                          <EmojiIcon emoji={step.icon} className="w-7 h-7 text-primary" />
                         </div>
                       </div>
                       <div>

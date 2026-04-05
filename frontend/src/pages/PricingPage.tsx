@@ -9,6 +9,7 @@ import { FriendlyError } from '../components/ui/FriendlyError';
 import { useAuth } from '../contexts/AuthProvider';
 import { SEOHead } from '../components/seo/SEOHead';
 import './PricingPage.css';
+import { EmojiIcon } from '@/components/ui/EmojiIcon';
 
 export const PricingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -106,7 +107,7 @@ export const PricingPage: React.FC = () => {
       <div className="pricing-page">
         <div className="pricing-page__loading">
           <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-4xl animate-bounce">💰</span>
+            <EmojiIcon emoji="💰" className="w-10 h-10 text-primary" />
           </div>
           <p className="text-lg font-medium text-slate-800">Finding the best deals for you...</p>
           <p className="text-sm text-slate-500 mt-2">This won't take long! ⚡</p>

@@ -9,6 +9,7 @@ import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { SEOHead, generateWebApplicationSchema } from '@/components/seo/SEOHead';
+import { EmojiIcon } from '@/components/ui/EmojiIcon';
 
 type Goal = 'lose' | 'maintain' | 'gain';
 type Activity = 'sedentary' | 'light' | 'moderate' | 'active';
@@ -79,7 +80,7 @@ export default function CalorieCalculatorPage() {
             className="text-center mb-8"
           >
             <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-2xl bg-primary/10">
-              <span className="text-3xl">🍎</span>
+              <EmojiIcon emoji="🍎" className="w-8 h-8 text-primary" />
             </div>
             <h1 className="text-3xl font-bold text-foreground">Calorie Calculator</h1>
             <p className="text-muted-foreground mt-2">
@@ -207,15 +208,15 @@ export default function CalorieCalculatorPage() {
           {/* Related */}
           <div className="grid grid-cols-3 gap-4 mb-8">
             <Link to="/tdee-calculator" className="bg-card border border-border rounded-xl p-4 text-center hover:border-primary/30">
-              <span className="text-2xl">🔥</span>
+              <EmojiIcon emoji="🔥" className="w-6 h-6 text-primary" />
               <p className="text-sm font-medium mt-2">TDEE</p>
             </Link>
             <Link to="/macro-calculator" className="bg-card border border-border rounded-xl p-4 text-center hover:border-primary/30">
-              <span className="text-2xl">🧮</span>
+              <EmojiIcon emoji="🧮" className="w-6 h-6 text-primary" />
               <p className="text-sm font-medium mt-2">Macros</p>
             </Link>
             <Link to="/protein-calculator" className="bg-card border border-border rounded-xl p-4 text-center hover:border-primary/30">
-              <span className="text-2xl">🎯</span>
+              <EmojiIcon emoji="🎯" className="w-6 h-6 text-primary" />
               <p className="text-sm font-medium mt-2">Protein</p>
             </Link>
           </div>
