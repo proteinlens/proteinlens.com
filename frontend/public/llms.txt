@@ -1,0 +1,65 @@
+# ProteinLens
+
+> AI-powered macro nutrition tracker. Snap a photo of your meal and get instant protein, carbs, fat & calorie breakdowns — no manual logging, no barcode scanning.
+
+ProteinLens uses computer vision to analyze food photos and estimate macronutrient content in seconds. Built for people who want to track their nutrition without the friction of traditional food logging apps.
+
+## Core Pages
+
+- [Home](https://www.proteinlens.com/): AI meal scanning — upload a photo, get instant macro breakdowns
+- [Pricing](https://www.proteinlens.com/pricing): Free tier (3 scans/day) and Pro plans (monthly €9.99, annual €79)
+- [How It Works](https://www.proteinlens.com/how-it-works): Step-by-step explanation of the AI food scanning process
+- [Features](https://www.proteinlens.com/features): Full feature list — AI scanning, macro tracking, meal history, sharing
+- [About](https://www.proteinlens.com/about): Team and mission
+- [Methodology](https://www.proteinlens.com/methodology): How ProteinLens estimates macros from photos — AI model details and accuracy
+
+## Free Tools
+
+- [Protein Calculator](https://www.proteinlens.com/protein-calculator): Calculate daily protein needs based on weight, activity, and goals
+- [Calorie Calculator](https://www.proteinlens.com/calorie-calculator): Estimate daily calorie needs
+- [TDEE Calculator](https://www.proteinlens.com/tdee-calculator): Total Daily Energy Expenditure calculator
+- [Macro Calculator](https://www.proteinlens.com/macro-calculator): Custom macro split calculator for any diet goal
+
+## Blog — AI Food Scanning
+
+- [Track Macros from a Photo: Accuracy Guide](https://www.proteinlens.com/blog/how-to-track-macros-from-photo): How to get accurate macro estimates from food photos
+- [Photo vs Barcode Tracking: Speed & Accuracy](https://www.proteinlens.com/blog/photo-macro-tracking-vs-barcode-scanning): Comparing photo-based tracking to barcode scanning
+- [Best Lighting & Angles for Food Photo Macros](https://www.proteinlens.com/blog/best-lighting-angles-food-photo-macros): Tips for better food photo accuracy
+- [Estimate Portion Sizes from Photos](https://www.proteinlens.com/blog/estimate-portion-sizes-from-photos): Visual tricks for portion estimation
+- [Common AI Food Scan Mistakes](https://www.proteinlens.com/blog/common-ai-food-scan-mistakes): Common errors and how to fix them
+- [Track Restaurant Meals with Unknown Ingredients](https://www.proteinlens.com/blog/track-restaurant-meals-unknown-ingredients): How to track when you don't know what's in your food
+
+## Blog — Protein & Nutrition
+
+- [How Much Protein Per Day?](https://www.proteinlens.com/blog/how-much-protein-per-day): Calculator and examples for daily protein intake
+- [Protein for Fat Loss](https://www.proteinlens.com/blog/protein-for-fat-loss): Does more protein always help with fat loss?
+- [Protein for Muscle Gain](https://www.proteinlens.com/blog/protein-for-muscle-gain): Protein targets by bodyweight for muscle building
+- [High-Protein Breakfast Ideas](https://www.proteinlens.com/blog/high-protein-breakfast-ideas): Quick, cheap, easy-to-track breakfast options
+
+## Blog — Macro Tracking Basics
+
+- [What Are Macros?](https://www.proteinlens.com/blog/what-are-macros): Protein, carbs & fat explained simply
+- [How to Calculate Macros for Weight Loss](https://www.proteinlens.com/blog/how-to-calculate-macros-weight-loss): Step-by-step macro calculation guide
+- [Calories vs Macros](https://www.proteinlens.com/blog/calories-vs-macros): What matters most for results?
+- [What Is TDEE?](https://www.proteinlens.com/blog/what-is-tdee): Total Daily Energy Expenditure explained
+- [Weight Loss Plateau: 9 Reasons](https://www.proteinlens.com/blog/weight-loss-plateau-reasons): Why the scale stopped moving and how to fix it
+- [Track Macros Without a Food Scale](https://www.proteinlens.com/blog/track-macros-without-food-scale): Stay consistent without weighing everything
+- [Track Macros Eating Out](https://www.proteinlens.com/blog/track-macros-eating-out): How to track when you eat out 3+ times a week
+- [Macro Tracking for Busy People](https://www.proteinlens.com/blog/macro-tracking-busy-people): The 80/20 approach to macro tracking
+
+## Blog — Comparisons
+
+- [ProteinLens vs MyFitnessPal](https://www.proteinlens.com/blog/proteinlens-vs-myfitnesspal): 2026 head-to-head comparison
+- [ProteinLens vs Cronometer](https://www.proteinlens.com/blog/proteinlens-vs-cronometer): Best macro tracker for 2026?
+- [ProteinLens vs Lose It!](https://www.proteinlens.com/blog/proteinlens-vs-lose-it): Which tracker wins?
+- [Best Macro Tracking Apps 2026](https://www.proteinlens.com/blog/best-macro-tracking-apps-2026): Top 7 apps compared
+
+## Blog — Behind the Scenes
+
+- [How AI Food Scanning Works](https://www.proteinlens.com/blog/how-ai-food-scanning-works): Technical deep dive into ProteinLens AI
+- [Why You Keep Quitting Macro Tracking](https://www.proteinlens.com/blog/why-you-quit-macro-tracking): The psychology of tracking failure and how to fix it
+
+## Legal
+
+- [Privacy Policy](https://www.proteinlens.com/privacy)
+- [Terms of Service](https://www.proteinlens.com/terms)
