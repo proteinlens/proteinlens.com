@@ -120,6 +120,7 @@ export function Footer() {
             { href: 'https://www.terraformpilot.com/', label: 'Terraform Pilot' },
             { href: 'https://www.copypastelearn.com/', label: 'CopyPasteLearn' },
             { href: 'https://www.proteinlens.com/', label: 'ProteinLens', active: true },
+            { href: 'https://www.heavenartshop.com/', label: 'Heaven Art Shop' },
             { href: 'https://www.techmeout.it/', label: 'TechMeOut' },
           ].map((site, i) => (
             <span key={site.href} style={{ display: 'inline-flex', alignItems: 'center' }}>
