@@ -162,7 +162,7 @@ export async function prerender(data: PrerenderData): Promise<PrerenderResult> {
     { type: 'meta', props: { property: 'og:url', content: seo.canonical } },
     { type: 'meta', props: { property: 'og:title', content: seo.ogTitle || seo.title } },
     { type: 'meta', props: { property: 'og:description', content: seo.ogDescription || seo.description } },
-    { type: 'meta', props: { property: 'og:image', content: seo.ogImage || 'https://www.proteinlens.com/og-image.svg' } },
+    { type: 'meta', props: { property: 'og:image', content: seo.ogImage || 'https://www.proteinlens.com/og-image.png' } },
     { type: 'meta', props: { property: 'og:site_name', content: 'ProteinLens' } },
     
     // Twitter Card
@@ -170,7 +170,7 @@ export async function prerender(data: PrerenderData): Promise<PrerenderResult> {
     { type: 'meta', props: { name: 'twitter:url', content: seo.canonical } },
     { type: 'meta', props: { name: 'twitter:title', content: seo.ogTitle || seo.title } },
     { type: 'meta', props: { name: 'twitter:description', content: seo.ogDescription || seo.description } },
-    { type: 'meta', props: { name: 'twitter:image', content: seo.ogImage || 'https://www.proteinlens.com/og-image.svg' } },
+    { type: 'meta', props: { name: 'twitter:image', content: seo.ogImage || 'https://www.proteinlens.com/og-image.png' } },
   ]);
 
   // Add JSON-LD structured data if provided
