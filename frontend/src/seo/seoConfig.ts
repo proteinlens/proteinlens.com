@@ -84,9 +84,14 @@ const createFAQSchema = (faqs: Array<{ question: string; answer: string }>) => (
 
 // Calculator-specific FAQs for schema
 const proteinCalculatorFAQs = [
-  { question: 'How much protein do I need per day?', answer: 'Protein needs vary based on body weight and activity level. A general guideline is 1.6-2.2g per kg of body weight for active individuals. Use our calculator for a personalized estimate.' },
-  { question: 'Does protein intake differ for muscle building vs weight loss?', answer: 'Yes. For muscle building, aim for the higher end (2.0-2.2g/kg). For weight loss, maintain high protein (1.6-2.0g/kg) to preserve muscle mass while in a caloric deficit.' },
-  { question: 'How accurate is this protein calculator?', answer: 'Our calculator uses evidence-based multipliers from sports nutrition research. Results are estimates - individual needs may vary based on age, health conditions, and specific goals.' },
+  { question: 'How much protein do I need per day?', answer: 'Protein needs vary based on body weight and activity level. A general guideline is 1.6-2.2g per kg of body weight for active individuals, and 0.8g/kg as a minimum for sedentary adults. Use our calculator for a personalized estimate based on your weight, training level, and goals.' },
+  { question: 'How much protein do I need to build muscle?', answer: 'Research shows 1.6-2.2g of protein per kg of body weight per day is optimal for muscle growth. For a 75kg person, that is 120-165g daily. Eating above 2.2g/kg provides minimal additional muscle-building benefit.' },
+  { question: 'How much protein for weight loss?', answer: 'During a calorie deficit, aim for 1.6-2.4g/kg of body weight. Higher protein during weight loss preserves muscle mass, keeps you fuller longer, and has a higher thermic effect — your body burns more calories digesting protein than carbs or fat.' },
+  { question: 'Is this protein calculator accurate?', answer: 'Our calculator uses evidence-based multipliers from peer-reviewed sports nutrition research including Schoenfeld & Aragon 2018, Helms et al. 2014, and ISSN Position Stands. Results are personalized estimates — individual needs may vary based on age, health conditions, and training intensity.' },
+  { question: 'Can I eat too much protein?', answer: 'For healthy adults, protein intakes up to 3.5g/kg have been studied without adverse effects on kidney or liver function. Above 2.2g/kg, muscle-building benefits plateau. The main downside is opportunity cost — those calories could come from carbs or fats you also need.' },
+  { question: 'How do I track my protein intake?', answer: 'ProteinLens makes it easy — snap a photo of your meal and get an instant breakdown of protein, carbs, fat, and calories. No manual logging or barcode scanning needed. You can also use food labels and a kitchen scale for precise tracking.' },
+  { question: 'How much protein do older adults need?', answer: 'Older adults (60+) need more protein due to anabolic resistance. The European Society for Clinical Nutrition recommends 1.0-1.2g/kg for healthy older adults, and up to 1.5g/kg for those who are ill or recovering from injury.' },
+  { question: 'What is the difference between a protein calculator and a macro calculator?', answer: 'A protein calculator focuses on your daily protein target. A macro calculator gives targets for all three macronutrients — protein, carbs, and fat — plus total calories. Use a protein calculator if protein is your priority; use a macro calculator for a complete nutrition plan.' },
 ];
 
 const macroCalculatorFAQs = [
@@ -180,9 +185,9 @@ const seoData: Record<string, PageSEO> = {
 
   '/protein-calculator': {
     title: `Protein Calculator - Daily Protein Intake${BRAND_SUFFIX}`,
-    description: 'Calculate your daily protein needs based on body weight and fitness goals. Free protein calculator for muscle building, weight loss, and maintenance.',
+    description: 'Free protein calculator — find exactly how much protein you need per day for muscle gain, fat loss, or maintenance. Based on body weight, activity level, and science-backed multipliers.',
     canonical: `${BASE_URL}/protein-calculator`,
-    keywords: 'protein calculator, daily protein intake, how much protein do I need, protein per day calculator, protein requirements',
+    keywords: 'protein calculator, daily protein intake calculator, how much protein do I need, protein per day calculator, protein calculator for muscle gain, protein intake calculator, protein calculator bodyweight, protein requirements calculator, protein for weight loss calculator',
     jsonLd: [webApplicationSchema, createFAQSchema(proteinCalculatorFAQs)],
   },
 
