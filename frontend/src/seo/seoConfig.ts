@@ -137,15 +137,25 @@ const proteinCalculatorFAQs = [
 ];
 
 const macroCalculatorFAQs = [
-  { question: 'What is the best macro split for weight loss?', answer: 'A common starting point is 40% protein, 30% carbs, 30% fat. However, the best split depends on your preferences, activity level, and how your body responds. Consistency matters more than the exact split.' },
-  { question: 'How do I calculate my macros?', answer: 'First calculate your TDEE (total daily energy expenditure), then divide calories among protein, carbs, and fat based on your goals. Our calculator handles the math for you.' },
-  { question: 'Should I track macros or just calories?', answer: 'Tracking macros provides more insight than calories alone. It ensures adequate protein for muscle, and helps balance energy from carbs and fats. However, tracking calories is better than tracking nothing.' },
+  { question: 'What is the best macro split for weight loss?', answer: 'A high-protein split (40% protein, 30% carbs, 30% fat) is often best for weight loss. Higher protein increases satiety, preserves muscle, and has the highest thermic effect. The best split is one you can stick to consistently.' },
+  { question: 'How do I calculate my macros from scratch?', answer: 'Step 1: Calculate your TDEE. Step 2: Adjust for your goal (subtract 300-500 cal for fat loss, add 200-300 for muscle gain). Step 3: Split those calories into protein (4 cal/g), carbs (4 cal/g), and fat (9 cal/g).' },
+  { question: 'Should I track macros or just calories?', answer: 'Tracking macros gives you more control. Two 2,000-calorie diets can produce very different results depending on the macro split. Adequate protein prevents muscle loss, while the carb/fat ratio affects energy and hormones.' },
+  { question: 'What does IIFYM mean?', answer: "IIFYM stands for 'If It Fits Your Macros' — a flexible dieting approach where you can eat any food as long as it fits within your daily macro targets. Aim for 80% whole foods, 20% flexible choices." },
+  { question: 'How much protein, carbs, and fat do I need per day?', answer: 'Protein: 1.6–2.2g per kg bodyweight. Fat: minimum 0.5g per kg for hormone health. Carbs: fill remaining calories. For a 75kg person at 2,400 cal: ~150g protein, ~67g fat, ~270g carbs.' },
+  { question: 'Is keto better than a balanced diet for weight loss?', answer: 'Research shows no significant difference in fat loss between keto and other diets when calories and protein are equated. Keto can reduce appetite initially, but long-term adherence is often lower.' },
+  { question: 'How do I know if my macro split is working?', answer: 'Track your weight weekly, take monthly progress photos, and monitor energy levels and gym performance. If weight is moving in the right direction and you feel good, your split is working.' },
+  { question: 'Can I build muscle and lose fat at the same time?', answer: 'Yes — body recomposition is possible, especially for beginners or those returning after a break. Eat at maintenance or a slight deficit, keep protein high (2.0g/kg+), and do resistance training 3–5 days per week.' },
 ];
 
 const tdeeCalculatorFAQs = [
-  { question: 'What is TDEE?', answer: 'TDEE (Total Daily Energy Expenditure) is the total number of calories you burn per day, including your basal metabolic rate plus activity. It\'s the starting point for any diet plan.' },
-  { question: 'How accurate are TDEE calculators?', answer: 'TDEE calculators provide estimates based on formulas like Mifflin-St Jeor. Actual needs can vary by 10-20%. Use the result as a starting point and adjust based on real-world results over 2-4 weeks.' },
-  { question: 'Should I eat above or below my TDEE?', answer: 'To lose weight, eat below TDEE (deficit of 300-500 calories). To gain muscle, eat slightly above (surplus of 200-300 calories). To maintain, eat at TDEE.' },
+  { question: 'What is TDEE and why does it matter?', answer: "TDEE (Total Daily Energy Expenditure) is the total number of calories you burn per day, including your basal metabolic rate, daily activity, exercise, and digestion. It's the foundation of any diet plan." },
+  { question: 'How do you calculate TDEE?', answer: 'TDEE is calculated by first estimating your BMR using the Mifflin-St Jeor equation, then multiplying by an activity factor. For example: a 75kg, 175cm, 30-year-old male with moderate activity has a BMR of ~1,700 cal × 1.55 = ~2,635 TDEE.' },
+  { question: 'How accurate are TDEE calculators?', answer: 'TDEE calculators provide estimates within 10–20% of your actual expenditure. The biggest variable is activity level. Use the result as a starting point and adjust based on 2–4 weeks of weight tracking.' },
+  { question: 'What is the difference between BMR and TDEE?', answer: 'BMR is the calories your body needs at complete rest. TDEE adds everything on top: walking, exercise, digesting food, even fidgeting. For most people, TDEE is 1.4–1.9× their BMR.' },
+  { question: 'Why is my TDEE different from other calculators?', answer: 'Different calculators use different formulas. We use Mifflin-St Jeor, the most accurate for non-obese adults. Others use Harris-Benedict (tends to overestimate) or Katch-McArdle (requires body fat %).' },
+  { question: 'How does NEAT affect my TDEE?', answer: "NEAT (Non-Exercise Activity Thermogenesis) can vary by 500–2,000 calories per day between individuals. It includes all movement that isn't planned exercise: walking, standing, fidgeting, cooking." },
+  { question: 'Should I eat below my TDEE to lose weight?', answer: 'Yes — a deficit of 300–500 calories below TDEE is ideal for sustainable weight loss (~0.25–0.5 kg per week). Keep protein high (1.6–2.4g/kg) to preserve muscle.' },
+  { question: 'Does my TDEE change as I lose weight?', answer: "Yes — TDEE decreases as you lose weight because you have less body mass. Recalculate every 5–10 kg and consider periodic diet breaks at maintenance to counteract metabolic adaptation." },
 ];
 
 // SEO data for all public routes
@@ -235,26 +245,35 @@ const seoData: Record<string, PageSEO> = {
 
   '/macro-calculator': {
     title: `Macro Calculator - Calculate Your Macros${BRAND_SUFFIX}`,
-    description: 'Free macro calculator to find your ideal protein, carbs, and fat split. Calculate macros for weight loss, muscle gain, or maintenance.',
+    description: 'Free macro calculator to find your ideal protein, carbs, and fat split. Compare 6 popular diets (IIFYM, keto, low carb, high protein) with 8 FAQs.',
     canonical: `${BASE_URL}/macro-calculator`,
-    keywords: 'macro calculator, macronutrient calculator, calculate macros, macro split calculator, carb fat protein calculator',
+    keywords: 'macro calculator, macronutrient calculator, calculate macros, macro split calculator, IIFYM calculator, carb fat protein calculator, keto macros, flexible dieting',
     jsonLd: [webApplicationSchema, createFAQSchema(macroCalculatorFAQs)],
   },
 
   '/tdee-calculator': {
     title: `TDEE Calculator — Daily Energy${BRAND_SUFFIX}`,
-    description: 'Calculate your TDEE (Total Daily Energy Expenditure) to find how many calories you burn per day. Free TDEE calculator with activity multipliers.',
+    description: 'Calculate your TDEE (Total Daily Energy Expenditure) with the Mifflin-St Jeor formula. Free TDEE calculator with activity multipliers, reference tables, and 8 FAQs.',
     canonical: `${BASE_URL}/tdee-calculator`,
-    keywords: 'TDEE calculator, total daily energy expenditure, how many calories do I burn, calorie calculator, BMR calculator',
+    keywords: 'TDEE calculator, total daily energy expenditure, how many calories do I burn, BMR calculator, metabolism calculator, maintenance calories calculator',
     jsonLd: [webApplicationSchema, createFAQSchema(tdeeCalculatorFAQs)],
   },
 
   '/calorie-calculator': {
     title: `Calorie Calculator - Daily Calorie Needs${BRAND_SUFFIX}`,
-    description: 'Calculate how many calories you need per day for weight loss, maintenance, or muscle gain. Free calorie calculator with goal-based recommendations.',
+    description: 'Calculate how many calories you need per day for weight loss, maintenance, or muscle gain. Free calorie calculator using the Mifflin-St Jeor equation with 8 FAQs.',
     canonical: `${BASE_URL}/calorie-calculator`,
-    keywords: 'calorie calculator, daily calorie needs, how many calories should I eat, calorie deficit calculator',
-    jsonLd: webApplicationSchema,
+    keywords: 'calorie calculator, daily calorie needs, how many calories should I eat, calorie deficit calculator, calories for weight loss, maintenance calories, calorie calculator for muscle gain',
+    jsonLd: [webApplicationSchema, createFAQSchema([
+      { question: 'How many calories should I eat to lose weight?', answer: 'To lose weight at a safe, sustainable rate (~0.5 kg per week), eat about 500 calories below your TDEE. For most adults, this means 1,500–2,000 calories per day. Never go below 1,200 calories without medical supervision.' },
+      { question: 'What formula does this calorie calculator use?', answer: 'We use the Mifflin-St Jeor equation, which research shows is the most accurate formula for estimating BMR (Basal Metabolic Rate). Your BMR is multiplied by an activity factor to estimate total daily calories burned.' },
+      { question: 'What is a calorie deficit and how big should it be?', answer: 'A calorie deficit means eating fewer calories than you burn. A 300–500 calorie deficit per day is recommended for steady weight loss. Larger deficits (750+) can lead to muscle loss, fatigue, and metabolic adaptation.' },
+      { question: 'How accurate are calorie calculators?', answer: 'Calorie calculators provide estimates with about 10–20% accuracy. Individual factors like genetics, muscle mass, hormones, and NEAT affect actual needs. Use the result as a starting point and adjust based on 2–4 weeks of tracking.' },
+      { question: 'How many calories do I need to build muscle?', answer: 'To build muscle, eat 200–300 calories above your TDEE (a lean bulk). Combined with resistance training and adequate protein (1.6–2.2g/kg), this supports muscle growth while minimizing fat gain.' },
+      { question: 'What is the difference between BMR and TDEE?', answer: 'BMR is the calories your body burns at complete rest. TDEE includes BMR plus calories burned through exercise, daily movement, and digesting food. TDEE is always higher than BMR.' },
+      { question: 'Should I eat back exercise calories?', answer: "If your TDEE already accounts for your exercise via the activity multiplier, don't eat back additional calories. If you're using BMR only and tracking exercise separately, eat back about 50–75% of estimated exercise calories." },
+      { question: 'Why am I not losing weight even in a calorie deficit?', answer: 'Common reasons: underestimating portion sizes (most people undercount by 20–50%), metabolic adaptation from prolonged dieting, water retention masking fat loss, or your activity level is lower than selected.' },
+    ])],
   },
 
   '/guides': {
