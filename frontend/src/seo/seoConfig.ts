@@ -61,11 +61,53 @@ const organizationSchema = {
   name: 'ProteinLens',
   url: BASE_URL,
   logo: `${BASE_URL}/favicon.svg`,
+  image: `${BASE_URL}/og-image.png`,
   description: 'AI-powered macro nutrition tracking app. Snap photos to instantly analyze protein, carbs, and fat.',
   contactPoint: {
     '@type': 'ContactPoint',
     email: 'support@proteinlens.com',
     contactType: 'customer service',
+  },
+  sameAs: [
+    'https://www.youtube.com/@BertonLuca',
+  ],
+};
+
+const howToSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'HowTo',
+  name: 'How to Track Macros from a Food Photo',
+  description: 'Use ProteinLens to instantly analyze protein, carbs, fat, and calories from any food photo.',
+  step: [
+    {
+      '@type': 'HowToStep',
+      name: 'Take a photo of your meal',
+      text: 'Open ProteinLens and snap a clear, well-lit photo of your plate. Top-down angle works best.',
+      position: 1,
+    },
+    {
+      '@type': 'HowToStep',
+      name: 'AI identifies the foods',
+      text: 'Our AI vision model identifies individual food items, estimates portion sizes, and recognizes preparation methods.',
+      position: 2,
+    },
+    {
+      '@type': 'HowToStep',
+      name: 'Get instant macro breakdown',
+      text: 'View detailed protein, carbs, fat, and calorie counts for each food item and the entire meal.',
+      position: 3,
+    },
+    {
+      '@type': 'HowToStep',
+      name: 'Track your daily progress',
+      text: 'Results are saved to your history. Track daily totals against your protein and macro goals.',
+      position: 4,
+    },
+  ],
+  totalTime: 'PT30S',
+  tool: {
+    '@type': 'HowToTool',
+    name: 'ProteinLens app',
   },
 };
 
@@ -129,7 +171,7 @@ const seoData: Record<string, PageSEO> = {
     description: 'Learn how ProteinLens uses AI to track macros from food photos. Snap a picture, get instant protein, carbs, fat & calories. No manual logging required.',
     canonical: `${BASE_URL}/how-it-works`,
     keywords: 'how to track macros from photo, AI food scanner, photo macro tracker, automatic macro tracking, food photo analyzer',
-    jsonLd: webApplicationSchema,
+    jsonLd: [webApplicationSchema, howToSchema],
   },
 
   '/about': {
