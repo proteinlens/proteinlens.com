@@ -304,6 +304,37 @@ export const blogPosts: BlogPost[] = [
     updatedAt: '2026-04-12',
     readingTime: 8,
   },
+  {
+    slug: 'photo-vs-manual-calorie-counting',
+    title: 'Photo vs Manual Calorie Counting',
+    description: 'AI photo tracking vs manual food logging: accuracy, speed, and consistency compared. Which calorie counting method is better for real results?',
+    keywords: 'photo calorie counting, manual calorie tracking, AI food tracking vs manual, calorie counting methods, best way to count calories',
+    category: 'ai-tracking',
+    publishedAt: '2026-04-12',
+    updatedAt: '2026-04-12',
+    readingTime: 7,
+  },
+  {
+    slug: 'high-protein-meal-prep',
+    title: 'High-Protein Meal Prep: 5 Recipes for the Week',
+    description: 'Complete meal prep guide with 5 high-protein recipes (30-50g each). Cook once on Sunday, eat all week. Includes macros, shopping list, and storage tips.',
+    keywords: 'high protein meal prep, meal prep recipes, protein meal prep, weekly meal prep, meal prep for muscle gain',
+    category: 'protein-goals',
+    publishedAt: '2026-04-12',
+    updatedAt: '2026-04-12',
+    readingTime: 9,
+  },
+  {
+    slug: 'how-much-protein-per-kg',
+    title: 'How Much Protein Per Kg of Body Weight?',
+    description: 'Evidence-based protein per kg recommendations by goal: 0.8g/kg (sedentary) to 2.4g/kg (fat loss). Includes tables for 7 populations with research sources.',
+    keywords: 'protein per kg, protein per kilogram, how much protein per kg, protein intake per kg body weight, protein g/kg',
+    category: 'protein-goals',
+    publishedAt: '2026-04-12',
+    updatedAt: '2026-04-12',
+    readingTime: 10,
+    featured: true,
+  },
 ];
 
 // Helper functions
