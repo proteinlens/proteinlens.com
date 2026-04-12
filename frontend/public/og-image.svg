@@ -1,12 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#f0fdf4;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#dcfce7;stop-opacity:1" />
+      <stop offset="0%" style="stop-color:#f0fdf4" />
+      <stop offset="100%" style="stop-color:#dcfce7" />
     </linearGradient>
     <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#22c55e;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#16a34a;stop-opacity:1" />
+      <stop offset="0%" style="stop-color:#22c55e" />
+      <stop offset="100%" style="stop-color:#16a34a" />
     </linearGradient>
   </defs>
   
@@ -14,27 +14,36 @@
   <rect width="1200" height="630" fill="url(#bg)"/>
   
   <!-- Decorative circles -->
-  <circle cx="100" cy="530" r="200" fill="#22c55e" opacity="0.1"/>
-  <circle cx="1100" cy="100" r="250" fill="#16a34a" opacity="0.1"/>
+  <circle cx="50" cy="580" r="200" fill="#22c55e" opacity="0.07"/>
+  <circle cx="1150" cy="50" r="250" fill="#16a34a" opacity="0.07"/>
+  <circle cx="900" cy="500" r="150" fill="#22c55e" opacity="0.05"/>
   
-  <!-- Logo/Icon -->
-  <circle cx="600" cy="200" r="80" fill="url(#accent)"/>
-  <text x="600" y="225" font-size="80" text-anchor="middle" fill="white">🍽️</text>
+  <!-- Logo circle with P lettermark -->
+  <circle cx="600" cy="195" r="75" fill="url(#accent)"/>
+  <path d="M575 160 L575 230 M575 160 L605 160 Q630 160 630 180 Q630 200 605 200 L575 200" 
+        stroke="white" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
   
-  <!-- Text -->
-  <text x="600" y="350" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="bold" text-anchor="middle" fill="#166534">ProteinLens</text>
-  <text x="600" y="420" font-family="system-ui, -apple-system, sans-serif" font-size="32" text-anchor="middle" fill="#15803d">AI-Powered Food Protein Analyzer</text>
+  <!-- Title -->
+  <text x="600" y="345" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="68" font-weight="800" text-anchor="middle" fill="#14532d" letter-spacing="-1">ProteinLens</text>
   
-  <!-- Feature badges -->
-  <rect x="350" y="470" width="150" height="40" rx="20" fill="#22c55e"/>
-  <text x="425" y="497" font-family="system-ui" font-size="16" text-anchor="middle" fill="white">📸 Snap</text>
+  <!-- Subtitle -->
+  <text x="600" y="400" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="28" font-weight="500" text-anchor="middle" fill="#15803d">AI-Powered Macro Nutrition Tracker</text>
   
-  <rect x="525" y="470" width="150" height="40" rx="20" fill="#22c55e"/>
-  <text x="600" y="497" font-family="system-ui" font-size="16" text-anchor="middle" fill="white">🤖 Analyze</text>
+  <!-- Feature pills -->
+  <rect x="295" y="440" width="170" height="44" rx="22" fill="#22c55e" opacity="0.15"/>
+  <text x="380" y="468" font-family="system-ui" font-size="17" font-weight="600" text-anchor="middle" fill="#166534">Snap a Photo</text>
   
-  <rect x="700" y="470" width="150" height="40" rx="20" fill="#22c55e"/>
-  <text x="775" y="497" font-family="system-ui" font-size="16" text-anchor="middle" fill="white">💪 Track</text>
+  <rect x="490" y="440" width="220" height="44" rx="22" fill="#22c55e" opacity="0.15"/>
+  <text x="600" y="468" font-family="system-ui" font-size="17" font-weight="600" text-anchor="middle" fill="#166534">Get Instant Macros</text>
   
-  <!-- URL -->
-  <text x="600" y="580" font-family="system-ui" font-size="24" text-anchor="middle" fill="#6b7280">www.proteinlens.com</text>
+  <rect x="735" y="440" width="170" height="44" rx="22" fill="#22c55e" opacity="0.15"/>
+  <text x="820" y="468" font-family="system-ui" font-size="17" font-weight="600" text-anchor="middle" fill="#166534">Hit Your Goals</text>
+  
+  <!-- Arrows between pills -->
+  <path d="M470 462 L485 462" stroke="#22c55e" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <path d="M715 462 L730 462" stroke="#22c55e" stroke-width="2" fill="none"/>
+  
+  <!-- Bottom bar -->
+  <rect x="0" y="560" width="1200" height="70" fill="#14532d"/>
+  <text x="600" y="603" font-family="system-ui" font-size="22" font-weight="500" text-anchor="middle" fill="#86efac">www.proteinlens.com</text>
 </svg>

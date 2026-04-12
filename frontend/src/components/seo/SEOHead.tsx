@@ -25,7 +25,7 @@ export interface SEOHeadProps {
 }
 
 const BASE_URL = 'https://www.proteinlens.com';
-const DEFAULT_OG_IMAGE = `${BASE_URL}/og-image.svg`;
+const DEFAULT_OG_IMAGE = `${BASE_URL}/og-image.png`;
 const SITE_NAME = 'ProteinLens';
 const BRAND_SUFFIX = ' | ProteinLens';
 

@@ -6,7 +6,7 @@
  */
 
 const BASE_URL = 'https://www.proteinlens.com';
-const DEFAULT_OG_IMAGE = `${BASE_URL}/og-image.svg`;
+const DEFAULT_OG_IMAGE = `${BASE_URL}/og-image.png`;
 import { blogPosts } from '../content/blog/index';
 const BRAND_SUFFIX = ' | ProteinLens';
 
@@ -150,7 +150,7 @@ const seoData: Record<string, PageSEO> = {
       '@type': 'Product',
       name: 'ProteinLens Pro',
       description: 'Unlimited AI-powered macro tracking with priority analysis',
-      image: `${BASE_URL}/og-image.svg`,
+      image: `${BASE_URL}/og-image.png`,
       offers: [
         {
           '@type': 'Offer',
