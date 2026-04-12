@@ -417,6 +417,9 @@ export const PUBLIC_ROUTES = [
   '/blog/scan-menu-for-protein',
   '/blog/protein-calculator-for-seniors',
   '/blog/fifty-grams-protein-breakfast',
+  '/blog/photo-vs-manual-calorie-counting',
+  '/blog/high-protein-meal-prep',
+  '/blog/how-much-protein-per-kg',
   '/404',
 ];
 

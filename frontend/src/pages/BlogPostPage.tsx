@@ -52,6 +52,9 @@ const postContentMap: Record<string, React.LazyExoticComponent<React.ComponentTy
   'scan-menu-for-protein': lazy(() => import('@/content/blog/posts/scan-menu-for-protein')),
   'protein-calculator-for-seniors': lazy(() => import('@/content/blog/posts/protein-calculator-for-seniors')),
   'fifty-grams-protein-breakfast': lazy(() => import('@/content/blog/posts/fifty-grams-protein-breakfast')),
+  'photo-vs-manual-calorie-counting': lazy(() => import('@/content/blog/posts/photo-vs-manual-calorie-counting')),
+  'high-protein-meal-prep': lazy(() => import('@/content/blog/posts/high-protein-meal-prep')),
+  'how-much-protein-per-kg': lazy(() => import('@/content/blog/posts/how-much-protein-per-kg')),
 };
 
 /** Skeleton placeholder while blog post content loads */
