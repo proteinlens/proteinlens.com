@@ -274,6 +274,36 @@ export const blogPosts: BlogPost[] = [
     updatedAt: '2026-03-01',
     readingTime: 8,
   },
+  {
+    slug: 'scan-menu-for-protein',
+    title: 'How to Scan a Menu for Protein Content',
+    description: 'Use AI food scanning to track protein at restaurants. Snap a photo of your meal and get instant macro estimates — no nutrition labels needed.',
+    keywords: 'scan menu for protein, protein scanner, scan food for protein, restaurant protein tracking, AI food scan, protein counter restaurant',
+    category: 'ai-tracking',
+    publishedAt: '2026-04-12',
+    updatedAt: '2026-04-12',
+    readingTime: 7,
+  },
+  {
+    slug: 'protein-calculator-for-seniors',
+    title: 'Protein Calculator for Seniors (60+)',
+    description: 'How much protein do older adults need? Evidence-based protein targets for healthy aging, sarcopenia prevention, and maintaining strength after 60.',
+    keywords: 'protein calculator seniors, protein for older adults, how much protein over 60, sarcopenia protein, elderly protein needs, senior protein intake',
+    category: 'protein-goals',
+    publishedAt: '2026-04-12',
+    updatedAt: '2026-04-12',
+    readingTime: 9,
+  },
+  {
+    slug: 'fifty-grams-protein-breakfast',
+    title: '50g Protein Breakfast: 10 Easy Recipes',
+    description: '10 breakfasts that hit 50 grams of protein — from 3-minute shakes to weekend meals. Quick, cheap, and actually filling.',
+    keywords: '50 grams protein breakfast, 50g protein breakfast, high protein breakfast 50g, how to get 50 grams of protein for breakfast, protein breakfast ideas',
+    category: 'protein-goals',
+    publishedAt: '2026-04-12',
+    updatedAt: '2026-04-12',
+    readingTime: 8,
+  },
 ];
 
 // Helper functions
