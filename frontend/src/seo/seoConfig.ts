@@ -353,6 +353,9 @@ export const PUBLIC_ROUTES = [
   '/blog/best-macro-tracking-apps-2026',
   '/blog/how-ai-food-scanning-works',
   '/blog/why-you-quit-macro-tracking',
+  '/blog/scan-menu-for-protein',
+  '/blog/protein-calculator-for-seniors',
+  '/blog/fifty-grams-protein-breakfast',
   '/404',
 ];
 

@@ -35,6 +35,8 @@ ProteinLens uses computer vision to analyze food photos and estimate macronutrie
 - [Protein for Fat Loss](https://www.proteinlens.com/blog/protein-for-fat-loss): Does more protein always help with fat loss?
 - [Protein for Muscle Gain](https://www.proteinlens.com/blog/protein-for-muscle-gain): Protein targets by bodyweight for muscle building
 - [High-Protein Breakfast Ideas](https://www.proteinlens.com/blog/high-protein-breakfast-ideas): Quick, cheap, easy-to-track breakfast options
+- [50g Protein Breakfast: 10 Easy Recipes](https://www.proteinlens.com/blog/fifty-grams-protein-breakfast): 10 breakfasts that hit 50 grams of protein
+- [Protein Calculator for Seniors (60+)](https://www.proteinlens.com/blog/protein-calculator-for-seniors): Evidence-based protein targets for healthy aging
 
 ## Blog — Macro Tracking Basics
 
@@ -57,6 +59,7 @@ ProteinLens uses computer vision to analyze food photos and estimate macronutrie
 ## Blog — Behind the Scenes
 
 - [How AI Food Scanning Works](https://www.proteinlens.com/blog/how-ai-food-scanning-works): Technical deep dive into ProteinLens AI
+- [Scan a Menu for Protein](https://www.proteinlens.com/blog/scan-menu-for-protein): How to use AI scanning to track protein at restaurants
 - [Why You Keep Quitting Macro Tracking](https://www.proteinlens.com/blog/why-you-quit-macro-tracking): The psychology of tracking failure and how to fix it
 
 ## Legal

@@ -49,6 +49,9 @@ const postContentMap: Record<string, React.LazyExoticComponent<React.ComponentTy
   'best-macro-tracking-apps-2026': lazy(() => import('@/content/blog/posts/best-macro-tracking-apps-2026')),
   'how-ai-food-scanning-works': lazy(() => import('@/content/blog/posts/how-ai-food-scanning-works')),
   'why-you-quit-macro-tracking': lazy(() => import('@/content/blog/posts/why-you-quit-macro-tracking')),
+  'scan-menu-for-protein': lazy(() => import('@/content/blog/posts/scan-menu-for-protein')),
+  'protein-calculator-for-seniors': lazy(() => import('@/content/blog/posts/protein-calculator-for-seniors')),
+  'fifty-grams-protein-breakfast': lazy(() => import('@/content/blog/posts/fifty-grams-protein-breakfast')),
 };
 
 /** Skeleton placeholder while blog post content loads */
