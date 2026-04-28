@@ -105,7 +105,7 @@ export default function WhatAreMacros() {
 
       <h3>Step 1: Calculate Your Calories</h3>
       <p>
-        Use our <Link to="/calculators/tdee" className="text-primary hover:underline">TDEE calculator</Link> to 
+        Use our <Link to="/tdee-calculator" className="text-primary hover:underline">TDEE calculator</Link> to 
         find your maintenance calories. Then:
       </p>
       <ul>
@@ -235,7 +235,7 @@ export default function WhatAreMacros() {
       </div>
 
       <p>
-        <Link to="/calculators/macro" className="text-primary hover:underline">
+        <Link to="/macro-calculator" className="text-primary hover:underline">
           → Calculate your personal macros with our free macro calculator
         </Link>
       </p>

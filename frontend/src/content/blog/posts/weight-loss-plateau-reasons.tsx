@@ -211,7 +211,7 @@ export default function WeightLossPlateauReasons() {
       </div>
 
       <p>
-        <Link to="/calculators/tdee" className="text-primary hover:underline">
+        <Link to="/tdee-calculator" className="text-primary hover:underline">
           → Recalculate your TDEE at your current weight
         </Link>
       </p>

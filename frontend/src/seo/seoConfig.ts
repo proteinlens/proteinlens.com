@@ -237,7 +237,7 @@ const seoData: Record<string, PageSEO> = {
 
   '/protein-calculator': {
     title: `Protein Calculator - Daily Protein Intake${BRAND_SUFFIX}`,
-    description: 'Free protein calculator — find exactly how much protein you need per day for muscle gain, fat loss, or maintenance. Based on body weight, activity level, and science-backed multipliers.',
+    description: 'Free protein calculator for muscle gain, fat loss, or maintenance. Based on body weight, activity level, and science-backed multipliers. 8 FAQs.',
     canonical: `${BASE_URL}/protein-calculator`,
     keywords: 'protein calculator, daily protein intake calculator, how much protein do I need, protein per day calculator, protein calculator for muscle gain, protein intake calculator, protein calculator bodyweight, protein requirements calculator, protein for weight loss calculator',
     jsonLd: [webApplicationSchema, createFAQSchema(proteinCalculatorFAQs)],
@@ -253,7 +253,7 @@ const seoData: Record<string, PageSEO> = {
 
   '/tdee-calculator': {
     title: `TDEE Calculator — Daily Energy${BRAND_SUFFIX}`,
-    description: 'Calculate your TDEE (Total Daily Energy Expenditure) with the Mifflin-St Jeor formula. Free TDEE calculator with activity multipliers, reference tables, and 8 FAQs.',
+    description: 'Calculate your TDEE (Total Daily Energy Expenditure) with the Mifflin-St Jeor formula. Free calculator with activity multipliers and 8 FAQs.',
     canonical: `${BASE_URL}/tdee-calculator`,
     keywords: 'TDEE calculator, total daily energy expenditure, how many calories do I burn, BMR calculator, metabolism calculator, maintenance calories calculator',
     jsonLd: [webApplicationSchema, createFAQSchema(tdeeCalculatorFAQs)],
@@ -261,7 +261,7 @@ const seoData: Record<string, PageSEO> = {
 
   '/calorie-calculator': {
     title: `Calorie Calculator - Daily Calorie Needs${BRAND_SUFFIX}`,
-    description: 'Calculate how many calories you need per day for weight loss, maintenance, or muscle gain. Free calorie calculator using the Mifflin-St Jeor equation with 8 FAQs.',
+    description: 'Calculate daily calories for weight loss, maintenance, or muscle gain. Free calorie calculator with Mifflin-St Jeor equation and 8 FAQs.',
     canonical: `${BASE_URL}/calorie-calculator`,
     keywords: 'calorie calculator, daily calorie needs, how many calories should I eat, calorie deficit calculator, calories for weight loss, maintenance calories, calorie calculator for muscle gain',
     jsonLd: [webApplicationSchema, createFAQSchema([

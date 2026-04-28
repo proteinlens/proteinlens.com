@@ -239,7 +239,7 @@ export default function HowToCalculateMacrosWeightLoss() {
       </div>
 
       <p>
-        <Link to="/calculators/macro" className="text-primary hover:underline">
+        <Link to="/macro-calculator" className="text-primary hover:underline">
           → Use our free Macro Calculator to get your personal targets
         </Link>
       </p>

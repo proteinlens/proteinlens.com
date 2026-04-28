@@ -270,7 +270,7 @@ export default function WhatIsTDEE() {
       </div>
 
       <p>
-        <Link to="/calculators/tdee" className="text-primary hover:underline">
+        <Link to="/tdee-calculator" className="text-primary hover:underline">
           → Calculate your exact TDEE with our free calculator
         </Link>
       </p>

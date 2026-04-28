@@ -234,11 +234,11 @@ export default function CaloriesVsMacros() {
       </div>
 
       <p>
-        <Link to="/calculators/calorie" className="text-primary hover:underline">
+        <Link to="/calorie-calculator" className="text-primary hover:underline">
           → Calculate your calorie needs
         </Link>
         {' • '}
-        <Link to="/calculators/macro" className="text-primary hover:underline">
+        <Link to="/macro-calculator" className="text-primary hover:underline">
           → Calculate your macro targets
         </Link>
       </p>

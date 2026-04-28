@@ -300,6 +300,15 @@ export default function TrackMacrosEatingOut() {
           estimate. No database searching required.
         </p>
       </div>
+
+      <h2>Related Guides</h2>
+      <ul>
+        <li><Link to="/blog/track-restaurant-meals-unknown-ingredients">Track Restaurant Meals with Unknown Ingredients</Link></li>
+        <li><Link to="/blog/scan-menu-for-protein">Scan a Menu for Protein</Link></li>
+        <li><Link to="/blog/estimate-portion-sizes-from-photos">Estimate Portion Sizes from Photos</Link></li>
+        <li><Link to="/blog/macro-tracking-busy-people">Macro Tracking for Busy People</Link></li>
+        <li><Link to="/macro-calculator">Free Macro Calculator</Link></li>
+      </ul>
     </div>
   );
 }

@@ -119,6 +119,14 @@ export default function ProteinLensVsLoseIt() {
           → Try ProteinLens free — no account needed for your first scan
         </Link>
       </p>
+
+      <h2>Related Comparisons</h2>
+      <ul>
+        <li><Link to="/blog/proteinlens-vs-myfitnesspal">ProteinLens vs MyFitnessPal</Link></li>
+        <li><Link to="/blog/proteinlens-vs-cronometer">ProteinLens vs Cronometer</Link></li>
+        <li><Link to="/blog/best-macro-tracking-apps-2026">Best Macro Tracking Apps 2026</Link></li>
+        <li><Link to="/blog/photo-vs-manual-calorie-counting">Photo vs Manual Calorie Counting</Link></li>
+      </ul>
     </div>
   );
 }
