@@ -8,7 +8,7 @@ const BASE_URL = 'https://www.proteinlens.com';
 
 // Parse blog posts from index.ts (simple regex extraction)
 const indexSrc = readFileSync('src/content/blog/index.ts', 'utf8');
-const postRegex = /\{\s*slug:\s*'([^']+)',\s*title:\s*'([^']*)',\s*description:\s*'([^']*)',[\s\S]*?category:\s*'([^']*)',\s*publishedAt:\s*'([^']*)',/g;
+const postRegex = /\{\s*slug:\s*'([^']+)',\s*title:\s*'([^']*)',\s*description:\s*'((?:[^'\\]|\\.)*)',[\s\S]*?category:\s*'([^']*)',\s*publishedAt:\s*'([^']*)',/g;
 
 const posts = [];
 let m;

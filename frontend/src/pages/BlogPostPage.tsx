@@ -55,6 +55,9 @@ const postContentMap: Record<string, React.LazyExoticComponent<React.ComponentTy
   'photo-vs-manual-calorie-counting': lazy(() => import('@/content/blog/posts/photo-vs-manual-calorie-counting')),
   'high-protein-meal-prep': lazy(() => import('@/content/blog/posts/high-protein-meal-prep')),
   'how-much-protein-per-kg': lazy(() => import('@/content/blog/posts/how-much-protein-per-kg')),
+  'ai-nutrition-tracking-accuracy': lazy(() => import('@/content/blog/posts/ai-nutrition-tracking-accuracy')),
+  'best-macro-split-for-weight-loss': lazy(() => import('@/content/blog/posts/best-macro-split-for-weight-loss')),
+  'track-macros-without-counting': lazy(() => import('@/content/blog/posts/track-macros-without-counting')),
 };
 
 /** Skeleton placeholder while blog post content loads */
