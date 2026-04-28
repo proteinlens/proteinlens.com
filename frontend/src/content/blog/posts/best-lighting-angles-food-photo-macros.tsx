@@ -146,6 +146,15 @@ export default function BestLightingAngles() {
           because it was too much hassle. Don't let perfect be the enemy of good.
         </p>
       </div>
+
+      <h2>Related Guides</h2>
+      <ul>
+        <li><Link to="/blog/how-to-track-macros-from-photo">Track Macros from a Photo: Accuracy Guide</Link></li>
+        <li><Link to="/blog/common-ai-food-scan-mistakes">Common AI Food Scan Mistakes to Avoid</Link></li>
+        <li><Link to="/blog/estimate-portion-sizes-from-photos">Estimate Portion Sizes from Photos</Link></li>
+        <li><Link to="/blog/photo-vs-manual-calorie-counting">Photo vs Manual Calorie Counting</Link></li>
+        <li><Link to="/protein-calculator">Free Protein Calculator</Link></li>
+      </ul>
     </div>
   );
 }

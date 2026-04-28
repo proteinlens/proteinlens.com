@@ -321,10 +321,19 @@ export default function TrackMacrosWithoutFoodScale() {
       </div>
 
       <p>
-        <Link to="/calculators/macro" className="text-primary hover:underline">
+        <Link to="/macro-calculator" className="text-primary hover:underline">
           → Calculate your macro targets to know what you're aiming for
         </Link>
       </p>
+
+      <h2>Related Guides</h2>
+      <ul>
+        <li><Link to="/blog/estimate-portion-sizes-from-photos">Estimate Portion Sizes from Photos</Link></li>
+        <li><Link to="/blog/track-macros-eating-out">Track Macros When Eating Out</Link></li>
+        <li><Link to="/blog/macro-tracking-busy-people">Macro Tracking for Busy People</Link></li>
+        <li><Link to="/blog/photo-vs-manual-calorie-counting">Photo vs Manual Calorie Counting</Link></li>
+        <li><Link to="/protein-calculator">Free Protein Calculator</Link></li>
+      </ul>
     </div>
   );
 }

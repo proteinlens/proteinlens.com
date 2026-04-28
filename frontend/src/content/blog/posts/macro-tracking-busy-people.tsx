@@ -312,10 +312,19 @@ export default function MacroTrackingBusyPeople() {
       </div>
 
       <p>
-        <Link to="/calculators/macro" className="text-primary hover:underline">
+        <Link to="/macro-calculator" className="text-primary hover:underline">
           → Calculate your protein target to focus on what matters most
         </Link>
       </p>
+
+      <h2>Related Guides</h2>
+      <ul>
+        <li><Link to="/blog/track-macros-without-food-scale">Track Macros Without a Food Scale</Link></li>
+        <li><Link to="/blog/track-macros-eating-out">Track Macros When Eating Out</Link></li>
+        <li><Link to="/blog/high-protein-meal-prep">High-Protein Meal Prep for the Week</Link></li>
+        <li><Link to="/blog/why-you-quit-macro-tracking">Why You Keep Quitting Macro Tracking</Link></li>
+        <li><Link to="/tdee-calculator">Free TDEE Calculator</Link></li>
+      </ul>
     </div>
   );
 }

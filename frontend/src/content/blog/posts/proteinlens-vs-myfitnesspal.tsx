@@ -120,6 +120,15 @@ export default function ProteinLensVsMyFitnessPal() {
         </Link>{' '}
         No signup required for your first scan.
       </p>
+
+      <h2>Related Comparisons</h2>
+      <ul>
+        <li><Link to="/blog/proteinlens-vs-cronometer">ProteinLens vs Cronometer</Link></li>
+        <li><Link to="/blog/proteinlens-vs-lose-it">ProteinLens vs Lose It!</Link></li>
+        <li><Link to="/blog/best-macro-tracking-apps-2026">Best Macro Tracking Apps 2026</Link></li>
+        <li><Link to="/blog/photo-vs-manual-calorie-counting">Photo vs Manual Calorie Counting</Link></li>
+        <li><Link to="/macro-calculator">Free Macro Calculator</Link></li>
+      </ul>
     </div>
   );
 }

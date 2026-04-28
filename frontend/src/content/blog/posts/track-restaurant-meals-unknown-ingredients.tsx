@@ -193,6 +193,15 @@ export default function TrackRestaurantMeals() {
         ProteinLens</Link>. You'll get an instant estimate that you can adjust with the 
         strategies above. It takes 10 seconds and keeps you on track.
       </p>
+
+      <h2>Related Guides</h2>
+      <ul>
+        <li><Link to="/blog/track-macros-eating-out">Track Macros When Eating Out</Link></li>
+        <li><Link to="/blog/scan-menu-for-protein">Scan a Menu for Protein</Link></li>
+        <li><Link to="/blog/common-ai-food-scan-mistakes">Common AI Food Scan Mistakes</Link></li>
+        <li><Link to="/blog/best-lighting-angles-food-photo-macros">Best Lighting & Angles for Food Photos</Link></li>
+        <li><Link to="/calorie-calculator">Free Calorie Calculator</Link></li>
+      </ul>
     </div>
   );
 }
