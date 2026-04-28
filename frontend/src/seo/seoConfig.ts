@@ -420,6 +420,9 @@ export const PUBLIC_ROUTES = [
   '/blog/photo-vs-manual-calorie-counting',
   '/blog/high-protein-meal-prep',
   '/blog/how-much-protein-per-kg',
+  '/blog/ai-nutrition-tracking-accuracy',
+  '/blog/best-macro-split-for-weight-loss',
+  '/blog/track-macros-without-counting',
   '/404',
 ];
 

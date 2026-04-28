@@ -335,6 +335,37 @@ export const blogPosts: BlogPost[] = [
     readingTime: 10,
     featured: true,
   },
+  {
+    slug: 'ai-nutrition-tracking-accuracy',
+    title: 'How Accurate Is AI Nutrition Tracking?',
+    description: 'Honest breakdown of AI food tracking accuracy: 85-95% food ID, ±15-25% portions, ±15-30% macros. How it compares to manual logging and food scales.',
+    keywords: 'AI nutrition tracking accuracy, food recognition accuracy, AI calorie counting, photo tracking accuracy, is AI food tracking accurate',
+    category: 'ai-tracking',
+    publishedAt: '2026-04-28',
+    updatedAt: '2026-04-28',
+    readingTime: 9,
+    featured: true,
+  },
+  {
+    slug: 'best-macro-split-for-weight-loss',
+    title: 'Best Macro Split for Fat Loss (Evidence-Based)',
+    description: 'Research-backed macro split for fat loss: 30-35% protein, 20-30% fat, rest carbs. Includes examples, adjustment tips, and 5 split approaches compared.',
+    keywords: 'best macro split for weight loss, fat loss macros, macro ratio for cutting, weight loss macro split, optimal macros for fat loss',
+    category: 'macro-basics',
+    publishedAt: '2026-04-28',
+    updatedAt: '2026-04-28',
+    readingTime: 8,
+  },
+  {
+    slug: 'track-macros-without-counting',
+    title: 'Track Macros Without Counting Every Gram',
+    description: 'Hit your macros without obsessive counting: hand portions, plate method, meal rotation, protein-only tracking, and AI spot-checks. Practical, sustainable methods.',
+    keywords: 'track macros without counting, easy macro tracking, hand portion method, macro tracking without scale, simple macro tracking',
+    category: 'real-life-tracking',
+    publishedAt: '2026-04-28',
+    updatedAt: '2026-04-28',
+    readingTime: 9,
+  },
 ];
 
 // Helper functions

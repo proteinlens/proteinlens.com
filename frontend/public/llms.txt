@@ -38,6 +38,8 @@ ProteinLens uses computer vision to analyze food photos and estimate macronutrie
 - [50g Protein Breakfast: 10 Easy Recipes](https://www.proteinlens.com/blog/fifty-grams-protein-breakfast): 10 breakfasts that hit 50 grams of protein
 - [How Much Protein Per Kg of Body Weight?](https://www.proteinlens.com/blog/how-much-protein-per-kg): Evidence-based protein per kg recommendations for 7 populations
 - [High-Protein Meal Prep: 5 Recipes](https://www.proteinlens.com/blog/high-protein-meal-prep): Cook once, eat all week — 5 recipes with 30-50g protein each
+- [Best Macro Split for Fat Loss](https://www.proteinlens.com/blog/best-macro-split-for-weight-loss): Evidence-based macro ratios for cutting — 5 approaches compared
+- [Track Macros Without Counting](https://www.proteinlens.com/blog/track-macros-without-counting): Hand portions, plate method, meal rotation — practical alternatives to obsessive counting
 - [Protein Calculator for Seniors (60+)](https://www.proteinlens.com/blog/protein-calculator-for-seniors): Evidence-based protein targets for healthy aging
 
 ## Blog — Macro Tracking Basics
@@ -62,6 +64,7 @@ ProteinLens uses computer vision to analyze food photos and estimate macronutrie
 
 - [How AI Food Scanning Works](https://www.proteinlens.com/blog/how-ai-food-scanning-works): Technical deep dive into ProteinLens AI
 - [Photo vs Manual Calorie Counting](https://www.proteinlens.com/blog/photo-vs-manual-calorie-counting): AI photo tracking vs manual logging — accuracy, speed, consistency compared
+- [How Accurate Is AI Nutrition Tracking?](https://www.proteinlens.com/blog/ai-nutrition-tracking-accuracy): Honest accuracy breakdown — food ID, portion estimation, and macro accuracy with benchmarks
 - [Scan a Menu for Protein](https://www.proteinlens.com/blog/scan-menu-for-protein): How to use AI scanning to track protein at restaurants
 - [Why You Keep Quitting Macro Tracking](https://www.proteinlens.com/blog/why-you-quit-macro-tracking): The psychology of tracking failure and how to fix it
 
