@@ -58,6 +58,9 @@ const postContentMap: Record<string, React.LazyExoticComponent<React.ComponentTy
   'ai-nutrition-tracking-accuracy': lazy(() => import('@/content/blog/posts/ai-nutrition-tracking-accuracy')),
   'best-macro-split-for-weight-loss': lazy(() => import('@/content/blog/posts/best-macro-split-for-weight-loss')),
   'track-macros-without-counting': lazy(() => import('@/content/blog/posts/track-macros-without-counting')),
+  'protein-timing-does-it-matter': lazy(() => import('@/content/blog/posts/protein-timing-does-it-matter')),
+  'how-to-read-nutrition-labels': lazy(() => import('@/content/blog/posts/how-to-read-nutrition-labels')),
+  'vegan-protein-sources-complete': lazy(() => import('@/content/blog/posts/vegan-protein-sources-complete')),
 };
 
 /** Skeleton placeholder while blog post content loads */

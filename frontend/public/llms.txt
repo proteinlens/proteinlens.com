@@ -37,8 +37,11 @@ ProteinLens uses computer vision to analyze food photos and estimate macronutrie
 - [High-Protein Breakfast Ideas](https://www.proteinlens.com/blog/high-protein-breakfast-ideas): Quick, cheap, easy-to-track breakfast options
 - [50g Protein Breakfast: 10 Easy Recipes](https://www.proteinlens.com/blog/fifty-grams-protein-breakfast): 10 breakfasts that hit 50 grams of protein
 - [How Much Protein Per Kg of Body Weight?](https://www.proteinlens.com/blog/how-much-protein-per-kg): Evidence-based protein per kg recommendations for 7 populations
+- [Protein Timing: Does It Actually Matter?](https://www.proteinlens.com/blog/protein-timing-does-it-matter): Anabolic window myth debunked — daily total and distribution matter more
+- [Vegan Protein Sources: Complete Guide](https://www.proteinlens.com/blog/vegan-protein-sources-complete): Hit 150g+ protein on a vegan diet — ranked sources, sample meal plan, common mistakes
 - [High-Protein Meal Prep: 5 Recipes](https://www.proteinlens.com/blog/high-protein-meal-prep): Cook once, eat all week — 5 recipes with 30-50g protein each
 - [Best Macro Split for Fat Loss](https://www.proteinlens.com/blog/best-macro-split-for-weight-loss): Evidence-based macro ratios for cutting — 5 approaches compared
+- [How to Read Nutrition Labels for Macros](https://www.proteinlens.com/blog/how-to-read-nutrition-labels): The 5 numbers that matter, common label traps, speed hacks for trackers
 - [Track Macros Without Counting](https://www.proteinlens.com/blog/track-macros-without-counting): Hand portions, plate method, meal rotation — practical alternatives to obsessive counting
 - [Protein Calculator for Seniors (60+)](https://www.proteinlens.com/blog/protein-calculator-for-seniors): Evidence-based protein targets for healthy aging
 
