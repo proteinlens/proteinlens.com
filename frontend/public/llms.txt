@@ -75,3 +75,18 @@ ProteinLens uses computer vision to analyze food photos and estimate macronutrie
 
 - [Privacy Policy](https://www.proteinlens.com/privacy)
 - [Terms of Service](https://www.proteinlens.com/terms)
+- [Protein in Eggs: Complete Guide](https://www.proteinlens.com/blog/protein-in-eggs): 6.3g per large egg — sizes, cooking methods, whole vs whites, cholesterol facts
+- [Protein in Chicken Breast](https://www.proteinlens.com/blog/protein-in-chicken-breast): 31g per 100g cooked — skin on/off, cooking methods, cuts compared
+- [Protein in Greek Yogurt](https://www.proteinlens.com/blog/protein-in-greek-yogurt): 10-18g per serving — Fage vs Chobani vs Skyr, fat levels, protein hacks
+- [Calories in Rice (All Types)](https://www.proteinlens.com/blog/calories-in-rice): White, brown, basmati, jasmine, wild — dry vs cooked weights, resistant starch
+- [Calories in Bananas](https://www.proteinlens.com/blog/calories-in-banana): 72-135 cal by size, ripeness effects, pre-workout uses
+- [Protein in Salmon](https://www.proteinlens.com/blog/protein-in-salmon): 25g per 100g — wild vs farmed, Atlantic vs sockeye, omega-3 content
+- [Protein in Oats & Oatmeal](https://www.proteinlens.com/blog/protein-in-oats): 5g per serving — how to boost to 30g+ with add-ins, overnight protein oats
+- [Intermittent Fasting & Macros](https://www.proteinlens.com/blog/intermittent-fasting-macros): Hit macros in 16:8, 20:4, OMAD — protein distribution, sample days
+- [Calories to Build Muscle](https://www.proteinlens.com/blog/how-many-calories-to-build-muscle): 200-500 cal surplus guide, natural growth rates, bulking macro split
+- [What Is BMR?](https://www.proteinlens.com/blog/what-is-bmr): Basal metabolic rate explained — Mifflin-St Jeor formula, BMR vs TDEE
+- [Protein for Women](https://www.proteinlens.com/blog/protein-for-women): 1.2-2.0g/kg for women — cycle considerations, pregnancy, menopause
+- [Pre-Workout Nutrition](https://www.proteinlens.com/blog/pre-workout-nutrition): What to eat 30min-3hrs before training — macro formula, fasted training
+- [Track Macros While Traveling](https://www.proteinlens.com/blog/track-macros-while-traveling): Airport food, hotel breakfasts, street food, restaurant strategies
+- [Protein in Beans & Lentils](https://www.proteinlens.com/blog/protein-in-beans-and-lentils): 8-11g per 100g cooked — all types ranked, complete protein combos
+- [How to Count Macros: Beginner Guide](https://www.proteinlens.com/blog/how-to-count-macros-beginners): Step-by-step for beginners — calculate targets, first week, common mistakes
