@@ -366,6 +366,37 @@ export const blogPosts: BlogPost[] = [
     updatedAt: '2026-04-28',
     readingTime: 9,
   },
+  {
+    slug: 'protein-timing-does-it-matter',
+    title: 'Protein Timing: Does It Actually Matter?',
+    description: 'The anabolic window myth debunked. Research shows total daily protein matters more than timing — but distribution across meals does help. Evidence-based guide.',
+    keywords: 'protein timing, anabolic window, when to eat protein, post workout protein, protein meal timing',
+    category: 'protein-goals',
+    publishedAt: '2026-04-28',
+    updatedAt: '2026-04-28',
+    readingTime: 8,
+  },
+  {
+    slug: 'how-to-read-nutrition-labels',
+    title: 'How to Read Nutrition Labels for Macros',
+    description: 'The 5 numbers that matter on a nutrition label: serving size, calories, protein, carbs, fat. Plus common label traps and speed hacks for macro trackers.',
+    keywords: 'how to read nutrition labels, nutrition label macros, food label guide, reading nutrition facts, macro tracking labels',
+    category: 'macro-basics',
+    publishedAt: '2026-04-28',
+    updatedAt: '2026-04-28',
+    readingTime: 8,
+  },
+  {
+    slug: 'vegan-protein-sources-complete',
+    title: 'Vegan Protein Sources: Complete Guide',
+    description: 'Hit 150g+ protein on a vegan diet. Ranked protein sources by density, sample meal plan, amino acid pairing, and common mistakes plant-based athletes make.',
+    keywords: 'vegan protein sources, plant based protein, best vegan protein foods, vegan protein guide, high protein vegan diet',
+    category: 'protein-goals',
+    publishedAt: '2026-04-28',
+    updatedAt: '2026-04-28',
+    readingTime: 10,
+    featured: true,
+  },
 ];
 
 // Helper functions

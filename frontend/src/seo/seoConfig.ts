@@ -423,6 +423,9 @@ export const PUBLIC_ROUTES = [
   '/blog/ai-nutrition-tracking-accuracy',
   '/blog/best-macro-split-for-weight-loss',
   '/blog/track-macros-without-counting',
+  '/blog/protein-timing-does-it-matter',
+  '/blog/how-to-read-nutrition-labels',
+  '/blog/vegan-protein-sources-complete',
   '/404',
 ];
 
