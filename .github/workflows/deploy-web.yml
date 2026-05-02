@@ -130,5 +130,17 @@ jobs:
           skip_app_build: true
 
       - name: Submit URLs to IndexNow
-        run: bash scripts/indexnow-submit.sh
+        run: |
+          echo "📤 Submitting URLs to IndexNow via API..."
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            "${{ inputs.api_url }}/indexnow" \
+            -H "Content-Type: application/json")
+          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          echo "$BODY" | jq . 2>/dev/null || echo "$BODY"
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ IndexNow submission successful"
+          else
+            echo "⚠️ IndexNow returned HTTP $HTTP_CODE (non-blocking)"
+          fi
         continue-on-error: true
