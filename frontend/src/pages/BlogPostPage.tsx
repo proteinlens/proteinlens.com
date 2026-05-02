@@ -76,6 +76,16 @@ const postContentMap: Record<string, React.LazyExoticComponent<React.ComponentTy
   'track-macros-while-traveling': lazy(() => import('@/content/blog/posts/track-macros-while-traveling')),
   'protein-in-beans-and-lentils': lazy(() => import('@/content/blog/posts/protein-in-beans-and-lentils')),
   'how-to-count-macros-beginners': lazy(() => import('@/content/blog/posts/how-to-count-macros-beginners')),
+  'protein-in-tofu': lazy(() => import('@/content/blog/posts/protein-in-tofu')),
+  'protein-in-peanut-butter': lazy(() => import('@/content/blog/posts/protein-in-peanut-butter')),
+  'protein-powder-comparison': lazy(() => import('@/content/blog/posts/protein-powder-comparison')),
+  'calories-in-pasta': lazy(() => import('@/content/blog/posts/calories-in-pasta')),
+  'calories-in-avocado': lazy(() => import('@/content/blog/posts/calories-in-avocado')),
+  'what-is-tdee': lazy(() => import('@/content/blog/posts/what-is-tdee')),
+  'weight-loss-plateau-reasons': lazy(() => import('@/content/blog/posts/weight-loss-plateau-reasons')),
+  'protein-in-cottage-cheese-and-dairy': lazy(() => import('@/content/blog/posts/protein-in-cottage-cheese-and-dairy')),
+  'calories-in-alcohol': lazy(() => import('@/content/blog/posts/calories-in-alcohol')),
+  'creatine-and-protein-guide': lazy(() => import('@/content/blog/posts/creatine-and-protein-guide')),
 };
 
 /** Skeleton placeholder while blog post content loads */

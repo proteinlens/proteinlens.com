@@ -90,3 +90,13 @@ ProteinLens uses computer vision to analyze food photos and estimate macronutrie
 - [Track Macros While Traveling](https://www.proteinlens.com/blog/track-macros-while-traveling): Airport food, hotel breakfasts, street food, restaurant strategies
 - [Protein in Beans & Lentils](https://www.proteinlens.com/blog/protein-in-beans-and-lentils): 8-11g per 100g cooked — all types ranked, complete protein combos
 - [How to Count Macros: Beginner Guide](https://www.proteinlens.com/blog/how-to-count-macros-beginners): Step-by-step for beginners — calculate targets, first week, common mistakes
+- [Protein in Tofu & Tempeh](https://www.proteinlens.com/blog/protein-in-tofu): All types ranked, complete protein status, soy myths debunked
+- [Protein in Peanut Butter](https://www.proteinlens.com/blog/protein-in-peanut-butter): Why PB is a fat source not protein, powdered PB hack, portions
+- [Protein Powder Comparison](https://www.proteinlens.com/blog/protein-powder-comparison): Whey vs casein vs plant vs collagen — per scoop, absorption, cost
+- [Calories in Pasta (All Types)](https://www.proteinlens.com/blog/calories-in-pasta): Regular, whole wheat, chickpea — dry vs cooked, sauce calories
+- [Calories in Avocado](https://www.proteinlens.com/blog/calories-in-avocado): 160 cal per half — portion macros, avo toast, worth the calories?
+- [What Is TDEE?](https://www.proteinlens.com/blog/what-is-tdee): Total daily energy expenditure — 4 components, calculation, goal-based use
+- [Weight Loss Plateau: 8 Reasons](https://www.proteinlens.com/blog/weight-loss-plateau-reasons): Hidden calories, metabolic adaptation, water retention, sleep, solutions
+- [Protein in Cottage Cheese & Dairy](https://www.proteinlens.com/blog/protein-in-cottage-cheese-and-dairy): Full dairy ranking, cottage cheese recipes, cutting vs bulking picks
+- [Calories in Alcohol](https://www.proteinlens.com/blog/calories-in-alcohol): 7 cal/gram, drink comparison, how to track alcohol in macros
+- [Creatine & Protein Guide](https://www.proteinlens.com/blog/creatine-and-protein-guide): Dosing, timing, myths debunked, synergy with protein intake

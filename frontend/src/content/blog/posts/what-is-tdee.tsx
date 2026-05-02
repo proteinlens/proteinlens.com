@@ -1,279 +1,86 @@
-/**
- * Blog Post: What Is TDEE? (And Why It Matters for Weight Loss)
- */
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-export default function WhatIsTDEE() {
+export default function WhatIsTdee() {
   return (
-    <div className="blog-content">
-      <p>
-        TDEE (Total Daily Energy Expenditure) is the number of calories you burn every day. 
-        It's the most important number for weight management — and most people have no idea 
-        what theirs is.
-      </p>
+    <>
+      <p>TDEE (Total Daily Energy Expenditure) is the total number of calories you burn in a day — from breathing, walking, exercising, and even digesting food. It's the single most important number for any nutrition goal.</p>
 
-      <h2>TDEE Explained Simply</h2>
-
-      <p>
-        Your body burns calories in four ways:
-      </p>
-
-      <ol>
-        <li><strong>BMR (Basal Metabolic Rate)</strong> — Calories burned just staying alive (60-70%)</li>
-        <li><strong>TEF (Thermic Effect of Food)</strong> — Calories burned digesting food (~10%)</li>
-        <li><strong>NEAT (Non-Exercise Activity)</strong> — Walking, fidgeting, daily movement (15-30%)</li>
-        <li><strong>EAT (Exercise Activity)</strong> — Intentional workouts (5-10%)</li>
-      </ol>
-
-      <p>
-        <strong>TDEE = BMR + TEF + NEAT + EAT</strong>
-      </p>
-
-      <div className="bg-muted/50 rounded-lg p-4 my-6">
-        <p className="font-semibold">Think of TDEE as your "break-even" point:</p>
-        <ul className="mt-2">
-          <li>Eat less than your TDEE → Lose weight</li>
-          <li>Eat more than your TDEE → Gain weight</li>
-          <li>Eat equal to your TDEE → Maintain weight</li>
-        </ul>
-      </div>
-
-      <h2>Why TDEE Matters More Than BMR</h2>
-
-      <p>
-        Many people calculate their BMR and try to eat that amount — but that's wrong. 
-        BMR is just the calories needed if you were in a coma. You need TDEE, which 
-        accounts for all daily activity.
-      </p>
-
-      <p>
-        For an average person:
-      </p>
+      <h2>TDEE = BMR + Activity</h2>
+      <p>Your TDEE is made up of four components:</p>
       <ul>
-        <li>BMR might be 1,500 calories</li>
-        <li>TDEE might be 2,200 calories</li>
+        <li><strong>BMR (60-70%):</strong> Calories burned at complete rest — <Link to="/blog/what-is-bmr">learn more about BMR</Link></li>
+        <li><strong>NEAT (15-30%):</strong> Non-Exercise Activity Thermogenesis — walking, fidgeting, standing, housework</li>
+        <li><strong>EAT (5-10%):</strong> Exercise Activity Thermogenesis — deliberate workouts</li>
+        <li><strong>TEF (8-10%):</strong> Thermic Effect of Food — energy to digest what you eat</li>
       </ul>
-
-      <p>
-        Eating at BMR (1,500) when your TDEE is 2,200 creates a 700-calorie deficit — 
-        which is too aggressive and unsustainable for most people.
-      </p>
+      <p><strong>Surprise:</strong> Your gym session (EAT) is typically only 5-10% of daily calorie burn. NEAT — the walking, stairs, and fidgeting — often burns more than your workout.</p>
 
       <h2>How to Calculate Your TDEE</h2>
-
-      <h3>Method 1: Formula (Quick Estimate)</h3>
-
-      <p>
-        Start with BMR using the Mifflin-St Jeor equation:
-      </p>
-
-      <div className="bg-muted/50 rounded-lg p-4 my-6">
-        <p><strong>Men:</strong> BMR = (10 × weight in kg) + (6.25 × height in cm) − (5 × age) + 5</p>
-        <p><strong>Women:</strong> BMR = (10 × weight in kg) + (6.25 × height in cm) − (5 × age) − 161</p>
-      </div>
-
-      <p>Then multiply by activity factor:</p>
-
-      <div className="overflow-x-auto my-6">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="border-b">
-              <th className="text-left p-2">Lifestyle</th>
-              <th className="text-left p-2">Multiply By</th>
-              <th className="text-left p-2">Example</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr className="border-b">
-              <td className="p-2">Sedentary (desk job, no exercise)</td>
-              <td className="p-2">1.2</td>
-              <td className="p-2">Office worker who drives everywhere</td>
-            </tr>
-            <tr className="border-b">
-              <td className="p-2">Lightly Active</td>
-              <td className="p-2">1.375</td>
-              <td className="p-2">Light walking, 1-2 workouts/week</td>
-            </tr>
-            <tr className="border-b">
-              <td className="p-2">Moderately Active</td>
-              <td className="p-2">1.55</td>
-              <td className="p-2">Active job or 3-5 workouts/week</td>
-            </tr>
-            <tr className="border-b">
-              <td className="p-2">Very Active</td>
-              <td className="p-2">1.725</td>
-              <td className="p-2">Physical job + daily workouts</td>
-            </tr>
-            <tr className="border-b">
-              <td className="p-2">Extremely Active</td>
-              <td className="p-2">1.9</td>
-              <td className="p-2">Athlete training multiple times daily</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 my-6">
-        <p className="font-semibold">⚠️ Most people overestimate activity level</p>
-        <p className="mt-2">
-          Working out 3x/week but sitting at a desk all day? You're probably "Lightly Active," 
-          not "Moderately Active." Be honest — overestimating leads to eating too much.
-        </p>
-      </div>
-
-      <h3>Method 2: Track Your Actual Intake (Most Accurate)</h3>
-
-      <p>
-        The most accurate way to find your TDEE is to track what you eat and monitor your 
-        weight for 2-4 weeks:
-      </p>
-
+      <p>Use our <Link to="/tdee-calculator">TDEE calculator</Link> or calculate manually:</p>
       <ol>
-        <li>Track everything you eat accurately (weigh food)</li>
-        <li>Weigh yourself daily at the same time</li>
-        <li>Calculate your average daily intake</li>
-        <li>Note your average weekly weight change</li>
+        <li><strong>Calculate BMR</strong> using Mifflin-St Jeor:
+          <ul>
+            <li>Men: (10 × kg) + (6.25 × cm) − (5 × age) + 5</li>
+            <li>Women: (10 × kg) + (6.25 × cm) − (5 × age) − 161</li>
+          </ul>
+        </li>
+        <li><strong>Multiply by activity factor:</strong>
+          <ul>
+            <li>Sedentary (desk job, no exercise): BMR × 1.2</li>
+            <li>Lightly active (1-3 workouts/week): BMR × 1.375</li>
+            <li>Moderately active (3-5 workouts/week): BMR × 1.55</li>
+            <li>Very active (6-7 workouts/week): BMR × 1.725</li>
+            <li>Extremely active (athlete/physical job + training): BMR × 1.9</li>
+          </ul>
+        </li>
       </ol>
 
-      <div className="bg-muted/50 rounded-lg p-4 my-6">
-        <p className="font-semibold">The Math:</p>
-        <ul className="mt-2">
-          <li>If you lost 1 lb/week eating 2,000 cal/day → TDEE is ~2,500</li>
-          <li>If you maintained eating 2,000 cal/day → TDEE is ~2,000</li>
-          <li>If you gained 1 lb/week eating 2,000 cal/day → TDEE is ~1,500</li>
-        </ul>
-        <p className="text-sm text-muted-foreground mt-2">
-          (1 pound ≈ 3,500 calories, so 500 cal/day deficit = 1 lb/week loss)
-        </p>
-      </div>
-
-      <h2>TDEE for Different Goals</h2>
-
-      <h3>For Weight Loss</h3>
-      <p>
-        Eat 300-500 calories below TDEE. This creates a sustainable deficit that preserves 
-        muscle and energy.
-      </p>
+      <h3>Example</h3>
+      <p>30-year-old woman, 65 kg, 165 cm, works out 4×/week:</p>
       <ul>
-        <li><strong>TDEE 2,000:</strong> Eat 1,500-1,700 for weight loss</li>
-        <li><strong>TDEE 2,500:</strong> Eat 2,000-2,200 for weight loss</li>
+        <li>BMR = (10 × 65) + (6.25 × 165) − (5 × 30) − 161 = 1,370 cal</li>
+        <li>TDEE = 1,370 × 1.55 = <strong>2,124 cal/day</strong></li>
       </ul>
 
-      <h3>For Muscle Gain</h3>
-      <p>
-        Eat 200-300 calories above TDEE. A larger surplus just adds more fat without 
-        faster muscle growth.
-      </p>
+      <h2>Using TDEE for Your Goals</h2>
       <ul>
-        <li><strong>TDEE 2,000:</strong> Eat 2,200-2,300 for muscle gain</li>
-        <li><strong>TDEE 2,500:</strong> Eat 2,700-2,800 for muscle gain</li>
+        <li><strong>Fat loss:</strong> Eat TDEE − 300 to 500 cal (moderate deficit = sustainable loss of 0.3-0.5 kg/week)</li>
+        <li><strong>Maintenance:</strong> Eat at TDEE (weight stays stable)</li>
+        <li><strong>Muscle gain:</strong> Eat TDEE + 200 to 400 cal (<Link to="/blog/how-many-calories-to-build-muscle">lean bulk guide</Link>)</li>
+      </ul>
+      <p><strong>Never eat below your BMR</strong> for extended periods — this triggers metabolic adaptation, muscle loss, and hormonal issues.</p>
+
+      <h2>Why TDEE Calculators Are Only Estimates</h2>
+      <p>All TDEE calculators have a margin of error of ±200-300 cal. The activity multiplier is the weakest link — most people overestimate their activity level.</p>
+      <p>The fix: <strong>use the calculator as a starting point, then adjust based on results</strong>:</p>
+      <ul>
+        <li>Losing 0.3-0.5 kg/week → you're in the right deficit</li>
+        <li>Not losing → reduce by 200 cal</li>
+        <li>Losing too fast (&gt;1 kg/week) → increase by 200 cal</li>
+        <li>Track daily weight and take <strong>weekly averages</strong> — daily fluctuations are meaningless</li>
       </ul>
 
-      <h3>For Maintenance</h3>
-      <p>
-        Eat at TDEE ± 100 calories. Weight will naturally fluctuate 2-5 lbs due to water, 
-        food volume, and other factors.
-      </p>
-
-      <h2>Why TDEE Changes Over Time</h2>
-
-      <p>
-        Your TDEE isn't fixed — it changes based on:
-      </p>
-
-      <ul>
-        <li><strong>Weight loss</strong> — Smaller bodies burn fewer calories</li>
-        <li><strong>Muscle mass</strong> — More muscle = higher BMR</li>
-        <li><strong>Activity changes</strong> — New job, lifestyle changes</li>
-        <li><strong>Age</strong> — Metabolism slows ~2-3% per decade after 20</li>
-        <li><strong>Metabolic adaptation</strong> — Your body adjusts to prolonged deficits</li>
-      </ul>
-
-      <p>
-        <strong>Recalculate every 10-15 lbs of weight change</strong> or when progress stalls.
-      </p>
-
-      <h2>Common TDEE Mistakes</h2>
-
+      <h2>How to Increase Your TDEE</h2>
+      <p>Higher TDEE means you can eat more while still losing/maintaining. Strategies:</p>
       <ol>
-        <li><strong>Using BMR as your target</strong> — BMR is too low; use TDEE</li>
-        <li><strong>Overestimating activity level</strong> — Be honest about how much you move</li>
-        <li><strong>Not recalculating as you lose weight</strong> — TDEE drops as you get smaller</li>
-        <li><strong>Eating exercise calories back</strong> — Fitness trackers overestimate burns</li>
-        <li><strong>Ignoring NEAT</strong> — Daily movement varies hugely between people</li>
+        <li><strong>Walk more:</strong> 10,000 steps/day burns 300-500 extra calories — the single biggest lever</li>
+        <li><strong>Build muscle:</strong> More muscle mass raises BMR (the 60-70% baseline)</li>
+        <li><strong>Stand more:</strong> Standing desks burn 50-100 more cal/day than sitting</li>
+        <li><strong>Eat more protein:</strong> Higher TEF — protein uses 20-30% of its calories in digestion vs. 5-10% for carbs and 0-3% for fat</li>
       </ol>
 
-      <h2>Quick TDEE Reference</h2>
+      <h2>TDEE vs. Calorie Counting</h2>
+      <p>TDEE gives you the target. <Link to="/">ProteinLens</Link> helps you hit it — snap photos of your meals and track against your daily budget. Calculate your number with our <Link to="/tdee-calculator">free TDEE calculator</Link>.</p>
 
-      <p>
-        Here are rough TDEE estimates for moderately active people:
-      </p>
-
-      <div className="overflow-x-auto my-6">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="border-b">
-              <th className="text-left p-2">Weight</th>
-              <th className="text-left p-2">Women (TDEE)</th>
-              <th className="text-left p-2">Men (TDEE)</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr className="border-b">
-              <td className="p-2">120 lbs</td>
-              <td className="p-2">1,700-1,900</td>
-              <td className="p-2">1,900-2,100</td>
-            </tr>
-            <tr className="border-b">
-              <td className="p-2">140 lbs</td>
-              <td className="p-2">1,850-2,050</td>
-              <td className="p-2">2,100-2,300</td>
-            </tr>
-            <tr className="border-b">
-              <td className="p-2">160 lbs</td>
-              <td className="p-2">2,000-2,200</td>
-              <td className="p-2">2,300-2,500</td>
-            </tr>
-            <tr className="border-b">
-              <td className="p-2">180 lbs</td>
-              <td className="p-2">2,150-2,350</td>
-              <td className="p-2">2,500-2,700</td>
-            </tr>
-            <tr className="border-b">
-              <td className="p-2">200 lbs</td>
-              <td className="p-2">2,300-2,500</td>
-              <td className="p-2">2,700-2,900</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <p className="text-sm text-muted-foreground">
-        These are estimates. Your actual TDEE depends on age, muscle mass, and exact activity level.
-      </p>
-
-      <h2>The Bottom Line</h2>
-
-      <p>
-        TDEE is the foundation of any diet. Without knowing it, you're just guessing. 
-        Calculate it, track your intake, adjust based on results. It's that simple.
-      </p>
-
-      <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 my-6">
-        <p className="font-semibold mb-2">Know your TDEE, hit your targets:</p>
-        <p>
-          Once you know your TDEE, <Link to="/" className="text-primary hover:underline">ProteinLens</Link> makes 
-          tracking easy. Snap a photo of your meal and instantly see if you're on track.
-        </p>
-      </div>
-
-      <p>
-        <Link to="/tdee-calculator" className="text-primary hover:underline">
-          → Calculate your exact TDEE with our free calculator
-        </Link>
-      </p>
-    </div>
+      <h2>Related Guides</h2>
+      <ul>
+        <li><Link to="/blog/what-is-bmr">What Is BMR?</Link></li>
+        <li><Link to="/blog/how-many-calories-to-build-muscle">Calories for Muscle Building</Link></li>
+        <li><Link to="/blog/best-macro-split-for-weight-loss">Best Macro Split for Fat Loss</Link></li>
+        <li><Link to="/blog/how-to-count-macros-beginners">Beginner Macro Counting Guide</Link></li>
+        <li><Link to="/tdee-calculator">Free TDEE Calculator</Link></li>
+      </ul>
+    </>
   );
 }
