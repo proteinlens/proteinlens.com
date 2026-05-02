@@ -441,6 +441,16 @@ export const PUBLIC_ROUTES = [
   '/blog/track-macros-while-traveling',
   '/blog/protein-in-beans-and-lentils',
   '/blog/how-to-count-macros-beginners',
+  '/blog/protein-in-tofu',
+  '/blog/protein-in-peanut-butter',
+  '/blog/protein-powder-comparison',
+  '/blog/calories-in-pasta',
+  '/blog/calories-in-avocado',
+  '/blog/what-is-tdee',
+  '/blog/weight-loss-plateau-reasons',
+  '/blog/protein-in-cottage-cheese-and-dairy',
+  '/blog/calories-in-alcohol',
+  '/blog/creatine-and-protein-guide',
   '/404',
 ];
 

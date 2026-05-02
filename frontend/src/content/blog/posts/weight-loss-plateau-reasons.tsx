@@ -1,220 +1,90 @@
-/**
- * Blog Post: Weight Loss Plateau Reasons (And How to Break Through)
- */
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 
 export default function WeightLossPlateauReasons() {
   return (
-    <div className="blog-content">
-      <p>
-        You've been losing weight consistently, then suddenly — nothing. The scale won't 
-        budge for weeks. Before you panic, know this: plateaus are normal, and they're 
-        almost always fixable. Here's why they happen and exactly how to break through.
-      </p>
+    <>
+      <p>You've been losing weight steadily, and then... nothing. The scale won't budge for 2-3 weeks despite sticking to your plan. <strong>You've hit a plateau — and it's completely normal.</strong></p>
+      <p>Here are the 8 real reasons your weight loss has stalled, and how to break through each one.</p>
 
-      <h2>First: Are You Actually Plateaued?</h2>
-
-      <p>
-        A true plateau is <strong>3+ weeks with no weight change</strong> (not just scale 
-        fluctuations). Before troubleshooting, make sure you're actually stuck:
-      </p>
-
+      <h2>1. You're Eating More Than You Think</h2>
+      <p>This is the #1 reason, and it's not your fault — humans are terrible at estimating calories. Studies show people underestimate intake by <strong>30-50%</strong> (Lichtman et al., 1992).</p>
+      <p>Common culprits:</p>
       <ul>
-        <li><strong>Weigh daily, but look at weekly averages</strong> — Daily fluctuations of 2-5 lbs are normal</li>
-        <li><strong>Consider body composition</strong> — You might be gaining muscle while losing fat</li>
-        <li><strong>Take measurements</strong> — Waist, hips, and chest can change even when weight doesn't</li>
-        <li><strong>Check progress photos</strong> — Visual changes often precede scale changes</li>
+        <li>Cooking oils (1 tbsp = 120 cal, and most people pour 2-3 tbsp)</li>
+        <li>Sauces, dressings, condiments</li>
+        <li>"Healthy" snacks (nuts, avocado, granola — calorie-dense)</li>
+        <li>Weekend overeating that erases the weekday deficit</li>
+      </ul>
+      <p><strong>Fix:</strong> Track everything for one strict week. Use <Link to="/">ProteinLens</Link> to photograph every meal — even the handful of nuts and the "taste" while cooking.</p>
+
+      <h2>2. Metabolic Adaptation Is Real</h2>
+      <p>As you lose weight, your body burns fewer calories:</p>
+      <ul>
+        <li><strong>Lower body mass = lower BMR:</strong> A 70 kg person burns ~150 cal/day less than an 80 kg person</li>
+        <li><strong>Adaptive thermogenesis:</strong> Your body becomes more efficient — moving costs less energy</li>
+        <li><strong>Reduced NEAT:</strong> You subconsciously move less (fewer fidgets, less standing, shorter walks)</li>
+      </ul>
+      <p><strong>Fix:</strong> Recalculate your <Link to="/tdee-calculator">TDEE</Link> every 5 kg lost. You may need to reduce calories by 100-200 or increase activity.</p>
+
+      <h2>3. Water Retention Is Masking Fat Loss</h2>
+      <p>You might still be losing fat but retaining water from:</p>
+      <ul>
+        <li><strong>High sodium meal:</strong> Can cause 1-2 kg water retention overnight</li>
+        <li><strong>New exercise routine:</strong> Muscles retain water for repair (can last 2-4 weeks)</li>
+        <li><strong>Menstrual cycle:</strong> 1-3 kg fluctuation is normal in the luteal phase</li>
+        <li><strong>Cortisol from stress/sleep deprivation:</strong> Causes water retention</li>
+        <li><strong>Increased carb intake:</strong> Every 1g glycogen stored holds 3-4g water</li>
+      </ul>
+      <p><strong>Fix:</strong> Trust the process. Track weekly averages, not daily weights. Take measurements and progress photos — the scale is a terrible short-term metric.</p>
+
+      <h2>4. You've Lost Muscle, Not Just Fat</h2>
+      <p>If you're not eating enough protein or resistance training during a deficit, up to 25% of weight lost can be muscle. Less muscle = lower BMR = smaller deficit = plateau.</p>
+      <p><strong>Fix:</strong></p>
+      <ul>
+        <li>Eat <Link to="/blog/how-much-protein-per-kg">1.6-2.2 g/kg protein</Link> — non-negotiable during a deficit</li>
+        <li>Resistance train 3-4×/week — the #1 muscle preservation signal</li>
+        <li>Don't exceed a 500 cal/day deficit — larger deficits sacrifice more muscle</li>
       </ul>
 
-      <div className="bg-muted/50 rounded-lg p-4 my-6">
-        <p className="font-semibold">Not a Plateau:</p>
-        <ul className="mt-2">
-          <li>Scale went up 2 lbs from yesterday (water weight)</li>
-          <li>Weight stable for 1-2 weeks (normal fluctuation period)</li>
-          <li>Losing inches but not pounds (recomposition)</li>
-        </ul>
-      </div>
-
-      <h2>Why Plateaus Happen</h2>
-
-      <h3>1. Your TDEE Has Decreased</h3>
-      <p>
-        <strong>The #1 reason for plateaus.</strong> As you lose weight, your body burns 
-        fewer calories. The deficit that worked at 200 lbs doesn't work at 175 lbs.
-      </p>
-      <p className="text-sm text-muted-foreground">
-        Solution: Recalculate TDEE every 10-15 lbs of weight loss. Reduce calories or 
-        increase activity to restore the deficit.
-      </p>
-
-      <h3>2. You're Eating More Than You Think</h3>
-      <p>
-        Studies show people underestimate calorie intake by 30-50%. As you diet longer, 
-        "portion creep" sets in — servings gradually get bigger without you noticing.
-      </p>
-      <p className="text-sm text-muted-foreground">
-        Solution: Re-tighten your tracking. Weigh food instead of eyeballing. Track 
-        every bite, including cooking oils and "tastes."
-      </p>
-
-      <h3>3. Weekend Overeating</h3>
-      <p>
-        Five days of deficit can be erased by two days of excess. A 500 cal/day deficit 
-        Monday-Friday (2,500 total) is wiped out by two 1,250+ calorie surplus days.
-      </p>
-      <p className="text-sm text-muted-foreground">
-        Solution: Track weekends just as carefully as weekdays. Budget for treats 
-        instead of going off-plan.
-      </p>
-
-      <h3>4. Metabolic Adaptation</h3>
-      <p>
-        After prolonged dieting, your body reduces energy expenditure. You move less 
-        unconsciously (lower NEAT), and your metabolism adjusts to the deficit.
-      </p>
-      <p className="text-sm text-muted-foreground">
-        Solution: Take a diet break — eat at maintenance for 1-2 weeks. This can help 
-        reset metabolic rate before resuming the deficit.
-      </p>
-
-      <h3>5. Not Enough Protein</h3>
-      <p>
-        Low protein = muscle loss. Less muscle = lower metabolic rate. This creates a 
-        downward spiral where you need to eat less and less to keep losing weight.
-      </p>
-      <p className="text-sm text-muted-foreground">
-        Solution: Ensure 0.8-1g protein per pound of body weight. This preserves muscle 
-        and metabolism.
-      </p>
-
-      <h3>6. Water Retention Masking Fat Loss</h3>
-      <p>
-        You might be losing fat but retaining water due to:
-      </p>
+      <h2>5. Your Deficit Is Too Aggressive</h2>
+      <p>Paradoxically, eating too little can stall weight loss. Extreme restriction (&gt;750 cal deficit) triggers:</p>
       <ul>
-        <li>High sodium intake</li>
-        <li>New exercise routine (muscle inflammation)</li>
-        <li>Menstrual cycle (women can retain 3-5 lbs)</li>
-        <li>Stress and cortisol</li>
-        <li>Not enough sleep</li>
+        <li>Cortisol spike → water retention</li>
+        <li>Thyroid downregulation → lower metabolic rate</li>
+        <li>Binge-restrict cycles → net zero deficit over the week</li>
       </ul>
-      <p className="text-sm text-muted-foreground">
-        Solution: Often resolves itself. A "whoosh" effect can happen where you suddenly 
-        drop 3-5 lbs of water overnight.
-      </p>
+      <p><strong>Fix:</strong> Moderate deficit (300-500 cal below <Link to="/blog/what-is-tdee">TDEE</Link>). Slower but sustainable. If you've been under 1,200 cal, try a "diet break" — eat at maintenance for 1-2 weeks, then resume your deficit.</p>
 
-      <h2>How to Break Through a Plateau</h2>
+      <h2>6. You're Not Sleeping Enough</h2>
+      <p>Sleep deprivation (&lt;7 hours) increases ghrelin (hunger hormone) by 28% and decreases leptin (satiety hormone) by 18%. You eat more, move less, and store more fat — a triple hit.</p>
+      <p><strong>Fix:</strong> Prioritize 7-9 hours. This isn't optional wellness advice — it's a direct driver of body composition.</p>
 
-      <h3>Option 1: Re-Tighten Tracking (Free)</h3>
-      <p>
-        The most common fix. Spend one week being extremely precise:
-      </p>
+      <h2>7. Weekend Calories Are Erasing Weekday Progress</h2>
+      <p>Example: 500 cal/day deficit Mon-Fri = 2,500 cal deficit. Two "cheat meals" Saturday and Sunday at +1,000 each = +2,000. Net weekly deficit: only 500 cal → minimal weight loss.</p>
+      <p><strong>Fix:</strong> Track weekends too. You don't have to be perfect — but be aware. A 300 cal surplus on Saturday is fine; a 1,500 cal surplus isn't.</p>
+
+      <h2>8. It's Not Actually a Plateau</h2>
+      <p>A true plateau is <strong>3+ weeks of zero weight change</strong> at the same calorie intake. If it's been 1-2 weeks, that's normal fluctuation. Weight loss is never linear — expect stalls, whooshes, and daily swings of 1-2 kg.</p>
+
+      <h2>The Plateau-Breaking Checklist</h2>
+      <ol>
+        <li>Track everything strictly for 7 days (no estimates)</li>
+        <li>Recalculate TDEE at current weight</li>
+        <li>Check protein intake (&gt;1.6 g/kg?)</li>
+        <li>Assess sleep (7+ hours?)</li>
+        <li>Add 2,000 steps/day (easiest calorie increase)</li>
+        <li>If still stuck after 3 weeks: reduce calories by 200 or add one cardio session</li>
+      </ol>
+
+      <h2>Related Guides</h2>
       <ul>
-        <li>Weigh everything, including cooking oils</li>
-        <li>Track every bite, even "just a taste"</li>
-        <li>Track weekends with the same rigor as weekdays</li>
-        <li>Use verified database entries (not user-submitted)</li>
+        <li><Link to="/blog/what-is-tdee">What Is TDEE?</Link></li>
+        <li><Link to="/blog/what-is-bmr">What Is BMR?</Link></li>
+        <li><Link to="/blog/best-macro-split-for-weight-loss">Best Macro Split for Fat Loss</Link></li>
+        <li><Link to="/blog/how-much-protein-per-kg">How Much Protein Per Kg?</Link></li>
+        <li><Link to="/calorie-calculator">Free Calorie Calculator</Link></li>
       </ul>
-
-      <h3>Option 2: Reduce Calories by 10%</h3>
-      <p>
-        If tracking is already tight, cut 100-200 calories. Remove from carbs or fat, 
-        not protein.
-      </p>
-      <div className="bg-muted/50 rounded-lg p-4 my-6">
-        <p><strong>Example:</strong> If eating 1,800 cal/day, drop to 1,600-1,650</p>
-      </div>
-
-      <h3>Option 3: Increase Activity</h3>
-      <p>
-        Adding movement burns calories without cutting food:
-      </p>
-      <ul>
-        <li>Add 2,000-4,000 daily steps</li>
-        <li>Add one cardio session per week</li>
-        <li>Take stairs instead of elevator</li>
-        <li>Walk during phone calls</li>
-      </ul>
-
-      <h3>Option 4: Take a Diet Break</h3>
-      <p>
-        If you've been dieting for 12+ weeks, take 1-2 weeks at maintenance calories. 
-        This helps reset hormones and metabolism, making your next deficit more effective.
-      </p>
-      <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 my-6">
-        <p className="font-semibold">Diet Break ≠ Cheat Week</p>
-        <p className="mt-2">
-          A diet break means eating at maintenance (TDEE), not going off-plan. You won't 
-          lose weight, but you shouldn't gain either.
-        </p>
-      </div>
-
-      <h3>Option 5: Add Strength Training</h3>
-      <p>
-        If you're not lifting weights, start. Resistance training preserves muscle, 
-        supports metabolism, and can break plateaus even without calorie changes.
-      </p>
-
-      <h2>What NOT to Do</h2>
-
-      <ul>
-        <li><strong>Don't crash diet</strong> — Eating 800 calories causes muscle loss and metabolic damage</li>
-        <li><strong>Don't do excessive cardio</strong> — Hours of cardio increases hunger and cortisol</li>
-        <li><strong>Don't buy "fat burner" supplements</strong> — They don't work</li>
-        <li><strong>Don't give up</strong> — Plateaus are temporary if you stay consistent</li>
-      </ul>
-
-      <h2>Plateau-Breaking Checklist</h2>
-
-      <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 my-6">
-        <ol className="space-y-2">
-          <li>☐ Confirmed it's a true plateau (3+ weeks, not just fluctuation)</li>
-          <li>☐ Recalculated TDEE at current weight</li>
-          <li>☐ Tightened food tracking (weighing food, tracking everything)</li>
-          <li>☐ Checked weekend intake</li>
-          <li>☐ Verified protein intake is adequate (0.8-1g/lb)</li>
-          <li>☐ Considered water retention factors</li>
-          <li>☐ If dieting 12+ weeks, considered a diet break</li>
-        </ol>
-      </div>
-
-      <h2>The Mindset Shift</h2>
-
-      <p>
-        Plateaus feel frustrating, but they're actually evidence that your body is 
-        adapting — which is a good thing. The same mechanisms that cause plateaus also 
-        helped your ancestors survive famines.
-      </p>
-
-      <p>
-        The people who succeed long-term don't panic at plateaus. They troubleshoot 
-        systematically, make small adjustments, and trust the process.
-      </p>
-
-      <h2>The Bottom Line</h2>
-
-      <p>
-        Most plateaus are solved by tighter tracking or recalculating TDEE at your new, 
-        lower weight. Stay patient, make one change at a time, and give each adjustment 
-        2 weeks before trying something else.
-      </p>
-
-      <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 my-6">
-        <p className="font-semibold mb-2">Tighten your tracking:</p>
-        <p>
-          <Link to="/" className="text-primary hover:underline">ProteinLens</Link> helps you 
-          track more accurately with AI-powered photo recognition. No more guessing portion 
-          sizes or searching databases for the right entry.
-        </p>
-      </div>
-
-      <p>
-        <Link to="/tdee-calculator" className="text-primary hover:underline">
-          → Recalculate your TDEE at your current weight
-        </Link>
-      </p>
-    </div>
+    </>
   );
 }
