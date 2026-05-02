@@ -61,6 +61,21 @@ const postContentMap: Record<string, React.LazyExoticComponent<React.ComponentTy
   'protein-timing-does-it-matter': lazy(() => import('@/content/blog/posts/protein-timing-does-it-matter')),
   'how-to-read-nutrition-labels': lazy(() => import('@/content/blog/posts/how-to-read-nutrition-labels')),
   'vegan-protein-sources-complete': lazy(() => import('@/content/blog/posts/vegan-protein-sources-complete')),
+  'protein-in-eggs': lazy(() => import('@/content/blog/posts/protein-in-eggs')),
+  'protein-in-chicken-breast': lazy(() => import('@/content/blog/posts/protein-in-chicken-breast')),
+  'protein-in-greek-yogurt': lazy(() => import('@/content/blog/posts/protein-in-greek-yogurt')),
+  'calories-in-rice': lazy(() => import('@/content/blog/posts/calories-in-rice')),
+  'calories-in-banana': lazy(() => import('@/content/blog/posts/calories-in-banana')),
+  'protein-in-salmon': lazy(() => import('@/content/blog/posts/protein-in-salmon')),
+  'protein-in-oats': lazy(() => import('@/content/blog/posts/protein-in-oats')),
+  'intermittent-fasting-macros': lazy(() => import('@/content/blog/posts/intermittent-fasting-macros')),
+  'how-many-calories-to-build-muscle': lazy(() => import('@/content/blog/posts/how-many-calories-to-build-muscle')),
+  'what-is-bmr': lazy(() => import('@/content/blog/posts/what-is-bmr')),
+  'protein-for-women': lazy(() => import('@/content/blog/posts/protein-for-women')),
+  'pre-workout-nutrition': lazy(() => import('@/content/blog/posts/pre-workout-nutrition')),
+  'track-macros-while-traveling': lazy(() => import('@/content/blog/posts/track-macros-while-traveling')),
+  'protein-in-beans-and-lentils': lazy(() => import('@/content/blog/posts/protein-in-beans-and-lentils')),
+  'how-to-count-macros-beginners': lazy(() => import('@/content/blog/posts/how-to-count-macros-beginners')),
 };
 
 /** Skeleton placeholder while blog post content loads */
