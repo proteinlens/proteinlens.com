@@ -100,3 +100,13 @@ ProteinLens uses computer vision to analyze food photos and estimate macronutrie
 - [Protein in Cottage Cheese & Dairy](https://www.proteinlens.com/blog/protein-in-cottage-cheese-and-dairy): Full dairy ranking, cottage cheese recipes, cutting vs bulking picks
 - [Calories in Alcohol](https://www.proteinlens.com/blog/calories-in-alcohol): 7 cal/gram, drink comparison, how to track alcohol in macros
 - [Creatine & Protein Guide](https://www.proteinlens.com/blog/creatine-and-protein-guide): Dosing, timing, myths debunked, synergy with protein intake
+- [Calories in Coffee](https://www.proteinlens.com/blog/calories-in-coffee): Black (2 cal) to Frappuccino (400+ cal), add-ins, protein coffee trend
+- [Calories in Bread](https://www.proteinlens.com/blog/calories-in-bread): White, wheat, sourdough, Ezekiel, bagels — macro breakdown, sandwich macros
+- [Protein in Beef](https://www.proteinlens.com/blog/protein-in-beef): Every cut ranked — eye of round to ribeye, ground beef, meal prep
+- [Protein in Shrimp](https://www.proteinlens.com/blog/protein-in-shrimp): 24g/100g at 99 cal — leanest protein, sizing guide, seafood comparison
+- [Calories in Pizza](https://www.proteinlens.com/blog/calories-in-pizza): 200-500+ cal per slice, chain comparison, pizza-friendly macro strategy
+- [Protein in Nuts & Seeds](https://www.proteinlens.com/blog/protein-in-nuts): All types ranked, portion control, hemp seeds are the protein winner
+- [Protein for Runners](https://www.proteinlens.com/blog/protein-for-runners): 1.2-1.8g/kg needs, carb balance, timing around runs, injury prevention
+- [Protein in Tuna](https://www.proteinlens.com/blog/protein-in-tuna): 26g/100g canned, water vs oil, mercury limits, 5-minute tuna meals
+- [Calories in Sushi](https://www.proteinlens.com/blog/calories-in-sushi): Nigiri, maki, sashimi — piece by piece, ordering strategy by goal
+- [Sleep & Macros](https://www.proteinlens.com/blog/sleep-and-macros): Poor sleep = +300 cal/day hunger, less muscle, more fat storage. Fixes inside

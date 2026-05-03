@@ -86,6 +86,16 @@ const postContentMap: Record<string, React.LazyExoticComponent<React.ComponentTy
   'protein-in-cottage-cheese-and-dairy': lazy(() => import('@/content/blog/posts/protein-in-cottage-cheese-and-dairy')),
   'calories-in-alcohol': lazy(() => import('@/content/blog/posts/calories-in-alcohol')),
   'creatine-and-protein-guide': lazy(() => import('@/content/blog/posts/creatine-and-protein-guide')),
+  'calories-in-coffee': lazy(() => import('@/content/blog/posts/calories-in-coffee')),
+  'calories-in-bread': lazy(() => import('@/content/blog/posts/calories-in-bread')),
+  'protein-in-beef': lazy(() => import('@/content/blog/posts/protein-in-beef')),
+  'protein-in-shrimp': lazy(() => import('@/content/blog/posts/protein-in-shrimp')),
+  'calories-in-pizza': lazy(() => import('@/content/blog/posts/calories-in-pizza')),
+  'protein-in-nuts': lazy(() => import('@/content/blog/posts/protein-in-nuts')),
+  'protein-for-runners': lazy(() => import('@/content/blog/posts/protein-for-runners')),
+  'protein-in-tuna': lazy(() => import('@/content/blog/posts/protein-in-tuna')),
+  'calories-in-sushi': lazy(() => import('@/content/blog/posts/calories-in-sushi')),
+  'sleep-and-macros': lazy(() => import('@/content/blog/posts/sleep-and-macros')),
 };
 
 /** Skeleton placeholder while blog post content loads */
