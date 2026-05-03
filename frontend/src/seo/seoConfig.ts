@@ -451,6 +451,16 @@ export const PUBLIC_ROUTES = [
   '/blog/protein-in-cottage-cheese-and-dairy',
   '/blog/calories-in-alcohol',
   '/blog/creatine-and-protein-guide',
+  '/blog/calories-in-coffee',
+  '/blog/calories-in-bread',
+  '/blog/protein-in-beef',
+  '/blog/protein-in-shrimp',
+  '/blog/calories-in-pizza',
+  '/blog/protein-in-nuts',
+  '/blog/protein-for-runners',
+  '/blog/protein-in-tuna',
+  '/blog/calories-in-sushi',
+  '/blog/sleep-and-macros',
   '/404',
 ];
 
