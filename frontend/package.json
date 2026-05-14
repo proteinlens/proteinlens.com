@@ -17,7 +17,7 @@
   "dependencies": {
     "@azure/msal-browser": "^4.27.0",
     "@azure/msal-react": "^3.0.23",
-    "@hcaptcha/react-hcaptcha": "^1.17.2",
+    "@hcaptcha/react-hcaptcha": "^2.0.2",
     "@microsoft/applicationinsights-react-js": "^17.3.6",
     "@microsoft/applicationinsights-web": "^3.3.10",
     "@tailwindcss/typography": "^0.5.19",
