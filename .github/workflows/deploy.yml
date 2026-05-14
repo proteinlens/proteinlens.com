@@ -69,7 +69,7 @@ jobs:
           fetch-depth: 2  # Only need last 2 commits for diff
       
       - name: Check for changes
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@v4
         id: filter
         with:
           filters: |
